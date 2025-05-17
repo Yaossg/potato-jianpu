@@ -1,0 +1,147 @@
+
+.notes {
+  font-size: 24px;
+  color: #333;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: bold;
+}
+
+.dot {
+    padding: 0.15em;
+    font-size: 0.8em;
+    position: relative;
+    top: -0.1em;
+}
+
+.hyphen {
+    position: relative;
+    top: -0.1em;
+    display: inline-block;
+}
+
+.up1 {
+    position: relative;
+    top: -1.3em;
+    width: 0px;
+    display: inline-block;
+}
+
+.up2 {
+    position: relative;
+    top: -1.7em;
+    width: 0px;
+    display: inline-block;
+}
+
+.up3 {
+    position: relative;
+    top: -2.1em;
+    width: 0px;
+    display: inline-block;
+}
+.up4 {
+    position: relative;
+    top: -2.5em;
+    width: 0px;
+    display: inline-block;
+}
+
+.high {
+    position: relative;
+    left: -0.6em;
+    font-size: 0.6em;
+}
+
+
+.arch1 {
+    position: relative;
+    top: 1em;
+    left: -1.15em;
+    transform: scale(1.1, 1.1);
+    font-weight: normal;
+    display: inline-block;
+}
+.arch2 {
+    position: relative;
+    top: 1em;
+    left: -1.55em;
+    transform: scale(1.8, 1.1);
+    font-weight: normal;
+    display: inline-block;
+}
+.arch3 {
+    position: relative;
+    top: 1em;
+    left: -1.75em;
+    transform: scale(2.2, 1.1);
+    font-weight: normal;
+    display: inline-block;
+}
+
+.low1 {
+    position: relative;
+    top: 0.7em;
+    left: -0.6em;
+    font-size: 0.6em;
+    width: 0px;
+    display: inline-block;
+
+}
+.low2 {
+    position: relative;
+    top: 1.1em;
+    left: -0.6em;
+    font-size: 0.6em;
+    width: 0px;
+    display: inline-block;
+}
+
+.low3 {
+    position: relative;
+    top: 1.5em;
+    left: -0.6em;
+    font-size: 0.6em;
+    width: 0px;
+    display: inline-block;
+}
+.low4 {
+    position: relative;
+    top: 1.9em;
+    left: -0.6em;
+    font-size: 0.6em;
+    width: 0px;
+    display: inline-block;
+}
+.half1 {
+    position: relative;
+    top: 0em;
+    left: -0.55em;
+    font-size: 1em;
+    width: 0px;
+    display: inline-block;
+
+}
+.half2 {
+    position: relative;
+    top: 0.2em;
+    left: -0.55em;
+    font-size: 1em;
+    width: 0px;
+    display: inline-block;
+
+}
+
+.border {
+    position: relative;
+    top: 0.2em;
+    font-size: 1.75em;
+    font-weight: bold;
+    display: inline-block;
+}
+
+.invalid {
+    border: 4px solid red;
+    font-family: "Fira Code", "Consolas", monospace;
+    font-size: 16px;
+  
+}

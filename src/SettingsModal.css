@@ -1,0 +1,126 @@
+.settings-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.settings-modal {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  max-width: 400px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden; /* Prevent content from overflowing */
+}
+
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+}
+
+.settings-header h3 {
+  margin: 0;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  color: #555;
+}
+
+.settings-group {
+  margin-bottom: 20px;
+}
+
+.settings-group label {
+  display: inline-block;
+  margin-bottom: 8px;
+  font-size: 18px;
+}
+
+.settings-group input,
+.settings-group select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.settings-group input:focus,
+.settings-group select:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
+.settings-group input[type="range"] {
+  height: 6px;
+  padding: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: #f0f0f0;
+}
+
+.settings-group input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #4a90e2;
+  cursor: pointer;
+  border: none;
+}
+
+.settings-group input[type="number"] {
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* Prevent number input overflow with better step button handling */
+.settings-group input[type="number"]::-webkit-inner-spin-button, 
+.settings-group input[type="number"]::-webkit-outer-spin-button { 
+  height: auto;
+}
+
+.volume-value {
+  display: inline-block;
+  margin-left: 10px;
+  font-size: 16px;
+  min-width: 36px;
+}
+
+.settings-group .input-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+/* Add responsive width for input-row that contains tempo field */
+.settings-group .input-row.tempo-row input {
+  max-width: calc(100% - 50px); /* Account for the volume-value or similar elements */
+}
+
+/* Ensure inputs in input-row don't exceed container */
+.settings-group .input-row input {
+  flex: 1;
+  max-width: 100%;
+  box-sizing: border-box;
+}

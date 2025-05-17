@@ -1,0 +1,55 @@
+.examples-panel {
+  position: absolute;
+  z-index: 100;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  width: 300px;
+  max-height: 400px;
+  overflow-y: auto;
+  right: 0;
+  top: 40px;
+}
+
+.examples-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.examples-panel-header h3 {
+  margin: 0;
+  padding-left: 4px;
+  font-size: 16px;
+}
+
+.examples-panel-header button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.examples-list {
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+}
+
+.example-item {
+  text-align: left;
+  padding: 8px 12px;
+  margin-bottom: 5px;
+  background: #f5f5f5;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.example-item:hover {
+  background: #e0e0e0;
+}

@@ -1,0 +1,146 @@
+#root {
+  margin: 0 auto;
+  padding: 2rem;
+  width: 100%;
+}
+
+.app-container {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.app-container h1 {
+  text-align: center;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.preview-area, .editor-area {
+  border-radius: 12px;
+  padding: 1.5rem;
+  background-color: white;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+  position: relative;
+}
+
+.preview-area {
+  margin-bottom: 2rem;
+  border: 2px solid #7fc1ff;
+  background-color: #f7faff;
+}
+
+.preview-area h2, .editor-area h2 {
+  margin-top: 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e0e0e0;
+  color: #444;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.preview-area button {
+  padding: 6px 12px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.preview-area button:hover {
+  background-color: #2980b9;
+}
+
+.editor-area {
+  border: 2px solid #a3d9a5;
+  background-color: #f7fff8;
+  position: relative;
+}
+
+.editor-area h2 {
+  margin-top: 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e0e0e0;
+  color: #444;
+}
+
+.render-area {
+  padding: 1rem;
+  min-height: 150px;
+  border-radius: 6px;
+  background-color: #f9f9f9;
+}
+
+.score-editor {
+  font-family: "Fira Code", "Consolas", monospace;
+  font-size: 18px;
+  padding: 2%;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  resize: none;
+  width: 96%;
+  box-shadow: inset 0 1px 4px rgba(0,0,0,0.1);
+  line-height: 1.5;
+  color: #333;
+  background-color: #f9f9f9;
+  transition: all 0.2s ease-in-out;
+  outline: none;
+  min-height: 200px;
+}
+
+.score-editor:focus {
+  box-shadow: inset 0 1px 4px rgba(0,0,0,0.1), 0 0 0 2px rgba(0,118,255,0.25);
+  border-color: #0070f3;
+}
+
+/* Buttons styling */
+.button-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+}
+
+.play-button, .stop-button, .settings-button, .examples-button {
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.stop-button {
+  background-color: #e74c3c !important;
+}
+
+.stop-button:hover {
+  background-color: #c0392b !important;
+}
+
+.play-button {
+  background-color: #2ecc71 !important;
+}
+
+.play-button:hover {
+  background-color: #27ae60 !important;
+}
+
+.examples-button {
+  padding: 5px 10px;
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.examples-button:hover {
+  background-color: #357ac5;
+}
