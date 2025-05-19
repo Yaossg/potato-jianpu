@@ -26,7 +26,7 @@ function tokenize(source: string): string[] {
             }
         } else {
             const tail = source.substring(i);
-            for (const symbol of ["||", ":|", "|:", "|"]) {
+            for (const symbol of ["||", ":|", "|:", "|", "%", "bb", "##", "b", "#"]) {
                 if (tail.startsWith(symbol)) {
                     flush();
                     tokens.push(symbol);

@@ -10,13 +10,13 @@ interface MelodyNote {
 
 const synth = new WebAudioTinySynth();
 let callbackId = -1;
+const DEFAULT_NOTE_MAP = [60, 62, 64, 65, 67, 69, 71];
 
-function parseNote(result: DecoratedNote): MelodyNote {
+function parseNote(result: DecoratedNote, noteMap: number[]): MelodyNote {
     const noteLength = result.getNoteLength();
     if (result.note === 0) {
         return { note: 'rest', duration: noteLength };
     }
-    const noteMap = [60, 62, 64, 65, 67, 69, 71];
     const { note, high, low } = result;
     const octave = high - low;
     return { note: noteMap[note - 1] + octave * 12, duration: noteLength };
@@ -25,15 +25,35 @@ function parseNote(result: DecoratedNote): MelodyNote {
 function parseMelody(source: string): MelodyNote[] | null {
     const tokens = tokenize(source);
     const melody: MelodyNote[] = [];
+    let noteMap = DEFAULT_NOTE_MAP.slice();
+    let accidental = "";
+    const accidentalMap = {
+        "%": 0,
+        "#": 1,
+        "##": 2,
+        "b": -1,
+        "bb": -2,
+    }
     for (let token of tokens) {
         if (token === '|' || token === '|:' || token === ':|' || token === '||' || token === '\n') {
+            noteMap = DEFAULT_NOTE_MAP.slice();
+            continue;
+        }
+        if (token in accidentalMap) {
+            accidental = token;
             continue;
         }
         const result = parse(token);
         if (result === null) {
             return null;
         }
-        const note = parseNote(result);
+        if (accidental !== "" && result.note !== 0) {
+            const accidentalValue = accidentalMap[accidental as keyof typeof accidentalMap];
+            let note = result.note - 1;
+            noteMap[note] = DEFAULT_NOTE_MAP[note] + accidentalValue;
+            accidental = "";
+        }
+        const note = parseNote(result, noteMap);
         const { tie } = result;
         if (tie) {
             if (melody.length === 0) {

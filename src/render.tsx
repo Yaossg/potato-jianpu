@@ -31,10 +31,6 @@ function invalid(note: string): JSX.Element {
     return <span className="invalid">{note}</span>;
 }
 
-function separator(symbol: string): JSX.Element {
-    return <> <span className="border">{symbol}</span></>;
-}
-
 function render(context: Context, token: string): JSX.Element {
     const separatorMap = {
         '|': '𝄀',
@@ -44,7 +40,18 @@ function render(context: Context, token: string): JSX.Element {
     }
     if (token in separatorMap) {
         context.resetSpacing();
-        return separator(separatorMap[token as keyof typeof separatorMap]);
+        return <> <span className="separator">{separatorMap[token as keyof typeof separatorMap]}</span></>;
+    }
+    const accidentalMap = {
+        "%": "♮",
+        "#": "♯",
+        "##": "𝄪",
+        "b": "♭",
+        "bb": "𝄫",
+    }
+    if (token in accidentalMap) {
+        context.spacing = true;
+        return <span className="accidental">{accidentalMap[token as keyof typeof accidentalMap]}</span>;
     }
     if (token === '\n') {
         context.resetSpacing();
