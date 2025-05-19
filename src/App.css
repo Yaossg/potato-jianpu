@@ -106,7 +106,7 @@
   position: relative;
 }
 
-.play-button, .stop-button, .settings-button, .examples-button {
+.play-button, .stop-button, .settings-button, .examples-button, .help-button {
   width: 40px;
   height: 40px;
   font-size: 18px;
@@ -132,7 +132,7 @@
   background-color: #27ae60 !important;
 }
 
-.examples-button {
+.examples-button, .help-button {
   padding: 5px 10px;
   background-color: #4a90e2;
   color: white;
@@ -141,6 +141,6 @@
   cursor: pointer;
 }
 
-.examples-button:hover {
+.examples-button:hover, .help-button:hover {
   background-color: #357ac5;
 }

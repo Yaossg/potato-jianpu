@@ -1,7 +1,7 @@
 /// <reference path="webaudio-tinysynth.d.ts" />
 import WebAudioTinySynth from 'webaudio-tinysynth';
 
-import { tokenize, parse, DecoratedNote } from "./parser";
+import { parse, DurableNote, noteLength, ParseError } from "./parser";
 
 interface MelodyNote {
     note: number | 'rest';
@@ -12,63 +12,49 @@ const synth = new WebAudioTinySynth();
 let callbackId = -1;
 const DEFAULT_NOTE_MAP = [60, 62, 64, 65, 67, 69, 71];
 
-function parseNote(result: DecoratedNote, noteMap: number[]): MelodyNote {
-    const noteLength = result.getNoteLength();
-    if (result.note === 0) {
-        return { note: 'rest', duration: noteLength };
+function parseNote(durableNote: DurableNote, noteMap: number[]): MelodyNote {
+    const { note = 1, octave = 0, rest = false, nopitch = false } = durableNote;
+    const duration = noteLength(durableNote);
+    if (rest) {
+        return { note: 'rest', duration };
+    } else if (nopitch) {
+        return { note: 60, duration };
     }
-    const { note, high, low } = result;
-    const octave = high - low;
-    return { note: noteMap[note - 1] + octave * 12, duration: noteLength };
+    return { note: noteMap[note - 1] + octave * 12, duration };
 }
 
 function parseMelody(source: string): MelodyNote[] | null {
-    const tokens = tokenize(source);
-    const melody: MelodyNote[] = [];
-    let noteMap = DEFAULT_NOTE_MAP.slice();
-    let accidental = "";
-    const accidentalMap = {
-        "%": 0,
-        "#": 1,
-        "##": 2,
-        "b": -1,
-        "bb": -2,
+    const measures = parse(source);
+    if (measures instanceof ParseError) {
+        console.log("Error parsing score: ", measures);
+        return null;
     }
-    for (let token of tokens) {
-        if (token === '|' || token === '|:' || token === ':|' || token === '||' || token === '\n') {
-            noteMap = DEFAULT_NOTE_MAP.slice();
-            continue;
-        }
-        if (token in accidentalMap) {
-            accidental = token;
-            continue;
-        }
-        const result = parse(token);
-        if (result === null) {
-            return null;
-        }
-        if (accidental !== "" && result.note !== 0) {
-            const accidentalValue = accidentalMap[accidental as keyof typeof accidentalMap];
-            let note = result.note - 1;
-            noteMap[note] = DEFAULT_NOTE_MAP[note] + accidentalValue;
-            accidental = "";
-        }
-        const note = parseNote(result, noteMap);
-        const { tie } = result;
-        if (tie) {
-            if (melody.length === 0) {
-                return null;
+    const melody: MelodyNote[] = [];
+    for (const measure of measures) {
+        const noteMap = DEFAULT_NOTE_MAP.slice();
+      
+        for (const durableNote of measure) {
+            const { accidental = null, note = 1, tie = false } = durableNote;
+            if (accidental !== null) {
+                const noteIndex = note - 1;
+                noteMap[noteIndex] = DEFAULT_NOTE_MAP[noteIndex] + accidental;
             }
-            // for the sake of simplicity, we use previous note directly
-            // so that possible accidental tie is properly handled
-            // if (melody[melody.length - 1].note !== note.note) {
-            //     return null;
-            // }
-            melody[melody.length - 1].duration += note.duration;
-        } else {
-            melody.push(note);
-        }
+            const melodyNote = parseNote(durableNote, noteMap);
+            if (tie) {
+                if (melody.length === 0) {
+                    return null;
+                }
+                // for the sake of simplicity, we use previous note directly
+                // so that possible accidental tie is properly handled
+                // if (melody[melody.length - 1].note !== note.note) {
+                //     return null;
+                // }
+                melody[melody.length - 1].duration += melodyNote.duration;
+            } else {
+                melody.push(melodyNote);
+            }
 
+        }
     }
     return melody;
 }
@@ -80,7 +66,7 @@ export async function playMusic(source: string, bpm: number, program: number, vo
 
     const melody = parseMelody(source);
     if (melody === null) {
-        console.error("Invalid music source");
+        console.error("(Internal synthesizer error) Error parsing melody", source);
         return;
     }
     const beatDuration = 60 / bpm;

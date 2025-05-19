@@ -76,6 +76,13 @@ function App() {
         <h2>
           <span>Editor</span>
           <div className="button-group">
+            <button
+              onClick={() => window.open('grammar.html', '_blank')}
+              className="help-button"
+              title="Grammar Help"
+            >
+              ❔
+            </button>
             <button 
               onClick={() => setShowExamples(!showExamples)}
               className="examples-button"

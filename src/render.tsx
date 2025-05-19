@@ -1,6 +1,6 @@
 import { JSX } from 'react';
 import './render.css';
-import { tokenize, parse } from './parser';
+import { DurableNote, Measure, noteLength, parse, ParseError } from './parser';
 
 function isInteger(value: number): boolean {
     return Math.floor(value) === value;
@@ -27,74 +27,75 @@ class Context {
     }
 }
 
-function invalid(note: string): JSX.Element {
-    return <span className="invalid">{note}</span>;
-}
-
-function render(context: Context, token: string): JSX.Element {
-    const separatorMap = {
-        '|': '𝄀',
-        '||': '𝄂',
-        ':|': '𝄇',
-        '|:': '𝄆',
+function renderNote(context: Context, durableNote: DurableNote): JSX.Element {
+    let { accidental = null, note = '', octave = 0, hyphens = 0, halves = 0, dots = 0, tie = false, rest = false, nopitch = false } = durableNote;
+    if (rest) {
+        note = '0';
+    } else if (nopitch) {
+        note = 'X';
     }
-    if (token in separatorMap) {
-        context.resetSpacing();
-        return <> <span className="separator">{separatorMap[token as keyof typeof separatorMap]}</span></>;
+    const elements: JSX.Element[] = [];
+    const currentLength = noteLength(durableNote);
+    if (context.shouldAddSpacing(currentLength)) {
+        elements.push(<> </>);
     }
-    const accidentalMap = {
-        "%": "♮",
-        "#": "♯",
-        "##": "𝄪",
-        "b": "♭",
-        "bb": "𝄫",
+    if (accidental !== null) {
+        const accidentalMap = {
+            [2]: "𝄪",
+            [1]: "♯",
+            [0]: "♮",
+            [-1]: "♭",
+            [-2]: "𝄫",
+        }
+        elements.push(<><span className="accidental">{accidentalMap[accidental as keyof typeof accidentalMap]}</span> </>);
     }
-    if (token in accidentalMap) {
-        context.spacing = true;
-        return <span className="accidental">{accidentalMap[token as keyof typeof accidentalMap]}</span>;
-    }
-    if (token === '\n') {
-        context.resetSpacing();
-        return <br/>;
-    }
-    const result = parse(token);
-    if (result === null) {
-        return invalid(token);
-    }
-    const { note, high, low, length, halves, dots, tie } = result;
-    const modifiers: JSX.Element[] = [];
-    for (let i = 0; i < high; i++) {
-        modifiers.push(<span className={`up${i + 1} high`}>•</span>);
+    elements.push(<>{note}</>)
+    for (let i = 0; i < octave; i++) {
+        elements.push(<span className={`up${i + 1} high`}>•</span>);
     }
     for (let i = 0; i < halves; i++) {
-        modifiers.push(<span className={`half${i + 1}`}>_</span>);
+        elements.push(<span className={`half${i + 1}`}>_</span>);
     }
-    for (let i = 0; i < low; i++) {
-        modifiers.push(<span className={`low${i + 1 + halves}`}>•</span>);
+    for (let i = 0; i < -octave; i++) {
+        elements.push(<span className={`low${i + 1 + halves}`}>•</span>);
     }
     if (tie) {
-        modifiers.push(<span className={`up${high + 1}`}><span className={`arch${context.tieLength()}`}>⁀</span></span>);
+        const high = Math.max(octave, 0);
+        elements.push(<span className={`up${high + 1}`}><span className={`arch${context.tieLength()}`}>⁀</span></span>);
     }
     for (let i = 0; i < dots; i++) {
-        modifiers.push(<><span className="dot">•</span> </>);
+        elements.push(<><span className="dot">•</span> </>);
     }
-    for (let i = 0; i < length; i++) {
-        modifiers.push(<span className="hyphen">&nbsp;–</span>);
+    for (let i = 0; i < hyphens; i++) {
+        elements.push(<span className="hyphen">&nbsp;–</span>);
     }
-    const currentLength = result.getNoteLength();
-    const rendered = context.shouldAddSpacing(currentLength) ? (<> {note}{...modifiers}</>) : (<>{note}{...modifiers}</>);
     if (isInteger(currentLength)) context.spacing = true;
     context.accumulate += currentLength;
-    if (length > 0) {
-        context.width = 1 + length;
+    if (hyphens > 0) {
+        context.width = 1 + hyphens;
     } else {
         context.width = 1 + dots;
     }
-    return rendered;
+    return <>{...elements}</>;
+}
+
+function renderMeasure(context: Context, measure: Measure): JSX.Element {
+    context.resetSpacing();
+    return <>{...measure.map(note => renderNote(context, note))}</>;
+}
+
+function renderBar(last: boolean): JSX.Element {
+    return <> <span className="separator">{last ? '𝄂' : '𝄀'}</span></>;
 }
 
 export function compile(source: string): JSX.Element {
-    const tokens = tokenize(source);
     const context = new Context();
-    return <div className="notes">{...tokens.map(token => render(context, token))}</div>;
+    const measures = parse(source);
+    if (measures instanceof ParseError) {
+        return <>{JSON.stringify(measures)}</>;
+    }
+    const last = measures.length - 1;
+    return <div className="notes">{...measures.map(
+        (measure, index) => <>{renderMeasure(context, measure)}{renderBar(index === last)}</>
+    )}</div>;
 }
