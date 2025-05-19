@@ -53,9 +53,15 @@ function merge(objects) {
 
 @lexer lexer
 
-score -> measure (%bar measure {% data => data[1] %}):* (%bar | %final):? {% data => [data[0], ...data[1]] %}
+score -> %bar:? measure (%bar measure {% data => data[1] %}):* (%bar | %final):? {% data => [data[1], ...data[2]] %}
 
-measure -> durable_note:+ {% id %}
+measure -> octave:? durable_note:+ {% data => (data[0] ? data[1].map(note => {
+  if ('octave' in note) {
+    return { ...note, octave: note.octave + data[0] }
+  } else {
+    return note
+  }
+}) : data[1]) %}
 
 accidental -> 
     %sharp {% () => 1 %} 

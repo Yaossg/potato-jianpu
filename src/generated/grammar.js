@@ -53,17 +53,27 @@ function merge(objects) {
 
 let Lexer = lexer;
 let ParserRules = [
-    {"name": "score$ebnf$1", "symbols": []},
-    {"name": "score$ebnf$1$subexpression$1", "symbols": [(lexer.has("bar") ? {type: "bar"} : bar), "measure"], "postprocess": data => data[1]},
-    {"name": "score$ebnf$1", "symbols": ["score$ebnf$1", "score$ebnf$1$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "score$ebnf$2$subexpression$1", "symbols": [(lexer.has("bar") ? {type: "bar"} : bar)]},
-    {"name": "score$ebnf$2$subexpression$1", "symbols": [(lexer.has("final") ? {type: "final"} : final)]},
-    {"name": "score$ebnf$2", "symbols": ["score$ebnf$2$subexpression$1"], "postprocess": id},
-    {"name": "score$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "score", "symbols": ["measure", "score$ebnf$1", "score$ebnf$2"], "postprocess": data => [data[0], ...data[1]]},
-    {"name": "measure$ebnf$1", "symbols": ["durable_note"]},
-    {"name": "measure$ebnf$1", "symbols": ["measure$ebnf$1", "durable_note"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "measure", "symbols": ["measure$ebnf$1"], "postprocess": id},
+    {"name": "score$ebnf$1", "symbols": [(lexer.has("bar") ? {type: "bar"} : bar)], "postprocess": id},
+    {"name": "score$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "score$ebnf$2", "symbols": []},
+    {"name": "score$ebnf$2$subexpression$1", "symbols": [(lexer.has("bar") ? {type: "bar"} : bar), "measure"], "postprocess": data => data[1]},
+    {"name": "score$ebnf$2", "symbols": ["score$ebnf$2", "score$ebnf$2$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "score$ebnf$3$subexpression$1", "symbols": [(lexer.has("bar") ? {type: "bar"} : bar)]},
+    {"name": "score$ebnf$3$subexpression$1", "symbols": [(lexer.has("final") ? {type: "final"} : final)]},
+    {"name": "score$ebnf$3", "symbols": ["score$ebnf$3$subexpression$1"], "postprocess": id},
+    {"name": "score$ebnf$3", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "score", "symbols": ["score$ebnf$1", "measure", "score$ebnf$2", "score$ebnf$3"], "postprocess": data => [data[1], ...data[2]]},
+    {"name": "measure$ebnf$1", "symbols": ["octave"], "postprocess": id},
+    {"name": "measure$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "measure$ebnf$2", "symbols": ["durable_note"]},
+    {"name": "measure$ebnf$2", "symbols": ["measure$ebnf$2", "durable_note"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "measure", "symbols": ["measure$ebnf$1", "measure$ebnf$2"], "postprocess":  data => (data[0] ? data[1].map(note => {
+          if ('octave' in note) {
+            return { ...note, octave: note.octave + data[0] }
+          } else {
+            return note
+          }
+        }) : data[1]) },
     {"name": "accidental", "symbols": [(lexer.has("sharp") ? {type: "sharp"} : sharp)], "postprocess": () => 1},
     {"name": "accidental", "symbols": [(lexer.has("sharpsharp") ? {type: "sharpsharp"} : sharpsharp)], "postprocess": () => 2},
     {"name": "accidental", "symbols": [(lexer.has("flat") ? {type: "flat"} : flat)], "postprocess": () => -1},
