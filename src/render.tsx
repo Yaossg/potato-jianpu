@@ -79,23 +79,22 @@ function renderNote(context: Context, durableNote: DurableNote): JSX.Element {
     return <>{...elements}</>;
 }
 
-function renderMeasure(context: Context, measure: Measure): JSX.Element {
-    context.resetSpacing();
-    return <>{...measure.map(note => renderNote(context, note))}</>;
-}
-
 function renderBar(last: boolean): JSX.Element {
     return <> <span className="separator">{last ? '𝄂' : '𝄀'}</span></>;
 }
 
+function renderMeasure(context: Context, measure: Measure, final: boolean): JSX.Element {
+    context.resetSpacing();
+    return <>{...measure.map(note => renderNote(context, note))}{renderBar(final)}</>;
+}
+
 export function compile(source: string): JSX.Element {
     const context = new Context();
-    const measures = parse(source);
-    if (measures instanceof ParseError) {
-        return <>{JSON.stringify(measures)}</>;
+    const score = parse(source);
+    if (score instanceof ParseError) {
+        return <>{JSON.stringify(score)}</>;
     }
-    const last = measures.length - 1;
-    return <div className="notes">{...measures.map(
-        (measure, index) => <>{renderMeasure(context, measure)}{renderBar(index === last)}</>
-    )}</div>;
+    return <div className="notes">{
+        score.map((line, lineno) => <>{...line.map((measure, measureno) => renderMeasure(context, measure, measureno === line.length - 1 && lineno === score.length - 1))}<br/></>)
+    }</div>
 }

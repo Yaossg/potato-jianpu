@@ -16,7 +16,9 @@ export interface DurableNote {
 
 export type Measure = DurableNote[];
 
-export type Score = Measure[];
+export type ScoreLine = Measure[];
+
+export type Score = ScoreLine[];
 
 export class ParseError {
     error: string;

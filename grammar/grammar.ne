@@ -23,12 +23,11 @@ function ignoreWs(lexer) {
 }
 
 const lexer = ignoreWs(moo.compile({
-  ws:      {match: /[ \t\n]+/, lineBreaks: true},
+  ws:      {match: /[ \t]+/},
   note:    /[1-7]/,
   rest:    '0',
   nopitch: 'X',
-  // newline: {match: '\n', lineBreaks: true},
-  final:   '||',
+  newline: {match: '\n', lineBreaks: true},
   // lrepeat: '|:',
   // rrepeat: ':|',
   bar: '|',
@@ -53,7 +52,9 @@ function merge(objects) {
 
 @lexer lexer
 
-score -> %bar:? measure (%bar measure {% data => data[1] %}):* (%bar | %final):? {% data => [data[1], ...data[2]] %}
+score -> %newline:* line (%newline:+ line {% data => data[1] %}):* %newline:* {% data => [data[1], ...data[2]] %}
+
+line -> %bar:? measure (%bar measure {% data => data[1] %}):* %bar:? {% data => [data[1], ...data[2]] %}
 
 measure -> octave:? durable_note:+ {% data => (data[0] ? data[1].map(note => {
   if ('octave' in note) {

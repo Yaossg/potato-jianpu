@@ -24,11 +24,12 @@ function parseNote(durableNote: DurableNote, noteMap: number[]): MelodyNote {
 }
 
 function parseMelody(source: string): MelodyNote[] | null {
-    const measures = parse(source);
-    if (measures instanceof ParseError) {
-        console.log("Error parsing score: ", measures);
+    const score = parse(source);
+    if (score instanceof ParseError) {
+        console.log("Error parsing score: ", score);
         return null;
     }
+    const measures = score.flatMap(line => line);
     const melody: MelodyNote[] = [];
     for (const measure of measures) {
         const noteMap = DEFAULT_NOTE_MAP.slice();
