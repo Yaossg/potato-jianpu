@@ -38,7 +38,7 @@ const lexer = ignoreWs(moo.compile({
   natural: '%',
   half: '/',
   dot: '.',
-  hyphen: '-',
+  dash: '-',
   lower: ',',
   higher: "'",
   tie: '~',
@@ -54,7 +54,7 @@ function merge(objects) {
 
 score -> %newline:* line (%newline:+ line {% data => data[1] %}):* %newline:* {% data => [data[1], ...data[2]] %}
 
-line -> %bar:? measure (%bar measure {% data => data[1] %}):* %bar:? {% data => [data[1], ...data[2]] %}
+line -> %bar:? measure (%bar measure {% data => data[1] %}):* %bar:? {% data => ({ measures: [data[1], ...data[2]], last_bar: data[3] !== null }) %}
 
 measure -> octave:? durable_note:+ {% data => (data[0] ? data[1].map(note => {
   if ('octave' in note) {
@@ -84,7 +84,7 @@ general_note -> octave_note {% id %} | rest {% id %} | nopitch {% id %}
 tie -> %tie {% () => ({ tie: true }) %} 
 
 length -> 
-    %hyphen:+ {% data => ({ hyphens: data[0].length }) %} 
+    %dash:+ {% data => ({ dashes: data[0].length }) %} 
   | (%half {% id %} | %dot {% id %} ):+ {% data => ({ 
       dots: data[0].filter(e => e.type == 'dot').length, 
       halves: data[0].filter(e => e.type == 'half').length }) 

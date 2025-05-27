@@ -9,14 +9,17 @@ export interface DurableNote {
     rest?: boolean;
     nopitch?: boolean;
     tie?: boolean;
-    hyphens?: number;
+    dashes?: number;
     halves?: number;
     dots?: number;
 }
 
 export type Measure = DurableNote[];
 
-export type ScoreLine = Measure[];
+export interface ScoreLine {
+    measures: Measure[];
+    last_bar: boolean;
+};
 
 export type Score = ScoreLine[];
 
@@ -52,9 +55,9 @@ export function parse(input: string): Score | ParseError {
 }
 
 export function noteLength(note: DurableNote): number {
-    const { hyphens = 0, halves = 0, dots = 0 } = note;
-    if (hyphens) {
-        return 1 + hyphens;
+    const { dashes = 0, halves = 0, dots = 0 } = note;
+    if (dashes) {
+        return 1 + dashes;
     }
     let one = 1;
     let dot = 1/2;

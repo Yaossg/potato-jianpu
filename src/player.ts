@@ -29,7 +29,7 @@ function parseMelody(source: string): MelodyNote[] | null {
         console.log("Error parsing score: ", score);
         return null;
     }
-    const measures = score.flatMap(line => line);
+    const measures = score.flatMap(line => line.measures);
     const melody: MelodyNote[] = [];
     for (const measure of measures) {
         const noteMap = DEFAULT_NOTE_MAP.slice();

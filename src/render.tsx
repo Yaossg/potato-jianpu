@@ -28,7 +28,7 @@ class Context {
 }
 
 function renderNote(context: Context, durableNote: DurableNote): JSX.Element {
-    let { accidental = null, note = '', octave = 0, hyphens = 0, halves = 0, dots = 0, tie = false, rest = false, nopitch = false } = durableNote;
+    let { accidental = null, note = '', octave = 0, dashes = 0, halves = 0, dots = 0, tie = false, rest = false, nopitch = false } = durableNote;
     if (rest) {
         note = '0';
     } else if (nopitch) {
@@ -66,26 +66,36 @@ function renderNote(context: Context, durableNote: DurableNote): JSX.Element {
     for (let i = 0; i < dots; i++) {
         elements.push(<><span className="dot">•</span> </>);
     }
-    for (let i = 0; i < hyphens; i++) {
+    for (let i = 0; i < dashes; i++) {
         elements.push(<span className="hyphen">&nbsp;–</span>);
     }
     if (isInteger(currentLength)) context.spacing = true;
     context.accumulate += currentLength;
-    if (hyphens > 0) {
-        context.width = 1 + hyphens;
+    if (dashes > 0) {
+        context.width = 1 + dashes;
     } else {
         context.width = 1 + dots;
     }
     return <>{...elements}</>;
 }
 
-function renderBar(last: boolean): JSX.Element {
-    return <> <span className="separator">{last ? '𝄂' : '𝄀'}</span></>;
+function selectBar(last_bar: boolean, last_measure: boolean, last_line: boolean): string {
+    if (last_measure && last_line) {
+        return '𝄂';
+    }
+    if (!last_measure || last_bar) {
+        return '𝄀';
+    }
+    return '';
 }
 
-function renderMeasure(context: Context, measure: Measure, final: boolean): JSX.Element {
+function renderBar(bar: string): JSX.Element {
+    return <> <span className="separator">{bar}</span></>;
+}
+
+function renderMeasure(context: Context, measure: Measure, bar: string): JSX.Element {
     context.resetSpacing();
-    return <>{...measure.map(note => renderNote(context, note))}{renderBar(final)}</>;
+    return <>{...measure.map(note => renderNote(context, note))}{renderBar(bar)}</>;
 }
 
 export function compile(source: string): JSX.Element {
@@ -95,6 +105,7 @@ export function compile(source: string): JSX.Element {
         return <>{JSON.stringify(score)}</>;
     }
     return <div className="notes">{
-        score.map((line, lineno) => <>{...line.map((measure, measureno) => renderMeasure(context, measure, measureno === line.length - 1 && lineno === score.length - 1))}<br/></>)
+        score.map((line, lineno) => <>{...line.measures.map((measure, measureno) => 
+            renderMeasure(context, measure, selectBar(line.last_bar, measureno === line.measures.length - 1, lineno === score.length - 1)))}<br/></>)
     }</div>
 }
