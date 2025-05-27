@@ -3,11 +3,10 @@ import nearley from "nearley";
 import grammar from "./generated/grammar";
 
 export interface DurableNote {
-    accidental?: number;
+    accidental?: null | 0 | -1 | -2 | 1 | 2;
     note?: number;
     octave?: number;
-    rest?: boolean;
-    nopitch?: boolean;
+    type: 'pitch' | 'rest' | 'drum';
     tie?: boolean;
     dashes?: number;
     halves?: number;
@@ -54,7 +53,7 @@ export function parse(input: string): Score | ParseError {
     return parser.results[0];
 }
 
-export function noteLength(note: DurableNote): number {
+export function durationOf(note: DurableNote): number {
     const { dashes = 0, halves = 0, dots = 0 } = note;
     if (dashes) {
         return 1 + dashes;

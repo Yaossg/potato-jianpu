@@ -1,7 +1,7 @@
 /// <reference path="webaudio-tinysynth.d.ts" />
 import WebAudioTinySynth from 'webaudio-tinysynth';
 
-import { parse, DurableNote, noteLength, ParseError } from "./parser";
+import { parse, DurableNote, durationOf, ParseError } from "./parser";
 
 interface MelodyNote {
     note: number | 'rest';
@@ -13,14 +13,16 @@ let callbackId = -1;
 const DEFAULT_NOTE_MAP = [60, 62, 64, 65, 67, 69, 71];
 
 function parseNote(durableNote: DurableNote, noteMap: number[]): MelodyNote {
-    const { note = 1, octave = 0, rest = false, nopitch = false } = durableNote;
-    const duration = noteLength(durableNote);
-    if (rest) {
-        return { note: 'rest', duration };
-    } else if (nopitch) {
-        return { note: 60, duration };
+    const { note = 1, octave = 0, type } = durableNote;
+    const duration = durationOf(durableNote);
+    switch (type) {
+        case 'rest':
+            return { note: 'rest', duration };
+        case 'drum':
+            return { note: 60, duration };
+        default:
+            return { note: noteMap[note - 1] + octave * 12, duration };
     }
-    return { note: noteMap[note - 1] + octave * 12, duration };
 }
 
 function parseMelody(source: string): MelodyNote[] | null {

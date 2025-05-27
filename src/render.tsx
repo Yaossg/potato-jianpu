@@ -1,6 +1,6 @@
 import { JSX } from 'react';
 import './render.css';
-import { DurableNote, Measure, noteLength, parse, ParseError } from './parser';
+import { DurableNote, Measure, durationOf, parse, ParseError } from './parser';
 
 function isInteger(value: number): boolean {
     return Math.floor(value) === value;
@@ -28,14 +28,17 @@ class Context {
 }
 
 function renderNote(context: Context, durableNote: DurableNote): JSX.Element {
-    let { accidental = null, note = '', octave = 0, dashes = 0, halves = 0, dots = 0, tie = false, rest = false, nopitch = false } = durableNote;
-    if (rest) {
-        note = '0';
-    } else if (nopitch) {
-        note = 'X';
+    let { accidental = null, note = '', octave = 0, dashes = 0, halves = 0, dots = 0, tie = false, type } = durableNote;
+    switch (type) {
+        case 'rest':
+            note = '0';
+            break;
+        case 'drum':
+            note = 'X';
+            break;
     }
     const elements: JSX.Element[] = [];
-    const currentLength = noteLength(durableNote);
+    const currentLength = durationOf(durableNote);
     if (context.shouldAddSpacing(currentLength)) {
         elements.push(<> </>);
     }
@@ -47,7 +50,7 @@ function renderNote(context: Context, durableNote: DurableNote): JSX.Element {
             [-1]: "♭",
             [-2]: "𝄫",
         }
-        elements.push(<><span className="accidental">{accidentalMap[accidental as keyof typeof accidentalMap]}</span> </>);
+        elements.push(<><span className="accidental">{accidentalMap[accidental]}</span> </>);
     }
     elements.push(<>{note}</>)
     for (let i = 0; i < octave; i++) {

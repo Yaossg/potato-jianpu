@@ -26,22 +26,20 @@ const lexer = ignoreWs(moo.compile({
   ws:      {match: /[ \t]+/},
   note:    /[1-7]/,
   rest:    '0',
-  nopitch: 'X',
+  drum:    'X',
   newline: {match: '\n', lineBreaks: true},
-  // lrepeat: '|:',
-  // rrepeat: ':|',
-  bar: '|',
-  sharpsharp: '##',
-  sharp: '#',
-  flatflat: 'bb',
-  flat: 'b',
+  bar:     '|',
+  sharpsharp:'##',
+  sharp:   '#',
+  flatflat:'bb',
+  flat:    'b',
   natural: '%',
-  half: '/',
-  dot: '.',
-  dash: '-',
-  lower: ',',
-  higher: "'",
-  tie: '~',
+  half:    '/',
+  dot:     '.',
+  dash:    '-',
+  lower:   ',',
+  higher:  "'",
+  tie:     '~',
 }));
 
 function merge(objects) {
@@ -73,13 +71,13 @@ accidental ->
 
 octave -> %lower:+ {% data => -data[0].length %} | %higher:+ {% data => data[0].length %}
 
-octave_note -> accidental:? %note octave:? {% data => ({ accidental: data[0], note: parseInt(data[1].value), octave: data[2] || 0}) %} 
+octave_note -> accidental:? %note octave:? {% data => ({ type: 'pitch', accidental: data[0], note: parseInt(data[1].value), octave: data[2] || 0}) %} 
 
-rest -> %rest {% () => ({ rest: true }) %}
+rest -> %rest {% () => ({ type: 'rest' }) %}
 
-nopitch -> %nopitch {% () => ({ nopitch: true }) %}
+drum -> %drum {% () => ({ type: 'drum' }) %}
 
-general_note -> octave_note {% id %} | rest {% id %} | nopitch {% id %}
+general_note -> octave_note {% id %} | rest {% id %} | drum {% id %}
 
 tie -> %tie {% () => ({ tie: true }) %} 
 
