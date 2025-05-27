@@ -53,8 +53,7 @@ export function parse(input: string): Score | ParseError {
     return parser.results[0];
 }
 
-export function durationOf(note: DurableNote): number {
-    const { dashes = 0, halves = 0, dots = 0 } = note;
+export function durationOf({ dashes = 0, halves = 0, dots = 0 }: DurableNote): number {
     if (dashes) {
         return 1 + dashes;
     }
