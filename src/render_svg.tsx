@@ -20,22 +20,22 @@ const DIMENSIONS = {
 // SVG CSS styles
 const svgStyles = `
   .jianpu-underline {
-    stroke: #333;
+    stroke: currentColor;
     stroke-width: 2.5;
   }
   
   .jianpu-dot {
-    fill: #333;
+    fill: currentColor;
   }
   
   .jianpu-dash {
-    stroke: #333;
+    stroke: currentColor;
     stroke-width: 3;
   }
   
   .jianpu-tie {
-    fill: #333;
-    stroke: #333;
+    fill: currentColor;
+    stroke: currentColor;
     stroke-width: 1;
   }
   
@@ -44,6 +44,7 @@ const svgStyles = `
     font-size: 24px;
     font-weight: bold;
     text-anchor: middle;
+    fill: currentColor;
   }
   
   .jianpu-accidental-text {
@@ -51,6 +52,7 @@ const svgStyles = `
     font-size: 16px;
     font-weight: bold;
     text-anchor: middle;
+    fill: currentColor;
   }
   
   .jianpu-bar-text {
@@ -58,6 +60,7 @@ const svgStyles = `
     font-size: 48px;
     font-weight: bold;
     text-anchor: middle;
+    fill: currentColor;
   }
 `;
 

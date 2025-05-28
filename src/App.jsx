@@ -4,6 +4,7 @@ import { compile } from './render'
 import { playMusic, stopMusic } from './player'
 import SettingsModal from './SettingsModal'
 import ExamplesPanel from './ExamplesPanel'
+import { useTheme } from './ThemeContext'
 
 function App() {
   const [source, setSource] = useState("")
@@ -13,6 +14,7 @@ function App() {
   const [showExamples, setShowExamples] = useState(false)
   const [instrument, setInstrument] = useState(0)
   const [volume, setVolume] = useState(100)
+  const { theme, toggleTheme } = useTheme()
 
   async function togglePlayMusic() {
     setShowExamples(false)
@@ -29,7 +31,16 @@ function App() {
 
   return (
     <div className="app-container">
-      <h1>Modern Numbered Musical Notation Markup</h1>
+      <div className="header-container">
+        <h1>Modern Numbered Musical Notation Markup</h1>
+        <button
+          onClick={toggleTheme}
+          className="theme-toggle-button"
+          title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+        >
+          {theme === 'light' ? '🌙' : '☀️'}
+        </button>
+      </div>
       <h2>Warning: Still In Early Development</h2>
       <div className="preview-area">
         <h2>

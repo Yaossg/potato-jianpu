@@ -1,3 +1,60 @@
+/* Theme variables */
+:root {
+  /* Light theme (default) */
+  --bg-color: #f5f5f5;
+  --text-color: #333;
+  --header-color: #333;
+  --border-color: #e0e0e0;
+  --shadow-color: rgba(0, 0, 0, 0.08);
+  --preview-border: #7fc1ff;
+  --preview-bg: #f7faff;
+  --editor-border: #a3d9a5;
+  --editor-bg: #f7fff8;
+  --render-bg: #f9f9f9;
+  --input-bg: #f9f9f9;
+  --input-border: #ddd;
+  --input-text: #333;
+  --button-bg: #3498db;
+  --button-hover: #2980b9;
+  --stop-button: #e74c3c;
+  --stop-button-hover: #c0392b;
+  --play-button: #2ecc71;
+  --play-button-hover: #27ae60;
+  --examples-button: #4a90e2;
+  --examples-button-hover: #357ac5;
+}
+
+/* Dark theme */
+[data-theme='dark'] {
+  --bg-color: #1a1a1a;
+  --text-color: #e0e0e0;
+  --header-color: #f0f0f0;
+  --border-color: #444;
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --preview-border: #3a6ea5;
+  --preview-bg: #1c2c3f;
+  --editor-border: #406b42;
+  --editor-bg: #1c3f1e;
+  --render-bg: #2a2a2a;
+  --input-bg: #2a2a2a;
+  --input-border: #555;
+  --input-text: #e0e0e0;
+  --button-bg: #2573b3;
+  --button-hover: #1a5789;
+  --stop-button: #c0392b;
+  --stop-button-hover: #922b1f;
+  --play-button: #27ae60;
+  --play-button-hover: #1e8449;
+  --examples-button: #3a70b2;
+  --examples-button-hover: #2a5282;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
 #root {
   margin: 0 auto;
   padding: 2rem;
@@ -11,31 +68,67 @@
   gap: 2rem;
 }
 
+.header-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  margin-bottom: 1rem;
+}
+
 .app-container h1 {
   text-align: center;
   margin-bottom: 1rem;
-  color: #333;
+  color: var(--header-color);
+}
+
+.theme-toggle-button {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+
+.theme-toggle-button:hover {
+  background-color: var(--button-hover);
+  color: white;
 }
 
 .preview-area, .editor-area {
   border-radius: 12px;
   padding: 1.5rem;
-  background-color: white;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+  background-color: var(--preview-bg);
+  box-shadow: 0 6px 12px var(--shadow-color);
   position: relative;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .preview-area {
   margin-bottom: 2rem;
-  border: 2px solid #7fc1ff;
-  background-color: #f7faff;
+  border: 2px solid var(--preview-border);
+}
+
+.editor-area {
+  border: 2px solid var(--editor-border);
+  background-color: var(--editor-bg);
 }
 
 .preview-area h2, .editor-area h2 {
   margin-top: 0;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid #e0e0e0;
-  color: #444;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -43,7 +136,7 @@
 
 .preview-area button {
   padding: 6px 12px;
-  background-color: #3498db;
+  background-color: var(--button-bg);
   color: white;
   border: none;
   border-radius: 4px;
@@ -53,27 +146,15 @@
 }
 
 .preview-area button:hover {
-  background-color: #2980b9;
-}
-
-.editor-area {
-  border: 2px solid #a3d9a5;
-  background-color: #f7fff8;
-  position: relative;
-}
-
-.editor-area h2 {
-  margin-top: 0;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid #e0e0e0;
-  color: #444;
+  background-color: var(--button-hover);
 }
 
 .render-area {
   padding: 1rem;
   min-height: 150px;
   border-radius: 6px;
-  background-color: #f9f9f9;
+  background-color: var(--render-bg);
+  transition: background-color 0.3s ease;
 }
 
 .score-editor {
@@ -81,20 +162,20 @@
   font-size: 18px;
   padding: 2%;
   border-radius: 8px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--input-border);
   resize: none;
   width: 96%;
-  box-shadow: inset 0 1px 4px rgba(0,0,0,0.1);
+  box-shadow: inset 0 1px 4px var(--shadow-color);
   line-height: 1.5;
-  color: #333;
-  background-color: #f9f9f9;
+  color: var(--input-text);
+  background-color: var(--input-bg);
   transition: all 0.2s ease-in-out;
   outline: none;
   min-height: 200px;
 }
 
 .score-editor:focus {
-  box-shadow: inset 0 1px 4px rgba(0,0,0,0.1), 0 0 0 2px rgba(0,118,255,0.25);
+  box-shadow: inset 0 1px 4px var(--shadow-color), 0 0 0 2px rgba(0,118,255,0.25);
   border-color: #0070f3;
 }
 
@@ -117,24 +198,24 @@
 }
 
 .stop-button {
-  background-color: #e74c3c !important;
+  background-color: var(--stop-button) !important;
 }
 
 .stop-button:hover {
-  background-color: #c0392b !important;
+  background-color: var(--stop-button-hover) !important;
 }
 
 .play-button {
-  background-color: #2ecc71 !important;
+  background-color: var(--play-button) !important;
 }
 
 .play-button:hover {
-  background-color: #27ae60 !important;
+  background-color: var(--play-button-hover) !important;
 }
 
 .examples-button, .help-button {
   padding: 5px 10px;
-  background-color: #4a90e2;
+  background-color: var(--examples-button);
   color: white;
   border: none;
   border-radius: 4px;
@@ -142,5 +223,5 @@
 }
 
 .examples-button:hover, .help-button:hover {
-  background-color: #357ac5;
+  background-color: var(--examples-button-hover);
 }

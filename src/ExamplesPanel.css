@@ -1,15 +1,16 @@
 .examples-panel {
   position: absolute;
   z-index: 100;
-  background-color: white;
-  border: 1px solid #ccc;
+  background-color: var(--preview-bg);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 10px var(--shadow-color);
   width: 300px;
   max-height: 400px;
   overflow-y: auto;
   right: 0;
   top: 40px;
+  color: var(--text-color);
 }
 
 .examples-panel-header {
@@ -17,13 +18,14 @@
   justify-content: space-between;
   align-items: center;
   padding: 10px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .examples-panel-header h3 {
   margin: 0;
   padding-left: 4px;
   font-size: 16px;
+  color: var(--header-color);
 }
 
 .examples-panel-header button {
@@ -31,6 +33,7 @@
   border: none;
   cursor: pointer;
   font-size: 16px;
+  color: var(--text-color);
 }
 
 .examples-list {
@@ -43,13 +46,14 @@
   text-align: left;
   padding: 8px 12px;
   margin-bottom: 5px;
-  background: #f5f5f5;
+  background: var(--input-bg);
   border: none;
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.2s;
+  color: var(--text-color);
 }
 
 .example-item:hover {
-  background: #e0e0e0;
+  background: var(--input-border);
 }
