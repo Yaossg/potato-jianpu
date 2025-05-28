@@ -2,11 +2,15 @@ import nearley from "nearley";
 // @ts-ignore
 import grammar from "./generated/grammar";
 
+export type Accidental = null | 0 | -1 | -2 | 1 | 2;
+
+export type NoteType = 'pitch' | 'rest' | 'drum';
+
 export interface DurableNote {
-    accidental?: null | 0 | -1 | -2 | 1 | 2;
+    accidental?: Accidental;
     note?: number;
     octave?: number;
-    type: 'pitch' | 'rest' | 'drum';
+    type: NoteType;
     tie?: boolean;
     dashes?: number;
     halves?: number;

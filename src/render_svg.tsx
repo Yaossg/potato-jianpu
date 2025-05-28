@@ -1,8 +1,9 @@
-import { DurableNote, Measure, durationOf, parse, ParseError } from './parser';
+import { DurableNote, Accidental } from './parser';
 
 // Constants for layout
 const DIMENSIONS = {
   baseNoteWidth: 24,
+  baseNoteHeight: 24,
   leftPadding: 18,
   measureSpacing: 0, // RESERVED FOR FUTURE USE
   accidentalOffset: 10,
@@ -140,9 +141,9 @@ function widthOf({ dashes = 0, dots = 0, accidental }: DurableNote): number {
  * Calculate the padding needed above a note
  */
 function paddingUpOf({ octave = 0, tie }: DurableNote): number {
-  let height = 24; // Note size
+  let height = DIMENSIONS.baseNoteHeight;
   height += (octave > 0) ? octave * DIMENSIONS.octaveSpacing : 0;
-  height += tie ? 15 : 0;
+  height += tie ? DIMENSIONS.tieHeight : 0;
   return height;
 }
 
@@ -159,8 +160,15 @@ function paddingDownOf({ octave = 0, halves = 0 }: DurableNote): number {
 /**
  * Calculate the horizontal offset for an accidental
  */
-function getAccidentalOffset(accidental: number | null | undefined): number {
+function getAccidentalOffset(accidental: Accidental | undefined): number {
   return accidental !== null && accidental !== undefined ? DIMENSIONS.accidentalOffset : 0;
+}
+
+/**
+ * Get the accidental symbol for a given accidental
+ */
+function getAccidentalSymbol(accidental: Accidental | undefined): string | null {
+  return accidental !== null && accidental !== undefined ? accidentalMap[accidental] : null;
 }
 
 /**
@@ -232,7 +240,7 @@ const JianpuNoteComponent = ({ noteObj }: { noteObj: DurableNote }) => {
       break;
   }
   
-  const accidentalSymbol = accidental !== null && accidental !== undefined ? accidentalMap[accidental] : null;
+  const accidentalSymbol = getAccidentalSymbol(accidental);
   const accidentalOffset = getAccidentalOffset(accidental);
 
   return (
@@ -348,12 +356,14 @@ const CrossMeasureTies = ({
         if (measureIndex === 0) return null; // Skip first measure
         
         const dim = measureDimensions[measureIndex];
-        const xOffset = calculateMeasureXOffset(measureDimensions, measureIndex);
         
         const firstNote = notes[0];
         if (firstNote?.tie) {
           const prevMeasure = measures[measureIndex - 1].notes;
           if (prevMeasure.length > 0) {
+            const prevXOffset = calculateMeasureXOffset(measureDimensions, measureIndex - 1);
+            const currentXOffset = calculateMeasureXOffset(measureDimensions, measureIndex);
+
             const prevX = measureDimensions[measureIndex - 1].notePositions[prevMeasure.length - 1] + DIMENSIONS.leftPadding;
             const currentX = dim.notePositions[0] + DIMENSIONS.leftPadding;
             
@@ -362,8 +372,8 @@ const CrossMeasureTies = ({
             const currentAccidentalOffset = getAccidentalOffset(firstNote.accidental);
             
             // Calculate tie points in the global coordinate system
-            const tieStartX = prevX + prevAccidentalOffset;
-            const tieEndX = xOffset + currentX + currentAccidentalOffset;
+            const tieStartX = prevXOffset + prevX + prevAccidentalOffset;
+            const tieEndX = currentXOffset + currentX + currentAccidentalOffset;
             
             const prevOctave = prevNote.octave && prevNote.octave > 0 ? prevNote.octave : 0;
             const currentOctave = firstNote.octave && firstNote.octave > 0 ? firstNote.octave : 0;
