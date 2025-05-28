@@ -1,4 +1,4 @@
-import { DurableNote, Accidental } from './parser';
+import { DurableNote, Accidental, durationOf } from './parser';
 
 // Constants for layout
 const DIMENSIONS = {
@@ -49,7 +49,7 @@ const svgStyles = `
   
   .jianpu-accidental-text {
     font-family: Helvetica;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: bold;
     text-anchor: middle;
     fill: currentColor;
@@ -68,17 +68,6 @@ const svgStyles = `
 const JianpuDefs = () => (
   <defs>
     <style>{svgStyles}</style>
-    
-    {/* Underline template */}
-    <line
-      id="underline-template"
-      x1="-10"
-      y1="0"
-      x2="10"
-      y2="0"
-      className="jianpu-underline"
-    />
-
     {/* Octave dot template (above or below) */}
     <circle
       id="octave-dot-template"
@@ -117,6 +106,18 @@ const accidentalMap = {
   [-2]: "𝄫", // double flat
 };
 
+export type Bar = '' | '𝄀' | '𝄂';
+
+export function selectBar(last_bar: boolean, last_measure: boolean, last_line: boolean): Bar {
+    if (last_measure && last_line) {
+        return '𝄂';
+    }
+    if (!last_measure || last_bar) {
+        return '𝄀';
+    }
+    return '';
+}
+
 interface MeasureDimensions {
   width: number;
   notePositions: number[];
@@ -126,17 +127,17 @@ interface MeasureDimensions {
 
 interface MeasureSvgProps {
   notes: DurableNote[];
-  bar: string;
+  bar: Bar;
 }
 
 /**
  * Calculate the width of a note in relative units
  */
 function widthOf({ dashes = 0, dots = 0, accidental }: DurableNote): number {
-  let width = 1;
-  width += dashes;
-  width += dots * 0.5;
-  width += accidental !== null && accidental !== undefined ? 0.5 : 0;
+  let width = DIMENSIONS.baseNoteWidth;
+  width += dashes * DIMENSIONS.dashSpacing;
+  width += dots * DIMENSIONS.dotSpacing;
+  width += getAccidentalOffset(accidental);
   return width;
 }
 
@@ -205,14 +206,12 @@ const TieComponent = ({
   startX, 
   endX, 
   maxPaddingUp, 
-  maxOctave = 0, 
-  key 
+  maxOctave = 0
 }: { 
   startX: number, 
   endX: number, 
   maxPaddingUp: number, 
-  maxOctave?: number, 
-  key: string 
+  maxOctave?: number
 }) => {
   const tieWidth = endX - startX;
   if (tieWidth <= 0) return null;
@@ -221,7 +220,6 @@ const TieComponent = ({
   
   return (
     <path 
-      key={key}
       d={createTiePath(startX, endX)}
       className="jianpu-tie"
       transform={`translate(0, ${maxPaddingUp - DIMENSIONS.tiePadding + yOffset})`}
@@ -230,7 +228,7 @@ const TieComponent = ({
 };
 
 // JianpuNoteComponent for rendering a single note
-const JianpuNoteComponent = ({ noteObj }: { noteObj: DurableNote }) => {
+const JianpuNoteComponent = ({ noteObj, full }: { noteObj: DurableNote, full: boolean }) => {
   let { note = '', octave = 0, dashes = 0, halves = 0, dots = 0, type, accidental } = noteObj;
   
   // Determine the note symbol based on type
@@ -269,10 +267,13 @@ const JianpuNoteComponent = ({ noteObj }: { noteObj: DurableNote }) => {
 
       {/* Draw underlines (for shorter notes) */}
       {[...Array(halves)].map((_, i) => (
-        <use
-          key={`underline-${i}`}
-          href="#underline-template"
-          transform={`translate(${accidentalOffset}, ${5 + i * DIMENSIONS.underlineSpacing})`}
+        <line
+          x1="-10"
+          y1="0"
+          x2={`${(full ? 10 : 14) + accidentalOffset}`}
+          y2="0"
+          className="jianpu-underline"
+          transform={`translate(0, ${5 + i * DIMENSIONS.underlineSpacing})`}
         />
       ))}
 
@@ -327,7 +328,7 @@ function calculateMeasureDimensions(measures: MeasureSvgProps[]): MeasureDimensi
     
     notes.forEach((noteObj) => {
       notePositions.push(totalWidth);
-      totalWidth += widthOf(noteObj) * DIMENSIONS.baseNoteWidth;
+      totalWidth += widthOf(noteObj);
       paddingUp = Math.max(paddingUp, paddingUpOf(noteObj));
       paddingDown = Math.max(paddingDown, paddingDownOf(noteObj));
     });
@@ -339,6 +340,15 @@ function calculateMeasureDimensions(measures: MeasureSvgProps[]): MeasureDimensi
       paddingDown
     };
   });
+}
+
+/**
+ * Calculate the maximum high octave between two notes
+ */
+function maxHighOctave(note1: DurableNote, note2: DurableNote): number {
+  const octave1 = note1.octave && note1.octave > 0 ? note1.octave : 0;
+  const octave2 = note2.octave && note2.octave > 0 ? note2.octave : 0;
+  return Math.max(octave1, octave2);
 }
 
 /**
@@ -378,9 +388,7 @@ const CrossMeasureTies = ({
             const tieStartX = prevXOffset + prevX + prevAccidentalOffset;
             const tieEndX = currentXOffset + currentX + currentAccidentalOffset;
             
-            const prevOctave = prevNote.octave && prevNote.octave > 0 ? prevNote.octave : 0;
-            const currentOctave = firstNote.octave && firstNote.octave > 0 ? firstNote.octave : 0;
-            const maxOctave = Math.max(prevOctave, currentOctave);
+            const maxOctave = maxHighOctave(prevNote, firstNote);
             
             return (
               <TieComponent
@@ -430,6 +438,10 @@ export const ScoreLineSvg = ({ measures }: { measures: MeasureSvgProps[] }) => {
       {measures.map(({notes, bar}, measureIndex) => {
         const dim = measureDimensions[measureIndex];
         const xOffset = calculateMeasureXOffset(measureDimensions, measureIndex);
+        const fullness = (() => {
+          let acc = 0;
+          return notes.map(note => acc += durationOf(note)).map(d => d == Math.floor(d));
+        })();
         
         return (
           <g key={measureIndex} transform={`translate(${xOffset}, 0)`}>
@@ -446,9 +458,7 @@ export const ScoreLineSvg = ({ measures }: { measures: MeasureSvgProps[] }) => {
                 const tieStartX = prevX + prevAccidentalOffset;
                 const tieEndX = currentX + currentAccidentalOffset;
                 
-                const prevOctave = prevNote.octave && prevNote.octave > 0 ? prevNote.octave : 0;
-                const currentOctave = noteObj.octave && noteObj.octave > 0 ? noteObj.octave : 0;
-                const maxOctave = Math.max(prevOctave, currentOctave);
+                const maxOctave = maxHighOctave(prevNote, noteObj);
                 
                 return (
                   <TieComponent
@@ -464,23 +474,25 @@ export const ScoreLineSvg = ({ measures }: { measures: MeasureSvgProps[] }) => {
             })}
             
             {/* Render notes */}
-            {notes.map((noteObj, index) => (
-              <g 
-                key={`note-${measureIndex}-${index}`} 
-                transform={`translate(${dim.notePositions[index] + DIMENSIONS.leftPadding}, ${maxPaddingUp})`}
-              >
-                <JianpuNoteComponent noteObj={noteObj} />
-              </g>
-            ))}
+            {notes.map((noteObj, index) => {
+              return (
+                <g 
+                  key={`note-${measureIndex}-${index}`} 
+                  transform={`translate(${dim.notePositions[index] + DIMENSIONS.leftPadding}, ${maxPaddingUp})`}
+                >
+                  <JianpuNoteComponent noteObj={noteObj} full={fullness[index]} />
+                </g>
+              );
+            })}
             
             {/* Render bar */}
-            <text
+            {bar !== '' && <text
               className="jianpu-bar-text"
               x={dim.width - DIMENSIONS.leftPadding + 12}
               y={maxPaddingUp + DIMENSIONS.noteBottomPadding}
             >
               {bar}
-            </text>
+            </text>}
           </g>
         );
       })}
