@@ -1,4 +1,4 @@
-import { DurableNote, Accidental, durationOf } from './parser';
+import { DurableNote, Accidental, durationOf, TimeSignature } from './parser';
 
 // Constants for layout
 const DIMENSIONS = {
@@ -268,9 +268,10 @@ const JianpuNoteComponent = ({ noteObj, full }: { noteObj: DurableNote, full: bo
       {/* Draw underlines (for shorter notes) */}
       {[...Array(halves)].map((_, i) => (
         <line
+          key={`underline-${i}`}
           x1="-10"
           y1="0"
-          x2={`${(full ? 10 : 14) + accidentalOffset}`}
+          x2={`${(full ? 10 : 14 + dots * DIMENSIONS.dotSpacing) + accidentalOffset}`}
           y2="0"
           className="jianpu-underline"
           transform={`translate(0, ${5 + i * DIMENSIONS.underlineSpacing})`}
@@ -410,7 +411,7 @@ const CrossMeasureTies = ({
 /**
  * Main component for rendering Jianpu notation
  */
-export const ScoreLineSvg = ({ measures }: { measures: MeasureSvgProps[] }) => {
+export const ScoreLineSvg = ({ measures, timeSignature }: { measures: MeasureSvgProps[], timeSignature: TimeSignature }) => {
   // Calculate dimensions for all measures
   const measureDimensions = calculateMeasureDimensions(measures);
   
@@ -440,7 +441,8 @@ export const ScoreLineSvg = ({ measures }: { measures: MeasureSvgProps[] }) => {
         const xOffset = calculateMeasureXOffset(measureDimensions, measureIndex);
         const fullness = (() => {
           let acc = 0;
-          return notes.map(note => acc += durationOf(note)).map(d => d == Math.floor(d));
+          const unit = timeSignature.actualNotePerBeat();
+          return notes.map(note => acc += durationOf(note)).map(d => d % unit == 0);
         })();
         
         return (

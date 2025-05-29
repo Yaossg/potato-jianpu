@@ -8,7 +8,6 @@ import { useTheme } from './ThemeContext'
 
 function App() {
   const [source, setSource] = useState("")
-  const [bpm, setBpm] = useState(120)
   const [isPlaying, setIsPlaying] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showExamples, setShowExamples] = useState(false)
@@ -19,7 +18,7 @@ function App() {
   async function togglePlayMusic() {
     setShowExamples(false)
     setIsPlaying(true)
-    await playMusic(source, bpm, instrument, volume / 100)
+    await playMusic(source, instrument, volume / 100)
     setIsPlaying(false)
   }
 
@@ -55,8 +54,6 @@ function App() {
             <SettingsModal
               isOpen={showSettings}
               onClose={() => setShowSettings(false)}
-              bpm={bpm}
-              onBpmChange={(e) => setBpm(e.target.value)}
               instrument={instrument}
               onInstrumentChange={(e) => setInstrument(e.target.value)}
               volume={volume}

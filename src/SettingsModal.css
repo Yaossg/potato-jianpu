@@ -105,39 +105,10 @@
   border: none;
 }
 
-.settings-group input[type="number"] {
-  max-width: 100%;
-  min-width: 0;
-}
-
-/* Prevent number input overflow with better step button handling */
-.settings-group input[type="number"]::-webkit-inner-spin-button, 
-.settings-group input[type="number"]::-webkit-outer-spin-button { 
-  height: auto;
-}
-
 .volume-value {
   display: inline-block;
   margin-left: 10px;
   font-size: 16px;
   min-width: 36px;
   color: var(--text-color);
-}
-
-.settings-group .input-row {
-  display: flex;
-  align-items: center;
-  width: 100%;
-}
-
-/* Add responsive width for input-row that contains tempo field */
-.settings-group .input-row.tempo-row input {
-  max-width: calc(100% - 50px); /* Account for the volume-value or similar elements */
-}
-
-/* Ensure inputs in input-row don't exceed container */
-.settings-group .input-row input {
-  flex: 1;
-  max-width: 100%;
-  box-sizing: border-box;
 }

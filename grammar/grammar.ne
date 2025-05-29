@@ -40,6 +40,10 @@ const lexer = ignoreWs(moo.compile({
   lower:   ',',
   higher:  "'",
   tie:     '~',
+  header_sep:'=',
+  colon:   ':',
+  identifier: {match: /[a-z_]+/},
+  string: {match: /"(?:\\["\\rn]|[^"\\])*?"/, lineBreaks: true, value: x => x.slice(1, -1)},
 }));
 
 function merge(objects) {
@@ -50,7 +54,13 @@ function merge(objects) {
 
 @lexer lexer
 
-score -> %newline:* line (%newline:+ line {% data => data[1] %}):* %newline:* {% data => [data[1], ...data[2]] %}
+file -> %newline:* header:? score:? {% data => ({ header: data[1], score: data[2] }) %}
+
+header -> property:* %header_sep:+ %newline:+ {% data => Object.fromEntries(data[0]) %}
+
+property -> %identifier %colon %string %newline:+ {% data => [data[0].value, data[2].value] %}
+
+score -> line (%newline:+ line {% data => data[1] %}):* %newline:* {% data => [data[0], ...data[1]] %}
 
 line -> %bar:? measure (%bar measure {% data => data[1] %}):* %bar:? {% data => ({ measures: [data[1], ...data[2]], last_bar: data[3] !== null }) %}
 

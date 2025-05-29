@@ -1,16 +1,22 @@
 /// <reference path="webaudio-tinysynth.d.ts" />
 import WebAudioTinySynth from 'webaudio-tinysynth';
 
-import { parse, DurableNote, durationOf, ParseError } from "./parser";
+import { parse, DurableNote, durationOf, ParseError, KeySignature, TimeSignature, parseTimeSignature, parseKeySignature } from "./parser";
 
 interface MelodyNote {
     note: number | 'rest';
     duration: number;
 }
 
+interface Melody {
+    notes: MelodyNote[];
+    timeSignature: TimeSignature;
+    tempo: number;
+}
+
 const synth = new WebAudioTinySynth();
 let callbackId = -1;
-const DEFAULT_NOTE_MAP = [60, 62, 64, 65, 67, 69, 71];
+const C_MAJOR_NOTE_MAP = [60, 62, 64, 65, 67, 69, 71];
 
 function parseNote(durableNote: DurableNote, noteMap: number[]): MelodyNote {
     const { note = 1, octave = 0, type } = durableNote;
@@ -25,57 +31,65 @@ function parseNote(durableNote: DurableNote, noteMap: number[]): MelodyNote {
     }
 }
 
-function parseMelody(source: string): MelodyNote[] | null {
-    const score = parse(source);
-    if (score instanceof ParseError) {
-        console.log("Error parsing score: ", score);
+function parseMelody(source: string): Melody | null {
+    const file = parse(source);
+    if (file instanceof ParseError) {
+        console.log("Error parsing score", file);
+        return null;
+    }
+    const { header, score } = file;
+    const { tempo = '120', key = 'C', time = '4/4' } = header;
+    const timeSignature = parseTimeSignature(time);
+    const keySignature = parseKeySignature(key);
+    const tempoNumber = Number(tempo);
+    if (isNaN(tempoNumber) || tempoNumber <= 0 || timeSignature === null || keySignature === null) {
+        console.error("Error: Invalid header", header);
         return null;
     }
     const measures = score.flatMap(line => line.measures);
-    const melody: MelodyNote[] = [];
+    const notes: MelodyNote[] = [];
+    const NOTE_MAP = C_MAJOR_NOTE_MAP.map(note => note + keySignature);
     for (const measure of measures) {
-        const noteMap = DEFAULT_NOTE_MAP.slice();
+        const noteMap = NOTE_MAP.slice();
       
         for (const durableNote of measure) {
             const { accidental = null, note = 1, tie = false } = durableNote;
             if (accidental !== null) {
                 const noteIndex = note - 1;
-                noteMap[noteIndex] = DEFAULT_NOTE_MAP[noteIndex] + accidental;
+                noteMap[noteIndex] = NOTE_MAP[noteIndex] + accidental;
             }
             const melodyNote = parseNote(durableNote, noteMap);
             if (tie) {
-                if (melody.length === 0) {
-                    return null;
-                }
+                // if (notes.length === 0) {
+                //     return null;
+                // }
                 // for the sake of simplicity, we use previous note directly
                 // so that possible accidental tie is properly handled
                 // if (melody[melody.length - 1].note !== note.note) {
                 //     return null;
                 // }
-                melody[melody.length - 1].duration += melodyNote.duration;
+                notes[notes.length - 1].duration += melodyNote.duration;
             } else {
-                melody.push(melodyNote);
+                notes.push(melodyNote);
             }
 
         }
     }
-    return melody;
+    return { notes, timeSignature, tempo: tempoNumber };
 }
 
-export async function playMusic(source: string, bpm: number, program: number, volume: number) {
+export async function playMusic(source: string, program: number, volume: number) {
     stopMusic();
     synth.setMasterVol(volume);
     synth.setProgram(0, program)
-
     const melody = parseMelody(source);
     if (melody === null) {
-        console.error("(Internal synthesizer error) Error parsing melody", source);
         return;
     }
-    const beatDuration = 60 / bpm;
+    const beatDuration = 60 / melody.tempo * melody.timeSignature.thNotePerBeat;
     const audioContext = synth.getAudioContext();
-    for (let i = 0; i < melody.length; i++) {
-        const { note, duration } = melody[i];
+    for (let i = 0; i < melody.notes.length; i++) {
+        const { note, duration } = melody.notes[i];
         const actualDuration = duration * beatDuration;
         if (note !== 'rest') {
             const baseTime = audioContext.currentTime;

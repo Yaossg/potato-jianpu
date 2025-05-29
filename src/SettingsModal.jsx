@@ -85,8 +85,6 @@ const GMInstruments = [
 export default function SettingsModal({
   isOpen, 
   onClose, 
-  bpm, 
-  onBpmChange, 
   instrument, 
   onInstrumentChange, 
   volume, 
@@ -102,18 +100,6 @@ export default function SettingsModal({
           <button className="close-button" onClick={onClose}>✕</button>
         </div>
         <div className="settings-content">
-          <div className="settings-group">
-            <label htmlFor="bpm-input">Tempo (BPM):</label>
-            <input 
-              id="bpm-input"
-              type="number" 
-              value={bpm} 
-              onChange={onBpmChange}
-              min="40" 
-              max="240" 
-            />
-          </div>
-          
           <div className="settings-group">
             <label htmlFor="instrument-select">Instrument:</label>
             <select
