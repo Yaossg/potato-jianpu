@@ -14,8 +14,6 @@ interface Melody {
     tempo: number;
 }
 
-const synth = new WebAudioTinySynth();
-let callbackId = -1;
 const C_MAJOR_NOTE_MAP = [60, 62, 64, 65, 67, 69, 71];
 
 function parseNote(durableNote: DurableNote, noteMap: number[]): MelodyNote {
@@ -78,6 +76,14 @@ function parseMelody(source: string): Melody | null {
     return { notes, timeSignature, tempo: tempoNumber };
 }
 
+const synth = new WebAudioTinySynth();
+let callbackId = -1;
+
+async function delay(seconds: number) {
+    await new Promise(resolve => callbackId = setTimeout(resolve, seconds * 1000));
+    callbackId = -1;
+}
+
 export async function playMusic(source: string, program: number, volume: number) {
     stopMusic();
     synth.setMasterVol(volume);
@@ -88,17 +94,22 @@ export async function playMusic(source: string, program: number, volume: number)
     }
     const beatDuration = 60 / melody.tempo * melody.timeSignature.thNotePerBeat;
     const audioContext = synth.getAudioContext();
+    let currentTime = audioContext.currentTime;
     for (let i = 0; i < melody.notes.length; i++) {
         const { note, duration } = melody.notes[i];
         const actualDuration = duration * beatDuration;
         if (note !== 'rest') {
-            const baseTime = audioContext.currentTime;
-            synth.noteOn(0, note, 64, baseTime);
-            synth.noteOff(0, note, baseTime + actualDuration);
+            synth.noteOn(0, note, 64, currentTime);
+            synth.noteOff(0, note, currentTime + actualDuration);
         }
-        await new Promise(resolve => callbackId = setTimeout(resolve, actualDuration * 1000));
-        callbackId = -1;
+        currentTime += actualDuration;
+        // if the next note is more than 1 second away, wait for it
+        if (currentTime > audioContext.currentTime + 1) {
+            await delay(0.5);
+        }
     }
+    // wait for the last note to play
+    await delay(currentTime - audioContext.currentTime);
 }
 
 export function stopMusic() {

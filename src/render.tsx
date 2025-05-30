@@ -3,13 +3,15 @@ import { Header, KeySignature, parse, ParseError, parseKeySignature, parseTimeSi
 import './render.css';
 
 // TODO tie across lines
-import { ScoreLineSvg, selectBar } from './render_svg';
+import { Bar, ScoreLineSvg } from './render_svg';
+
+const keyMap = ['C', '♯C', 'D', '♯D', 'E', 'F', '♯F', 'G', '♯G', 'A', '♯A', 'B']
 
 function renderKeySignature(keySignature: KeySignature | null): JSX.Element {
   if (keySignature === null) {
     return <span className="error">Invalid key signature</span>;
   }
-  const key = ['C', '♯C', 'D', '♯D', 'E', 'F', '♯F', 'G', '♯G', 'A', '♯A', 'B'][keySignature];
+  const key = keyMap[keySignature];
   return <span className="score-key"><span className="score-note">1</span> = <span className="score-note">{key}</span></span>;
 }
 
@@ -38,6 +40,16 @@ function renderTempo(timeSignature: TimeSignature | null, tempo: string): JSX.El
   return tempoNumber > 0 
       ? <span className="score-tempo">{timeSignature && tempoMap[timeSignature.thNotePerBeat]} = {tempoNumber}</span> 
       : <span className="error">Invalid tempo</span>;
+}
+
+function selectBar(last_bar: boolean, last_measure: boolean, last_line: boolean): Bar {
+  if (last_measure && last_line) {
+      return '𝄂';
+  }
+  if (!last_measure || last_bar) {
+      return '𝄀';
+  }
+  return '';
 }
 
 export function compile(source: string): JSX.Element {

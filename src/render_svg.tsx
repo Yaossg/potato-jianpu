@@ -108,16 +108,6 @@ const accidentalMap = {
 
 export type Bar = '' | '𝄀' | '𝄂';
 
-export function selectBar(last_bar: boolean, last_measure: boolean, last_line: boolean): Bar {
-    if (last_measure && last_line) {
-        return '𝄂';
-    }
-    if (!last_measure || last_bar) {
-        return '𝄀';
-    }
-    return '';
-}
-
 interface MeasureDimensions {
   width: number;
   notePositions: number[];
