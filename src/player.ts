@@ -6,6 +6,7 @@ import { ParsedNote, TimeSignature, parse, ParseError } from "./parser";
 interface MelodyNote {
     note: number | 'rest';
     duration: number;
+    indexOfScore: number;
 }
 
 interface Melody {
@@ -17,15 +18,15 @@ interface Melody {
 const C_MAJOR_NOTE_MAP = [60, 62, 64, 65, 67, 69, 71];
 
 function parseNote(noteObj: ParsedNote, noteMap: number[]): MelodyNote {
-    const { note = 1, octave = 0, type } = noteObj;
+    const { note = 1, octave = 0, type, indexOfScore } = noteObj;
     const duration = noteObj.duration;
     switch (type) {
         case 'rest':
-            return { note: 'rest', duration };
+            return { note: 'rest', duration, indexOfScore };
         case 'drum':
-            return { note: 60, duration };
+            return { note: 60, duration, indexOfScore };
         default:
-            return { note: noteMap[note - 1] + octave * 12, duration };
+            return { note: noteMap[note - 1] + octave * 12, duration, indexOfScore };
     }
 }
 
@@ -65,6 +66,16 @@ function parseMelody(source: string): Melody | null {
     return { notes, timeSignature, tempo };
 }
 
+function dropWhile<T>(array: T[], pred: (element: T) => boolean): T[] {
+    let i = 0;
+    for (; i < array.length; i++) {
+        if (!pred(array[i])) {
+            break;
+        }
+    }
+    return array.slice(i);
+}
+
 const synth = new WebAudioTinySynth();
 let callbackId = -1;
 
@@ -73,7 +84,7 @@ async function delay(seconds: number) {
     callbackId = -1;
 }
 
-export async function playMusic(source: string, program: number, volume: number) {
+export async function playMusic(source: string, program: number, volume: number, startIndex: number = 0) {
     await synth.ready();
     stopMusic();
     synth.setMasterVol(volume);
@@ -82,11 +93,12 @@ export async function playMusic(source: string, program: number, volume: number)
     if (melody === null) {
         return;
     }
+    const notes = dropWhile(melody.notes, note => note.indexOfScore < startIndex)
     const beatDuration = 60 / melody.tempo * melody.timeSignature.thNotePerBeat;
     const audioContext = synth.getAudioContext();
     let currentTime = audioContext.currentTime;
-    for (let i = 0; i < melody.notes.length; i++) {
-        const { note, duration } = melody.notes[i];
+    for (let i = 0; i < notes.length; i++) {
+        const { note, duration } = notes[i];
         const actualDuration = duration * beatDuration;
         if (note !== 'rest') {
             synth.noteOn(0, note, 64, currentTime);

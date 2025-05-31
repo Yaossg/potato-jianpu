@@ -1,5 +1,5 @@
 import { JSX } from 'react';
-import { KeySignature, TimeSignature, parse, ParseError } from './parser';
+import { KeySignature, TimeSignature, parse, ParseError, ParsedNote } from './parser';
 import './render.css';
 
 import { ScoreLineSvg } from './render_svg';
@@ -38,7 +38,12 @@ function renderTempo(timeSignature: TimeSignature | null, tempo: number): JSX.El
   return <span className="score-tempo">{timeSignature && tempoMap[timeSignature.thNotePerBeat]} = {tempo}</span>
 }
 
-export function compile(source: string): JSX.Element {
+interface RenderedScoreProp {
+  source: string;
+  onNoteClick: (note: ParsedNote) => void
+}
+
+export const RenderedScore = ({ source, onNoteClick }: RenderedScoreProp) => {
   const file = parse(source);
   if (file instanceof ParseError) {
     return <div className="error">{file.digest}</div>;
@@ -57,5 +62,5 @@ export function compile(source: string): JSX.Element {
       {composer && <div className="score-composer">{composer}</div>}
     </div>
   </div>
-  return <div> {renderedHeader} {...score.map(line => (<><ScoreLineSvg measures={line} timeSignature={timeSignature ?? new TimeSignature(4, 4)} /><br/></>))} </div>
+  return <div> {renderedHeader} {...score.map(line => (<><ScoreLineSvg measures={line} timeSignature={timeSignature ?? new TimeSignature(4, 4)} onNoteClick={onNoteClick} /><br/></>))} </div>
 }

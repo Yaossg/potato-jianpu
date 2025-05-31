@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import './App.css'
-import { compile } from './render'
+import { RenderedScore } from './render'
 import { playMusic, stopMusic } from './player'
 import SettingsModal from './SettingsModal'
 import ExamplesPanel from './ExamplesPanel'
@@ -15,10 +15,10 @@ function App() {
   const [volume, setVolume] = useState(100)
   const { theme, toggleTheme } = useTheme()
 
-  async function togglePlayMusic() {
+  async function togglePlayMusic(startIndex = 0) {
     setShowExamples(false)
     setIsPlaying(true)
-    await playMusic(source, instrument, volume / 100)
+    await playMusic(source, instrument, volume / 100, startIndex)
     setIsPlaying(false)
   }
 
@@ -76,9 +76,9 @@ function App() {
             )}
           </div>
         </h2>
-        <div 
-          className="render-area" 
-        >{compile(source)}</div>
+        <div className="render-area">
+          <RenderedScore source={source} onNoteClick={note => togglePlayMusic(note.indexOfScore)} />
+        </div>
       </div>
       <div className="editor-area">
         <h2>

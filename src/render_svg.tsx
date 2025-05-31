@@ -45,6 +45,7 @@ const svgStyles = `
     font-weight: bold;
     text-anchor: middle;
     fill: currentColor;
+    cursor: pointer;
   }
   
   .jianpu-accidental-text {
@@ -65,7 +66,7 @@ const svgStyles = `
 `;
 
 // SVG definitions for reusable elements
-const JianpuDefs = () => (
+const Defs = () => (
   <defs>
     <style>{svgStyles}</style>
     {/* Octave dot template (above or below) */}
@@ -182,32 +183,31 @@ function calculateMeasureXOffset(measureDimensions: MeasureDimensions[], measure
     .reduce((sum, dim) => sum + dim.width + DIMENSIONS.measureSpacing, 0);
 }
 
-/**
- * Render a tie between two notes
- */
-const TieComponent = ({ 
-  startX, 
-  endX, 
-  maxPaddingUp, 
-  maxOctave,
-  clipPath
-}: { 
-  startX: number, 
-  endX: number, 
-  maxPaddingUp: number, 
+interface TieComponentProp {
+  startX: number,
+  endX: number,
+  maxPaddingUp: number,
   maxOctave: number
   clipPath?: string
-}) => {
+}
+
+const TieComponent = ({
+  startX,
+  endX,
+  maxPaddingUp,
+  maxOctave,
+  clipPath
+}: TieComponentProp) => {
   const tieWidth = endX - startX;
   if (tieWidth <= 0) {
     console.log("Internal Error: attempt to create reversed tie")
     return null;
   }
-  
+
   const yOffset = calculateTieYOffset(maxOctave);
-  
+
   return (
-    <path 
+    <path
       d={createTiePath(startX, endX)}
       className="jianpu-tie"
       transform={`translate(0, ${maxPaddingUp - DIMENSIONS.tiePadding + yOffset})`}
@@ -216,10 +216,15 @@ const TieComponent = ({
   );
 };
 
-// JianpuNoteComponent for rendering a single note
-const JianpuNoteComponent = ({ noteObj, full }: { noteObj: ParsedNote, full: boolean }) => {
+interface NoteComponentProp {
+  noteObj: ParsedNote,
+  full: boolean,
+  onClick: (note: ParsedNote) => void
+}
+
+const NoteComponent = ({ noteObj, full, onClick }: NoteComponentProp) => {
   let { note = '', octave = 0, dashes = 0, halves = 0, dots = 0, type, accidental } = noteObj;
-  
+
   // Determine the note symbol based on type
   switch (type) {
     case 'rest':
@@ -229,7 +234,7 @@ const JianpuNoteComponent = ({ noteObj, full }: { noteObj: ParsedNote, full: boo
       note = 'X';
       break;
   }
-  
+
   const accidentalSymbol = getAccidentalSymbol(accidental);
   const accidentalOffset = getAccidentalOffset(accidental);
 
@@ -250,6 +255,7 @@ const JianpuNoteComponent = ({ noteObj, full }: { noteObj: ParsedNote, full: boo
       <text
         className="jianpu-note-text"
         x={accidentalOffset}
+        onClick={() => onClick(noteObj)}
       >
         {note}
       </text>
@@ -310,19 +316,19 @@ const JianpuNoteComponent = ({ noteObj, full }: { noteObj: ParsedNote, full: boo
  * Calculate dimensions for all measures
  */
 function calculateMeasureDimensions(measures: ParsedScoreLine): MeasureDimensions[] {
-  return measures.map(({notes}) => {
+  return measures.map(({ notes }) => {
     let totalWidth = 0;
     let notePositions: number[] = [];
     let paddingUp = 0;
     let paddingDown = 0;
-    
+
     notes.forEach((noteObj) => {
       notePositions.push(totalWidth);
       totalWidth += widthOf(noteObj);
       paddingUp = Math.max(paddingUp, paddingUpOf(noteObj));
       paddingDown = Math.max(paddingDown, paddingDownOf(noteObj));
     });
-    
+
     return {
       width: totalWidth + DIMENSIONS.leftPadding + 4,
       notePositions,
@@ -344,22 +350,22 @@ function maxHighOctave(note1: ParsedNote, note2: ParsedNote): number {
 /**
  * Render cross-measure ties
  */
-const InlineCrossMeasureTie = ({ 
-  measures, 
-  measureDimensions, 
-  maxPaddingUp 
-}: { 
-  measures: ParsedScoreLine, 
-  measureDimensions: MeasureDimensions[], 
-  maxPaddingUp: number 
+const InlineCrossMeasureTie = ({
+  measures,
+  measureDimensions,
+  maxPaddingUp
+}: {
+  measures: ParsedScoreLine,
+  measureDimensions: MeasureDimensions[],
+  maxPaddingUp: number
 }) => {
   return (
     <>
-      {measures.map(({notes}, measureIndex) => {
+      {measures.map(({ notes }, measureIndex) => {
         if (measureIndex === 0) return null; // Skip first measure
-        
+
         const dim = measureDimensions[measureIndex];
-        
+
         const firstNote = notes[0];
         if (firstNote?.tie) {
           const prevMeasure = measures[measureIndex - 1].notes;
@@ -369,17 +375,17 @@ const InlineCrossMeasureTie = ({
 
             const prevX = measureDimensions[measureIndex - 1].notePositions[prevMeasure.length - 1] + DIMENSIONS.leftPadding;
             const currentX = dim.notePositions[0] + DIMENSIONS.leftPadding;
-            
+
             const prevNote = prevMeasure[prevMeasure.length - 1];
             const prevAccidentalOffset = getAccidentalOffset(prevNote.accidental);
             const currentAccidentalOffset = getAccidentalOffset(firstNote.accidental);
-            
+
             // Calculate tie points in the global coordinate system
             const tieStartX = prevXOffset + prevX + prevAccidentalOffset;
             const tieEndX = currentXOffset + currentX + currentAccidentalOffset;
-            
+
             const maxOctave = maxHighOctave(prevNote, firstNote);
-            
+
             return (
               <TieComponent
                 key={`tie-cross-${measureIndex}`}
@@ -412,14 +418,14 @@ const LocalTie = ({ context }: { context: TieContext }) => {
   if (noteIndex > 0 && noteObj.tie) {
     const prevX = dim.notePositions[noteIndex - 1] + DIMENSIONS.leftPadding;
     const currentX = dim.notePositions[noteIndex] + DIMENSIONS.leftPadding;
-    
+
     const prevNote = notes[noteIndex - 1];
     const prevAccidentalOffset = getAccidentalOffset(prevNote.accidental);
     const currentAccidentalOffset = getAccidentalOffset(noteObj.accidental);
-    
+
     const tieStartX = prevX + prevAccidentalOffset;
     const tieEndX = currentX + currentAccidentalOffset;
-    
+
     const maxOctave = maxHighOctave(prevNote, noteObj);
 
     return (
@@ -442,7 +448,7 @@ const CrossLineLeftTie = ({ context }: { context: TieContext }) => {
     const currentAccidentalOffset = getAccidentalOffset(noteObj.accidental);
     const tieStartX = currentX + currentAccidentalOffset;
     const tieEndX = tieStartX + widthOf(noteObj) * 2;
-    
+
     const maxOctave = maxHighOctave(noteObj, noteObj);
 
     return (
@@ -465,7 +471,7 @@ const CrossLineRightTie = ({ context }: { context: TieContext }) => {
     const currentAccidentalOffset = getAccidentalOffset(noteObj.accidental);
     const tieEndX = currentX + currentAccidentalOffset;
     const tieStartX = tieEndX - DIMENSIONS.baseNoteWidth * 2;
-    
+
     const maxOctave = maxHighOctave(noteObj, noteObj);
 
     return (
@@ -481,35 +487,38 @@ const CrossLineRightTie = ({ context }: { context: TieContext }) => {
   return null;
 }
 
-/**
- * Main component for rendering Jianpu notation
- */
-export const ScoreLineSvg = ({ measures, timeSignature }: { measures: ParsedScoreLine, timeSignature: TimeSignature }) => {
+interface ScoreLineSvgProp {
+  measures: ParsedScoreLine;
+  timeSignature: TimeSignature;
+  onNoteClick: (note: ParsedNote) => void
+}
+
+export const ScoreLineSvg = ({ measures, timeSignature, onNoteClick }: ScoreLineSvgProp) => {
   // Calculate dimensions for all measures
   const measureDimensions = calculateMeasureDimensions(measures);
-  
+
   // Calculate total width and unified height
   const totalWidth = measureDimensions.reduce(
     (sum, dim) => sum + dim.width + DIMENSIONS.measureSpacing, 0
   ) - DIMENSIONS.measureSpacing;
-  
+
   const maxPaddingUp = Math.max(...measureDimensions.map(dim => dim.paddingUp));
   const maxPaddingDown = Math.max(...measureDimensions.map(dim => dim.paddingDown));
   const unifiedHeight = maxPaddingUp + maxPaddingDown + DIMENSIONS.noteBottomPadding;
-  
+
   return (
     <svg width={totalWidth} height={unifiedHeight} xmlns="http://www.w3.org/2000/svg">
-      <JianpuDefs />
-      
+      <Defs />
+
       {/* Render ties across measures */}
-      <InlineCrossMeasureTie 
-        measures={measures} 
-        measureDimensions={measureDimensions} 
-        maxPaddingUp={maxPaddingUp} 
+      <InlineCrossMeasureTie
+        measures={measures}
+        measureDimensions={measureDimensions}
+        maxPaddingUp={maxPaddingUp}
       />
-      
+
       {/* Render measures */}
-      {measures.map(({notes, bar}, measureIndex) => {
+      {measures.map(({ notes, bar }, measureIndex) => {
         const dim = measureDimensions[measureIndex];
         const xOffset = calculateMeasureXOffset(measureDimensions, measureIndex);
         const fullness = (() => {
@@ -517,7 +526,7 @@ export const ScoreLineSvg = ({ measures, timeSignature }: { measures: ParsedScor
           const unit = timeSignature.actualNotePerBeat();
           return notes.map(note => acc += note.duration).map(d => d % unit == 0);
         })();
-        
+
         return (
           <g key={measureIndex} transform={`translate(${xOffset}, 0)`}>
             {/* Render ties within measure */}
@@ -533,25 +542,25 @@ export const ScoreLineSvg = ({ measures, timeSignature }: { measures: ParsedScor
               }
               return (
                 <g key={`tie-${measureIndex}-${index}`}>
-                  <LocalTie key={`local-tie-${measureIndex}-${index}`} context={context} /> 
-                  <CrossLineLeftTie key={`cross-line-left-${measureIndex}-${index}`} context={context} /> 
+                  <LocalTie key={`local-tie-${measureIndex}-${index}`} context={context} />
+                  <CrossLineLeftTie key={`cross-line-left-${measureIndex}-${index}`} context={context} />
                   <CrossLineRightTie key={`cross-line-right-${measureIndex}-${index}`} context={context} />
                 </g>
               );
             })}
-            
+
             {/* Render notes */}
             {notes.map((noteObj, index) => {
               return (
-                <g 
-                  key={`note-${measureIndex}-${index}`} 
+                <g
+                  key={`note-${measureIndex}-${index}`}
                   transform={`translate(${dim.notePositions[index] + DIMENSIONS.leftPadding}, ${maxPaddingUp})`}
                 >
-                  <JianpuNoteComponent noteObj={noteObj} full={fullness[index]} />
+                  <NoteComponent noteObj={noteObj} full={fullness[index]} onClick={onNoteClick} />
                 </g>
               );
             })}
-            
+
             {/* Render bar */}
             {bar && <text
               className="jianpu-bar-text"
