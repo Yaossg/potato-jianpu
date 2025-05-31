@@ -41,9 +41,10 @@ function renderTempo(timeSignature: TimeSignature | null, tempo: number): JSX.El
 interface RenderedScoreProp {
   source: string;
   onNoteClick: (note: ParsedNote) => void
+  playingNote: number
 }
 
-export const RenderedScore = ({ source, onNoteClick }: RenderedScoreProp) => {
+export const RenderedScore = ({ source, onNoteClick, playingNote }: RenderedScoreProp) => {
   const file = parse(source);
   if (file instanceof ParseError) {
     return <div className="error">{file.digest}</div>;
@@ -62,5 +63,5 @@ export const RenderedScore = ({ source, onNoteClick }: RenderedScoreProp) => {
       {composer && <div className="score-composer">{composer}</div>}
     </div>
   </div>
-  return <div> {renderedHeader} {...score.map(line => (<><ScoreLineSvg measures={line} timeSignature={timeSignature ?? new TimeSignature(4, 4)} onNoteClick={onNoteClick} /><br/></>))} </div>
+  return <div> {renderedHeader} {...score.map(line => (<><ScoreLineSvg measures={line} timeSignature={timeSignature ?? new TimeSignature(4, 4)} onNoteClick={onNoteClick} playingNote={playingNote} /><br/></>))} </div>
 }

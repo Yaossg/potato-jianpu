@@ -47,6 +47,19 @@ const svgStyles = `
     fill: currentColor;
     cursor: pointer;
   }
+
+  .jianpu-note-text:hover {
+    fill: #3366CC;
+  }
+  
+  .jianpu-note-text-bg {
+    font-family: Helvetica;
+    font-size: 24px;
+    font-weight: bold;
+    text-anchor: middle;
+    stroke: #FFCC66;
+    stroke-width: 0.1em;
+  }
   
   .jianpu-accidental-text {
     font-family: Helvetica;
@@ -219,10 +232,11 @@ const TieComponent = ({
 interface NoteComponentProp {
   noteObj: ParsedNote,
   full: boolean,
-  onClick: (note: ParsedNote) => void
+  onClick: (note: ParsedNote) => void,
+  playingNote: number
 }
 
-const NoteComponent = ({ noteObj, full, onClick }: NoteComponentProp) => {
+const NoteComponent = ({ noteObj, full, onClick, playingNote }: NoteComponentProp) => {
   let { note = '', octave = 0, dashes = 0, halves = 0, dots = 0, type, accidental } = noteObj;
 
   // Determine the note symbol based on type
@@ -252,6 +266,12 @@ const NoteComponent = ({ noteObj, full, onClick }: NoteComponentProp) => {
       )}
 
       {/* Draw the note number */}
+      {playingNote === noteObj.indexOfScore ? <text
+        className="jianpu-note-text-bg"
+        x={accidentalOffset}
+      >
+        {note}
+      </text> : null}
       <text
         className="jianpu-note-text"
         x={accidentalOffset}
@@ -491,9 +511,10 @@ interface ScoreLineSvgProp {
   measures: ParsedScoreLine;
   timeSignature: TimeSignature;
   onNoteClick: (note: ParsedNote) => void
+  playingNote: number
 }
 
-export const ScoreLineSvg = ({ measures, timeSignature, onNoteClick }: ScoreLineSvgProp) => {
+export const ScoreLineSvg = ({ measures, timeSignature, onNoteClick, playingNote }: ScoreLineSvgProp) => {
   // Calculate dimensions for all measures
   const measureDimensions = calculateMeasureDimensions(measures);
 
@@ -556,7 +577,7 @@ export const ScoreLineSvg = ({ measures, timeSignature, onNoteClick }: ScoreLine
                   key={`note-${measureIndex}-${index}`}
                   transform={`translate(${dim.notePositions[index] + DIMENSIONS.leftPadding}, ${maxPaddingUp})`}
                 >
-                  <NoteComponent noteObj={noteObj} full={fullness[index]} onClick={onNoteClick} />
+                  <NoteComponent noteObj={noteObj} full={fullness[index]} onClick={onNoteClick} playingNote={playingNote} />
                 </g>
               );
             })}

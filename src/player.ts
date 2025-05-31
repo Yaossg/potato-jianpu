@@ -77,24 +77,37 @@ function dropWhile<T>(array: T[], pred: (element: T) => boolean): T[] {
 }
 
 const synth = new WebAudioTinySynth();
-let callbackId = -1;
 
-async function delay(seconds: number) {
-    await new Promise(resolve => callbackId = setTimeout(resolve, seconds * 1000));
-    callbackId = -1;
+class Continuation {
+    id: number = -1;
+
+    async delay(seconds: number) {
+        await new Promise(resolve => this.id = setTimeout(resolve, seconds * 1000));
+        this.id = -1;
+    }
+
+    cancel() {
+        if (this.id !== -1) {
+            clearTimeout(this.id);
+            this.id = -1;
+        }
+    }
 }
 
-export async function playMusic(source: string, program: number, volume: number, startIndex: number = 0) {
-    await synth.ready();
-    stopMusic();
-    synth.setMasterVol(volume);
-    synth.setProgram(0, program)
-    const melody = parseMelody(source);
-    if (melody === null) {
-        return;
+const noteDisplayPause = new Continuation();
+const soundPlayPause = new Continuation();
+
+async function displayNote(notes: MelodyNote[], beatDuration: number, setPlayingNote: (note: number) => void) {
+    const audioContext = synth.getAudioContext();
+    let baseTime = audioContext.currentTime;
+    const displayUntils = notes.map(note => ({display: note.indexOfScore, until: baseTime += note.duration * beatDuration}))
+    for (const { display, until } of displayUntils) {
+        setPlayingNote(display);
+        await noteDisplayPause.delay(until - audioContext.currentTime);
     }
-    const notes = dropWhile(melody.notes, note => note.indexOfScore < startIndex)
-    const beatDuration = 60 / melody.tempo * melody.timeSignature.thNotePerBeat;
+}
+
+async function playSound(notes: MelodyNote[], beatDuration: number) {
     const audioContext = synth.getAudioContext();
     let currentTime = audioContext.currentTime;
     for (let i = 0; i < notes.length; i++) {
@@ -107,17 +120,32 @@ export async function playMusic(source: string, program: number, volume: number,
         currentTime += actualDuration;
         // if the next note is more than 1 second away, wait for it
         if (currentTime > audioContext.currentTime + 1) {
-            await delay(0.5);
+            await soundPlayPause.delay(0.5);
         }
     }
     // wait for the last note to play
-    await delay(currentTime - audioContext.currentTime);
+    await soundPlayPause.delay(currentTime - audioContext.currentTime);
+}
+
+export async function playMusic(source: string, program: number, volume: number, startIndex: number, setPlayingNote: (note: number) => void) {
+    await synth.ready();
+    stopMusic();
+    synth.setMasterVol(volume);
+    synth.setProgram(0, program)
+    const melody = parseMelody(source);
+    if (melody === null) {
+        return;
+    }
+    const notes = dropWhile(melody.notes, note => note.indexOfScore < startIndex)
+    const beatDuration = 60 / melody.tempo * melody.timeSignature.thNotePerBeat;
+    await Promise.all([
+        displayNote(notes, beatDuration, setPlayingNote), 
+        playSound(notes, beatDuration)
+    ]);
 }
 
 export function stopMusic() {
     synth.reset();
-    if (callbackId !== -1) {
-        clearTimeout(callbackId);
-        callbackId = -1;
-    }
+    soundPlayPause.cancel();
+    noteDisplayPause.cancel();
 }

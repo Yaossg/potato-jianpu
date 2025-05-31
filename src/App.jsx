@@ -13,19 +13,23 @@ function App() {
   const [showExamples, setShowExamples] = useState(false)
   const [instrument, setInstrument] = useState(0)
   const [volume, setVolume] = useState(100)
+  const [playingNote, setPlayingNote] = useState(-1)
   const { theme, toggleTheme } = useTheme()
 
   async function togglePlayMusic(startIndex = 0) {
     setShowExamples(false)
+    setPlayingNote(startIndex)
     setIsPlaying(true)
-    await playMusic(source, instrument, volume / 100, startIndex)
+    await playMusic(source, instrument, volume / 100, startIndex, setPlayingNote)
     setIsPlaying(false)
+    setPlayingNote(-1)
   }
 
   function toggleStopMusic() {
     setShowExamples(false)
     stopMusic()
     setIsPlaying(false)
+    setPlayingNote(-1)
   }
 
   return (
@@ -77,7 +81,7 @@ function App() {
           </div>
         </h2>
         <div className="render-area">
-          <RenderedScore source={source} onNoteClick={note => togglePlayMusic(note.indexOfScore)} />
+          <RenderedScore source={source} onNoteClick={note => togglePlayMusic(note.indexOfScore)} playingNote={playingNote} />
         </div>
       </div>
       <div className="editor-area">
