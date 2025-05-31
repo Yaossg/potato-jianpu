@@ -86,7 +86,7 @@ let ParserRules = [
     {"name": "line$ebnf$2", "symbols": ["line$ebnf$2", "line$ebnf$2$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "line$ebnf$3", "symbols": [(lexer.has("bar") ? {type: "bar"} : bar)], "postprocess": id},
     {"name": "line$ebnf$3", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "line", "symbols": ["line$ebnf$1", "measure", "line$ebnf$2", "line$ebnf$3"], "postprocess": data => ({ measures: [data[1], ...data[2]], last_bar: data[3] !== null })},
+    {"name": "line", "symbols": ["line$ebnf$1", "measure", "line$ebnf$2", "line$ebnf$3"], "postprocess": data => [data[1], ...data[2]]},
     {"name": "measure$ebnf$1", "symbols": ["octave"], "postprocess": id},
     {"name": "measure$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "measure$ebnf$2", "symbols": ["durable_note"]},

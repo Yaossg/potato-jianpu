@@ -62,7 +62,7 @@ property -> %identifier %colon %string %newline:+ {% data => [data[0].value, dat
 
 score -> line (%newline:+ line {% data => data[1] %}):* %newline:* {% data => [data[0], ...data[1]] %}
 
-line -> %bar:? measure (%bar measure {% data => data[1] %}):* %bar:? {% data => ({ measures: [data[1], ...data[2]], last_bar: data[3] !== null }) %}
+line -> %bar:? measure (%bar measure {% data => data[1] %}):* %bar:? {% data => [data[1], ...data[2]] %}
 
 measure -> octave:? durable_note:+ {% data => (data[0] ? data[1].map(note => {
   if ('octave' in note) {

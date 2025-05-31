@@ -5,6 +5,7 @@ declare module 'webaudio-tinysynth' {
             useReverb?: boolean;
             voices?: number;
         });
+        async ready();
         getAudioContext(): AudioContext;
         setAudioContext(audioContext: AudioContext, destinationNode?: AudioNode): void;
         getTimbreName(m: number, n: number): string;

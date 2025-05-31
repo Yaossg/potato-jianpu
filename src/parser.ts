@@ -1,79 +1,5 @@
-import nearley from "nearley";
-// @ts-ignore
-import grammar from "./generated/grammar";
-
-export type Accidental = null | 0 | -1 | -2 | 1 | 2;
-
-export type NoteType = 'pitch' | 'rest' | 'drum';
-
-export interface DurableNote {
-    accidental?: Accidental;
-    note?: number;
-    octave?: number;
-    type: NoteType;
-    tie?: boolean;
-    dashes?: number;
-    halves?: number;
-    dots?: number;
-}
-
-export type Measure = DurableNote[];
-
-export interface ScoreLine {
-    measures: Measure[];
-    last_bar: boolean;
-};
-
-export type Score = ScoreLine[];
-
-export interface Header {
-    [key: string]: string;
-}
-
-export interface File {
-    header: Header;
-    score: Score;
-}
-
-export class ParseError {
-    digest: string;
-    detail: string;
-    constructor(digest: string, detail: string) {
-        this.digest = digest;
-        this.detail = detail;
-    }
-}
-
-export function parse(input: string): File | ParseError {
-    const parser = new nearley.Parser(nearley.Grammar.fromCompiled(grammar));
-    try {
-        parser.feed(input);
-    } catch (error) {
-        if (error instanceof Error) {
-            return new ParseError(error.message.substring(0, error.message.indexOf('\n') - 1), error.message);
-        } else {
-            return new ParseError("Error: unknown compilation exception caught", JSON.stringify(error));
-        }
-    }
-    if (parser.results.length === 0) {
-        return new ParseError("Error: input is incomplete or invalid", input);
-    }
-    if (parser.results.length > 1) {
-        return new ParseError("Internal Error: ambiguous grammar, please report this to developer", JSON.stringify(parser.results));
-    }
-    const { header, score } = parser.results[0];
-    return { header: header ?? {}, score: score ?? [] };
-}
-
-export function durationOf({ dashes = 0, halves = 0, dots = 0 }: DurableNote): number {
-    let unit = (1 + dashes) / 4;
-    let dot = unit / 2;
-    for (let i = 0; i < dots; i++) {
-        unit += dot;
-        dot /= 2;
-    }
-    return unit / (2 ** halves);
-}
+import * as Grammar from "./grammar";
+import { ParseError, Accidental, NoteType } from "./grammar";
 
 export class TimeSignature {
     beatsPerMeasure: 2 | 3 | 4 | 6 | 9 | 12;
@@ -105,7 +31,7 @@ export class TimeSignature {
     }
 }
 
-export function parseTimeSignature(time: string): TimeSignature | null {
+function parseTimeSignature(time: string): TimeSignature | null {
     const [ beatsPerMeasure, thNotePerBeat ] = time.split('/', 2).map(s => s.trim()).map(Number);
     switch (beatsPerMeasure) {
         case 2: case 3: case 4:
@@ -145,7 +71,7 @@ const keyMap: Record<string, KeySignature> = {
     'B': 11,
 }
 
-export function parseKeySignature(key: string): KeySignature | null {
+function parseKeySignature(key: string): KeySignature | null {
     key = key.replace(' ', '');
     if (key in keyMap) {
         return keyMap[key];
@@ -156,3 +82,136 @@ export function parseKeySignature(key: string): KeySignature | null {
     }
     return null;
 }
+
+export interface ParsedHeader {
+    title: string,
+    subtitle: string,
+    composer: string,
+    keySignature: KeySignature,
+    timeSignature: TimeSignature,
+    tempo: number
+}
+
+function parseHeader(header: Grammar.Header): ParsedHeader | ParseError {
+    const { title = '', subtitle = '', composer = '', tempo = '120', key = 'C', time = '4/4' } = header;
+    const tempoNumber = Number(tempo);
+    if (isNaN(tempoNumber) || tempoNumber <= 0) {
+        return new ParseError("Error: invalid tempo", tempo);
+    }
+    const timeSignature = parseTimeSignature(time);
+    if (timeSignature === null) {
+        return new ParseError("Error: invalid time signature", time);
+    }
+    const keySignature = parseKeySignature(key);
+    if (keySignature === null) {
+        return new ParseError("Error: invalid key signature", key);
+    }
+    return { title, subtitle, composer, keySignature, timeSignature, tempo: tempoNumber };
+}
+
+function durationOf({ dashes = 0, halves = 0, dots = 0 }: Grammar.DurableNote): number {
+    let unit = (1 + dashes) / 4;
+    let dot = unit / 2;
+    for (let i = 0; i < dots; i++) {
+        unit += dot;
+        dot /= 2;
+    }
+    return unit / (2 ** halves);
+}
+
+export interface ParsedNote {
+    accidental?: Accidental;
+    note?: number;
+    octave?: number;
+    type: NoteType;
+    tie: boolean;
+    dashes: number;
+    halves: number;
+    dots: number;
+    
+    duration: number;
+    tieAfter: boolean; // true if next note is a tie
+
+    indexOfScore: number;
+    lineno: number;
+    measureno: number;
+}
+
+export type ElementType = 'note' | 'bar' | 'linebreak';
+
+export type Bar = '𝄀' | '𝄂';
+
+interface ParsedMeasure {
+    notes: ParsedNote[];
+    bar: Bar;
+}
+
+export type ParsedScoreLine = ParsedMeasure[]
+
+export type ParsedScore = ParsedScoreLine[];
+
+function parseScore(score: Grammar.Score): ParsedScore | ParseError {
+    let indexOfScore = 0;
+    const ps: ParsedScore = [];
+    for (const [lineno, measures] of score.entries()) {
+        const pm: ParsedScoreLine = [];
+        for (const [measureno, measure] of measures.entries()) {
+            const pn: ParsedNote[] = [];
+            for (const noteObj of measure) {
+                const { type, note, octave, accidental, dashes = 0, halves = 0, dots = 0, tie = false } = noteObj;
+                pn.push({
+                    type, note, octave, accidental, // no defaults
+                    dashes, halves, dots, tie, // defaults to zero
+                    duration: durationOf(noteObj),
+                    tieAfter: false, // placeholder, fill later
+                    indexOfScore: indexOfScore++,
+                    lineno: lineno + 1,
+                    measureno: measureno + 1
+                })
+            }
+            pm.push({
+                notes: pn,
+                bar: measureno === measures.length - 1 && lineno === score.length - 1 ? '𝄂' : '𝄀'
+            })
+        }
+        ps.push(pm);
+    }
+    const notes = ps.flatMap($ => $).flatMap($ => $.notes);
+    if (notes.length > 0 && notes[0].tie) {
+        return new ParseError("Error: first note cannot be a tie", JSON.stringify(notes[0]));
+    }
+    for (const [index, note] of notes.entries()) {
+        if (index > notes.length - 2) {
+            break;
+        }
+        const next = notes[index + 1];
+        note.tieAfter = next.tie;
+    }
+    return ps;
+}
+
+export interface ParsedFile {
+    header: ParsedHeader;
+    score: ParsedScore;
+}
+
+export function parse(source: string): ParsedFile | ParseError {
+    const file = Grammar.parse(source);
+    if (file instanceof ParseError) {
+        return file;
+    }
+    const { header, score } = file;
+    const parsedHeader = parseHeader(header);
+    if (parsedHeader instanceof ParseError) {
+        return parsedHeader;
+    }
+    const parsedScore = parseScore(score);
+    if (parsedScore instanceof ParseError) {
+        return parsedScore;
+    }
+    return { header: parsedHeader, score: parsedScore };
+}
+
+// re-export
+export { ParseError } from './grammar'
+export type { Accidental, NoteType } from './grammar'

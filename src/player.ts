@@ -1,7 +1,7 @@
 /// <reference path="webaudio-tinysynth.d.ts" />
 import WebAudioTinySynth from 'webaudio-tinysynth';
 
-import { parse, DurableNote, durationOf, ParseError, KeySignature, TimeSignature, parseTimeSignature, parseKeySignature } from "./parser";
+import { ParsedNote, TimeSignature, parse, ParseError } from "./parser";
 
 interface MelodyNote {
     note: number | 'rest';
@@ -16,9 +16,9 @@ interface Melody {
 
 const C_MAJOR_NOTE_MAP = [60, 62, 64, 65, 67, 69, 71];
 
-function parseNote(durableNote: DurableNote, noteMap: number[]): MelodyNote {
-    const { note = 1, octave = 0, type } = durableNote;
-    const duration = durationOf(durableNote);
+function parseNote(noteObj: ParsedNote, noteMap: number[]): MelodyNote {
+    const { note = 1, octave = 0, type } = noteObj;
+    const duration = noteObj.duration;
     switch (type) {
         case 'rest':
             return { note: 'rest', duration };
@@ -36,31 +36,21 @@ function parseMelody(source: string): Melody | null {
         return null;
     }
     const { header, score } = file;
-    const { tempo = '120', key = 'C', time = '4/4' } = header;
-    const timeSignature = parseTimeSignature(time);
-    const keySignature = parseKeySignature(key);
-    const tempoNumber = Number(tempo);
-    if (isNaN(tempoNumber) || tempoNumber <= 0 || timeSignature === null || keySignature === null) {
-        console.error("Error: Invalid header", header);
-        return null;
-    }
-    const measures = score.flatMap(line => line.measures);
+    const { tempo, keySignature, timeSignature } = header;
+    const measures = score.flatMap(line => line);
     const notes: MelodyNote[] = [];
     const NOTE_MAP = C_MAJOR_NOTE_MAP.map(note => note + keySignature);
     for (const measure of measures) {
         const noteMap = NOTE_MAP.slice();
       
-        for (const durableNote of measure) {
-            const { accidental = null, note = 1, tie = false } = durableNote;
+        for (const noteObj of measure.notes) {
+            const { accidental = null, note = 1, tie} = noteObj;
             if (accidental !== null) {
                 const noteIndex = note - 1;
                 noteMap[noteIndex] = NOTE_MAP[noteIndex] + accidental;
             }
-            const melodyNote = parseNote(durableNote, noteMap);
+            const melodyNote = parseNote(noteObj, noteMap);
             if (tie) {
-                // if (notes.length === 0) {
-                //     return null;
-                // }
                 // for the sake of simplicity, we use previous note directly
                 // so that possible accidental tie is properly handled
                 // if (melody[melody.length - 1].note !== note.note) {
@@ -70,10 +60,9 @@ function parseMelody(source: string): Melody | null {
             } else {
                 notes.push(melodyNote);
             }
-
         }
     }
-    return { notes, timeSignature, tempo: tempoNumber };
+    return { notes, timeSignature, tempo };
 }
 
 const synth = new WebAudioTinySynth();
@@ -85,6 +74,7 @@ async function delay(seconds: number) {
 }
 
 export async function playMusic(source: string, program: number, volume: number) {
+    await synth.ready();
     stopMusic();
     synth.setMasterVol(volume);
     synth.setProgram(0, program)
