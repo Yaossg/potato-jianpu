@@ -4,7 +4,7 @@ function id(x) { return x[0]; }
 
 import moo from 'moo';
 
-function ignoreWs(lexer) {
+function ignore(types, lexer) {
   return {
     next() {
       while (true) {
@@ -12,7 +12,7 @@ function ignoreWs(lexer) {
         if (token === undefined) {
           return token;
         }
-        if (token.type !== "ws") {
+        if (!types.includes(token.type)) {
           return token;
         }
       }
@@ -20,32 +20,34 @@ function ignoreWs(lexer) {
     save: () => lexer.save(),
     reset: (chunk, info) => lexer.reset(chunk, info),
     formatError: (token) => lexer.formatError(token),
-    has: (name) => name !== 'ws' && lexer.has(name),
+    has: (name) => !types.includes(name) && lexer.has(name),
   }
 }
 
-const lexer = ignoreWs(moo.compile({
-  ws:      {match: /[ \t]+/},
-  note:    /[1-7]/,
-  rest:    '0',
-  drum:    'X',
-  newline: {match: '\n', lineBreaks: true},
-  bar:     '|',
-  sharpsharp:'##',
-  sharp:   '#',
-  flatflat:'bb',
-  flat:    'b',
-  natural: '%',
-  half:    '/',
-  dot:     '.',
-  dash:    '-',
-  lower:   ',',
-  higher:  "'",
-  tie:     '~',
-  header_sep:'=',
-  colon:   ':',
-  identifier: {match: /[a-z_]+/},
-  string: {match: /"(?:\\["\\rn]|[^"\\])*?"/, lineBreaks: true, value: x => x.slice(1, -1)},
+const lexer = ignore(['ws', 'comment'], moo.compile({
+  identifier: {match: /[A-Za-z_][A-Za-z_0-9]*/, type: moo.keywords({
+    flat:     'b',
+    flatflat: 'bb',
+    drum:     'X',
+  })},
+  ws:         {match: /[ \t]+/},
+  note:       /[1-7]/,
+  rest:       '0',
+  newline:    {match: '\n', lineBreaks: true},
+  bar:        '|',
+  sharpsharp: '##',
+  sharp:      '#',
+  natural:    '%',
+  half:       '/',
+  dot:        '.',
+  dash:       '-',
+  lower:      ',',
+  higher:     "'",
+  tie:        '~',
+  header_sep: '=',
+  colon:      ':',
+  string:     {match: /"(?:\\["\\rn]|[^"\\])*?"/, value: x => x.slice(1, -1)},
+  comment:    {match: /;.*$/, lineBreaks: true}
 }));
 
 function merge(objects) {
@@ -70,7 +72,8 @@ let ParserRules = [
     {"name": "header", "symbols": ["header$ebnf$1", "header$ebnf$2", "header$ebnf$3"], "postprocess": data => Object.fromEntries(data[0])},
     {"name": "property$ebnf$1", "symbols": [(lexer.has("newline") ? {type: "newline"} : newline)]},
     {"name": "property$ebnf$1", "symbols": ["property$ebnf$1", (lexer.has("newline") ? {type: "newline"} : newline)], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "property", "symbols": [(lexer.has("identifier") ? {type: "identifier"} : identifier), (lexer.has("colon") ? {type: "colon"} : colon), (lexer.has("string") ? {type: "string"} : string), "property$ebnf$1"], "postprocess": data => [data[0].value, data[2].value]},
+    {"name": "property", "symbols": ["label", (lexer.has("string") ? {type: "string"} : string), "property$ebnf$1"], "postprocess": data => [data[0].value, data[1].value]},
+    {"name": "label", "symbols": [(lexer.has("identifier") ? {type: "identifier"} : identifier), (lexer.has("colon") ? {type: "colon"} : colon)], "postprocess": id},
     {"name": "score$ebnf$1", "symbols": []},
     {"name": "score$ebnf$1$subexpression$1$ebnf$1", "symbols": [(lexer.has("newline") ? {type: "newline"} : newline)]},
     {"name": "score$ebnf$1$subexpression$1$ebnf$1", "symbols": ["score$ebnf$1$subexpression$1$ebnf$1", (lexer.has("newline") ? {type: "newline"} : newline)], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
@@ -79,14 +82,16 @@ let ParserRules = [
     {"name": "score$ebnf$2", "symbols": []},
     {"name": "score$ebnf$2", "symbols": ["score$ebnf$2", (lexer.has("newline") ? {type: "newline"} : newline)], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "score", "symbols": ["line", "score$ebnf$1", "score$ebnf$2"], "postprocess": data => [data[0], ...data[1]]},
-    {"name": "line$ebnf$1", "symbols": [(lexer.has("bar") ? {type: "bar"} : bar)], "postprocess": id},
+    {"name": "line$ebnf$1", "symbols": ["label"], "postprocess": id},
     {"name": "line$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "line$ebnf$2", "symbols": []},
-    {"name": "line$ebnf$2$subexpression$1", "symbols": [(lexer.has("bar") ? {type: "bar"} : bar), "measure"], "postprocess": data => data[1]},
-    {"name": "line$ebnf$2", "symbols": ["line$ebnf$2", "line$ebnf$2$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "line$ebnf$3", "symbols": [(lexer.has("bar") ? {type: "bar"} : bar)], "postprocess": id},
-    {"name": "line$ebnf$3", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "line", "symbols": ["line$ebnf$1", "measure", "line$ebnf$2", "line$ebnf$3"], "postprocess": data => [data[1], ...data[2]]},
+    {"name": "line$ebnf$2", "symbols": [(lexer.has("bar") ? {type: "bar"} : bar)], "postprocess": id},
+    {"name": "line$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "line$ebnf$3", "symbols": []},
+    {"name": "line$ebnf$3$subexpression$1", "symbols": [(lexer.has("bar") ? {type: "bar"} : bar), "measure"], "postprocess": data => data[1]},
+    {"name": "line$ebnf$3", "symbols": ["line$ebnf$3", "line$ebnf$3$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "line$ebnf$4", "symbols": [(lexer.has("bar") ? {type: "bar"} : bar)], "postprocess": id},
+    {"name": "line$ebnf$4", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "line", "symbols": ["line$ebnf$1", "line$ebnf$2", "measure", "line$ebnf$3", "line$ebnf$4"], "postprocess": data => [data[2], ...data[3]]},
     {"name": "measure$ebnf$1", "symbols": ["octave"], "postprocess": id},
     {"name": "measure$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "measure$ebnf$2", "symbols": ["durable_note"]},

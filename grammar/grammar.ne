@@ -2,7 +2,7 @@
 @{%
 import moo from 'moo';
 
-function ignoreWs(lexer) {
+function ignore(types, lexer) {
   return {
     next() {
       while (true) {
@@ -10,7 +10,7 @@ function ignoreWs(lexer) {
         if (token === undefined) {
           return token;
         }
-        if (token.type !== "ws") {
+        if (!types.includes(token.type)) {
           return token;
         }
       }
@@ -18,32 +18,34 @@ function ignoreWs(lexer) {
     save: () => lexer.save(),
     reset: (chunk, info) => lexer.reset(chunk, info),
     formatError: (token) => lexer.formatError(token),
-    has: (name) => name !== 'ws' && lexer.has(name),
+    has: (name) => !types.includes(name) && lexer.has(name),
   }
 }
 
-const lexer = ignoreWs(moo.compile({
-  ws:      {match: /[ \t]+/},
-  note:    /[1-7]/,
-  rest:    '0',
-  drum:    'X',
-  newline: {match: '\n', lineBreaks: true},
-  bar:     '|',
-  sharpsharp:'##',
-  sharp:   '#',
-  flatflat:'bb',
-  flat:    'b',
-  natural: '%',
-  half:    '/',
-  dot:     '.',
-  dash:    '-',
-  lower:   ',',
-  higher:  "'",
-  tie:     '~',
-  header_sep:'=',
-  colon:   ':',
-  identifier: {match: /[a-z_]+/},
-  string: {match: /"(?:\\["\\rn]|[^"\\])*?"/, lineBreaks: true, value: x => x.slice(1, -1)},
+const lexer = ignore(['ws', 'comment'], moo.compile({
+  identifier: {match: /[A-Za-z_][A-Za-z_0-9]*/, type: moo.keywords({
+    flat:     'b',
+    flatflat: 'bb',
+    drum:     'X',
+  })},
+  ws:         {match: /[ \t]+/},
+  note:       /[1-7]/,
+  rest:       '0',
+  newline:    {match: '\n', lineBreaks: true},
+  bar:        '|',
+  sharpsharp: '##',
+  sharp:      '#',
+  natural:    '%',
+  half:       '/',
+  dot:        '.',
+  dash:       '-',
+  lower:      ',',
+  higher:     "'",
+  tie:        '~',
+  header_sep: '=',
+  colon:      ':',
+  string:     {match: /"(?:\\["\\rn]|[^"\\])*?"/, value: x => x.slice(1, -1)},
+  comment:    {match: /;.*$/, lineBreaks: true}
 }));
 
 function merge(objects) {
@@ -58,11 +60,13 @@ file -> %newline:* header:? score:? {% data => ({ header: data[1], score: data[2
 
 header -> property:* %header_sep:+ %newline:+ {% data => Object.fromEntries(data[0]) %}
 
-property -> %identifier %colon %string %newline:+ {% data => [data[0].value, data[2].value] %}
+property -> label %string %newline:+ {% data => [data[0].value, data[1].value] %}
+
+label -> %identifier %colon {% id %}
 
 score -> line (%newline:+ line {% data => data[1] %}):* %newline:* {% data => [data[0], ...data[1]] %}
 
-line -> %bar:? measure (%bar measure {% data => data[1] %}):* %bar:? {% data => [data[1], ...data[2]] %}
+line -> label:? %bar:? measure (%bar measure {% data => data[1] %}):* %bar:? {% data => [data[2], ...data[3]] %}
 
 measure -> octave:? durable_note:+ {% data => (data[0] ? data[1].map(note => {
   if ('octave' in note) {
