@@ -1,7 +1,7 @@
 /// <reference path="webaudio-tinysynth.d.ts" />
 import WebAudioTinySynth from 'webaudio-tinysynth';
 
-import { dropWhile, Continuation } from './util';
+import { dropWhile, Continuation } from '@/util';
 import { parseMelody, MelodyNote } from './melody';
 
 const synth = new WebAudioTinySynth();

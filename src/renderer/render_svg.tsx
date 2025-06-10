@@ -1,4 +1,4 @@
-import { ParsedNote, ParsedScoreLine, TimeSignature, Accidental } from "./parser";
+import { ParsedNote, ParsedScoreLine, TimeSignature, Accidental } from "@/parser";
 
 // Constants for layout
 const DIMENSIONS = {

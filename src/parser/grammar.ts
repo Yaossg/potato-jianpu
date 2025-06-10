@@ -1,6 +1,6 @@
 import nearley from "nearley";
 // @ts-ignore
-import grammar from "./grammar/grammar.ne";
+import grammar from "./grammar.ne";
 
 export type Accidental = null | 0 | -1 | -2 | 1 | 2;
 

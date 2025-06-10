@@ -1,5 +1,5 @@
 import { JSX } from 'react';
-import { KeySignature, TimeSignature, parse, ParseError, ParsedNote } from './parser';
+import { KeySignature, TimeSignature, parse, ParseError, ParsedNote } from '@/parser';
 import './render.css';
 
 import { ScoreLineSvg } from './render_svg';

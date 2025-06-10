@@ -1,4 +1,4 @@
-import { ParsedNote, TimeSignature, parse, ParseError } from "./parser";
+import { ParsedNote, TimeSignature, parse, ParseError } from "@/parser";
 
 export interface MelodyNote {
     note: number | 'rest';

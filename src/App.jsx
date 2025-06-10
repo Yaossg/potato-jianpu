@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import './App.css'
-import { RenderedScore } from './render'
-import { playMusic, stopMusic } from './player'
-import SettingsModal from './SettingsModal'
-import ExamplesPanel from './ExamplesPanel'
-import { useTheme } from './ThemeContext'
+import { RenderedScore } from './renderer/RenderedScore'
+import { playMusic, stopMusic } from './player/player'
+import SettingsModal from './components/SettingsModal'
+import ExamplesPanel from './components/ExamplesPanel'
+import { useTheme } from './components/ThemeContext'
 
 function App() {
   const [source, setSource] = useState("")
