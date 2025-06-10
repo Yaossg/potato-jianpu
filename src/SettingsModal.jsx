@@ -83,12 +83,14 @@ const GMInstruments = [
     ];
 
 export default function SettingsModal({
-  isOpen, 
-  onClose, 
-  instrument, 
-  onInstrumentChange, 
-  volume, 
-  onVolumeChange 
+  isOpen,
+  onClose,
+  instrument,
+  onInstrumentChange,
+  volume,
+  onVolumeChange,
+  omitInitialRest,
+  onOmitInitialRestChange
 }) {
   if (!isOpen) return null;
 
@@ -114,7 +116,7 @@ export default function SettingsModal({
               ))}
             </select>
           </div>
-          
+
           <div className="settings-group">
             <label htmlFor="volume-slider">Volume:</label>
             <span className="volume-value">{volume}%</span>
@@ -125,6 +127,16 @@ export default function SettingsModal({
               max="200"
               value={volume}
               onChange={onVolumeChange}
+            />
+          </div>
+
+          <div className="settings-group">
+            <label htmlFor="omit-initial-rest">Whether to omit initial rest:</label>
+            <input
+              id="omit-initial-rest"
+              type="checkbox"
+              checked={omitInitialRest}
+              onChange={onOmitInitialRestChange}
             />
           </div>
         </div>

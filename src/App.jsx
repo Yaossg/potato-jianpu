@@ -15,10 +15,10 @@ function App() {
   const [volume, setVolume] = useState(100)
   const [playingNote, setPlayingNote] = useState(-1)
   const { theme, toggleTheme } = useTheme()
+  const [omitInitialRest, setOmitInitialRest] = useState(true)
 
-  async function togglePlayMusic(startIndex = 0) {
+  async function togglePlayMusic(startIndex) {
     setShowExamples(false)
-    setPlayingNote(startIndex)
     setIsPlaying(true)
     await playMusic(source, instrument, volume / 100, startIndex, setPlayingNote)
     setIsPlaying(false)
@@ -62,6 +62,8 @@ function App() {
               onInstrumentChange={(e) => setInstrument(e.target.value)}
               volume={volume}
               onVolumeChange={(e) => setVolume(e.target.value)}
+              omitInitialRest={omitInitialRest}
+              onOmitInitialRestChange={(e) => setOmitInitialRest(e.target.checked)}
             />
             {isPlaying ? (
               <button 
@@ -72,7 +74,7 @@ function App() {
               </button>
             ) : (
               <button 
-                onClick={togglePlayMusic} 
+                onClick={() => togglePlayMusic(omitInitialRest ? -1 : 0)} 
                 className="play-button"
               >
                 ▶

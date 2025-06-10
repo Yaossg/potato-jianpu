@@ -1,0 +1,26 @@
+export function dropWhile<T>(array: T[], pred: (element: T) => boolean): T[] {
+    let i = 0;
+    for (; i < array.length; i++) {
+        if (!pred(array[i])) {
+            break;
+        }
+    }
+    return array.slice(i);
+}
+
+
+export class Continuation {
+    id: number = -1;
+
+    async delay(seconds: number) {
+        await new Promise(resolve => this.id = setTimeout(resolve, seconds * 1000));
+        this.id = -1;
+    }
+
+    cancel() {
+        if (this.id !== -1) {
+            clearTimeout(this.id);
+            this.id = -1;
+        }
+    }
+}
