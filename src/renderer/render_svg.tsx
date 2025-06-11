@@ -1,4 +1,5 @@
-import { ParsedNote, ParsedScoreLine, TimeSignature, Accidental } from "@/parser";
+import { ParsedNote, ParsedScoreLine, TimeSignature, Accidental, ParsedScore } from "@/parser";
+import { exclusiveScan, inclusiveScan } from "@/util";
 
 // Constants for layout
 const DIMENSIONS = {
@@ -15,6 +16,7 @@ const DIMENSIONS = {
   underlineSpacing: 5,
   dotSpacing: 12,
   dashSpacing: 24,
+  lineSpacing: 10,
 };
 
 // SVG CSS styles
@@ -201,15 +203,13 @@ interface TieComponentProp {
   endX: number,
   maxPaddingUp: number,
   maxOctave: number
-  clipPath?: string
 }
 
 const TieComponent = ({
   startX,
   endX,
   maxPaddingUp,
-  maxOctave,
-  clipPath
+  maxOctave
 }: TieComponentProp) => {
   const tieWidth = endX - startX;
   if (tieWidth <= 0) {
@@ -224,7 +224,6 @@ const TieComponent = ({
       d={createTiePath(startX, endX)}
       className="jianpu-tie"
       transform={`translate(0, ${maxPaddingUp - DIMENSIONS.tiePadding + yOffset})`}
-      clipPath={clipPath && `url(#${clipPath})`}
     />
   );
 };
@@ -509,24 +508,21 @@ const CrossLineRightTie = ({ context }: { context: TieContext }) => {
 
 interface ScoreLineSvgProp {
   measures: ParsedScoreLine;
+
+  measureDimensions: MeasureDimensions[];
+  maxPaddingUp: number;
+  maxPaddingDown: number;
+  totalWidth: number;
+  unifiedHeight: number;
+
   timeSignature: TimeSignature;
   onNoteClick: (note: ParsedNote) => void
   playingNote: number
 }
 
-export const ScoreLineSvg = ({ measures, timeSignature, onNoteClick, playingNote }: ScoreLineSvgProp) => {
-  // Calculate dimensions for all measures
-  const measureDimensions = calculateMeasureDimensions(measures);
-
-  // Calculate total width and unified height
-  const totalWidth = measureDimensions.reduce(
-    (sum, dim) => sum + dim.width + DIMENSIONS.measureSpacing, 0
-  ) - DIMENSIONS.measureSpacing;
-
-  const maxPaddingUp = Math.max(...measureDimensions.map(dim => dim.paddingUp));
-  const maxPaddingDown = Math.max(...measureDimensions.map(dim => dim.paddingDown));
-  const unifiedHeight = maxPaddingUp + maxPaddingDown + DIMENSIONS.noteBottomPadding;
-
+const ScoreLineSvg = ({ measures, measureDimensions,
+  maxPaddingUp, maxPaddingDown, totalWidth, unifiedHeight,
+  timeSignature, onNoteClick, playingNote }: ScoreLineSvgProp) => {
   return (
     <svg width={totalWidth} height={unifiedHeight} xmlns="http://www.w3.org/2000/svg">
       <Defs />
@@ -542,11 +538,8 @@ export const ScoreLineSvg = ({ measures, timeSignature, onNoteClick, playingNote
       {measures.map(({ notes, bar }, measureIndex) => {
         const dim = measureDimensions[measureIndex];
         const xOffset = calculateMeasureXOffset(measureDimensions, measureIndex);
-        const fullness = (() => {
-          let acc = 0;
-          const unit = timeSignature.actualNotePerBeat();
-          return notes.map(note => acc += note.duration).map(d => d % unit == 0);
-        })();
+        const unit = timeSignature.actualNotePerBeat();
+        const fullness = inclusiveScan(notes.map(note => note.duration)).map(d => d % unit == 0);
 
         return (
           <g key={measureIndex} transform={`translate(${xOffset}, 0)`}>
@@ -593,6 +586,55 @@ export const ScoreLineSvg = ({ measures, timeSignature, onNoteClick, playingNote
           </g>
         );
       })}
+    </svg>
+  );
+};
+
+interface ScoreSvgProp {
+  score: ParsedScore;
+  timeSignature: TimeSignature;
+  onNoteClick: (note: ParsedNote) => void;
+  playingNote: number;
+}
+
+export const ScoreSvg = ({ score, timeSignature, onNoteClick, playingNote }: ScoreSvgProp) => {
+  const lines = score.map(line => {
+    // Calculate dimensions for all measures
+    const measureDimensions = calculateMeasureDimensions(line);
+
+    // Calculate total width and unified height
+    const totalWidth = measureDimensions.reduce(
+      (sum, dim) => sum + dim.width + DIMENSIONS.measureSpacing, 0
+    ) - DIMENSIONS.measureSpacing;
+
+    const maxPaddingUp = Math.max(...measureDimensions.map(dim => dim.paddingUp));
+    const maxPaddingDown = Math.max(...measureDimensions.map(dim => dim.paddingDown));
+    const unifiedHeight = maxPaddingUp + maxPaddingDown + DIMENSIONS.noteBottomPadding;
+
+    return (
+      <ScoreLineSvg
+        measures={line}
+        measureDimensions={measureDimensions}
+        maxPaddingUp={maxPaddingUp}
+        maxPaddingDown={maxPaddingDown}
+        totalWidth={totalWidth}
+        unifiedHeight={unifiedHeight}
+        timeSignature={timeSignature}
+        onNoteClick={onNoteClick}
+        playingNote={playingNote}
+      />
+    )
+  });
+  const heights = exclusiveScan(lines.map(line => line.props.unifiedHeight + DIMENSIONS.lineSpacing))
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg"
+      width={lines.reduce((maxWidth, line) => Math.max(maxWidth, line.props.totalWidth), 0)}
+      height={lines.reduce((totalHeight, line) => totalHeight + line.props.unifiedHeight + DIMENSIONS.lineSpacing, 0)}>
+      {lines.map((line, index) => (
+        <g key={index} transform={`translate(0, ${heights[index]})`}>
+          {line}
+        </g>
+      ))}
     </svg>
   );
 };

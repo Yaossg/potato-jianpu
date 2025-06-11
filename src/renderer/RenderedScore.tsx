@@ -2,7 +2,7 @@ import { JSX } from 'react';
 import { KeySignature, TimeSignature, parse, ParseError, ParsedNote } from '@/parser';
 import './render.css';
 
-import { ScoreLineSvg } from './render_svg';
+import { ScoreSvg } from './render_svg';
 
 const keyMap = ['C', '♯C', 'D', '♯D', 'E', 'F', '♯F', 'G', '♯G', 'A', '♯A', 'B']
 
@@ -63,5 +63,5 @@ export const RenderedScore = ({ source, onNoteClick, playingNote }: RenderedScor
       {composer && <div className="score-composer">{composer}</div>}
     </div>
   </div>
-  return <div> {renderedHeader} {...score.map(line => (<><ScoreLineSvg measures={line} timeSignature={timeSignature ?? new TimeSignature(4, 4)} onNoteClick={onNoteClick} playingNote={playingNote} /><br/></>))} </div>
+  return <div> {renderedHeader} <ScoreSvg score={score} timeSignature={timeSignature ?? new TimeSignature(4, 4)} onNoteClick={onNoteClick} playingNote={playingNote} /></div>
 }

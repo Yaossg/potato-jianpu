@@ -8,6 +8,25 @@ export function dropWhile<T>(array: T[], pred: (element: T) => boolean): T[] {
     return array.slice(i);
 }
 
+export function inclusiveScan(array: number[]): number[] {
+   const result: number[] = [];
+   let sum = 0;
+   for (let i = 0; i < array.length; i++) {
+       sum += array[i];
+       result.push(sum);
+   }
+   return result;
+}
+
+export function exclusiveScan(array: number[]): number[] {
+    const result: number[] = [];
+    let sum = 0;
+    for (let i = 0; i < array.length; i++) {
+        result.push(sum);
+        sum += array[i];
+    }
+    return result;
+}
 
 export class Continuation {
     id: number = -1;
