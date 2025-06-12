@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import './App.css'
-import { RenderedScore } from './renderer/RenderedScore'
+import RenderedFile from './renderer/RenderedFile'
 import { playMusic, stopMusic } from './player/player'
 import SettingsModal from './components/SettingsModal'
 import ExamplesPanel from './components/ExamplesPanel'
@@ -83,7 +83,7 @@ function App() {
           </div>
         </h2>
         <div className="render-area">
-          <RenderedScore source={source} onNoteClick={note => togglePlayMusic(note.indexOfScore)} playingNote={playingNote} />
+          <RenderedFile source={source} onNoteClick={note => togglePlayMusic(note.indexOfScore)} playingNote={playingNote} />
         </div>
       </div>
       <div className="editor-area">
