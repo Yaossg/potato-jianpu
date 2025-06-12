@@ -32,6 +32,35 @@ function App() {
     setPlayingNote(-1)
   }
 
+  function exportSVG() {
+    // Get the SVG element from the render area
+    const renderArea = document.querySelector('.render-area svg')
+    if (!renderArea) {
+      alert('No score to export')
+      return
+    }
+
+    // Clone the SVG to avoid modifying the original
+    const svgClone = renderArea.cloneNode(true)
+    
+    // Add XML declaration and namespace for proper SVG format
+    const svgString = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+${svgClone.outerHTML}`
+
+    // Create a blob and download link
+    const blob = new Blob([svgString], { type: 'image/svg+xml' })
+    const url = URL.createObjectURL(blob)
+    
+    // Create download link
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'jianpu-score.svg'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="app-container">
       <div className="header-container">
@@ -44,11 +73,17 @@ function App() {
           {theme === 'light' ? '🌙' : '☀️'}
         </button>
       </div>
-      <h2>Warning: Still In Early Development</h2>
       <div className="preview-area">
         <h2>
           <span>Preview</span>
           <div className="button-group">
+            <button 
+              onClick={exportSVG}
+              className="export-button"
+              title="Export SVG"
+            >
+              💾
+            </button>
             <button 
               onClick={() => setShowSettings(!showSettings)} 
               className="settings-button"
@@ -83,7 +118,7 @@ function App() {
           </div>
         </h2>
         <div className="render-area">
-          <RenderedFile source={source} onNoteClick={note => togglePlayMusic(note.indexOfScore)} playingNote={playingNote} />
+          <RenderedFile source={source} pageWidth={1000} onNoteClick={note => togglePlayMusic(note.indexOfScore)} playingNote={playingNote} />
         </div>
       </div>
       <div className="editor-area">

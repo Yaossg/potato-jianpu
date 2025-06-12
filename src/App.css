@@ -150,11 +150,16 @@ body {
 }
 
 .render-area {
-  padding: 1rem;
+  padding: 2%;
   min-height: 150px;
   border-radius: 6px;
   background-color: var(--render-bg);
   transition: background-color 0.3s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 96%;
+  overflow-x: auto;
 }
 
 .score-editor {
@@ -187,7 +192,7 @@ body {
   position: relative;
 }
 
-.play-button, .stop-button, .settings-button, .examples-button, .help-button {
+.play-button, .stop-button, .settings-button, .examples-button, .help-button, .export-button {
   width: 40px;
   height: 40px;
   font-size: 18px;
@@ -213,7 +218,7 @@ body {
   background-color: var(--play-button-hover) !important;
 }
 
-.examples-button, .help-button {
+.examples-button, .help-button, .export-button {
   padding: 5px 10px;
   background-color: var(--examples-button);
   color: white;
@@ -222,6 +227,6 @@ body {
   cursor: pointer;
 }
 
-.examples-button:hover, .help-button:hover {
+.examples-button:hover, .help-button:hover, .export-button:hover {
   background-color: var(--examples-button-hover);
 }
