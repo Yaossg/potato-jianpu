@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import './App.css'
 import RenderedFile from './renderer/RenderedFile'
-import { playMusic, stopMusic } from './player/player'
+import { playMusic, stopMusic, exportMusic } from './player/player'
 import SettingsModal from './components/SettingsModal'
 import ExamplesPanel from './components/ExamplesPanel'
 import { useTheme } from './components/ThemeContext'
@@ -61,6 +61,21 @@ ${svgClone.outerHTML}`
     URL.revokeObjectURL(url)
   }
 
+  function exportMIDI() {
+    const midiURI = exportMusic(source, instrument, omitInitialRest ? -1 : 0);
+    if (!midiURI) {
+      alert('Failed to export music');
+      return;
+    }
+    const link = document.createElement('a');
+    link.href = midiURI;
+    link.download = 'jianpu-score.mid';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(midiURI);
+  }
+
   return (
     <div className="app-container">
       <div className="header-container">
@@ -82,11 +97,12 @@ ${svgClone.outerHTML}`
               className="export-button"
               title="Export SVG"
             >
-              💾
+              🧾
             </button>
             <button 
               onClick={() => setShowSettings(!showSettings)} 
               className="settings-button"
+              title="Audio Settings"
             >
               ⚙️
             </button>
@@ -100,10 +116,18 @@ ${svgClone.outerHTML}`
               omitInitialRest={omitInitialRest}
               onOmitInitialRestChange={(e) => setOmitInitialRest(e.target.checked)}
             />
+            <button
+              onClick={exportMIDI}
+              className="export-button"
+              title="Export MIDI"
+            >
+              💾
+            </button>
             {isPlaying ? (
               <button 
                 onClick={toggleStopMusic} 
                 className="stop-button"
+                title="Stop Music"
               >
                 ⏹
               </button>
@@ -111,6 +135,7 @@ ${svgClone.outerHTML}`
               <button 
                 onClick={() => togglePlayMusic(omitInitialRest ? -1 : 0)} 
                 className="play-button"
+                title="Play Music"
               >
                 ▶
               </button>
@@ -135,6 +160,7 @@ ${svgClone.outerHTML}`
             <button 
               onClick={() => setShowExamples(!showExamples)}
               className="examples-button"
+              title="Examples"
             >
               📚
             </button>

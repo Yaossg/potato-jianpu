@@ -43,3 +43,28 @@ export class Continuation {
         }
     }
 }
+
+export function toBytes(number: number, byteCount: number): number[] {
+    const bytes: number[] = [];
+    for (let i = 0; i < byteCount; i++) {
+        bytes[byteCount - 1 - i] = number & 0xFF;
+        number >>= 8;
+    }
+    return bytes;
+}
+
+export function toVarInt(number: number): number[] {
+    if (number < 0) {
+        throw new Error("Negative numbers are not supported");
+    }
+    const bytes: number[] = [];
+    do {
+        let byte = number & 0x7F;
+        number >>= 7;
+        if (bytes.length > 0) {
+            byte |= 0x80; // Set the continuation bit
+        }
+        bytes.push(byte);
+    } while (number > 0);
+    return bytes.reverse();
+}

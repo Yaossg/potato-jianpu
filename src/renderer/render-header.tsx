@@ -16,7 +16,7 @@ function renderTimeSignature(timeSignature: TimeSignature, x: number, y: number)
   return <g className="score-time" transform={`translate(${x}, ${y - 5})`}>
     <text x={0} y={-5}>{timeSignature.beatsPerMeasure}</text>
     <line x1={-5} y1={0} x2={15} y2={0} stroke="black" strokeWidth="1" className="time-divider" />
-    <text x={0} y={20}>{timeSignature.thNotePerBeat}</text>
+    <text x={0} y={20}>{timeSignature.beatsPerWholeNote}</text>
   </g>;
 }
 
@@ -29,7 +29,7 @@ const tempoMap = {
 
 function renderTempo(timeSignature: TimeSignature | null, tempo: number, x: number, y: number): JSX.Element {
   return <g className="score-tempo" transform={`translate(${x}, ${y})`}>
-    <text x={0} y={0}>{timeSignature && tempoMap[timeSignature.thNotePerBeat]} = {tempo}</text>
+    <text x={0} y={0}>{timeSignature && tempoMap[timeSignature.beatsPerWholeNote]} = {tempo}</text>
   </g>
 }
 

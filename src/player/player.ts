@@ -3,6 +3,9 @@ import WebAudioTinySynth from 'webaudio-tinysynth';
 
 import { dropWhile, Continuation } from '@/util';
 import { parseMelody, MelodyNote } from './melody';
+import { MIDIFile, MIDITrack } from './midi';
+
+const DEFAULT_VELOCITY = 64;
 
 const synth = new WebAudioTinySynth();
 
@@ -26,7 +29,7 @@ async function playSound(notes: MelodyNote[], beatDuration: number) {
         const { note, duration } = notes[i];
         const actualDuration = duration * beatDuration;
         if (note !== 'rest') {
-            synth.noteOn(0, note, 64, currentTime);
+            synth.noteOn(0, note, DEFAULT_VELOCITY, currentTime);
             synth.noteOff(0, note, currentTime + actualDuration);
         }
         currentTime += actualDuration;
@@ -39,6 +42,13 @@ async function playSound(notes: MelodyNote[], beatDuration: number) {
     await soundPlayPause.delay(currentTime - audioContext.currentTime);
 }
 
+function skipInitialNotes(notes: MelodyNote[], startIndex: number) {
+    if (startIndex < 0) { // omit initial rests
+        startIndex = notes.findIndex(note => note.note !== 'rest');
+    }
+    return dropWhile(notes, note => note.indexOfScore < startIndex);
+}
+
 export async function playMusic(source: string, program: number, volume: number, startIndex: number, setPlayingNote: (note: number) => void) {
     await synth.ready();
     stopMusic();
@@ -48,11 +58,8 @@ export async function playMusic(source: string, program: number, volume: number,
     if (melody === null) {
         return;
     }
-    if (startIndex < 0) {
-        startIndex = melody.notes.findIndex(note => note.note !== 'rest');
-    }
-    const notes = dropWhile(melody.notes, note => note.indexOfScore < startIndex)
-    const beatDuration = 60 / melody.tempo * melody.timeSignature.thNotePerBeat;
+    const notes = skipInitialNotes(melody.notes, startIndex);
+    const beatDuration = 60 / melody.tempo * melody.timeSignature.beatsPerWholeNote;
     await Promise.all([
         displayNote(notes, beatDuration, setPlayingNote), 
         playSound(notes, beatDuration)
@@ -63,4 +70,27 @@ export function stopMusic() {
     synth.reset();
     soundPlayPause.cancel();
     noteDisplayPause.cancel();
+}
+
+export function exportMusic(source: string, program: number, startIndex: number): string | null {
+    const melody = parseMelody(source);
+    if (melody === null) {
+        return null;
+    }
+    const notes = skipInitialNotes(melody.notes, startIndex);
+    const midiFile = new MIDIFile(melody.tempo, melody.timeSignature);
+    const track = new MIDITrack(0, program);
+
+    let delta = 0;
+    for (const note of notes) {
+        if (note.note === 'rest') {
+            delta += note.duration;
+            continue;
+        }
+        track.noteOn(delta, note.note, DEFAULT_VELOCITY);
+        delta = 0;
+        track.noteOff(note.duration, note.note);
+    }
+    midiFile.addTrack(track);
+    return midiFile.toDataURI()
 }

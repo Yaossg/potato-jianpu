@@ -3,10 +3,10 @@ import { ParseError, Accidental, NoteType } from "./grammar";
 
 export class TimeSignature {
     beatsPerMeasure: 2 | 3 | 4 | 6 | 9 | 12;
-    thNotePerBeat:  2 | 4 | 8 | 16;
-    constructor(beatsPerMeasure: 2 | 3 | 4 | 6 | 9 | 12, thNotePerBeat: 2 | 4 | 8 | 16) {
+    beatsPerWholeNote: 2 | 4 | 8 | 16;
+    constructor(beatsPerMeasure: 2 | 3 | 4 | 6 | 9 | 12, beatsPerWholeNote: 2 | 4 | 8 | 16) {
         this.beatsPerMeasure = beatsPerMeasure;
-        this.thNotePerBeat = thNotePerBeat;
+        this.beatsPerWholeNote = beatsPerWholeNote;
     }
 
     // actual = treat 3n notes as n dotted notes (per beat)
@@ -22,17 +22,17 @@ export class TimeSignature {
     }
 
     actualNotePerBeat() {
-        switch (this.thNotePerBeat) {
+        switch (this.beatsPerWholeNote) {
             case 2: case 4:
-                return 1 / this.thNotePerBeat;
+                return 1 / this.beatsPerWholeNote;
             default:
-                return 3 / this.thNotePerBeat;
+                return 3 / this.beatsPerWholeNote;
         }
     }
 }
 
 function parseTimeSignature(time: string): TimeSignature | null {
-    const [ beatsPerMeasure, thNotePerBeat ] = time.split('/', 2).map(s => s.trim()).map(Number);
+    const [ beatsPerMeasure, beatsPerWholeNote ] = time.split('/', 2).map(s => s.trim()).map(Number);
     switch (beatsPerMeasure) {
         case 2: case 3: case 4:
         case 6: case 9: case 12:
@@ -40,13 +40,13 @@ function parseTimeSignature(time: string): TimeSignature | null {
         default:
             return null;
     }
-    switch (thNotePerBeat) {
+    switch (beatsPerWholeNote) {
         case 2: case 4: case 8: case 16:
             break;
         default:
             return null;
     }
-    return new TimeSignature(beatsPerMeasure, thNotePerBeat);
+    return new TimeSignature(beatsPerMeasure, beatsPerWholeNote);
 }
 
 export type KeySignature = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11;
