@@ -34,11 +34,11 @@ function renderTempo(timeSignature: TimeSignature | null, tempo: number, x: numb
 }
 
 const svgStyles = `
-  .score-title { font-size: 32px; font-weight: bold; font-family: Arial, sans-serif; }
-  .score-subtitle { font-size: 20px; font-family: Arial, sans-serif; }
-  .score-composer { font-size: 20px; font-family: Arial, sans-serif; }
-  .score-note { font-size: 20px; font-weight: bold; font-family: Helvetica, sans-serif; }
-  .score-metadata { font-size: 20px; font-family: Arial, sans-serif; }
+  .score-title { fill: currentColor; font-size: 32px; font-weight: bold; font-family: Arial, sans-serif; }
+  .score-subtitle { fill: currentColor; font-size: 20px; font-family: Arial, sans-serif; }
+  .score-composer { fill: currentColor; font-size: 20px; font-family: Arial, sans-serif; }
+  .score-note { fill: currentColor; font-size: 20px; font-weight: bold; font-family: Helvetica, sans-serif; }
+  .score-metadata { fill: currentColor; font-size: 20px; font-family: Arial, sans-serif; }
 `
 
 export function renderHeader(pageWidth: number, { title, subtitle, composer, tempo, keySignature, timeSignature }: ParsedHeader): JSX.Element {

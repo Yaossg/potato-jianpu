@@ -104,7 +104,7 @@ function ExamplesPanel({ isOpen, onClose, onSelectExample }) {
     <div className="examples-panel">
       <div className="examples-panel-header">
         <h3>Choose an Example</h3>
-        <button onClick={onClose}>✕</button>
+        <button className="close-button" onClick={onClose}>✕</button>
       </div>
       <div className="examples-list">
         {EXAMPLES.map((example, index) => (

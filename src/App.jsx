@@ -106,16 +106,6 @@ ${svgClone.outerHTML}`
             >
               ⚙️
             </button>
-            <SettingsModal
-              isOpen={showSettings}
-              onClose={() => setShowSettings(false)}
-              instrument={instrument}
-              onInstrumentChange={(e) => setInstrument(e.target.value)}
-              volume={volume}
-              onVolumeChange={(e) => setVolume(e.target.value)}
-              omitInitialRest={omitInitialRest}
-              onOmitInitialRestChange={(e) => setOmitInitialRest(e.target.checked)}
-            />
             <button
               onClick={exportMIDI}
               className="export-button"
@@ -141,6 +131,16 @@ ${svgClone.outerHTML}`
               </button>
             )}
           </div>
+          <SettingsModal
+            isOpen={showSettings}
+            onClose={() => setShowSettings(false)}
+            instrument={instrument}
+            onInstrumentChange={(e) => setInstrument(e.target.value)}
+            volume={volume}
+            onVolumeChange={(e) => setVolume(e.target.value)}
+            omitInitialRest={omitInitialRest}
+            onOmitInitialRestChange={(e) => setOmitInitialRest(e.target.checked)}
+          />
         </h2>
         <div className="render-area">
           <RenderedFile source={source} pageWidth={1000} onNoteClick={note => togglePlayMusic(note.indexOfScore)} playingNote={playingNote} />

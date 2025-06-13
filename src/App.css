@@ -185,11 +185,11 @@ body {
   border: none;
   cursor: pointer;
   transition: all 0.3s ease;
-  color: white;
 }
 
 /* Button specific styling */
 .stop-button {
+  color: white;
   background-color: var(--stop-button);
 }
 
@@ -198,6 +198,7 @@ body {
 }
 
 .play-button {
+  color: white;
   background-color: var(--play-button);
 }
 
