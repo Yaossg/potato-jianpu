@@ -1,7 +1,7 @@
 import { ParsedNote, TimeSignature, parse, ParseError } from "@/parser";
 
 export interface MelodyNote {
-    note: number | 'rest';
+    chord: number[] | 'rest';
     duration: number;
     indexOfScore: number;
 }
@@ -15,15 +15,21 @@ export interface Melody {
 const C_MAJOR_NOTE_MAP = [60, 62, 64, 65, 67, 69, 71];
 
 function parseNote(noteObj: ParsedNote, noteMap: number[]): MelodyNote {
-    const { note = 1, octave = 0, type, indexOfScore } = noteObj;
+    const { type, chord, indexOfScore } = noteObj;
     const duration = noteObj.duration;
     switch (type) {
         case 'rest':
-            return { note: 'rest', duration, indexOfScore };
+            return { chord: 'rest', duration, indexOfScore };
         case 'drum':
-            return { note: 60, duration, indexOfScore };
+            return { chord: [60], duration, indexOfScore };
+        case 'pitch':
+            const midiNotes = chord!.map(pitchNote => {
+                const { note = 1, octave = 0 } = pitchNote;
+                return noteMap[note - 1] + octave * 12;
+            });
+            return { chord: midiNotes, duration, indexOfScore };
         default:
-            return { note: noteMap[note - 1] + octave * 12, duration, indexOfScore };
+            return { chord: [60], duration, indexOfScore };
     }
 }
 
@@ -40,20 +46,18 @@ export function parseMelody(source: string): Melody | null {
     const NOTE_MAP = C_MAJOR_NOTE_MAP.map(note => note + keySignature);
     for (const measure of measures) {
         const noteMap = NOTE_MAP.slice();
-      
         for (const noteObj of measure.notes) {
-            const { accidental = null, note = 1, tie} = noteObj;
-            if (accidental !== null) {
-                const noteIndex = note - 1;
-                noteMap[noteIndex] = NOTE_MAP[noteIndex] + accidental;
+            for (const pitchNote of noteObj.chord || []) {
+                if (pitchNote.accidental !== null && pitchNote.accidental !== undefined) {
+                    const noteIndex = pitchNote.note - 1;
+                    noteMap[noteIndex] = NOTE_MAP[noteIndex] + pitchNote.accidental;
+                }
             }
+            
             const melodyNote = parseNote(noteObj, noteMap);
-            if (tie) {
-                // for the sake of simplicity, we use previous note directly
+            if (noteObj.tie) {
+                // use previous note directly for the sake of simplicity
                 // so that possible accidental tie is properly handled
-                // if (melody[melody.length - 1].note !== note.note) {
-                //     return null;
-                // }
                 notes[notes.length - 1].duration += melodyNote.duration;
             } else {
                 notes.push(melodyNote);

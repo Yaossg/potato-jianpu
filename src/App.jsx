@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import './App.css'
-import RenderedFile from './renderer/RenderedFile'
+import { RenderedFile }from './renderer/RenderedFile'
 import { playMusic, stopMusic, exportMusic } from './player/player'
 import SettingsModal from './components/SettingsModal'
 import ExamplesPanel from './components/ExamplesPanel'

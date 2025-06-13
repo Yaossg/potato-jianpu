@@ -1,5 +1,5 @@
 import * as Grammar from "./grammar";
-import { ParseError, Accidental, NoteType } from "./grammar";
+import { ParseError, Accidental, NoteType, PitchNote } from "./grammar";
 
 export class TimeSignature {
     beatsPerMeasure: 2 | 3 | 4 | 6 | 9 | 12;
@@ -120,10 +120,8 @@ function durationOf({ dashes = 0, halves = 0, dots = 0 }: Grammar.DurableNote): 
 }
 
 export interface ParsedNote {
-    accidental?: Accidental;
-    note?: number;
-    octave?: number;
     type: NoteType;
+    chord?: PitchNote[];
     tie: boolean;
     dashes: number;
     halves: number;
@@ -158,9 +156,9 @@ function parseScore(score: Grammar.Score): ParsedScore | ParseError {
         for (const [measureno, measure] of measures.entries()) {
             const pn: ParsedNote[] = [];
             for (const noteObj of measure) {
-                const { type, note, octave, accidental, dashes = 0, halves = 0, dots = 0, tie = false } = noteObj;
+                const { type, chord, dashes = 0, halves = 0, dots = 0, tie = false } = noteObj;
                 pn.push({
-                    type, note, octave, accidental, // no defaults
+                    type, chord, // no defaults
                     dashes, halves, dots, tie, // defaults to zero
                     duration: durationOf(noteObj),
                     tieAfter: false, // placeholder, fill later
@@ -214,4 +212,4 @@ export function parse(source: string): ParsedFile | ParseError {
 
 // re-export
 export { ParseError } from './grammar'
-export type { Accidental, NoteType } from './grammar'
+export type { Accidental, NoteType, PitchNote } from './grammar'

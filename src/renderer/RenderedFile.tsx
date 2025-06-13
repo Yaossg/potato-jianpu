@@ -11,7 +11,7 @@ interface RenderedScoreProp {
   playingNote?: number
 }
 
-export default function RenderedFile({ source, pageWidth, onNoteClick, playingNote }: RenderedScoreProp): JSX.Element {
+export function RenderedFile({ source, pageWidth, onNoteClick, playingNote }: RenderedScoreProp): JSX.Element {
   const file = parse(source);
   if (file instanceof ParseError) {
     return <div className="error">{file.digest}</div>;

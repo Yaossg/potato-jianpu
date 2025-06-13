@@ -6,11 +6,15 @@ export type Accidental = null | 0 | -1 | -2 | 1 | 2;
 
 export type NoteType = 'pitch' | 'rest' | 'drum';
 
+export interface PitchNote {
+    accidental: Accidental;
+    note: number;
+    octave: number;
+}
+
 export interface DurableNote {
-    accidental?: Accidental;
-    note?: number;
-    octave?: number;
     type: NoteType;
+    chord?: PitchNote[];
     tie?: boolean;
     dashes?: number;
     halves?: number;

@@ -44,6 +44,8 @@ const lexer = ignore(['ws', 'comment'], moo.compile({
   tie:        '~',
   header_sep: '=',
   colon:      ':',
+  lbrace:     '{',
+  rbrace:     '}',
   string:     {match: /"(?:\\["\\rn]|[^"\\])*?"/, value: x => x.slice(1, -1)},
   comment:    {match: /;.*$/, lineBreaks: true}
 }));
@@ -69,8 +71,14 @@ score -> line (%newline:+ line {% data => data[1] %}):* %newline:* {% data => [d
 line -> label:? %bar:? measure (%bar measure {% data => data[1] %}):* %bar:? {% data => [data[2], ...data[3]] %}
 
 measure -> octave:? durable_note:+ {% data => (data[0] ? data[1].map(note => {
-  if ('octave' in note) {
-    return { ...note, octave: note.octave + data[0] }
+  if (note.type === 'pitch') {
+    return { 
+      ...note, 
+      chord: note.chord.map(n => ({
+        ...n,
+        octave: n.octave + data[0]
+      })) 
+    };
   } else {
     return note
   }
@@ -85,13 +93,16 @@ accidental ->
 
 octave -> %lower:+ {% data => -data[0].length %} | %higher:+ {% data => data[0].length %}
 
-octave_note -> accidental:? %note octave:? {% data => ({ type: 'pitch', accidental: data[0], note: parseInt(data[1].value), octave: data[2] || 0}) %} 
+pitch_note -> accidental:? %note octave:? {% data => ({ accidental: data[0], note: parseInt(data[1].value), octave: data[2] || 0}) %} 
+
+chord -> pitch_note {% data => ({ type: 'pitch', chord: [data[0]] }) %} 
+    | %lbrace pitch_note:+ %rbrace {% data => ({ type: 'pitch', chord: data[1] }) %}
 
 rest -> %rest {% () => ({ type: 'rest' }) %}
 
 drum -> %drum {% () => ({ type: 'drum' }) %}
 
-general_note -> octave_note {% id %} | rest {% id %} | drum {% id %}
+general_note -> chord {% id %} | rest {% id %} | drum {% id %}
 
 tie -> %tie {% () => ({ tie: true }) %} 
 
