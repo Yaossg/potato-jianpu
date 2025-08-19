@@ -1,11 +1,8 @@
 /// <reference path="webaudio-tinysynth.d.ts" />
 import WebAudioTinySynth from 'webaudio-tinysynth';
 
-import { dropWhile, Continuation } from '@/util';
-import { parseMelody, MelodyNote } from './melody';
-import { MIDIFile, MIDITrack } from './midi';
-
-const DEFAULT_VELOCITY = 64;
+import { Continuation } from '@/util';
+import { parseMelody, MelodyNote, skipInitialNotes, DEFAULT_VELOCITY } from './melody';
 
 const synth = new WebAudioTinySynth();
 
@@ -44,13 +41,6 @@ async function playSound(notes: MelodyNote[], beatDuration: number) {
     await soundPlayPause.delay(currentTime - audioContext.currentTime);
 }
 
-function skipInitialNotes(notes: MelodyNote[], startIndex: number) {
-    if (startIndex < 0) { // omit initial rests
-        startIndex = notes.findIndex(note => note.chord !== 'rest');
-    }
-    return dropWhile(notes, note => note.indexOfScore < startIndex);
-}
-
 export async function playMusic(source: string, program: number, volume: number, startIndex: number, setPlayingNote: (note: number) => void) {
     await synth.ready();
     stopMusic();
@@ -72,33 +62,4 @@ export function stopMusic() {
     synth.reset();
     soundPlayPause.cancel();
     noteDisplayPause.cancel();
-}
-
-export function exportMusic(source: string, program: number, startIndex: number): string | null {
-    const melody = parseMelody(source);
-    if (melody === null) {
-        return null;
-    }
-    const notes = skipInitialNotes(melody.notes, startIndex);
-    const midiFile = new MIDIFile(melody.tempo, melody.timeSignature);
-    const track = new MIDITrack(0, program);   
-    let delta = 0;
-    for (const note of notes) {
-        if (note.chord === 'rest') {
-            delta += note.duration;
-            continue;
-        }
-        for (const midiNote of note.chord) {
-            track.noteOn(delta, midiNote, DEFAULT_VELOCITY);
-            delta = 0;
-        }
-        delta = note.duration;
-        // End all notes in the chord
-        for (const midiNote of note.chord) {
-            track.noteOff(delta, midiNote);
-            delta = 0;
-        }
-    }
-    midiFile.addTrack(track);
-    return midiFile.toDataURI()
 }

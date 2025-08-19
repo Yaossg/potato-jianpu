@@ -1,4 +1,5 @@
 import { ParsedNote, TimeSignature, parse, ParseError } from "@/parser";
+import { dropWhile } from "@/util";
 
 export interface MelodyNote {
     chord: number[] | 'rest';
@@ -66,3 +67,12 @@ export function parseMelody(source: string): Melody | null {
     }
     return { notes, timeSignature, tempo };
 }
+
+export function skipInitialNotes(notes: MelodyNote[], startIndex: number) {
+    if (startIndex < 0) { // omit initial rests
+        startIndex = notes.findIndex(note => note.chord !== 'rest');
+    }
+    return dropWhile(notes, note => note.indexOfScore < startIndex);
+}
+
+export const DEFAULT_VELOCITY = 64;

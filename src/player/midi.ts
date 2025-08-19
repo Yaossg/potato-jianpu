@@ -1,5 +1,6 @@
 import { TimeSignature } from "@/parser";
 import { toBytes, toVarInt } from "@/util";
+import { parseMelody, skipInitialNotes, DEFAULT_VELOCITY } from "./melody";
 
 const HEADER_CHUNK_TYPE = [0x4d, 0x54, 0x68, 0x64]; // MThd
 const HEADER_CHUNK_LENGTH = [0x00, 0x00, 0x00, 0x06];
@@ -169,4 +170,34 @@ export class MIDIFile {
         const base64 = btoa(String.fromCharCode(...bytes));
         return DATAURI_PREFIX + base64;
     }
+}
+
+
+export function exportMusic(source: string, program: number, startIndex: number): string | null {
+    const melody = parseMelody(source);
+    if (melody === null) {
+        return null;
+    }
+    const notes = skipInitialNotes(melody.notes, startIndex);
+    const midiFile = new MIDIFile(melody.tempo, melody.timeSignature);
+    const track = new MIDITrack(0, program);   
+    let delta = 0;
+    for (const note of notes) {
+        if (note.chord === 'rest') {
+            delta += note.duration;
+            continue;
+        }
+        for (const midiNote of note.chord) {
+            track.noteOn(delta, midiNote, DEFAULT_VELOCITY);
+            delta = 0;
+        }
+        delta = note.duration;
+        // End all notes in the chord
+        for (const midiNote of note.chord) {
+            track.noteOff(delta, midiNote);
+            delta = 0;
+        }
+    }
+    midiFile.addTrack(track);
+    return midiFile.toDataURI()
 }
