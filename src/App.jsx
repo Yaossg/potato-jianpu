@@ -3,6 +3,7 @@ import './App.css'
 import { RenderedFile }from './renderer/RenderedFile'
 import { playMusic, stopMusic } from './player/player'
 import { exportMusic } from './player/midi'
+import { synthMusic } from './player/synth'
 import SettingsModal from './components/SettingsModal'
 import ExamplesPanel from './components/ExamplesPanel'
 import { useTheme } from './components/ThemeContext'
@@ -34,25 +35,16 @@ function App() {
   }
 
   function exportSVG() {
-    // Get the SVG element from the render area
     const renderArea = document.querySelector('.render-area svg')
     if (!renderArea) {
       alert('No score to export')
       return
     }
 
-    // Clone the SVG to avoid modifying the original
     const svgClone = renderArea.cloneNode(true)
-    
-    // Add XML declaration and namespace for proper SVG format
-    const svgString = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-${svgClone.outerHTML}`
-
-    // Create a blob and download link
-    const blob = new Blob([svgString], { type: 'image/svg+xml' })
+    const blob = new Blob([`<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n${svgClone.outerHTML}`], { type: 'image/svg+xml' })
     const url = URL.createObjectURL(blob)
     
-    // Create download link
     const link = document.createElement('a')
     link.href = url
     link.download = 'jianpu-score.svg'
@@ -63,18 +55,35 @@ ${svgClone.outerHTML}`
   }
 
   function exportMIDI() {
-    const midiURI = exportMusic(source, instrument, omitInitialRest ? -1 : 0);
-    if (!midiURI) {
+    const blob = exportMusic(source, instrument, omitInitialRest ? -1 : 0);
+    if (!blob) {
       alert('Failed to export music');
       return;
     }
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = midiURI;
+    link.href = url;
     link.download = 'jianpu-score.mid';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(midiURI);
+  }
+
+  async function exportAudio() {
+    const blob = await synthMusic(source, instrument, volume / 100, 44100, omitInitialRest ? -1 : 0);
+    if (!blob) {
+      alert('Failed to export music');
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'jianpu-score.wav';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(audioURI);
   }
 
   return (
@@ -113,6 +122,13 @@ ${svgClone.outerHTML}`
               title="Export MIDI"
             >
               💾
+            </button>
+            <button
+              onClick={exportAudio}
+              className="export-button"
+              title="Export Audio"
+            >
+              🔊
             </button>
             {isPlaying ? (
               <button 

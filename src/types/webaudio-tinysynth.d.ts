@@ -1,9 +1,10 @@
-declare module 'webaudio-tinysynth' {
+declare module '@/player/webaudio-tinysynth.js' {
     export default class WebAudioTinySynth {
         constructor(options?: {
             quality?: number;
             useReverb?: boolean;
             voices?: number;
+            internalcontext?: boolean;
         });
         async ready();
         getAudioContext(): AudioContext;

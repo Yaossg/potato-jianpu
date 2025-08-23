@@ -886,7 +886,7 @@ export function renderScore({ score, timeSignature, onNoteClick, playingNote }: 
   const heights = exclusiveScan(lines.map(line => line.props.height + DIMENSIONS.lineSpacing))
   return (
     <svg xmlns="http://www.w3.org/2000/svg"
-      width={Math.max(...lines.map(line => line.props.width))}
+      width={Math.max(0, ...lines.map(line => line.props.width))}
       height={lines.reduce((totalHeight, line) => totalHeight + line.props.height + DIMENSIONS.lineSpacing, 0)}>
       {lines.map((line, index) => (
         <g key={index} transform={`translate(0, ${heights[index]})`}>

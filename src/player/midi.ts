@@ -21,7 +21,6 @@ const MAX_CHANNEL = 15;
 const MAX_NOTE = 127;
 const MAX_VELOCITY = 127;
 const MAX_TICKSPERBEAT = 65535;
-const DATAURI_PREFIX = 'data:audio/midi;base64,';
 
 const META_TRACK_CHANNEL = -1; // Meta track does not have a channel
 
@@ -164,16 +163,10 @@ export class MIDIFile {
         }
         return bytes;
     }
-
-    toDataURI(): string {
-        const bytes = this.toBytes();
-        const base64 = btoa(String.fromCharCode(...bytes));
-        return DATAURI_PREFIX + base64;
-    }
 }
 
 
-export function exportMusic(source: string, program: number, startIndex: number): string | null {
+export function exportMusic(source: string, program: number, startIndex: number): Blob | null {
     const melody = parseMelody(source);
     if (melody === null) {
         return null;
@@ -199,5 +192,5 @@ export function exportMusic(source: string, program: number, startIndex: number)
         }
     }
     midiFile.addTrack(track);
-    return midiFile.toDataURI()
+    return new Blob([new Uint8Array(midiFile.toBytes())], { type: 'audio/midi' });
 }

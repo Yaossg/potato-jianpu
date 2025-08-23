@@ -1,5 +1,4 @@
-/// <reference path="webaudio-tinysynth.d.ts" />
-import WebAudioTinySynth from 'webaudio-tinysynth';
+import WebAudioTinySynth from '@/player/webaudio-tinysynth.js';
 
 import { Continuation } from '@/util';
 import { parseMelody, MelodyNote, skipInitialNotes, DEFAULT_VELOCITY } from './melody';
@@ -42,16 +41,16 @@ async function playSound(notes: MelodyNote[], beatDuration: number) {
 }
 
 export async function playMusic(source: string, program: number, volume: number, startIndex: number, setPlayingNote: (note: number) => void) {
-    await synth.ready();
-    stopMusic();
-    synth.setMasterVol(volume);
-    synth.setProgram(0, program)
     const melody = parseMelody(source);
     if (melody === null) {
         return;
     }
     const notes = skipInitialNotes(melody.notes, startIndex);
     const beatDuration = 60 / melody.tempo * melody.timeSignature.beatsPerWholeNote;
+    await synth.ready();
+    stopMusic();
+    synth.setMasterVol(volume);
+    synth.setProgram(0, program)
     await Promise.all([
         displayNote(notes, beatDuration, setPlayingNote), 
         playSound(notes, beatDuration)

@@ -1,10 +1,12 @@
 import { defineConfig } from 'vite'
 import nearleyc from '../plugins/nearleyc'
 import path from 'path'
+import { nodePolyfills } from 'vite-plugin-node-polyfills'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
+    nodePolyfills(),
     nearleyc(),
   ],
   base: './',
