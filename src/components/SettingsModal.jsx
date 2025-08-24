@@ -90,7 +90,9 @@ export default function SettingsModal({
   volume,
   onVolumeChange,
   omitInitialRest,
-  onOmitInitialRestChange
+  onOmitInitialRestChange,
+  sampleRate,
+  onSampleRateChange,
 }) {
   if (!isOpen) return null;
 
@@ -137,6 +139,16 @@ export default function SettingsModal({
               type="checkbox"
               checked={omitInitialRest}
               onChange={onOmitInitialRestChange}
+            />
+          </div>
+
+          <div className="settings-group">
+            <label htmlFor="sample-rate">Export Sample Rate:</label>
+            <input
+              id="sample-rate"
+              type="number"
+              value={sampleRate}
+              onChange={onSampleRateChange}
             />
           </div>
         </div>

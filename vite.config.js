@@ -17,6 +17,11 @@ export default defineConfig({
       condition: (file) => file.includes('grammar.ne'),
     })
   ],
+  worker: {
+    plugins: [
+      nearleyc(),
+    ]
+  },
   base: './',
   resolve: {
     alias: {

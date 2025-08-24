@@ -3,7 +3,7 @@ import './App.css'
 import { RenderedFile }from './renderer/RenderedFile'
 import { playMusic, stopMusic } from './player/player'
 import { exportMusic } from './player/midi'
-import { synthMusic } from './player/synth'
+import { synthMusicInWorker } from './player/synth-worker-host'
 import SettingsModal from './components/SettingsModal'
 import ExamplesPanel from './components/ExamplesPanel'
 import { useTheme } from './components/ThemeContext'
@@ -18,6 +18,7 @@ function App() {
   const [playingNote, setPlayingNote] = useState(-1)
   const { theme, toggleTheme } = useTheme()
   const [omitInitialRest, setOmitInitialRest] = useState(true)
+  const [sampleRate, setSampleRate] = useState(44100)
 
   async function togglePlayMusic(startIndex) {
     setShowExamples(false)
@@ -71,7 +72,7 @@ function App() {
   }
 
   async function exportAudio() {
-    const blob = await synthMusic(source, instrument, volume / 100, 44100, omitInitialRest ? -1 : 0);
+    const blob = await synthMusicInWorker(source, instrument, volume / 100, sampleRate, omitInitialRest ? -1 : 0);
     if (!blob) {
       alert('Failed to export music');
       return;
@@ -157,6 +158,8 @@ function App() {
             onVolumeChange={(e) => setVolume(e.target.value)}
             omitInitialRest={omitInitialRest}
             onOmitInitialRestChange={(e) => setOmitInitialRest(e.target.checked)}
+            sampleRate={sampleRate}
+            onSampleRateChange={(e) => setSampleRate(e.target.value)}
           />
         </h2>
         <div className="render-area">
