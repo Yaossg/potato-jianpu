@@ -26,3 +26,7 @@ dist-ssr
 # Cloudflare
 functions
 .wrangler
+
+# Vercel
+api-impl
+.vercel

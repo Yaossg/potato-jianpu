@@ -3,6 +3,7 @@ import { exportMusic } from '../src/player/midi.ts'
 import { synthMusic } from '../src/player/synth.ts'
 import ReactDOMServer from 'react-dom/server'
 
+// Cloudflare Serverless
 export async function onRequest(context) {
   const { request } = context;
   if (request.method === 'POST') {
@@ -47,4 +48,9 @@ export async function onRequest(context) {
     }
   }
   return new Response(`Method Not Allowed: ${request.method}`, { status: 405 });
+}
+
+// Vercel Serverless
+export async function POST(request) {
+  return onRequest({ request })
 }

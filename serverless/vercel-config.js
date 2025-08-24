@@ -11,12 +11,12 @@ export default defineConfig({
   ],
   base: './',
   build: {
-    outDir: 'functions',
+    outDir: 'api-impl',
     copyPublicDir: false,
     lib: {
-        entry: './functions_src/server.js',
+        entry: './serverless/server.js',
         formats: ['es'],
-        fileName: 'api'
+        fileName: 'index'
     }
   },
   resolve: {

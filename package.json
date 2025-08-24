@@ -1,13 +1,14 @@
 {
-  "name": "modern-jianpu",
+  "name": "modern-jianpu-markup",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && vite --config ./functions_src/config.js build",
+    "build": "vite build && vite --config ./serverless/cloudflare-config.js build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "vercel-build": "vite build && vite --config ./serverless/vercel-config.js build"
   },
   "dependencies": {
     "@descript/web-audio-js": "0.15.3-patched.6",
