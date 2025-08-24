@@ -23,7 +23,7 @@ function ignore(types, lexer) {
 }
 
 const lexer = ignore(['ws', 'comment'], moo.compile({
-  identifier: {match: /[A-Za-z_][A-Za-z_0-9]*/, type: moo.keywords({
+  identifier: {match: /[A-Za-z_]+/, type: moo.keywords({
     flat:     'b',
     flatflat: 'bb',
     drum:     'X',
