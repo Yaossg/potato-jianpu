@@ -82,6 +82,8 @@ const GMInstruments = [
       {name:"Applause"},                {name:"Gunshot"},
     ];
 
+import { playMusic } from '../player/player'
+
 export default function SettingsModal({
   isOpen,
   onClose,
@@ -130,6 +132,15 @@ export default function SettingsModal({
               value={volume}
               onChange={onVolumeChange}
             />
+          </div>
+
+          <div className="settings-group">
+            <label htmlFor="audition-button">Audition:</label>
+            <button className="audition-button" 
+              onClick={() => playMusic("12345671'", instrument, volume / 100, 0, () => {})}
+            >
+              🔊
+            </button>
           </div>
 
           <div className="settings-group">
