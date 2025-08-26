@@ -167,13 +167,14 @@ export class MIDIFile {
 
 
 export function exportMusic(source: string, program: number, startIndex: number): Blob | null {
-    const melody = parseMelody(source);
+    const melody = parseMelody(source, program);
     if (melody === null) {
         return null;
     }
     const notes = skipInitialNotes(melody.notes, startIndex);
     const midiFile = new MIDIFile(melody.tempo, melody.timeSignature);
-    const track = new MIDITrack(0, program);   
+    const drum = program >= 128;
+    const track = new MIDITrack(drum ? 9 : 0, program);
     let delta = 0;
     for (const note of notes) {
         if (note.chord === 'rest') {

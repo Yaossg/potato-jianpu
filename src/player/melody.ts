@@ -15,14 +15,14 @@ export interface Melody {
 
 const C_MAJOR_NOTE_MAP = [60, 62, 64, 65, 67, 69, 71];
 
-function parseNote(noteObj: ParsedNote, noteMap: number[]): MelodyNote {
+function parseNote(noteObj: ParsedNote, noteMap: number[], program: number): MelodyNote {
     const { type, chord, indexOfScore } = noteObj;
     const duration = noteObj.duration;
     switch (type) {
         case 'rest':
             return { chord: 'rest', duration, indexOfScore };
         case 'drum':
-            return { chord: [60], duration, indexOfScore };
+            return { chord: [program < 128 ? 60 : program - 128 + 35], duration, indexOfScore };
         case 'pitch':
             const midiNotes = chord!.map(pitchNote => {
                 const { note = 1, octave = 0 } = pitchNote;
@@ -34,7 +34,7 @@ function parseNote(noteObj: ParsedNote, noteMap: number[]): MelodyNote {
     }
 }
 
-export function parseMelody(source: string): Melody | null {
+export function parseMelody(source: string, program: number): Melody | null {
     const file = parse(source);
     if (file instanceof ParseError) {
         console.log("Error parsing score", file);
@@ -54,8 +54,8 @@ export function parseMelody(source: string): Melody | null {
                     noteMap[noteIndex] = NOTE_MAP[noteIndex] + pitchNote.accidental;
                 }
             }
-            
-            const melodyNote = parseNote(noteObj, noteMap);
+
+            const melodyNote = parseNote(noteObj, noteMap, program);
             if (noteObj.tie) {
                 // use previous note directly for the sake of simplicity
                 // so that possible accidental tie is properly handled

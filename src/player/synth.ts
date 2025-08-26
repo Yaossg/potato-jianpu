@@ -11,7 +11,7 @@ function totalTimeOf(notes: MelodyNote[], beatDuration: number) {
     return totalTime;
 }
 
-function recordSound(synth: WebAudioTinySynth, notes: MelodyNote[], beatDuration: number) {
+function recordSound(synth: WebAudioTinySynth, notes: MelodyNote[], beatDuration: number, drum: boolean) {
     const audioContext = synth.getAudioContext();
     let currentTime = audioContext.currentTime;
     for (let i = 0; i < notes.length; i++) {
@@ -19,8 +19,8 @@ function recordSound(synth: WebAudioTinySynth, notes: MelodyNote[], beatDuration
         const actualDuration = duration * beatDuration;
         if (chord !== 'rest') {
             for (const midiNote of chord) {
-                synth.noteOn(0, midiNote, DEFAULT_VELOCITY, currentTime);
-                synth.noteOff(0, midiNote, currentTime + actualDuration);
+                synth.noteOn(drum ? 9 : 0, midiNote, DEFAULT_VELOCITY, currentTime);
+                synth.noteOff(drum ? 9 : 0, midiNote, currentTime + actualDuration);
             }
         }
         currentTime += actualDuration;
@@ -28,7 +28,7 @@ function recordSound(synth: WebAudioTinySynth, notes: MelodyNote[], beatDuration
 }
 
 export async function synthMusic(source: string, program: number, volume: number, sampleRate: number, startIndex: number): Promise<Blob | null> {
-    const melody = parseMelody(source);
+    const melody = parseMelody(source, program);
     if (melody === null) {
         return null;
     }
@@ -48,7 +48,7 @@ export async function synthMusic(source: string, program: number, volume: number
     synth.reset();
     synth.setMasterVol(volume);
     synth.setProgram(0, program);
-    recordSound(synth, notes, beatDuration);
+    recordSound(synth, notes, beatDuration, program >= 128);
     context.processTo(totalTimeOf(notes, beatDuration));
     const audioData = context.exportAsAudioData();
     // @ts-ignore

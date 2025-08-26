@@ -18,7 +18,7 @@ async function displayNote(notes: MelodyNote[], beatDuration: number, setPlaying
     }
 }
 
-async function playSound(notes: MelodyNote[], beatDuration: number) {
+async function playSound(notes: MelodyNote[], beatDuration: number, drum: boolean) {
     const audioContext = synth.getAudioContext();
     let currentTime = audioContext.currentTime;
     for (let i = 0; i < notes.length; i++) {
@@ -26,8 +26,8 @@ async function playSound(notes: MelodyNote[], beatDuration: number) {
         const actualDuration = duration * beatDuration;
         if (chord !== 'rest') {
             for (const midiNote of chord) {
-                synth.noteOn(0, midiNote, DEFAULT_VELOCITY, currentTime);
-                synth.noteOff(0, midiNote, currentTime + actualDuration);
+                synth.noteOn(drum ? 9 : 0, midiNote, DEFAULT_VELOCITY, currentTime);
+                synth.noteOff(drum ? 9 : 0, midiNote, currentTime + actualDuration);
             }
         }
         currentTime += actualDuration;
@@ -41,7 +41,7 @@ async function playSound(notes: MelodyNote[], beatDuration: number) {
 }
 
 export async function playMusic(source: string, program: number, volume: number, startIndex: number, setPlayingNote: (note: number) => void) {
-    const melody = parseMelody(source);
+    const melody = parseMelody(source, program);
     if (melody === null) {
         return;
     }
@@ -53,7 +53,7 @@ export async function playMusic(source: string, program: number, volume: number,
     synth.setProgram(0, program)
     await Promise.all([
         displayNote(notes, beatDuration, setPlayingNote), 
-        playSound(notes, beatDuration)
+        playSound(notes, beatDuration, program >= 128)
     ]);
 }
 

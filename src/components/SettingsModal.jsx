@@ -1,4 +1,3 @@
-import './SettingsModal.css';
 const GMInstruments = [
 // 1-8 : Piano
       {name:"Acoustic Grand Piano"},    {name:"Bright Acoustic Piano"},
@@ -80,9 +79,24 @@ const GMInstruments = [
       {name:"Seashore"},                {name:"Bird Tweet"},
       {name:"Telephone Ring"},          {name:"Helicopter"},
       {name:"Applause"},                {name:"Gunshot"},
+// P35
+      {name:"Acoustic Bass Drum"},  {name:"Bass Drum 1"},      {name:"Side Stick"},     {name:"Acoustic Snare"},
+      {name:"Hand Clap"},           {name:"Electric Snare"},   {name:"Low Floor Tom"},  {name:"Closed Hi Hat"},
+      {name:"High Floor Tom"},      {name:"Pedal Hi-Hat"},     {name:"Low Tom"},        {name:"Open Hi-Hat"},
+      {name:"Low-Mid Tom"},         {name:"Hi-Mid Tom"},       {name:"Crash Cymbal 1"}, {name:"High Tom"},
+      {name:"Ride Cymbal 1"},       {name:"Chinese Cymbal"},   {name:"Ride Bell"},      {name:"Tambourine"},
+      {name:"Splash Cymbal"},       {name:"Cowbell"},          {name:"Crash Cymbal 2"}, {name:"Vibraslap"},
+      {name:"Ride Cymbal 2"},       {name:"Hi Bongo"},         {name:"Low Bongo"},      {name:"Mute Hi Conga"},
+      {name:"Open Hi Conga"},       {name:"Low Conga"},        {name:"High Timbale"},   {name:"Low Timbale"},
+      {name:"High Agogo"},          {name:"Low Agogo"},        {name:"Cabasa"},         {name:"Maracas"},
+      {name:"Short Whistle"},       {name:"Long Whistle"},     {name:"Short Guiro"},    {name:"Long Guiro"},
+      {name:"Claves"},              {name:"Hi Wood Block"},    {name:"Low Wood Block"}, {name:"Mute Cuica"},
+      {name:"Open Cuica"},          {name:"Mute Triangle"},    {name:"Open Triangle"},
     ];
 
-import { playMusic } from '../player/player'
+import { useState } from 'react'
+import { playMusic, stopMusic } from '../player/player'
+import './SettingsModal.css';
 
 export default function SettingsModal({
   isOpen,
@@ -97,6 +111,19 @@ export default function SettingsModal({
   onSampleRateChange,
 }) {
   if (!isOpen) return null;
+  
+  const [isPlaying, setIsPlaying] = useState(false)
+
+  async function handlePlay() {
+    setIsPlaying(true)
+    const drum = instrument >= 128;
+    await playMusic(drum ? "X X X" : "12345671'", instrument, volume / 100, 0, () => {})
+    setIsPlaying(false)
+  }
+  function handleStop() {
+    stopMusic()
+    setIsPlaying(false)
+  }
 
   return (
     <div className="settings-modal-overlay">
@@ -115,7 +142,7 @@ export default function SettingsModal({
             >
               {GMInstruments.map(inst => inst.name).map((inst, index) => (
                 <option key={index} value={index}>
-                  {inst}
+                  ({index < 128 ? index : `P${index - 128 + 35}`}) {inst}
                 </option>
               ))}
             </select>
@@ -136,11 +163,23 @@ export default function SettingsModal({
 
           <div className="settings-group">
             <label htmlFor="audition-button">Audition:</label>
-            <button className="audition-button" 
-              onClick={() => playMusic("12345671'", instrument, volume / 100, 0, () => {})}
-            >
-              🔊
-            </button>
+            {isPlaying ? (
+              <button 
+                onClick={handleStop} 
+                className="audition-button stop-button"
+                title="Stop Music"
+              >
+                ⏹
+              </button>
+            ) : (
+              <button 
+                onClick={() => handlePlay()} 
+                className="audition-button play-button"
+                title="Play Music"
+              >
+                ▶
+              </button>
+            )}
           </div>
 
           <div className="settings-group">
