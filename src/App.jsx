@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import './App.css'
 import { RenderedFile }from './renderer/RenderedFile'
+import { renderSvg, renderPng } from './renderer/renderer'
 import { playMusic, stopMusic } from './player/player'
 import { exportMusic } from './player/midi'
 import { synthMusicInWorker } from './player/synth-worker-host'
@@ -35,24 +36,27 @@ function App() {
     setPlayingNote(-1)
   }
 
-  function exportSVG() {
-    const renderArea = document.querySelector('.render-area svg')
-    if (!renderArea) {
-      alert('No score to export')
-      return
-    }
+  function downloadBlob(blob, ext) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `jianpu-score.${ext}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
 
-    const svgClone = renderArea.cloneNode(true)
-    const blob = new Blob([`<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n${svgClone.outerHTML}`], { type: 'image/svg+xml' })
-    const url = URL.createObjectURL(blob)
-    
-    const link = document.createElement('a')
-    link.href = url
-    link.download = 'jianpu-score.svg'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
+  function exportSVG() {
+    const svg = renderSvg(source, 1000);
+    const blob = new Blob([svg], { type: 'image/svg+xml' });
+    downloadBlob(blob, 'svg');
+  }
+
+  async function exportPNG() {
+    const png = await renderPng(source, 1000, theme);
+    const blob = new Blob([png], { type: 'image/png' });
+    downloadBlob(blob, 'png');
   }
 
   function exportMIDI() {
@@ -61,30 +65,16 @@ function App() {
       alert('Failed to export music');
       return;
     }
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'jianpu-score.mid';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(midiURI);
+    downloadBlob(blob, 'mid');
   }
 
-  async function exportAudio() {
+  async function exportWAV() {
     const blob = await synthMusicInWorker(source, instrument, volume / 100, sampleRate, omitInitialRest ? -1 : 0);
     if (!blob) {
       alert('Failed to export music');
       return;
     }
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'jianpu-score.wav';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(audioURI);
+    downloadBlob(blob, 'wav');
   }
 
   return (
@@ -111,11 +101,11 @@ function App() {
               🧾
             </button>
             <button 
-              onClick={() => setShowSettings(!showSettings)} 
-              className="settings-button"
-              title="Audio Settings"
+              onClick={exportPNG}
+              className="export-button"
+              title="Export PNG"
             >
-              ⚙️
+              🖼️
             </button>
             <button
               onClick={exportMIDI}
@@ -125,11 +115,18 @@ function App() {
               💾
             </button>
             <button
-              onClick={exportAudio}
+              onClick={exportWAV}
               className="export-button"
-              title="Export Audio"
+              title="Export WAV"
             >
               🔊
+            </button>
+            <button 
+              onClick={() => setShowSettings(!showSettings)} 
+              className="settings-button"
+              title="Audio Settings"
+            >
+              ⚙️
             </button>
             {isPlaying ? (
               <button 

@@ -11,10 +11,10 @@ interface RenderedScoreProp {
   playingNote?: number
 }
 
-export function RenderedFile({ source, pageWidth, onNoteClick, playingNote }: RenderedScoreProp): JSX.Element {
+export function renderFile({ source, pageWidth, onNoteClick, playingNote }: RenderedScoreProp): JSX.Element & React.SVGProps<SVGSVGElement> | ParseError {
   const file = parse(source);
   if (file instanceof ParseError) {
-    return <div className="error">{file.digest}</div>;
+    return file;
   }
   const { header, score } = file;
   const { timeSignature } = header;
@@ -29,4 +29,13 @@ export function RenderedFile({ source, pageWidth, onNoteClick, playingNote }: Re
       {renderedScore}
     </g>
   </svg>;
+}
+
+export function RenderedFile(prop: RenderedScoreProp): JSX.Element {
+  const rendered = renderFile(prop);
+  if (rendered instanceof ParseError) {
+    return <div className="error">{rendered.digest}</div>;
+  } else {
+    return rendered;
+  }
 }

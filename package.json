@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@descript/web-audio-js": "0.15.3-patched.6",
+    "canvg": "^4.0.3",
     "moo": "^0.5.2",
     "nearley": "^2.20.1",
     "react": "^19.1.0",
