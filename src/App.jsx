@@ -4,7 +4,7 @@ import { RenderedFile }from './renderer/RenderedFile'
 import { renderSvg, renderPng } from './renderer/renderer'
 import { playMusic, stopMusic } from './player/player'
 import { exportMusic } from './player/midi'
-import { synthMusicInWorker } from './player/synth-worker-host'
+// import { synthMusicInWorker } from './player/synth-worker-host'
 import SettingsModal from './components/SettingsModal'
 import ExamplesPanel from './components/ExamplesPanel'
 import { useTheme } from './components/ThemeContext'
@@ -68,14 +68,14 @@ function App() {
     downloadBlob(blob, 'mid');
   }
 
-  async function exportWAV() {
-    const blob = await synthMusicInWorker(source, instrument, volume / 100, sampleRate, omitInitialRest ? -1 : 0);
-    if (!blob) {
-      alert('Failed to export music');
-      return;
-    }
-    downloadBlob(blob, 'wav');
-  }
+  // async function exportWAV() {
+  //   const blob = await synthMusicInWorker(source, instrument, volume / 100, sampleRate, omitInitialRest ? -1 : 0);
+  //   if (!blob) {
+  //     alert('Failed to export music');
+  //     return;
+  //   }
+  //   downloadBlob(blob, 'wav');
+  // }
 
   return (
     <div className="app-container">
@@ -114,13 +114,13 @@ function App() {
             >
               💾
             </button>
-            <button
+            {/* <button
               onClick={exportWAV}
               className="export-button"
               title="Export WAV"
             >
               🔊
-            </button>
+            </button> */}
             <button 
               onClick={() => setShowSettings(!showSettings)} 
               className="settings-button"

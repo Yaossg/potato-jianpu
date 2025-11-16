@@ -1,10 +1,8 @@
 import { JSX } from 'react';
 import { KeySignature, TimeSignature, ParsedHeader } from '@/parser';
 
-const keyMap = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
-
-function renderKeySignature(keySignature: KeySignature, x: number, y: number): JSX.Element {
-  const key = keyMap[keySignature];
+function renderKeySignature(keySignatureText: string, x: number, y: number): JSX.Element {
+  const key = keySignatureText.replace('#', '♯').replace('b', '♭');
   return <g className="score-key" transform={`translate(${x}, ${y})`}>
     <text x={0} y={0} className="score-note">1</text>
     <text x={16} y={0}>=</text>
@@ -41,7 +39,10 @@ const svgStyles = `
   .score-metadata { fill: currentColor; font-size: 20px; font-family: Arial, sans-serif; }
 `
 
-export function renderHeader(pageWidth: number, { title, subtitle, composer, tempo, keySignature, timeSignature }: ParsedHeader): JSX.Element {
+export function renderHeader(pageWidth: number, { title, subtitle, composer, tempo, keySignature, keySignatureText, timeSignature, hidden }: ParsedHeader): JSX.Element {
+  if (hidden) {
+    return <svg width={pageWidth} height={0} xmlns="http://www.w3.org/2000/svg"></svg>;
+  }
   const titleY = title ? 40 : 0;
   const subtitleY = subtitle ? (titleY + 32) : titleY;
   const metadataY = subtitleY + 40;
@@ -56,9 +57,9 @@ export function renderHeader(pageWidth: number, { title, subtitle, composer, tem
     {subtitle && <text x={pageWidth / 2} y={subtitleY} className="score-subtitle" textAnchor="middle">{subtitle}</text>}
     <g className="score-metadata" transform={`translate(0, ${metadataY})`}>
       <g className="score-details">
-        {renderKeySignature(keySignature, 10, 0)}
-        {renderTimeSignature(timeSignature, 72 + 16 * keyMap[keySignature].length, 0)}
-        {renderTempo(timeSignature, tempo, 116 + 16 * keyMap[keySignature].length, 0)}
+        {renderKeySignature(keySignatureText, 10, 0)}
+        {renderTimeSignature(timeSignature, 72 + 16 * keySignatureText.length, 0)}
+        {renderTempo(timeSignature, tempo, 116 + 16 * keySignatureText.length, 0)}
       </g>
       {composer && <text x={pageWidth - 50} y={0} className="score-composer" textAnchor="end">{composer}</text>}
     </g>

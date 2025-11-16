@@ -1,5 +1,5 @@
 import * as Grammar from "./grammar";
-import { ParseError, Accidental, NoteType, PitchNote } from "./grammar";
+import { ParseError, NoteType, PitchNote } from "./grammar";
 
 export class TimeSignature {
     beatsPerMeasure: 2 | 3 | 4 | 6 | 9 | 12;
@@ -88,12 +88,14 @@ export interface ParsedHeader {
     subtitle: string,
     composer: string,
     keySignature: KeySignature,
+    keySignatureText: string,
     timeSignature: TimeSignature,
-    tempo: number
+    tempo: number,
+    hidden: string,
 }
 
 function parseHeader(header: Grammar.Header): ParsedHeader | ParseError {
-    const { title = '', subtitle = '', composer = '', tempo = '120', key = 'C', time = '4/4' } = header;
+    const { title = '', subtitle = '', composer = '', tempo = '120', key = 'C', time = '4/4', hidden = '' } = header;
     const tempoNumber = Number(tempo);
     if (isNaN(tempoNumber) || tempoNumber <= 0) {
         return new ParseError("Error: invalid tempo", tempo);
@@ -106,7 +108,7 @@ function parseHeader(header: Grammar.Header): ParsedHeader | ParseError {
     if (keySignature === null) {
         return new ParseError("Error: invalid key signature", key);
     }
-    return { title, subtitle, composer, keySignature, timeSignature, tempo: tempoNumber };
+    return { title, subtitle, composer, keySignature, keySignatureText: key, timeSignature, tempo: tempoNumber, hidden };
 }
 
 function durationOf({ dashes = 0, halves = 0, dots = 0 }: Grammar.DurableNote): number {
