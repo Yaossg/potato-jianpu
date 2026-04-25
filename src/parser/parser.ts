@@ -19,6 +19,10 @@ type DraftNote =
   | { kind: "rest" }
   | { kind: "drum" };
 
+type ResolvedTieTarget =
+  | { kind: "pitch"; pitches: string[] }
+  | { kind: "drum" };
+
 function mergeRange(start: SourceRange, end: SourceRange): SourceRange {
   return { start: start.start, end: end.end };
 }
@@ -338,10 +342,60 @@ class Parser {
   }
 
   private validateTies(lines: ScoreLine[]) {
-    const notes = lines.flatMap((line) => line.measures).flatMap((measure) => measure.notes);
-    if (notes[0]?.tie) {
-      this.error("First note cannot be tied.", notes[0].range);
+    let previous: ResolvedTieTarget | undefined;
+    let hasPreviousNote = false;
+
+    for (const line of lines) {
+      for (const measure of line.measures) {
+        const accidentals = new Map<number, Accidental>();
+        for (const note of measure.notes) {
+          const current = this.resolveTieTarget(note, accidentals);
+          if (note.tie) {
+            if (!hasPreviousNote) {
+              this.error("First note cannot be tied.", note.range);
+            } else if (!previous) {
+              this.error("Tied note must follow a sounding note.", note.range);
+            } else if (!current || !this.sameTieTarget(previous, current)) {
+              this.error("Tied note must match the previous sounding note.", note.range);
+            }
+          }
+          previous = current;
+          hasPreviousNote = true;
+        }
+      }
     }
+  }
+
+  private resolveTieTarget(note: Note, accidentals: Map<number, Accidental>): ResolvedTieTarget | undefined {
+    if (note.kind === "rest") {
+      return undefined;
+    }
+    if (note.kind === "drum") {
+      return { kind: "drum" };
+    }
+
+    const pitches = note.chord.map((pitch) => {
+      if (pitch.accidental !== undefined) {
+        accidentals.set(pitch.note, pitch.accidental);
+      }
+      const accidental = accidentals.get(pitch.note) ?? 0;
+      return `${pitch.note}:${pitch.octave}:${accidental}`;
+    });
+    pitches.sort();
+    return { kind: "pitch", pitches };
+  }
+
+  private sameTieTarget(previous: ResolvedTieTarget, current: ResolvedTieTarget): boolean {
+    if (previous.kind !== current.kind) {
+      return false;
+    }
+    if (previous.kind === "drum") {
+      return true;
+    }
+    if (current.kind !== "pitch") {
+      return false;
+    }
+    return previous.pitches.length === current.pitches.length && previous.pitches.every((pitch, index) => pitch === current.pitches[index]);
   }
 
   private synchronizeLine() {

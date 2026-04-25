@@ -21,6 +21,8 @@ Completed initial slices:
 - Example score set with parser/SVG/PNG/MIDI coverage.
 - Backend PNG export through the CLI.
 - Renderer layout pass closer to the legacy spacing/chord/tie model.
+- Tie validation for mismatched pitches, rests, drums, and measure-local
+  accidental persistence.
 
 Current test status:
 

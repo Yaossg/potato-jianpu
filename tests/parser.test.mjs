@@ -56,3 +56,15 @@ test("rejects a tie on the first note", () => {
   assert.match(result.diagnostics.map((d) => d.message).join("\n"), /First note cannot be tied/);
 });
 
+test("validates tied note targets", () => {
+  const samePitch = parse("#4 ~4 5 | X ~X");
+  assert.equal(samePitch.ok, true);
+
+  const differentPitch = parse("1 ~2");
+  assert.equal(differentPitch.ok, false);
+  assert.match(differentPitch.diagnostics.map((d) => d.message).join("\n"), /Tied note must match/);
+
+  const afterRest = parse("1 0 ~1");
+  assert.equal(afterRest.ok, false);
+  assert.match(afterRest.diagnostics.map((d) => d.message).join("\n"), /Tied note must follow/);
+});
