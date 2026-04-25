@@ -38,8 +38,9 @@ test("distinguishes regular and final bars", () => {
   const result = parse("1 | 2 |");
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value);
-  assert.match(svg, />&#119047;<\/text>/);
-  assert.match(svg, />&#119049;<\/text>/);
+  assert.match(svg, /class="bar-thin"/);
+  assert.match(svg, /class="bar-final"/);
+  assert.doesNotMatch(svg, /&#119047;|&#119049;/);
 });
 
 test("marks active notes for preview highlighting", () => {

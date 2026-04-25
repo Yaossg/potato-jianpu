@@ -288,6 +288,18 @@ function renderTie(startX: number, endX: number, y: number, chordHeightValue: nu
   return `<path class="tie" d="M${startX},${tieY} Q${midX},${tieY - DIMENSIONS.tieHeight} ${endX},${tieY} Q${midX},${tieY - DIMENSIONS.tieCurveHeight} ${startX},${tieY} Z"/>`;
 }
 
+function renderBar(x: number, baselineY: number, final: boolean): string {
+  const y1 = baselineY - DIMENSIONS.baseNoteHeight - 4;
+  const y2 = baselineY + 4;
+  if (final) {
+    return [
+      `<line class="bar-thin" x1="${x - 5}" y1="${y1}" x2="${x - 5}" y2="${y2}"/>`,
+      `<line class="bar-final" x1="${x + 2}" y1="${y1}" x2="${x + 2}" y2="${y2}"/>`,
+    ].join("");
+  }
+  return `<line class="bar-thin" x1="${x}" y1="${y1}" x2="${x}" y2="${y2}"/>`;
+}
+
 function renderHeader(document: Document, width: number): { svg: string; height: number } {
   const { header } = document;
   if (header.hidden) {
@@ -342,9 +354,12 @@ function renderLine(layout: LineLayout, lineY: number, allNotes: Note[], documen
         full: fullness[noteIndex] ?? false,
       });
     }
-    const bar = measureLayout.measure === finalMeasure ? "&#119049;" : "&#119047;";
     parts.push(
-      `<text class="bar" x="${xOffset + measureLayout.width - DIMENSIONS.leftPadding + 12}" y="${lineY + layout.maxPaddingUp + DIMENSIONS.noteBottomPadding}">${bar}</text>`,
+      renderBar(
+        xOffset + measureLayout.width - DIMENSIONS.leftPadding + 12,
+        lineY + layout.maxPaddingUp + DIMENSIONS.noteBottomPadding,
+        measureLayout.measure === finalMeasure,
+      ),
     );
   }
 
@@ -407,8 +422,9 @@ export function renderSvg(document: Document, options: RenderOptions = {}): stri
 .metadata { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 20px; font-weight: 400; }
 .note { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 24px; font-weight: 700; }
 .accidental { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-weight: 700; text-anchor: middle; }
-.bar { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 48px; font-weight: 700; text-anchor: middle; }
 .dot { fill: currentColor; }
+.bar-thin { stroke: currentColor; stroke-width: 2.5; stroke-linecap: butt; }
+.bar-final { stroke: currentColor; stroke-width: 5; stroke-linecap: butt; }
 .underline { stroke: currentColor; stroke-width: 2.5; }
 .dash { stroke: currentColor; stroke-width: 3; }
 .tie { fill: currentColor; stroke: currentColor; stroke-width: 1; }
