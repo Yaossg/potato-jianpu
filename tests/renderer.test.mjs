@@ -25,3 +25,11 @@ test("renders chord notes as stacked text instead of slash-joined text", () => {
   assert.match(svg, />3</);
   assert.match(svg, />5</);
 });
+
+test("shortens underline at beat boundaries", () => {
+  const result = parse("1//1//1//1//");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  assert.match(svg, /class="underline" x1="8" y1="109" x2="32" y2="109"/);
+  assert.match(svg, /class="underline" x1="80" y1="109" x2="100" y2="109"/);
+});

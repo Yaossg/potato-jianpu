@@ -1,4 +1,4 @@
-import type { Document, Measure, Note, Pitch, PitchNote, ScoreLine } from "../core/index.js";
+import { actualNotePerBeat, type Document, type Measure, type Note, type Pitch, type PitchNote, type ScoreLine } from "../core/index.js";
 
 export interface RenderOptions {
   pageWidth?: number;
@@ -247,12 +247,12 @@ function renderPitchNote(note: PitchNote, x: number, y: number): string {
   return parts.join("");
 }
 
-function renderDuration(note: Note, x: number, y: number): string {
+function renderDuration(note: Note, x: number, y: number, full: boolean): string {
   const parts: string[] = [];
   const maxOffset = note.kind === "pitch" ? maxAccidentalOffset(note.chord) : 0;
   for (let i = 0; i < note.duration.halves; i += 1) {
     const underlineY = y + DIMENSIONS.octaveDotBelowOffset + i * DIMENSIONS.underlineSpacing;
-    const x2 = DIMENSIONS.underlineXEndOffset + note.duration.dots * DIMENSIONS.dotSpacing + maxOffset;
+    const x2 = (full ? 10 : DIMENSIONS.underlineXEndOffset + note.duration.dots * DIMENSIONS.dotSpacing) + maxOffset;
     parts.push(
       `<line class="underline" x1="${x + DIMENSIONS.underlineXStart}" y1="${underlineY}" x2="${x + x2}" y2="${underlineY}"/>`,
     );
@@ -312,16 +312,27 @@ function renderHeader(document: Document, width: number): { svg: string; height:
   return { svg: parts.join("\n"), height };
 }
 
-function renderLine(layout: LineLayout, lineY: number, allNotes: Note[]): string {
+function measureFullness(measure: Measure, unit: number): boolean[] {
+  let duration = 0;
+  return measure.notes.map((note) => {
+    duration += note.duration.value;
+    return Math.abs(duration % unit) < 1e-9;
+  });
+}
+
+function renderLine(layout: LineLayout, lineY: number, allNotes: Note[], document: Document): string {
   const parts: string[] = [];
-  const lineEntries: Array<{ note: Note; x: number; y: number }> = [];
+  const lineEntries: Array<{ note: Note; x: number; y: number; full: boolean }> = [];
+  const unit = actualNotePerBeat(document.header.timeSignature);
   for (const [measureIndex, measureLayout] of layout.measures.entries()) {
     const xOffset = measureXOffset(layout.measures, measureIndex);
+    const fullness = measureFullness(measureLayout.measure, unit);
     for (const [noteIndex, note] of measureLayout.measure.notes.entries()) {
       lineEntries.push({
         note,
         x: xOffset + measureLayout.notePositions[noteIndex]! + DIMENSIONS.leftPadding,
         y: lineY + layout.maxPaddingUp,
+        full: fullness[noteIndex] ?? false,
       });
     }
     parts.push(
@@ -349,7 +360,7 @@ function renderLine(layout: LineLayout, lineY: number, allNotes: Note[]): string
     } else {
       parts.push(renderRestOrDrum(entry.note, entry.x, entry.y));
     }
-    parts.push(renderDuration(entry.note, entry.x, entry.y));
+    parts.push(renderDuration(entry.note, entry.x, entry.y, entry.full));
   }
 
   return parts.join("\n");
@@ -361,7 +372,7 @@ function renderScore(document: Document, yStart: number): { svg: string; height:
   let y = yStart;
   const parts: string[] = [];
   for (const layout of layouts) {
-    parts.push(renderLine(layout, y, allNotes));
+    parts.push(renderLine(layout, y, allNotes, document));
     y += layout.height + DIMENSIONS.lineSpacing;
   }
   return {
