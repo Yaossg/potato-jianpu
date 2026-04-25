@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
-import { exportMidiBytes, parse } from "../index.js";
+import { useMemo, useRef, useState } from "react";
+import { compileMelody, exportMidiBytes, parse } from "../index.js";
 import { renderSvg } from "../renderer/index.js";
+import { PreviewAudioPlayer } from "./audio.js";
 import scale from "../../examples/scale.jp?raw";
 import twinkle from "../../examples/twinkle.jp?raw";
 import odeToJoy from "../../examples/ode-to-joy.jp?raw";
@@ -33,6 +34,8 @@ function downloadBytes(data: BlobPart, filename: string, type: string) {
 
 export function App() {
   const [source, setSource] = useState(twinkle);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const playerRef = useRef<PreviewAudioPlayer | null>(null);
   const parsed = useMemo(() => parse(source), [source]);
   const svg = useMemo(() => (parsed.ok ? renderSvg(parsed.value, { pageWidth: 1000 }) : null), [parsed]);
 
@@ -50,6 +53,21 @@ export function App() {
     }
   }
 
+  async function play() {
+    if (!parsed.ok) {
+      return;
+    }
+    const player = playerRef.current ?? new PreviewAudioPlayer();
+    playerRef.current = player;
+    setIsPlaying(true);
+    await player.play(compileMelody(parsed.value), () => setIsPlaying(false));
+  }
+
+  function stop() {
+    playerRef.current?.stop();
+    setIsPlaying(false);
+  }
+
   return (
     <main className="app-shell">
       <header className="topbar">
@@ -58,6 +76,15 @@ export function App() {
           <p>Browser preview for the rewritten parser, SVG renderer, and MIDI exporter.</p>
         </div>
         <div className="actions">
+          {isPlaying ? (
+            <button type="button" onClick={stop}>
+              Stop
+            </button>
+          ) : (
+            <button type="button" onClick={play} disabled={!parsed.ok}>
+              Play
+            </button>
+          )}
           <button type="button" onClick={exportSvg} disabled={!svg}>
             Export SVG
           </button>
