@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { readFile, writeFile } from "node:fs/promises";
+import { renderPngBytes } from "../backend/index.js";
 import { parse } from "../parser/index.js";
 import { exportMidiBytes } from "../player/index.js";
 import { renderSvg } from "../renderer/index.js";
@@ -10,9 +11,10 @@ function usage(): string {
     "  jianpu validate <file>",
     "  jianpu parse <file> [--json]",
     "  jianpu export-svg <file> -o <output.svg>",
+    "  jianpu export-png <file> -o <output.png>",
     "  jianpu export-midi <file> -o <output.mid> [--program <number>]",
     "",
-    "Current rewrite status: parse/validate/export-svg/export-midi are implemented.",
+    "Current rewrite status: parse/validate/export-svg/export-png/export-midi are implemented.",
   ].join("\n");
 }
 
@@ -34,7 +36,7 @@ async function main(argv: string[]): Promise<number> {
     console.log(usage());
     return 0;
   }
-  if (!file || !["validate", "parse", "export-svg", "export-midi"].includes(command)) {
+  if (!file || !["validate", "parse", "export-svg", "export-png", "export-midi"].includes(command)) {
     console.error(usage());
     return 2;
   }
@@ -73,6 +75,16 @@ async function main(argv: string[]): Promise<number> {
       return 2;
     }
     await writeFile(output, renderSvg(result.value), "utf8");
+    console.log(output);
+  }
+
+  if (command === "export-png") {
+    const output = readFlag(flags, "-o");
+    if (!output) {
+      console.error("error: export-png requires -o <output.png>");
+      return 2;
+    }
+    await writeFile(output, renderPngBytes(renderSvg(result.value)));
     console.log(output);
   }
 
