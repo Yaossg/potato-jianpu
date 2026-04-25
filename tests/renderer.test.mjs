@@ -21,8 +21,8 @@ test("renders tempo without musical glyph codepoints", () => {
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value);
   assert.match(svg, /class="tempo-mark"/);
-  assert.match(svg, /class="tempo-flag"/);
-  assert.match(svg, />= 132<\/text>/);
+  assert.match(svg, />♪ = 132<\/text>/);
+  assert.match(svg, /Segoe UI Symbol/);
   assert.doesNotMatch(svg, /&#119100;|&#119101;|&#119102;|&#119104;/);
 });
 

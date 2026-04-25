@@ -293,20 +293,15 @@ function renderBar(x: number, baselineY: number, final: boolean): string {
   return `<line class="bar-thin" x1="${x}" y1="${y1}" x2="${x}" y2="${y2}"/>`;
 }
 
+const tempoMarkMap = new Map([
+  [2, "𝅗𝅥"],
+  [4, "♩"],
+  [8, "♪"],
+  [16, "♬"],
+]);
+
 function renderTempoMark(beatsPerWholeNote: number, tempo: number, x: number, baselineY: number): string {
-  const headClass = beatsPerWholeNote === 2 ? "tempo-head-open" : "tempo-head-filled";
-  const head = `<ellipse class="${headClass}" cx="${x + 7}" cy="${baselineY - 6}" rx="7" ry="5" transform="rotate(-20 ${x + 7} ${baselineY - 6})"/>`;
-  const stem = `<line class="tempo-stem" x1="${x + 13}" y1="${baselineY - 8}" x2="${x + 13}" y2="${baselineY - 32}"/>`;
-  const flags =
-    beatsPerWholeNote >= 8
-      ? [
-          `<path class="tempo-flag" d="M${x + 13},${baselineY - 32} C${x + 25},${baselineY - 27} ${x + 25},${baselineY - 19} ${x + 14},${baselineY - 17}"/>`,
-          beatsPerWholeNote >= 16
-            ? `<path class="tempo-flag" d="M${x + 13},${baselineY - 25} C${x + 24},${baselineY - 21} ${x + 24},${baselineY - 14} ${x + 14},${baselineY - 12}"/>`
-            : "",
-        ].join("")
-      : "";
-  return `<g class="tempo-mark">${head}${stem}${flags}<text class="metadata" x="${x + 30}" y="${baselineY}">= ${tempo}</text></g>`;
+  return `<text class="tempo-mark" x="${x}" y="${baselineY}">${tempoMarkMap.get(beatsPerWholeNote) ?? "♩"} = ${tempo}</text>`;
 }
 
 function renderHeader(document: Document, width: number): { svg: string; height: number } {
@@ -432,10 +427,7 @@ export function renderSvg(document: Document, options: RenderOptions = {}): stri
 .dot { fill: currentColor; }
 .bar-thin { stroke: currentColor; stroke-width: 2.5; stroke-linecap: butt; }
 .bar-final { stroke: currentColor; stroke-width: 5; stroke-linecap: butt; }
-.tempo-head-filled { fill: currentColor; }
-.tempo-head-open { fill: none; stroke: currentColor; stroke-width: 2; }
-.tempo-stem { stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; }
-.tempo-flag { fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; }
+.tempo-mark { fill: currentColor; font-family: "Segoe UI Symbol", "Noto Music", "Noto Sans Symbols 2", Arial, Helvetica, sans-serif; font-size: 22px; font-weight: 400; }
 .underline { stroke: currentColor; stroke-width: 2.5; }
 .dash { stroke: currentColor; stroke-width: 3; }
 .tie { fill: currentColor; stroke: currentColor; stroke-width: 1; }
