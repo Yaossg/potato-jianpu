@@ -3,4 +3,5 @@ dist/
 dist-web/
 coverage/
 *.log
+vite.log
 *.local
