@@ -17,10 +17,14 @@ Completed initial slices:
 - CLI `parse` and `validate`.
 - Backend SVG renderer and CLI `export-svg`.
 - Melody compiler, MIDI writer, and CLI `export-midi`.
+- Frontend preview application with SVG/MIDI export and basic playback.
+- Example score set with parser/SVG/PNG/MIDI coverage.
+- Backend PNG export through the CLI.
+- Renderer layout pass closer to the legacy spacing/chord/tie model.
 
 Current test status:
 
-- Parser, renderer, melody, and MIDI tests pass.
+- Parser, renderer, melody, MIDI, examples, and backend export tests pass.
 
 ## Goals
 
