@@ -180,12 +180,12 @@ export function renderSvg(document: Document, options: RenderOptions = {}): stri
 <svg xmlns="http://www.w3.org/2000/svg" width="${resolved.pageWidth}" height="${height}" viewBox="0 0 ${resolved.pageWidth} ${height}">
 <defs>
 <style>
-.title { fill: currentColor; font: bold 32px Arial, sans-serif; }
-.subtitle { fill: currentColor; font: 20px Arial, sans-serif; }
-.metadata { fill: currentColor; font: 18px Arial, sans-serif; }
-.note { fill: currentColor; font: bold 24px Helvetica, Arial, sans-serif; }
-.accidental { fill: currentColor; font: bold 14px Helvetica, Arial, sans-serif; text-anchor: middle; }
-.bar { fill: currentColor; font: 34px Helvetica, Arial, sans-serif; text-anchor: middle; }
+.title { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 32px; font-weight: 700; }
+.subtitle { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 20px; font-weight: 400; }
+.metadata { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 18px; font-weight: 400; }
+.note { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 24px; font-weight: 700; }
+.accidental { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-weight: 700; text-anchor: middle; }
+.bar { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 34px; font-weight: 400; text-anchor: middle; }
 .dot { fill: currentColor; }
 .underline { stroke: currentColor; stroke-width: 2.5; }
 .dash { stroke: currentColor; stroke-width: 3; }
@@ -196,4 +196,3 @@ ${header.svg}
 ${score.svg}
 </svg>`;
 }
-

@@ -13,5 +13,5 @@ test("renders a parse result as an SVG document", () => {
   assert.match(svg, /1=F♯/);
   assert.match(svg, /♯/);
   assert.match(svg, /class="dash"/);
+  assert.match(svg, /font-family: Arial, Helvetica, sans-serif/);
 });
-
