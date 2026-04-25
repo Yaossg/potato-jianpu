@@ -1,0 +1,111 @@
+import { useMemo, useState } from "react";
+import { exportMidiBytes, parse } from "../index.js";
+import { renderSvg } from "../renderer/index.js";
+import scale from "../../examples/scale.jp?raw";
+import twinkle from "../../examples/twinkle.jp?raw";
+import odeToJoy from "../../examples/ode-to-joy.jp?raw";
+import compound from "../../examples/compound-6-8.jp?raw";
+import accidentals from "../../examples/accidentals-and-ties.jp?raw";
+import chords from "../../examples/chords.jp?raw";
+import drums from "../../examples/drums.jp?raw";
+
+const examples = [
+  { name: "Scale", source: scale },
+  { name: "Twinkle", source: twinkle },
+  { name: "Ode to Joy", source: odeToJoy },
+  { name: "6/8 Study", source: compound },
+  { name: "Accidentals", source: accidentals },
+  { name: "Chords", source: chords },
+  { name: "Drums", source: drums },
+];
+
+function downloadBytes(data: BlobPart, filename: string, type: string) {
+  const blob = new Blob([data], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+export function App() {
+  const [source, setSource] = useState(twinkle);
+  const parsed = useMemo(() => parse(source), [source]);
+  const svg = useMemo(() => (parsed.ok ? renderSvg(parsed.value, { pageWidth: 1000 }) : null), [parsed]);
+
+  function exportSvg() {
+    if (svg) {
+      downloadBytes(svg, "score.svg", "image/svg+xml");
+    }
+  }
+
+  function exportMidi() {
+    if (parsed.ok) {
+      const midi = exportMidiBytes(parsed.value);
+      const buffer = midi.buffer.slice(midi.byteOffset, midi.byteOffset + midi.byteLength) as ArrayBuffer;
+      downloadBytes(buffer, "score.mid", "audio/midi");
+    }
+  }
+
+  return (
+    <main className="app-shell">
+      <header className="topbar">
+        <div>
+          <h1>Modern Jianpu Reloaded</h1>
+          <p>Browser preview for the rewritten parser, SVG renderer, and MIDI exporter.</p>
+        </div>
+        <div className="actions">
+          <button type="button" onClick={exportSvg} disabled={!svg}>
+            Export SVG
+          </button>
+          <button type="button" onClick={exportMidi} disabled={!parsed.ok}>
+            Export MIDI
+          </button>
+        </div>
+      </header>
+
+      <section className="workspace">
+        <aside className="examples">
+          <h2>Examples</h2>
+          {examples.map((example) => (
+            <button key={example.name} type="button" onClick={() => setSource(example.source)}>
+              {example.name}
+            </button>
+          ))}
+        </aside>
+
+        <section className="editor-panel">
+          <div className="panel-title">
+            <h2>Source</h2>
+            <span>{parsed.ok ? "Valid" : "Has errors"}</span>
+          </div>
+          <textarea value={source} onChange={(event) => setSource(event.target.value)} spellCheck={false} />
+          {parsed.diagnostics.length > 0 && (
+            <div className="diagnostics">
+              {parsed.diagnostics.map((diagnostic, index) => (
+                <p key={index} className={diagnostic.severity}>
+                  {diagnostic.range
+                    ? `${diagnostic.range.start.line}:${diagnostic.range.start.column} ${diagnostic.message}`
+                    : diagnostic.message}
+                </p>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="preview-panel">
+          <div className="panel-title">
+            <h2>Preview</h2>
+            <span>{parsed.ok ? `${parsed.value.score.length} line(s)` : "No preview"}</span>
+          </div>
+          <div className="preview-scroll">
+            {svg ? <div className="score-svg" dangerouslySetInnerHTML={{ __html: svg }} /> : <p>Fix parse errors to preview.</p>}
+          </div>
+        </section>
+      </section>
+    </main>
+  );
+}

@@ -7,6 +7,7 @@ Current status:
 - hand-written tokenizer/parser
 - shared core document model
 - CLI with `parse`, `validate`, `export-svg`, and `export-midi`
+- frontend web preview with SVG and MIDI export
 - example scores in `examples/`
 - Node built-in test runner for parser compatibility checks
 
@@ -20,6 +21,8 @@ pnpm run cli -- validate path/to/score.jp
 pnpm run cli -- parse path/to/score.jp --json
 pnpm run cli -- export-svg examples/twinkle.jp -o twinkle.svg
 pnpm run cli -- export-midi examples/twinkle.jp -o twinkle.mid
+pnpm run dev
+pnpm run web:build
 ```
 
 Implementation is intentionally incremental. See `PLAN.md` for the full rewrite

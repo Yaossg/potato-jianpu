@@ -4,6 +4,8 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "strict": true,
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "declaration": true,
     "sourceMap": true,
     "outDir": "dist",
@@ -11,6 +13,5 @@
     "verbatimModuleSyntax": true,
     "skipLibCheck": true
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
 }
-
