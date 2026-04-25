@@ -16,6 +16,16 @@ test("renders a parse result as an SVG document", () => {
   assert.match(svg, /font-family: Arial, Helvetica, sans-serif/);
 });
 
+test("renders tempo without musical glyph codepoints", () => {
+  const result = parse(`tempo: "132"\ntime: "6/8"\n=\n1 2 3`);
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  assert.match(svg, /class="tempo-mark"/);
+  assert.match(svg, /class="tempo-flag"/);
+  assert.match(svg, />= 132<\/text>/);
+  assert.doesNotMatch(svg, /&#119100;|&#119101;|&#119102;|&#119104;/);
+});
+
 test("renders chord notes as stacked text instead of slash-joined text", () => {
   const result = parse("{1 3 5}/");
   assert.equal(result.ok, true);

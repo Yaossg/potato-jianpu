@@ -58,13 +58,6 @@ const accidentalMap = new Map([
   [-2, "&#119083;"],
 ]);
 
-const tempoMap = new Map([
-  [2, "&#119100;"],
-  [4, "&#119101;"],
-  [8, "&#119102;"],
-  [16, "&#119104;"],
-]);
-
 function escapeXml(value: string): string {
   return value
     .replaceAll("&", "&amp;")
@@ -300,6 +293,22 @@ function renderBar(x: number, baselineY: number, final: boolean): string {
   return `<line class="bar-thin" x1="${x}" y1="${y1}" x2="${x}" y2="${y2}"/>`;
 }
 
+function renderTempoMark(beatsPerWholeNote: number, tempo: number, x: number, baselineY: number): string {
+  const headClass = beatsPerWholeNote === 2 ? "tempo-head-open" : "tempo-head-filled";
+  const head = `<ellipse class="${headClass}" cx="${x + 7}" cy="${baselineY - 6}" rx="7" ry="5" transform="rotate(-20 ${x + 7} ${baselineY - 6})"/>`;
+  const stem = `<line class="tempo-stem" x1="${x + 13}" y1="${baselineY - 8}" x2="${x + 13}" y2="${baselineY - 32}"/>`;
+  const flags =
+    beatsPerWholeNote >= 8
+      ? [
+          `<path class="tempo-flag" d="M${x + 13},${baselineY - 32} C${x + 25},${baselineY - 27} ${x + 25},${baselineY - 19} ${x + 14},${baselineY - 17}"/>`,
+          beatsPerWholeNote >= 16
+            ? `<path class="tempo-flag" d="M${x + 13},${baselineY - 25} C${x + 24},${baselineY - 21} ${x + 24},${baselineY - 14} ${x + 14},${baselineY - 12}"/>`
+            : "",
+        ].join("")
+      : "";
+  return `<g class="tempo-mark">${head}${stem}${flags}<text class="metadata" x="${x + 30}" y="${baselineY}">= ${tempo}</text></g>`;
+}
+
 function renderHeader(document: Document, width: number): { svg: string; height: number } {
   const { header } = document;
   if (header.hidden) {
@@ -321,9 +330,7 @@ function renderHeader(document: Document, width: number): { svg: string; height:
   parts.push(
     `<text class="metadata" x="${72 + 16 * header.keySignatureText.length}" y="${metadataY}">${header.timeSignature.beatsPerMeasure}/${header.timeSignature.beatsPerWholeNote}</text>`,
   );
-  parts.push(
-    `<text class="metadata" x="${116 + 16 * header.keySignatureText.length}" y="${metadataY}">${tempoMap.get(header.timeSignature.beatsPerWholeNote)} = ${header.tempo}</text>`,
-  );
+  parts.push(renderTempoMark(header.timeSignature.beatsPerWholeNote, header.tempo, 116 + 16 * header.keySignatureText.length, metadataY));
   if (header.composer) {
     parts.push(`<text class="metadata" x="${width - 50}" y="${metadataY}" text-anchor="end">${escapeXml(header.composer)}</text>`);
   }
@@ -425,6 +432,10 @@ export function renderSvg(document: Document, options: RenderOptions = {}): stri
 .dot { fill: currentColor; }
 .bar-thin { stroke: currentColor; stroke-width: 2.5; stroke-linecap: butt; }
 .bar-final { stroke: currentColor; stroke-width: 5; stroke-linecap: butt; }
+.tempo-head-filled { fill: currentColor; }
+.tempo-head-open { fill: none; stroke: currentColor; stroke-width: 2; }
+.tempo-stem { stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; }
+.tempo-flag { fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; }
 .underline { stroke: currentColor; stroke-width: 2.5; }
 .dash { stroke: currentColor; stroke-width: 3; }
 .tie { fill: currentColor; stroke: currentColor; stroke-width: 1; }
