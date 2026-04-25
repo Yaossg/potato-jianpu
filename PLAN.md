@@ -3,8 +3,24 @@
 This document is the implementation plan for rewriting the existing Modern
 Jianpu Markup project inside this standalone repository.
 
-No production code should be added until the plan is reviewed and the first
-implementation milestone is selected.
+The plan has been reviewed and implementation has started. This document remains
+the working plan for the rewrite and should be updated when scope or milestone
+decisions change.
+
+## Implementation Status
+
+Completed initial slices:
+
+- Project scaffold with pnpm, TypeScript, build script, and Node test runner.
+- Shared core document model.
+- Hand-written tokenizer and parser.
+- CLI `parse` and `validate`.
+- Backend SVG renderer and CLI `export-svg`.
+- Melody compiler, MIDI writer, and CLI `export-midi`.
+
+Current test status:
+
+- Parser, renderer, melody, and MIDI tests pass.
 
 ## Goals
 
