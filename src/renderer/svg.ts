@@ -297,7 +297,7 @@ const tempoMarkMap = new Map([
   [2, "𝅗𝅥"],
   [4, "♩"],
   [8, "♪"],
-  [16, "♬"],
+  [16, "𝅘𝅥𝅯"],
 ]);
 
 function renderTempoMark(beatsPerWholeNote: number, tempo: number, x: number, baselineY: number): string {

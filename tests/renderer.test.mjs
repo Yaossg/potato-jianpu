@@ -26,6 +26,14 @@ test("renders tempo without musical glyph codepoints", () => {
   assert.doesNotMatch(svg, /&#119100;|&#119101;|&#119102;|&#119104;/);
 });
 
+test("uses a single sixteenth note for 16-denominator tempo marks", () => {
+  const result = parse(`tempo: "96"\ntime: "2/16"\n=\n1 2`);
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  assert.match(svg, />𝅘𝅥𝅯 = 96<\/text>/);
+  assert.doesNotMatch(svg, /♬ = 96/);
+});
+
 test("renders chord notes as stacked text instead of slash-joined text", () => {
   const result = parse("{1 3 5}/");
   assert.equal(result.ok, true);
