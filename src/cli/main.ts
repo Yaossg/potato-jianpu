@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { readFile, writeFile } from "node:fs/promises";
 import { parse } from "../parser/index.js";
+import { exportMidiBytes } from "../player/index.js";
 import { renderSvg } from "../renderer/index.js";
 
 function usage(): string {
@@ -9,9 +10,15 @@ function usage(): string {
     "  jianpu validate <file>",
     "  jianpu parse <file> [--json]",
     "  jianpu export-svg <file> -o <output.svg>",
+    "  jianpu export-midi <file> -o <output.mid> [--program <number>]",
     "",
-    "Current rewrite status: parse/validate/export-svg are implemented.",
+    "Current rewrite status: parse/validate/export-svg/export-midi are implemented.",
   ].join("\n");
+}
+
+function readFlag(flags: string[], name: string): string | undefined {
+  const index = flags.indexOf(name);
+  return index >= 0 ? flags[index + 1] : undefined;
 }
 
 function formatDiagnostic(message: string, line?: number, column?: number): string {
@@ -27,7 +34,7 @@ async function main(argv: string[]): Promise<number> {
     console.log(usage());
     return 0;
   }
-  if (!file || (command !== "validate" && command !== "parse" && command !== "export-svg")) {
+  if (!file || !["validate", "parse", "export-svg", "export-midi"].includes(command)) {
     console.error(usage());
     return 2;
   }
@@ -60,13 +67,27 @@ async function main(argv: string[]): Promise<number> {
   }
 
   if (command === "export-svg") {
-    const outputIndex = flags.indexOf("-o");
-    const output = outputIndex >= 0 ? flags[outputIndex + 1] : undefined;
+    const output = readFlag(flags, "-o");
     if (!output) {
       console.error("error: export-svg requires -o <output.svg>");
       return 2;
     }
     await writeFile(output, renderSvg(result.value), "utf8");
+    console.log(output);
+  }
+
+  if (command === "export-midi") {
+    const output = readFlag(flags, "-o");
+    if (!output) {
+      console.error("error: export-midi requires -o <output.mid>");
+      return 2;
+    }
+    const program = Number(readFlag(flags, "--program") ?? "0");
+    if (!Number.isInteger(program) || program < 0) {
+      console.error("error: --program must be a non-negative integer");
+      return 2;
+    }
+    await writeFile(output, exportMidiBytes(result.value, program));
     console.log(output);
   }
 
