@@ -23,6 +23,7 @@ Completed initial slices:
 - Renderer layout pass closer to the legacy spacing/chord/tie model.
 - Tie validation for mismatched pitches, rests, drums, and measure-local
   accidental persistence.
+- Frontend playback highlighting and click-to-play-from-note behavior.
 
 Current test status:
 

@@ -2,6 +2,7 @@ import { actualNotePerBeat, type Document, type Measure, type Note, type Pitch, 
 
 export interface RenderOptions {
   pageWidth?: number;
+  activeNoteIndex?: number;
 }
 
 interface MeasureLayout {
@@ -22,6 +23,7 @@ interface LineLayout {
 
 const DEFAULT_OPTIONS: Required<RenderOptions> = {
   pageWidth: 1000,
+  activeNoteIndex: -1,
 };
 
 const DIMENSIONS = {
@@ -324,7 +326,7 @@ function measureFullness(measure: Measure, unit: number): boolean[] {
   });
 }
 
-function renderLine(layout: LineLayout, lineY: number, allNotes: Note[], document: Document): string {
+function renderLine(layout: LineLayout, lineY: number, allNotes: Note[], document: Document, activeNoteIndex: number): string {
   const parts: string[] = [];
   const lineEntries: Array<{ note: Note; x: number; y: number; full: boolean }> = [];
   const unit = actualNotePerBeat(document.header.timeSignature);
@@ -361,24 +363,27 @@ function renderLine(layout: LineLayout, lineY: number, allNotes: Note[], documen
       parts.push(renderTie(startX, startX + widthOf(entry.note) * 2, lineY + layout.maxPaddingUp - DIMENSIONS.tiePadding, chordHeight(entry.note)));
     }
 
+    const className = entry.note.index === activeNoteIndex ? "note-item active" : "note-item";
+    const noteParts: string[] = [];
     if (entry.note.kind === "pitch") {
-      parts.push(renderPitchNote(entry.note, entry.x, entry.y));
+      noteParts.push(renderPitchNote(entry.note, entry.x, entry.y));
     } else {
-      parts.push(renderRestOrDrum(entry.note, entry.x, entry.y));
+      noteParts.push(renderRestOrDrum(entry.note, entry.x, entry.y));
     }
-    parts.push(renderDuration(entry.note, entry.x, entry.y, entry.full));
+    noteParts.push(renderDuration(entry.note, entry.x, entry.y, entry.full));
+    parts.push(`<g class="${className}" data-note-index="${entry.note.index}">${noteParts.join("")}</g>`);
   }
 
   return parts.join("\n");
 }
 
-function renderScore(document: Document, yStart: number): { svg: string; height: number; width: number } {
+function renderScore(document: Document, yStart: number, activeNoteIndex: number): { svg: string; height: number; width: number } {
   const allNotes = flattenNotes(document);
   const layouts = document.score.map((line) => layoutLine(line, allNotes));
   let y = yStart;
   const parts: string[] = [];
   for (const layout of layouts) {
-    parts.push(renderLine(layout, y, allNotes, document));
+    parts.push(renderLine(layout, y, allNotes, document, activeNoteIndex));
     y += layout.height + DIMENSIONS.lineSpacing;
   }
   return {
@@ -391,7 +396,7 @@ function renderScore(document: Document, yStart: number): { svg: string; height:
 export function renderSvg(document: Document, options: RenderOptions = {}): string {
   const resolved = { ...DEFAULT_OPTIONS, ...options };
   const header = renderHeader(document, resolved.pageWidth);
-  const score = renderScore(document, header.height);
+  const score = renderScore(document, header.height, resolved.activeNoteIndex);
   const height = Math.max(1, header.height + score.height);
   return `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${resolved.pageWidth}" height="${height}" viewBox="0 0 ${resolved.pageWidth} ${height}">
@@ -407,6 +412,9 @@ export function renderSvg(document: Document, options: RenderOptions = {}): stri
 .underline { stroke: currentColor; stroke-width: 2.5; }
 .dash { stroke: currentColor; stroke-width: 3; }
 .tie { fill: currentColor; stroke: currentColor; stroke-width: 1; }
+.note-item { cursor: pointer; }
+.note-item.active .note, .note-item.active .accidental, .note-item.active .dot { fill: #dc2626; }
+.note-item.active .underline, .note-item.active .dash { stroke: #dc2626; }
 </style>
 </defs>
 ${header.svg}

@@ -12,29 +12,39 @@ export class PreviewAudioPlayer {
   private context: AudioContext | null = null;
   private oscillators: OscillatorNode[] = [];
   private stopTimer: number | null = null;
+  private noteTimers: number[] = [];
 
-  async play(melody: Melody, onEnded: () => void) {
+  async play(melody: Melody, onEnded: () => void, onNoteStart?: (noteIndex: number) => void, startNoteIndex = 0) {
     this.stop();
+    const startIndex = melody.notes.findIndex((note) => note.index >= startNoteIndex);
+    const notes = startIndex >= 0 ? melody.notes.slice(startIndex) : [];
     this.context = new AudioContext();
     await this.context.resume();
 
     const secondsPerWholeNote = (60 / melody.tempo) * melody.beatsPerWholeNote;
     let currentTime = this.context.currentTime;
+    let elapsedSeconds = 0;
 
-    for (const note of melody.notes) {
+    for (const note of notes) {
       const duration = note.duration * secondsPerWholeNote;
+      this.noteTimers.push(
+        window.setTimeout(() => {
+          onNoteStart?.(note.index);
+        }, elapsedSeconds * 1000),
+      );
       if (note.chord !== "rest") {
         for (const midiNote of note.chord) {
           this.scheduleTone(midiNote, currentTime, duration);
         }
       }
       currentTime += duration;
+      elapsedSeconds += duration;
     }
 
     this.stopTimer = window.setTimeout(() => {
       this.stop();
       onEnded();
-    }, totalSeconds(melody.notes, secondsPerWholeNote) * 1000 + 80);
+    }, totalSeconds(notes, secondsPerWholeNote) * 1000 + 80);
   }
 
   stop() {
@@ -42,6 +52,10 @@ export class PreviewAudioPlayer {
       window.clearTimeout(this.stopTimer);
       this.stopTimer = null;
     }
+    for (const timer of this.noteTimers) {
+      window.clearTimeout(timer);
+    }
+    this.noteTimers = [];
     for (const oscillator of this.oscillators) {
       try {
         oscillator.stop();
@@ -72,4 +86,3 @@ export class PreviewAudioPlayer {
     this.oscillators.push(oscillator);
   }
 }
-

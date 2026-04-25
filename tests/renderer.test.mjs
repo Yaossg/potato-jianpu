@@ -41,3 +41,11 @@ test("distinguishes regular and final bars", () => {
   assert.match(svg, />&#119047;<\/text>/);
   assert.match(svg, />&#119049;<\/text>/);
 });
+
+test("marks active notes for preview highlighting", () => {
+  const result = parse("1 2");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { activeNoteIndex: 1 });
+  assert.match(svg, /<g class="note-item" data-note-index="0">/);
+  assert.match(svg, /<g class="note-item active" data-note-index="1">/);
+});

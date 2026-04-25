@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import type { MouseEvent } from "react";
 import { compileMelody, exportMidiBytes, parse } from "../index.js";
 import { renderSvg } from "../renderer/index.js";
 import { PreviewAudioPlayer } from "./audio.js";
@@ -35,9 +36,13 @@ function downloadBytes(data: BlobPart, filename: string, type: string) {
 export function App() {
   const [source, setSource] = useState(twinkle);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [activeNoteIndex, setActiveNoteIndex] = useState<number | null>(null);
   const playerRef = useRef<PreviewAudioPlayer | null>(null);
   const parsed = useMemo(() => parse(source), [source]);
-  const svg = useMemo(() => (parsed.ok ? renderSvg(parsed.value, { pageWidth: 1000 }) : null), [parsed]);
+  const svg = useMemo(
+    () => (parsed.ok ? renderSvg(parsed.value, { pageWidth: 1000, activeNoteIndex: activeNoteIndex ?? undefined }) : null),
+    [activeNoteIndex, parsed],
+  );
 
   function exportSvg() {
     if (svg) {
@@ -53,19 +58,36 @@ export function App() {
     }
   }
 
-  async function play() {
+  async function play(startNoteIndex = 0) {
     if (!parsed.ok) {
       return;
     }
     const player = playerRef.current ?? new PreviewAudioPlayer();
     playerRef.current = player;
     setIsPlaying(true);
-    await player.play(compileMelody(parsed.value), () => setIsPlaying(false));
+    await player.play(
+      compileMelody(parsed.value),
+      () => {
+        setIsPlaying(false);
+        setActiveNoteIndex(null);
+      },
+      setActiveNoteIndex,
+      startNoteIndex,
+    );
   }
 
   function stop() {
     playerRef.current?.stop();
     setIsPlaying(false);
+    setActiveNoteIndex(null);
+  }
+
+  function playFromPreview(event: MouseEvent<HTMLDivElement>) {
+    const target = event.target instanceof Element ? event.target.closest<SVGGElement>("[data-note-index]") : null;
+    const noteIndex = Number(target?.dataset.noteIndex);
+    if (Number.isInteger(noteIndex)) {
+      void play(noteIndex);
+    }
   }
 
   return (
@@ -81,7 +103,7 @@ export function App() {
               Stop
             </button>
           ) : (
-            <button type="button" onClick={play} disabled={!parsed.ok}>
+            <button type="button" onClick={() => void play()} disabled={!parsed.ok}>
               Play
             </button>
           )}
@@ -128,7 +150,7 @@ export function App() {
             <h2>Preview</h2>
             <span>{parsed.ok ? `${parsed.value.score.length} line(s)` : "No preview"}</span>
           </div>
-          <div className="preview-scroll">
+          <div className="preview-scroll" onClick={playFromPreview}>
             {svg ? <div className="score-svg" dangerouslySetInnerHTML={{ __html: svg }} /> : <p>Fix parse errors to preview.</p>}
           </div>
         </section>
