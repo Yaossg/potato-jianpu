@@ -146,6 +146,10 @@ function flattenNotes(document: Document): Note[] {
   return document.score.flatMap((line) => line.measures).flatMap((measure) => measure.notes);
 }
 
+function lastMeasure(document: Document): Measure | undefined {
+  return document.score.at(-1)?.measures.at(-1);
+}
+
 function noteTieAfter(note: Note, allNotes: Note[]): boolean {
   return Boolean(allNotes[note.index + 1]?.tie);
 }
@@ -324,6 +328,7 @@ function renderLine(layout: LineLayout, lineY: number, allNotes: Note[], documen
   const parts: string[] = [];
   const lineEntries: Array<{ note: Note; x: number; y: number; full: boolean }> = [];
   const unit = actualNotePerBeat(document.header.timeSignature);
+  const finalMeasure = lastMeasure(document);
   for (const [measureIndex, measureLayout] of layout.measures.entries()) {
     const xOffset = measureXOffset(layout.measures, measureIndex);
     const fullness = measureFullness(measureLayout.measure, unit);
@@ -335,8 +340,9 @@ function renderLine(layout: LineLayout, lineY: number, allNotes: Note[], documen
         full: fullness[noteIndex] ?? false,
       });
     }
+    const bar = measureLayout.measure === finalMeasure ? "&#119049;" : "&#119047;";
     parts.push(
-      `<text class="bar" x="${xOffset + measureLayout.width - DIMENSIONS.leftPadding + 12}" y="${lineY + layout.maxPaddingUp + DIMENSIONS.noteBottomPadding}">|</text>`,
+      `<text class="bar" x="${xOffset + measureLayout.width - DIMENSIONS.leftPadding + 12}" y="${lineY + layout.maxPaddingUp + DIMENSIONS.noteBottomPadding}">${bar}</text>`,
     );
   }
 

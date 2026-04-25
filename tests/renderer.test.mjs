@@ -33,3 +33,11 @@ test("shortens underline at beat boundaries", () => {
   assert.match(svg, /class="underline" x1="8" y1="109" x2="32" y2="109"/);
   assert.match(svg, /class="underline" x1="80" y1="109" x2="100" y2="109"/);
 });
+
+test("distinguishes regular and final bars", () => {
+  const result = parse("1 | 2 |");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  assert.match(svg, />&#119047;<\/text>/);
+  assert.match(svg, />&#119049;<\/text>/);
+});
