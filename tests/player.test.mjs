@@ -54,3 +54,17 @@ test("exports tempo and time signature MIDI meta events", () => {
   assert.notEqual(timeSignatureIndex, -1);
   assert.deepEqual(bytes.slice(timeSignatureIndex, timeSignatureIndex + 7), [0xff, 0x58, 0x04, 0x06, 0x03, 0x24, 0x08]);
 });
+
+test("maps drum programs to percussion channel notes", () => {
+  const result = parse("X X");
+  assert.equal(result.ok, true);
+  const melody = compileMelody(result.value, 128);
+  assert.deepEqual(
+    melody.notes.map((note) => note.chord),
+    [[35], [35]],
+  );
+
+  const bytes = [...exportMidiBytes(result.value, 128)];
+  assert.equal(bytes.includes(0xc9), false);
+  assert.notEqual(bytes.findIndex((byte, index) => byte === 0x99 && bytes[index + 1] === 35), -1);
+});

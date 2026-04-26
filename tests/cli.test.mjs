@@ -75,3 +75,17 @@ test("CLI export-wav writes a WAV file", async () => {
   assert.equal(String.fromCharCode(...wav.slice(0, 4)), "RIFF");
   assert.equal(String.fromCharCode(...wav.slice(8, 12)), "WAVE");
 });
+
+test("CLI rejects out-of-range MIDI programs", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
+  const input = join(dir, "score.jp");
+  const output = join(dir, "score.mid");
+  await writeFile(input, "X", "utf8");
+
+  await assert.rejects(
+    execFileAsync(process.execPath, ["dist/cli/main.js", "export-midi", input, "-o", output, "--program", "221"], {
+      cwd: repoDir,
+    }),
+    /--program must be an integer from 0 to 220/,
+  );
+});

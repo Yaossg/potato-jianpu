@@ -80,7 +80,7 @@ class MIDITrack {
 
   constructor(
     private readonly channel: number,
-    private readonly program: number,
+    private readonly program: number | null,
   ) {}
 
   addEvent(event: MIDIEvent) {
@@ -97,7 +97,7 @@ class MIDITrack {
 
   toBytes(): number[] {
     const bytes: number[] = [];
-    if (this.channel >= 0) {
+    if (this.channel >= 0 && this.program !== null) {
       bytes.push(0, MESSAGE_PROGRAMCHANGE_PREFIX | this.channel, this.program);
     }
     for (const event of this.events) {
@@ -128,7 +128,7 @@ function buildMetaTrack(melody: Melody): number[] {
 
 function buildMusicTrack(melody: Melody, program: number): number[] {
   const drum = program >= 128;
-  const track = new MIDITrack(drum ? 9 : 0, program);
+  const track = new MIDITrack(drum ? 9 : 0, drum ? null : program);
   let delta = 0;
   for (const note of melody.notes) {
     if (note.chord === "rest") {
@@ -161,4 +161,3 @@ export function exportMidiBytes(document: Document, program = 0): Uint8Array {
   ];
   return new Uint8Array(bytes);
 }
-

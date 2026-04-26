@@ -31,6 +31,7 @@ Completed initial slices:
 - Machine-readable CLI diagnostics for `parse --json` and `validate --json`.
 - MIDI tempo and time-signature meta event coverage.
 - Backend WAV export through the CLI.
+- Drum MIDI export coverage with percussion-channel program handling.
 
 Current test status:
 
