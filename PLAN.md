@@ -27,6 +27,7 @@ Completed initial slices:
 - Frontend playback highlighting and click-to-play-from-note behavior.
 - Renderer measure wrapping based on `pageWidth`.
 - CLI `--page-width` option for SVG and PNG export.
+- Frontend page width control shared by preview and SVG export.
 
 Current test status:
 

@@ -17,6 +17,7 @@ body {
 }
 
 button,
+input,
 textarea {
   font: inherit;
 }
@@ -75,6 +76,24 @@ button:disabled {
 .actions {
   flex-wrap: wrap;
   justify-content: flex-end;
+  align-items: center;
+}
+
+.number-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #354154;
+  font-size: 14px;
+}
+
+.number-control input {
+  width: 92px;
+  border: 1px solid #b8c0cc;
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: #18212f;
+  background: #ffffff;
 }
 
 .workspace {
@@ -190,4 +209,3 @@ textarea {
     min-height: 360px;
   }
 }
-

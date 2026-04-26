@@ -37,11 +37,12 @@ export function App() {
   const [source, setSource] = useState(twinkle);
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeNoteIndex, setActiveNoteIndex] = useState<number | null>(null);
+  const [pageWidth, setPageWidth] = useState(1000);
   const playerRef = useRef<PreviewAudioPlayer | null>(null);
   const parsed = useMemo(() => parse(source), [source]);
   const svg = useMemo(
-    () => (parsed.ok ? renderSvg(parsed.value, { pageWidth: 1000, activeNoteIndex: activeNoteIndex ?? undefined }) : null),
-    [activeNoteIndex, parsed],
+    () => (parsed.ok ? renderSvg(parsed.value, { pageWidth, activeNoteIndex: activeNoteIndex ?? undefined }) : null),
+    [activeNoteIndex, pageWidth, parsed],
   );
 
   function exportSvg() {
@@ -98,6 +99,22 @@ export function App() {
           <p>Browser preview for the rewritten parser, SVG renderer, and MIDI exporter.</p>
         </div>
         <div className="actions">
+          <label className="number-control">
+            Width
+            <input
+              type="number"
+              min={240}
+              max={2000}
+              step={20}
+              value={pageWidth}
+              onChange={(event) => {
+                const value = Number(event.target.value);
+                if (Number.isFinite(value) && value > 0) {
+                  setPageWidth(value);
+                }
+              }}
+            />
+          </label>
           {isPlaying ? (
             <button type="button" onClick={stop}>
               Stop
@@ -148,7 +165,7 @@ export function App() {
         <section className="preview-panel">
           <div className="panel-title">
             <h2>Preview</h2>
-            <span>{parsed.ok ? `${parsed.value.score.length} line(s)` : "No preview"}</span>
+            <span>{parsed.ok ? `${parsed.value.score.length} source line(s), ${pageWidth}px` : "No preview"}</span>
           </div>
           <div className="preview-scroll" onClick={playFromPreview}>
             {svg ? <div className="score-svg" dangerouslySetInnerHTML={{ __html: svg }} /> : <p>Fix parse errors to preview.</p>}
