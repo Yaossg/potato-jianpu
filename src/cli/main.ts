@@ -10,8 +10,8 @@ function usage(): string {
     "Usage:",
     "  jianpu validate <file>",
     "  jianpu parse <file> [--json]",
-    "  jianpu export-svg <file> -o <output.svg>",
-    "  jianpu export-png <file> -o <output.png>",
+    "  jianpu export-svg <file> -o <output.svg> [--page-width <px>]",
+    "  jianpu export-png <file> -o <output.png> [--page-width <px>]",
     "  jianpu export-midi <file> -o <output.mid> [--program <number>]",
     "",
     "Current rewrite status: parse/validate/export-svg/export-png/export-midi are implemented.",
@@ -28,6 +28,15 @@ function formatDiagnostic(message: string, line?: number, column?: number): stri
     return message;
   }
   return `${line}:${column} ${message}`;
+}
+
+function readPositiveNumberFlag(flags: string[], name: string): number | undefined {
+  const raw = readFlag(flags, name);
+  if (raw === undefined) {
+    return undefined;
+  }
+  const value = Number(raw);
+  return Number.isFinite(value) && value > 0 ? value : Number.NaN;
 }
 
 async function main(argv: string[]): Promise<number> {
@@ -74,7 +83,12 @@ async function main(argv: string[]): Promise<number> {
       console.error("error: export-svg requires -o <output.svg>");
       return 2;
     }
-    await writeFile(output, renderSvg(result.value), "utf8");
+    const pageWidth = readPositiveNumberFlag(flags, "--page-width");
+    if (Number.isNaN(pageWidth)) {
+      console.error("error: --page-width must be a positive number");
+      return 2;
+    }
+    await writeFile(output, pageWidth === undefined ? renderSvg(result.value) : renderSvg(result.value, { pageWidth }), "utf8");
     console.log(output);
   }
 
@@ -84,7 +98,13 @@ async function main(argv: string[]): Promise<number> {
       console.error("error: export-png requires -o <output.png>");
       return 2;
     }
-    await writeFile(output, renderPngBytes(renderSvg(result.value)));
+    const pageWidth = readPositiveNumberFlag(flags, "--page-width");
+    if (Number.isNaN(pageWidth)) {
+      console.error("error: --page-width must be a positive number");
+      return 2;
+    }
+    const svg = pageWidth === undefined ? renderSvg(result.value) : renderSvg(result.value, { pageWidth });
+    await writeFile(output, renderPngBytes(svg));
     console.log(output);
   }
 

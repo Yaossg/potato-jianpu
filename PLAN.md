@@ -26,6 +26,7 @@ Completed initial slices:
 - Measure duration mismatch warnings based on the active time signature.
 - Frontend playback highlighting and click-to-play-from-note behavior.
 - Renderer measure wrapping based on `pageWidth`.
+- CLI `--page-width` option for SVG and PNG export.
 
 Current test status:
 

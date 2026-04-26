@@ -1,0 +1,39 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { execFile } from "node:child_process";
+import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
+
+const execFileAsync = promisify(execFile);
+const repoDir = fileURLToPath(new URL("../", import.meta.url));
+
+test("CLI export-svg accepts page width", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
+  const input = join(dir, "score.jp");
+  const output = join(dir, "score.svg");
+  await writeFile(input, "1 2 | 3 4 | 5 6 | 7 1' |", "utf8");
+
+  await execFileAsync(process.execPath, ["dist/cli/main.js", "export-svg", input, "-o", output, "--page-width", "120"], {
+    cwd: repoDir,
+  });
+
+  const svg = await readFile(output, "utf8");
+  assert.match(svg, /<svg[^>]+width="120"/);
+});
+
+test("CLI rejects invalid page width", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
+  const input = join(dir, "score.jp");
+  const output = join(dir, "score.svg");
+  await writeFile(input, "1 2 3 4", "utf8");
+
+  await assert.rejects(
+    execFileAsync(process.execPath, ["dist/cli/main.js", "export-svg", input, "-o", output, "--page-width", "0"], {
+      cwd: repoDir,
+    }),
+    /--page-width must be a positive number/,
+  );
+});
