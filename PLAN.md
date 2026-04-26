@@ -35,6 +35,7 @@ Completed initial slices:
 - Export behavior documentation in `docs/EXPORTS.md`.
 - Current grammar documentation in `docs/GRAMMAR.md`.
 - Current renderer documentation in `docs/RENDERER.md`.
+- Current player documentation in `docs/PLAYER.md`.
 
 Current test status:
 
