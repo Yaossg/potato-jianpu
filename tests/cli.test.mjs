@@ -66,6 +66,13 @@ test("CLI rejects invalid page width", async () => {
     }),
     /--page-width must be a positive number/,
   );
+
+  await assert.rejects(
+    execFileAsync(process.execPath, ["dist/cli/main.js", "export-svg", input, "-o", output, "--page-width", "-1"], {
+      cwd: repoDir,
+    }),
+    /--page-width must be a positive number/,
+  );
 });
 
 test("CLI rejects flags with missing values", async () => {
@@ -254,6 +261,13 @@ test("CLI rejects out-of-range MIDI programs", async () => {
 
   await assert.rejects(
     execFileAsync(process.execPath, ["dist/cli/main.js", "export-midi", input, "-o", output, "--program", "221"], {
+      cwd: repoDir,
+    }),
+    /--program must be an integer from 0 to 220/,
+  );
+
+  await assert.rejects(
+    execFileAsync(process.execPath, ["dist/cli/main.js", "export-midi", input, "-o", output, "--program", "-1"], {
       cwd: repoDir,
     }),
     /--program must be an integer from 0 to 220/,

@@ -24,9 +24,11 @@ function readFlag(flags: string[], name: string): string | undefined {
   return index >= 0 ? flags[index + 1] : undefined;
 }
 
+const VALUE_FLAGS = new Set(["-o", "--page-width", "--color", "--background", "--program", "--sample-rate", "--amplitude"]);
+
 function hasFlagValue(flags: string[], name: string): boolean {
   const index = flags.indexOf(name);
-  return index === -1 || (flags[index + 1] !== undefined && !flags[index + 1]!.startsWith("-"));
+  return index === -1 || (flags[index + 1] !== undefined && !VALUE_FLAGS.has(flags[index + 1]!));
 }
 
 function validateFlagValues(flags: string[], names: string[]): string | null {
@@ -57,9 +59,13 @@ function commandFlags(command: string): Set<string> {
 
 function unknownFlag(command: string, flags: string[]): string | null {
   const allowed = commandFlags(command);
-  for (const flag of flags) {
+  for (let index = 0; index < flags.length; index += 1) {
+    const flag = flags[index]!;
     if (flag.startsWith("-") && !allowed.has(flag)) {
       return flag;
+    }
+    if (VALUE_FLAGS.has(flag)) {
+      index += 1;
     }
   }
   return null;

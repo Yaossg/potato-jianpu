@@ -56,6 +56,8 @@ Completed initial slices:
   diagnostics.
 - CLI rejects flags with missing values.
 - CLI rejects unknown options per command.
+- CLI treats negative numeric flag values as values before reporting command
+  specific range errors.
 - Player APIs reject out-of-range programs.
 - CLI validates options before reading input files.
 - Unknown header fields are covered as preserved raw metadata.
