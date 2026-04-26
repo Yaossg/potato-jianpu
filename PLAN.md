@@ -71,6 +71,8 @@ Completed initial slices:
   release file boundaries, with tests covering built output paths.
 - MP3 export is explicitly deferred from the current release target; WAV is the
   backend audio export for now.
+- Parser recovers malformed header lines without cascading into score syntax
+  errors.
 
 Current test status:
 
@@ -94,8 +96,8 @@ Medium priority:
   release file boundaries, but release versioning, publish workflow, and frontend
   deployment steps still need final decisions.
 - Improve parser diagnostics and recovery for additional malformed inputs,
-  especially malformed headers, unterminated chords, compact-notation edge cases,
-  and comment/newline boundaries.
+  especially unterminated chords, compact-notation edge cases, and
+  comment/newline boundaries.
 
 Lower priority or post-parity improvements:
 

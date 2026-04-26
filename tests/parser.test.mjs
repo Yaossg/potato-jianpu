@@ -73,6 +73,15 @@ test("rejects invalid header values", () => {
   assert.match(result.diagnostics.map((d) => d.message).join("\n"), /Invalid key signature/);
 });
 
+test("recovers malformed header lines without score-syntax cascades", () => {
+  const result = parse("title: Missing Quotes\ncomposer: \"Ada\"\n=\n1 2 3 4");
+  assert.equal(result.ok, false);
+  const messages = result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
+  assert.match(messages, /Expected quoted string header value/);
+  assert.match(messages, /Expected newline after header property/);
+  assert.doesNotMatch(messages, /Expected note, rest, drum note, chord, or tie/);
+});
+
 test("preserves unknown header fields in raw metadata", () => {
   const result = parse(`arranger: "Ada"\ntitle: "Raw Header"\n=\n1 2 3 4`);
   assert.equal(result.ok, true);

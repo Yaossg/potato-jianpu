@@ -139,11 +139,21 @@ class Parser {
         continue;
       }
       const label = this.consume("identifier", "Expected header property name.");
-      this.consume("colon", "Expected ':' after header property name.");
+      const colon = this.consume("colon", "Expected ':' after header property name.");
       const value = this.consume("string", "Expected quoted string header value.");
-      this.consumeNewlines("Expected newline after header property.");
+      if (!this.at("newline") && !this.at("equals") && !this.at("eof")) {
+        this.error("Expected newline after header property.");
+        this.synchronizeHeaderLine();
+      }
+      if (this.at("newline")) {
+        this.skipNewlines();
+      } else if (!this.at("equals") && !this.at("eof")) {
+        this.error("Expected newline after header property.");
+      }
       if (label && value) {
         raw[label.value ?? label.text] = value.value ?? "";
+      } else if (!label || !colon || !value) {
+        this.synchronizeHeaderLine();
       }
     }
 
@@ -461,6 +471,12 @@ class Parser {
 
   private synchronizeLine() {
     while (!this.at("newline") && !this.at("eof")) {
+      this.index += 1;
+    }
+  }
+
+  private synchronizeHeaderLine() {
+    while (!this.at("newline") && !this.at("equals") && !this.at("eof")) {
       this.index += 1;
     }
   }
