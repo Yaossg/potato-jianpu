@@ -91,6 +91,8 @@ Completed initial slices:
 - Frontend source editor disables programming-font ligatures, and playback
   controls include grouped Program selection, browser preview volume, and
   Program audition.
+- Frontend theme toggle restores the original light/dark workflow while syncing
+  SVG preview/export color presets.
 - Legacy example songs from the original frontend examples panel are available
   as `examples/*.jp` fixtures and are covered by parse/render/export tests.
 - Initial-rest omission from the original player settings is available for

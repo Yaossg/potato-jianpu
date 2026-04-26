@@ -8,6 +8,36 @@
   text-rendering: optimizeLegibility;
 }
 
+.theme-light {
+  --app-bg: #f6f7f8;
+  --panel-bg: #ffffff;
+  --panel-border: #d7dce3;
+  --subtle-border: #e3e7ed;
+  --text: #202124;
+  --muted-text: #5c6878;
+  --control-bg: #ffffff;
+  --control-text: #18212f;
+  --control-border: #b8c0cc;
+  --control-hover-bg: #f0f4f8;
+  --control-hover-border: #50627a;
+  --diagnostics-bg: #fff9f3;
+}
+
+.theme-dark {
+  --app-bg: #17191f;
+  --panel-bg: #22262f;
+  --panel-border: #3a4250;
+  --subtle-border: #343b47;
+  --text: #e8edf5;
+  --muted-text: #a5afbf;
+  --control-bg: #2c3340;
+  --control-text: #f8fafc;
+  --control-border: #596577;
+  --control-hover-bg: #384252;
+  --control-hover-border: #8b9bb1;
+  --diagnostics-bg: #2d261b;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -23,17 +53,17 @@ textarea {
 }
 
 button {
-  border: 1px solid #b8c0cc;
-  background: #ffffff;
-  color: #18212f;
+  border: 1px solid var(--control-border);
+  background: var(--control-bg);
+  color: var(--control-text);
   border-radius: 6px;
   padding: 8px 12px;
   cursor: pointer;
 }
 
 button:hover:not(:disabled) {
-  border-color: #50627a;
-  background: #f0f4f8;
+  border-color: var(--control-hover-border);
+  background: var(--control-hover-bg);
 }
 
 button:disabled {
@@ -45,6 +75,8 @@ button:disabled {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  color: var(--text);
+  background: var(--app-bg);
 }
 
 .topbar {
@@ -53,8 +85,8 @@ button:disabled {
   align-items: flex-start;
   gap: 24px;
   padding: 20px 24px;
-  border-bottom: 1px solid #d7dce3;
-  background: #ffffff;
+  border-bottom: 1px solid var(--panel-border);
+  background: var(--panel-bg);
 }
 
 .topbar h1 {
@@ -64,7 +96,7 @@ button:disabled {
 
 .topbar p {
   margin: 6px 0 0;
-  color: #5c6878;
+  color: var(--muted-text);
 }
 
 .actions,
@@ -83,7 +115,7 @@ button:disabled {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: #354154;
+  color: var(--muted-text);
   font-size: 14px;
 }
 
@@ -94,26 +126,26 @@ button:disabled {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: #354154;
+  color: var(--muted-text);
   font-size: 14px;
 }
 
 .number-control input {
   width: 92px;
-  border: 1px solid #b8c0cc;
+  border: 1px solid var(--control-border);
   border-radius: 6px;
   padding: 8px 10px;
-  color: #18212f;
-  background: #ffffff;
+  color: var(--control-text);
+  background: var(--control-bg);
 }
 
 .select-control select {
   width: 220px;
-  border: 1px solid #b8c0cc;
+  border: 1px solid var(--control-border);
   border-radius: 6px;
   padding: 8px 10px;
-  color: #18212f;
-  background: #ffffff;
+  color: var(--control-text);
+  background: var(--control-bg);
 }
 
 .range-control input {
@@ -122,7 +154,7 @@ button:disabled {
 
 .range-control span {
   width: 38px;
-  color: #5c6878;
+  color: var(--muted-text);
   font-variant-numeric: tabular-nums;
 }
 
@@ -134,10 +166,10 @@ button:disabled {
 .color-control input {
   width: 40px;
   height: 36px;
-  border: 1px solid #b8c0cc;
+  border: 1px solid var(--control-border);
   border-radius: 6px;
   padding: 3px;
-  background: #ffffff;
+  background: var(--control-bg);
 }
 
 .workspace {
@@ -152,8 +184,8 @@ button:disabled {
 .examples,
 .editor-panel,
 .preview-panel {
-  background: #ffffff;
-  border: 1px solid #d7dce3;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
   border-radius: 8px;
 }
 
@@ -181,11 +213,11 @@ button:disabled {
   justify-content: space-between;
   align-items: center;
   padding: 12px 14px;
-  border-bottom: 1px solid #e3e7ed;
+  border-bottom: 1px solid var(--subtle-border);
 }
 
 .panel-title span {
-  color: #5c6878;
+  color: var(--muted-text);
   font-size: 13px;
 }
 
@@ -207,6 +239,8 @@ textarea {
   border: 0;
   outline: 0;
   padding: 14px;
+  color: var(--text);
+  background: var(--panel-bg);
   font-family: "Cascadia Code", "Fira Code", Consolas, monospace;
   font-variant-ligatures: none;
   font-feature-settings:
@@ -216,9 +250,9 @@ textarea {
 }
 
 .diagnostics {
-  border-top: 1px solid #e3e7ed;
+  border-top: 1px solid var(--subtle-border);
   padding: 8px 14px;
-  background: #fff9f3;
+  background: var(--diagnostics-bg);
 }
 
 .diagnostics p {

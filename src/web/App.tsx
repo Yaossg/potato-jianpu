@@ -35,6 +35,16 @@ const examples = [
 
 const MELODIC_AUDITION_SOURCE = "1 2 3 4 5 6 7 1'";
 const DRUM_AUDITION_SOURCE = "X X X X";
+const LIGHT_THEME = {
+  scoreColor: "#111827",
+  pageBackground: "#ffffff",
+};
+const DARK_THEME = {
+  scoreColor: "#f8fafc",
+  pageBackground: "#111827",
+};
+
+type ThemeName = "light" | "dark";
 
 function downloadBytes(data: BlobPart, filename: string, type: string) {
   const blob = new Blob([data], { type });
@@ -65,8 +75,9 @@ export function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeNoteIndex, setActiveNoteIndex] = useState<number | null>(null);
   const [pageWidth, setPageWidth] = useState(1000);
-  const [scoreColor, setScoreColor] = useState("#111827");
-  const [pageBackground, setPageBackground] = useState("#ffffff");
+  const [theme, setTheme] = useState<ThemeName>("light");
+  const [scoreColor, setScoreColor] = useState(LIGHT_THEME.scoreColor);
+  const [pageBackground, setPageBackground] = useState(LIGHT_THEME.pageBackground);
   const [program, setProgram] = useState(0);
   const [volume, setVolume] = useState(0.8);
   const [omitInitialRests, setOmitInitialRests] = useState(true);
@@ -97,6 +108,14 @@ export function App() {
       const buffer = midi.buffer.slice(midi.byteOffset, midi.byteOffset + midi.byteLength) as ArrayBuffer;
       downloadBytes(buffer, "score.mid", "audio/midi");
     }
+  }
+
+  function toggleTheme() {
+    const nextTheme = theme === "light" ? "dark" : "light";
+    const colors = nextTheme === "light" ? LIGHT_THEME : DARK_THEME;
+    setTheme(nextTheme);
+    setScoreColor(colors.scoreColor);
+    setPageBackground(colors.pageBackground);
   }
 
   async function play(startNoteIndex = 0) {
@@ -156,13 +175,16 @@ export function App() {
   }
 
   return (
-    <main className="app-shell">
+    <main className={`app-shell theme-${theme}`}>
       <header className="topbar">
         <div>
           <h1>Modern Jianpu Reloaded</h1>
           <p>Browser preview for the rewritten parser, SVG renderer, and MIDI exporter.</p>
         </div>
         <div className="actions">
+          <button type="button" onClick={toggleTheme}>
+            Theme: {theme === "light" ? "Light" : "Dark"}
+          </button>
           <label className="number-control">
             Width
             <input
