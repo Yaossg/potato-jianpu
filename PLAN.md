@@ -87,6 +87,8 @@ Completed initial slices:
 - CLI `export-wav` exposes the backend amplitude option.
 - WAV export and browser preview playback share lightweight synth constants,
   MIDI frequency conversion, envelope timing, and triangle-wave tone shape.
+- Frontend source editor disables programming-font ligatures, and playback
+  controls include grouped Program selection plus browser preview volume.
 
 Current test status:
 

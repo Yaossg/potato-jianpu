@@ -87,6 +87,8 @@ button:disabled {
   font-size: 14px;
 }
 
+.select-control,
+.range-control,
 .color-control {
   display: inline-flex;
   align-items: center;
@@ -102,6 +104,25 @@ button:disabled {
   padding: 8px 10px;
   color: #18212f;
   background: #ffffff;
+}
+
+.select-control select {
+  width: 220px;
+  border: 1px solid #b8c0cc;
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: #18212f;
+  background: #ffffff;
+}
+
+.range-control input {
+  width: 120px;
+}
+
+.range-control span {
+  width: 38px;
+  color: #5c6878;
+  font-variant-numeric: tabular-nums;
 }
 
 .color-control input {
@@ -181,6 +202,10 @@ textarea {
   outline: 0;
   padding: 14px;
   font-family: "Cascadia Code", "Fira Code", Consolas, monospace;
+  font-variant-ligatures: none;
+  font-feature-settings:
+    "liga" 0,
+    "calt" 0;
   line-height: 1.55;
 }
 

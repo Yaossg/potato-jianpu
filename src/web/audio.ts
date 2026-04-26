@@ -11,7 +11,7 @@ export class PreviewAudioPlayer {
   private stopTimer: number | null = null;
   private noteTimers: number[] = [];
 
-  async play(melody: Melody, onEnded: () => void, onNoteStart?: (noteIndex: number) => void, startNoteIndex = 0) {
+  async play(melody: Melody, onEnded: () => void, onNoteStart?: (noteIndex: number) => void, startNoteIndex = 0, volume = 1) {
     this.stop();
     const startIndex = melody.notes.findIndex((note) => note.index >= startNoteIndex);
     const notes = startIndex >= 0 ? melody.notes.slice(startIndex) : [];
@@ -31,7 +31,7 @@ export class PreviewAudioPlayer {
       );
       if (note.chord !== "rest") {
         for (const midiNote of note.chord) {
-          this.scheduleTone(midiNote, currentTime, duration);
+          this.scheduleTone(midiNote, currentTime, duration, volume);
         }
       }
       currentTime += duration;
@@ -65,7 +65,7 @@ export class PreviewAudioPlayer {
     this.context = null;
   }
 
-  private scheduleTone(midiNote: number, start: number, duration: number) {
+  private scheduleTone(midiNote: number, start: number, duration: number, volume: number) {
     if (!this.context) {
       return;
     }
@@ -74,9 +74,10 @@ export class PreviewAudioPlayer {
     oscillator.type = SYNTH_WAVEFORM;
     oscillator.frequency.setValueAtTime(midiToFrequency(midiNote), start);
     gain.gain.setValueAtTime(0.0001, start);
-    gain.gain.exponentialRampToValueAtTime(SYNTH_BROWSER_GAIN, start + SYNTH_ATTACK_SECONDS);
+    const gainValue = Math.max(0.0001, SYNTH_BROWSER_GAIN * Math.max(0, Math.min(1, volume)));
+    gain.gain.exponentialRampToValueAtTime(gainValue, start + SYNTH_ATTACK_SECONDS);
     gain.gain.setValueAtTime(
-      SYNTH_BROWSER_GAIN,
+      gainValue,
       Math.max(start + SYNTH_ATTACK_SECONDS, start + duration - SYNTH_RELEASE_SECONDS),
     );
     gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);

@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import type { MouseEvent } from "react";
-import { compileMelody, exportMidiBytes, parse } from "../index.js";
+import { compileMelody, DRUM_PROGRAMS, exportMidiBytes, GM_PROGRAMS, parse } from "../index.js";
 import { renderSvg } from "../renderer/index.js";
 import { PreviewAudioPlayer } from "./audio.js";
 import scale from "../../examples/scale.jp?raw";
@@ -53,6 +53,7 @@ export function App() {
   const [scoreColor, setScoreColor] = useState("#111827");
   const [pageBackground, setPageBackground] = useState("#ffffff");
   const [program, setProgram] = useState(0);
+  const [volume, setVolume] = useState(0.8);
   const playerRef = useRef<PreviewAudioPlayer | null>(null);
   const parsed = useMemo(() => parse(source), [source]);
   const svg = useMemo(
@@ -97,6 +98,7 @@ export function App() {
       },
       setActiveNoteIndex,
       startNoteIndex,
+      volume,
     );
   }
 
@@ -146,13 +148,9 @@ export function App() {
             Page
             <input type="color" value={pageBackground} onChange={(event) => setPageBackground(event.target.value)} />
           </label>
-          <label className="number-control">
+          <label className="select-control">
             Program
-            <input
-              type="number"
-              min={0}
-              max={220}
-              step={1}
+            <select
               value={program}
               onChange={(event) => {
                 const value = Number(event.target.value);
@@ -160,7 +158,34 @@ export function App() {
                   setProgram(value);
                 }
               }}
+            >
+              <optgroup label="General MIDI">
+                {GM_PROGRAMS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Drums">
+                {DRUM_PROGRAMS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </optgroup>
+            </select>
+          </label>
+          <label className="range-control">
+            Volume
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.05}
+              value={volume}
+              onChange={(event) => setVolume(Number(event.target.value))}
             />
+            <span>{Math.round(volume * 100)}%</span>
           </label>
           {isPlaying ? (
             <button type="button" onClick={stop}>
