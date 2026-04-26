@@ -78,3 +78,11 @@ test("marks active notes for preview highlighting", () => {
   assert.match(svg, /<g class="note-item" data-note-index="0">/);
   assert.match(svg, /<g class="note-item active" data-note-index="1">/);
 });
+
+test("renders explicit export color and background", () => {
+  const result = parse("1 2 3 4");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { color: "#123456", background: "#f8fafc" });
+  assert.match(svg, /<svg[^>]+style="color: #123456"/);
+  assert.match(svg, /<rect class="page-background"[^>]+fill="#f8fafc"/);
+});

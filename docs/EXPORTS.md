@@ -25,8 +25,8 @@ Run commands through the package script during development:
 pnpm run cli -- validate examples/twinkle.jp
 pnpm run cli -- validate examples/twinkle.jp --json
 pnpm run cli -- parse examples/twinkle.jp --json
-pnpm run cli -- export-svg examples/twinkle.jp -o twinkle.svg --page-width 1000
-pnpm run cli -- export-png examples/twinkle.jp -o twinkle.png --page-width 1000
+pnpm run cli -- export-svg examples/twinkle.jp -o twinkle.svg --page-width 1000 --color "#111827" --background "#ffffff"
+pnpm run cli -- export-png examples/twinkle.jp -o twinkle.png --page-width 1000 --color "#111827" --background "#ffffff"
 pnpm run cli -- export-midi examples/twinkle.jp -o twinkle.mid --program 0
 pnpm run cli -- export-wav examples/twinkle.jp -o twinkle.wav --sample-rate 44100
 ```
@@ -85,6 +85,8 @@ Options:
 
 - `--page-width <px>`: positive number. Defaults to the renderer default when
   omitted.
+- `--color <css>`: CSS color used for `currentColor` SVG notation elements.
+- `--background <css>`: CSS color used for an SVG background rectangle.
 
 The renderer uses `pageWidth` for both the SVG viewport width and measure
 wrapping. Measures are wrapped between measures when the next measure would
@@ -102,6 +104,9 @@ pnpm run cli -- export-png input.jp -o output.png --page-width 1000
 Options:
 
 - `--page-width <px>`: same behavior as SVG export.
+- `--color <css>`: same behavior as SVG export.
+- `--background <css>`: sets both the SVG background rectangle and the PNG
+  renderer background.
 
 PNG export uses the backend dependency `@resvg/resvg-js`. Font behavior is
 intended to match the SVG preview by using the same SVG text and style output.

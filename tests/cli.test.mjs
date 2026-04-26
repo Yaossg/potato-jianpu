@@ -24,6 +24,26 @@ test("CLI export-svg accepts page width", async () => {
   assert.match(svg, /<svg[^>]+width="120"/);
 });
 
+test("CLI export-svg accepts explicit color and background", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
+  const input = join(dir, "score.jp");
+  const output = join(dir, "score.svg");
+  await writeFile(input, "1 2 3 4", "utf8");
+
+  await execFileAsync(
+    process.execPath,
+    ["dist/cli/main.js", "export-svg", input, "-o", output, "--color", "#123456", "--background", "#f8fafc"],
+    {
+      cwd: repoDir,
+    },
+  );
+
+  const svg = await readFile(output, "utf8");
+  assert.match(svg, /style="color: #123456"/);
+  assert.match(svg, /fill="#f8fafc"/);
+});
+
+
 test("CLI rejects invalid page width", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
   const input = join(dir, "score.jp");

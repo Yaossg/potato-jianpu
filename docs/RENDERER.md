@@ -19,6 +19,8 @@ Options:
 interface RenderOptions {
   pageWidth?: number;
   activeNoteIndex?: number;
+  color?: string;
+  background?: string;
 }
 ```
 
@@ -26,6 +28,10 @@ interface RenderOptions {
   measure wrapping. Default: `1000`.
 - `activeNoteIndex` marks one parsed note as active for frontend playback
   highlighting. Default: no active note.
+- `color` sets the root SVG `color` style used by `currentColor` notation
+  elements. Default: `currentColor`.
+- `background` draws a full-page background rectangle when non-empty. Default:
+  no SVG background rectangle.
 
 The return value is a complete SVG string with XML declaration, `<svg>`, inline
 `<style>`, header graphics, and score graphics.
@@ -262,6 +268,9 @@ self-contained so SVG export and PNG export see the same style rules.
 
 Most elements use `currentColor`, allowing the embedding page or PNG renderer to
 control color at the SVG root level.
+
+Export callers can pass `color` and `background` render options. The CLI exposes
+these as `--color` and `--background` for SVG and PNG export.
 
 ## Current Limitations
 

@@ -10,8 +10,8 @@ function usage(): string {
     "Usage:",
     "  jianpu validate <file> [--json]",
     "  jianpu parse <file> [--json]",
-    "  jianpu export-svg <file> -o <output.svg> [--page-width <px>]",
-    "  jianpu export-png <file> -o <output.png> [--page-width <px>]",
+    "  jianpu export-svg <file> -o <output.svg> [--page-width <px>] [--color <css>] [--background <css>]",
+    "  jianpu export-png <file> -o <output.png> [--page-width <px>] [--color <css>] [--background <css>]",
     "  jianpu export-midi <file> -o <output.mid> [--program <number>]",
     "  jianpu export-wav <file> -o <output.wav> [--program <number>] [--sample-rate <hz>]",
     "",
@@ -100,7 +100,15 @@ async function main(argv: string[]): Promise<number> {
       console.error("error: --page-width must be a positive number");
       return 2;
     }
-    await writeFile(output, pageWidth === undefined ? renderSvg(result.value) : renderSvg(result.value, { pageWidth }), "utf8");
+    await writeFile(
+      output,
+      renderSvg(result.value, {
+        pageWidth,
+        color: readFlag(flags, "--color"),
+        background: readFlag(flags, "--background"),
+      }),
+      "utf8",
+    );
     console.log(output);
   }
 
@@ -115,8 +123,13 @@ async function main(argv: string[]): Promise<number> {
       console.error("error: --page-width must be a positive number");
       return 2;
     }
-    const svg = pageWidth === undefined ? renderSvg(result.value) : renderSvg(result.value, { pageWidth });
-    await writeFile(output, renderPngBytes(svg));
+    const background = readFlag(flags, "--background");
+    const svg = renderSvg(result.value, {
+      pageWidth,
+      color: readFlag(flags, "--color"),
+      background,
+    });
+    await writeFile(output, renderPngBytes(svg, { background }));
     console.log(output);
   }
 

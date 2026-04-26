@@ -37,6 +37,7 @@ Completed initial slices:
 - Current renderer documentation in `docs/RENDERER.md`.
 - Current player documentation in `docs/PLAYER.md`.
 - Frontend diagnostics status shows warning and error counts.
+- Theme-aware SVG and PNG export color/background options.
 
 Current test status:
 
