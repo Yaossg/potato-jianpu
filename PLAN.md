@@ -53,6 +53,7 @@ Completed initial slices:
 - WAV export option validation is covered.
 - Minimal renderer SVG snapshot coverage exists.
 - CLI WAV sample-rate behavior is covered.
+- Parser rejects mixed duration suffix styles with a specific diagnostic.
 
 Current test status:
 

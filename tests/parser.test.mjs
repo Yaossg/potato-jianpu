@@ -52,6 +52,18 @@ test("rejects empty chords and non-pitch chord members", () => {
   assert.match(restMember.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Expected pitch note inside chord/);
 });
 
+test("rejects mixed dash and slash duration marks with a specific diagnostic", () => {
+  const dashThenSlash = parse("1-/ 2");
+  assert.equal(dashThenSlash.ok, false);
+  assert.match(dashThenSlash.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Dash duration marks cannot be combined/);
+  assert.doesNotMatch(dashThenSlash.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Expected note, rest, drum note, chord, or tie/);
+
+  const slashThenDash = parse("1/- 2");
+  assert.equal(slashThenDash.ok, false);
+  assert.match(slashThenDash.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Dash duration marks cannot be combined/);
+  assert.doesNotMatch(slashThenDash.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Expected note, rest, drum note, chord, or tie/);
+});
+
 
 test("rejects invalid header values", () => {
   const result = parse(`tempo: "-1"\ntime: "5/4"\nkey: "H"\n=\n1234`);

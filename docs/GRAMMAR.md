@@ -278,8 +278,9 @@ value:
 | `1..` | `7/16` whole note |
 | `1/.` | `3/16` whole note |
 
-Dashes and slash/dot suffixes are mutually exclusive in the current parser. If a
-dash appears first, only consecutive dashes are consumed as the duration suffix.
+Dashes and slash/dot suffixes are mutually exclusive in the current parser.
+Inputs such as `1-/` or `1/-` are rejected with a specific duration diagnostic
+rather than being treated as separate note syntax.
 
 Examples:
 
@@ -396,6 +397,7 @@ The parser currently reports errors for:
 - invalid key, time, or tempo
 - empty measures
 - invalid note/chord/tie syntax
+- mixed dash and slash/dot duration suffixes
 - first note tied
 - tied note after rest
 - tied note target mismatch

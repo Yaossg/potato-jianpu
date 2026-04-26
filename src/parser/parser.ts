@@ -352,6 +352,10 @@ class Parser {
       while (this.match("dash")) {
         dashes += 1;
       }
+      if (this.at("half") || this.at("dot")) {
+        this.error("Dash duration marks cannot be combined with slash or dot duration marks.");
+        this.consumeFractionalDurationTail();
+      }
     } else {
       while (this.at("half") || this.at("dot")) {
         if (this.match("half")) {
@@ -361,8 +365,20 @@ class Parser {
           dots += 1;
         }
       }
+      if (this.at("dash")) {
+        this.error("Dash duration marks cannot be combined with slash or dot duration marks.");
+        while (this.match("dash")) {
+          dashes += 1;
+        }
+      }
     }
     return { dashes, halves, dots, value: durationOf(dashes, halves, dots) };
+  }
+
+  private consumeFractionalDurationTail() {
+    while (this.at("half") || this.at("dot")) {
+      this.index += 1;
+    }
   }
 
   private validateTies(lines: ScoreLine[]) {
