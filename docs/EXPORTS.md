@@ -163,7 +163,7 @@ Options:
 
 The current synthesizer is intentionally simple and deterministic:
 
-- sine oscillator per MIDI note
+- triangle oscillator per MIDI note, shared with browser preview playback
 - chord notes mixed evenly
 - short attack and release envelope
 - rests render as silence
