@@ -86,3 +86,11 @@ export function compileMelody(document: Document, program = 0): Melody {
     beatsPerWholeNote: document.header.timeSignature.beatsPerWholeNote,
   };
 }
+
+export function skipInitialRests(melody: Melody): Melody {
+  const firstSoundingIndex = melody.notes.findIndex((note) => note.chord !== "rest");
+  return {
+    ...melody,
+    notes: firstSoundingIndex < 0 ? [] : melody.notes.slice(firstSoundingIndex),
+  };
+}

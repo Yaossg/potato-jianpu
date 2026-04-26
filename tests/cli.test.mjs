@@ -169,6 +169,32 @@ test("CLI export-wav writes a WAV file", async () => {
   assert.equal(wav.readUInt32LE(24), 8000);
 });
 
+test("CLI export-midi and export-wav can omit initial rests", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
+  const input = join(dir, "score.jp");
+  const midiWithRests = join(dir, "with-rests.mid");
+  const midiWithoutRests = join(dir, "without-rests.mid");
+  const wavWithRests = join(dir, "with-rests.wav");
+  const wavWithoutRests = join(dir, "without-rests.wav");
+  await writeFile(input, `tempo: "120"\n=\n0 0 1 2`, "utf8");
+
+  await execFileAsync(process.execPath, ["dist/cli/main.js", "export-midi", input, "-o", midiWithRests], { cwd: repoDir });
+  await execFileAsync(process.execPath, ["dist/cli/main.js", "export-midi", input, "-o", midiWithoutRests, "--omit-initial-rest"], {
+    cwd: repoDir,
+  });
+  await execFileAsync(process.execPath, ["dist/cli/main.js", "export-wav", input, "-o", wavWithRests, "--sample-rate", "8000"], {
+    cwd: repoDir,
+  });
+  await execFileAsync(
+    process.execPath,
+    ["dist/cli/main.js", "export-wav", input, "-o", wavWithoutRests, "--sample-rate", "8000", "--omit-initial-rest"],
+    { cwd: repoDir },
+  );
+
+  assert.ok((await readFile(midiWithoutRests)).length < (await readFile(midiWithRests)).length);
+  assert.ok((await readFile(wavWithoutRests)).length < (await readFile(wavWithRests)).length);
+});
+
 test("CLI rejects invalid WAV sample rates", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
   const input = join(dir, "score.jp");

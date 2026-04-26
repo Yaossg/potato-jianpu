@@ -117,6 +117,11 @@ MIDI export advances delta time without writing note events.
 
 Browser playback and WAV export render the duration as silence.
 
+`skipInitialRests(melody)` removes leading rest events while preserving tempo,
+time-signature metadata, and note indexes for the remaining events. The frontend
+uses this for from-start playback when "Omit initial rests" is enabled. MIDI and
+WAV export can also opt into the same behavior.
+
 ## Chords
 
 Pitch notes with multiple chord members compile to a MIDI note array:
@@ -196,7 +201,15 @@ Browser playback and WAV export share the same basic synth constants from
 
 ## MIDI Export
 
-`exportMidiBytes(document, program?)` returns a `Uint8Array`.
+`exportMidiBytes(document, program?, options?)` returns a `Uint8Array`.
+
+Options:
+
+```ts
+interface MidiExportOptions {
+  omitInitialRests?: boolean;
+}
+```
 
 MIDI writer constants:
 
@@ -242,6 +255,7 @@ interface WavExportOptions {
   sampleRate?: number;
   program?: number;
   amplitude?: number;
+  omitInitialRests?: boolean;
 }
 ```
 
@@ -269,6 +283,9 @@ The WAV synthesizer is intentionally simple and deterministic:
 Invalid sample rates and amplitudes throw errors.
 
 The CLI exposes WAV amplitude through `export-wav --amplitude`.
+
+The CLI exposes initial-rest omission through `--omit-initial-rest` for MIDI and
+WAV export.
 
 ## Current Limitations
 

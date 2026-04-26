@@ -12,8 +12,8 @@ function usage(): string {
     "  jianpu parse <file> [--json]",
     "  jianpu export-svg <file> -o <output.svg> [--page-width <px>] [--color <css>] [--background <css>]",
     "  jianpu export-png <file> -o <output.png> [--page-width <px>] [--color <css>] [--background <css>]",
-    "  jianpu export-midi <file> -o <output.mid> [--program <number>]",
-    "  jianpu export-wav <file> -o <output.wav> [--program <number>] [--sample-rate <hz>] [--amplitude <0-1>]",
+    "  jianpu export-midi <file> -o <output.mid> [--program <number>] [--omit-initial-rest]",
+    "  jianpu export-wav <file> -o <output.wav> [--program <number>] [--sample-rate <hz>] [--amplitude <0-1>] [--omit-initial-rest]",
     "",
     "Current rewrite status: parse/validate/export-svg/export-png/export-midi/export-wav are implemented.",
   ].join("\n");
@@ -47,9 +47,9 @@ function commandFlags(command: string): Set<string> {
     case "export-png":
       return new Set(["-o", "--page-width", "--color", "--background"]);
     case "export-midi":
-      return new Set(["-o", "--program"]);
+      return new Set(["-o", "--program", "--omit-initial-rest"]);
     case "export-wav":
-      return new Set(["-o", "--program", "--sample-rate", "--amplitude"]);
+      return new Set(["-o", "--program", "--sample-rate", "--amplitude", "--omit-initial-rest"]);
     default:
       return new Set();
   }
@@ -201,7 +201,7 @@ async function main(argv: string[]): Promise<number> {
       console.error("error: --program must be an integer from 0 to 220");
       return 2;
     }
-    await writeFile(output, exportMidiBytes(result.value, program));
+    await writeFile(output, exportMidiBytes(result.value, program, { omitInitialRests: flags.includes("--omit-initial-rest") }));
     console.log(output);
   }
 
@@ -226,7 +226,7 @@ async function main(argv: string[]): Promise<number> {
       console.error("error: --amplitude must be a number greater than 0 and no more than 1");
       return 2;
     }
-    await writeFile(output, exportWavBytes(result.value, { program, sampleRate, amplitude }));
+    await writeFile(output, exportWavBytes(result.value, { program, sampleRate, amplitude, omitInitialRests: flags.includes("--omit-initial-rest") }));
     console.log(output);
   }
 

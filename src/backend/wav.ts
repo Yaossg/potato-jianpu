@@ -1,11 +1,12 @@
 import type { Document } from "../core/index.js";
-import { compileMelody, type Melody } from "../player/index.js";
+import { compileMelody, skipInitialRests, type Melody } from "../player/index.js";
 import { amplitudeEnvelope, midiToFrequency, triangleWave } from "../player/synth.js";
 
 export interface WavExportOptions {
   sampleRate?: number;
   program?: number;
   amplitude?: number;
+  omitInitialRests?: boolean;
 }
 
 const DEFAULT_SAMPLE_RATE = 44100;
@@ -78,7 +79,8 @@ export function exportWavBytes(document: Document, options: WavExportOptions = {
     throw new Error("WAV amplitude must be greater than 0 and no more than 1.");
   }
 
-  const melody = compileMelody(document, options.program ?? 0);
+  const compiled = compileMelody(document, options.program ?? 0);
+  const melody = options.omitInitialRests ? skipInitialRests(compiled) : compiled;
   const pcm = renderPcm(melody, sampleRate, amplitude);
   const dataBytes = pcm.length * 2;
   const bytes = new Uint8Array(HEADER_SIZE + dataBytes);

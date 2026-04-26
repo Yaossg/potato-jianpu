@@ -92,6 +92,8 @@ Completed initial slices:
   controls include grouped Program selection plus browser preview volume.
 - Legacy example songs from the original frontend examples panel are available
   as `examples/*.jp` fixtures and are covered by parse/render/export tests.
+- Initial-rest omission from the original player settings is available for
+  frontend from-start playback, MIDI export, WAV export, and CLI export flags.
 
 Current test status:
 

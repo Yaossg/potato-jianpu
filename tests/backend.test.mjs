@@ -22,6 +22,14 @@ test("exports melody to WAV bytes", () => {
   assert.ok(wav.length > 44);
 });
 
+test("WAV export can omit initial rests", () => {
+  const result = parse(`tempo: "120"\n=\n0 0 1 2`);
+  assert.equal(result.ok, true);
+  const withRests = exportWavBytes(result.value, { sampleRate: 8000 });
+  const withoutRests = exportWavBytes(result.value, { sampleRate: 8000, omitInitialRests: true });
+  assert.ok(withoutRests.length < withRests.length);
+});
+
 test("rejects invalid WAV export options", () => {
   const result = parse("1 2 3 4");
   assert.equal(result.ok, true);

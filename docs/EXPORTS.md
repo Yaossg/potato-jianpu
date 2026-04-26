@@ -29,8 +29,8 @@ pnpm run cli -- validate examples/twinkle.jp --json
 pnpm run cli -- parse examples/twinkle.jp --json
 pnpm run cli -- export-svg examples/twinkle.jp -o twinkle.svg --page-width 1000 --color "#111827" --background "#ffffff"
 pnpm run cli -- export-png examples/twinkle.jp -o twinkle.png --page-width 1000 --color "#111827" --background "#ffffff"
-pnpm run cli -- export-midi examples/twinkle.jp -o twinkle.mid --program 0
-pnpm run cli -- export-wav examples/twinkle.jp -o twinkle.wav --sample-rate 44100 --amplitude 0.24
+pnpm run cli -- export-midi examples/twinkle.jp -o twinkle.mid --program 0 --omit-initial-rest
+pnpm run cli -- export-wav examples/twinkle.jp -o twinkle.wav --sample-rate 44100 --amplitude 0.24 --omit-initial-rest
 ```
 
 The built package also exposes a `jianpu` binary mapped to
@@ -127,6 +127,7 @@ pnpm run cli -- export-midi input.jp -o output.mid --program 0
 Options:
 
 - `--program <number>`: integer from `0` to `220`.
+- `--omit-initial-rest`: remove leading rests before writing note events.
 
 Program behavior:
 
@@ -158,6 +159,7 @@ Options:
 - `--sample-rate <hz>`: positive number. Defaults to `44100`.
 - `--amplitude <number>`: number greater than `0` and no more than `1`.
   Defaults to `0.24`.
+- `--omit-initial-rest`: remove leading rests before rendering audio.
 
 The current synthesizer is intentionally simple and deterministic:
 

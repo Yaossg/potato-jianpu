@@ -89,6 +89,7 @@ button:disabled {
 
 .select-control,
 .range-control,
+.checkbox-control,
 .color-control {
   display: inline-flex;
   align-items: center;
@@ -123,6 +124,11 @@ button:disabled {
   width: 38px;
   color: #5c6878;
   font-variant-numeric: tabular-nums;
+}
+
+.checkbox-control input {
+  width: 16px;
+  height: 16px;
 }
 
 .color-control input {

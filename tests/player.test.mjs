@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { parse } from "../dist/parser/index.js";
-import { compileMelody, exportMidiBytes, midiToFrequency, SYNTH_WAVEFORM, triangleWave } from "../dist/player/index.js";
+import { compileMelody, exportMidiBytes, midiToFrequency, skipInitialRests, SYNTH_WAVEFORM, triangleWave } from "../dist/player/index.js";
 
 test("compiles pitch notes to MIDI notes with key and octave", () => {
   const result = parse(`key: "D"\n=\n1 2 1'`);
@@ -39,6 +39,24 @@ test("exports a standard MIDI header", () => {
   assert.equal(String.fromCharCode(...bytes.slice(14, 18)), "MTrk");
   assert.equal(bytes[8], 0);
   assert.equal(bytes[9], 1);
+});
+
+test("can omit initial rests from compiled melody and MIDI export", () => {
+  const result = parse("0 0 1 2");
+  assert.equal(result.ok, true);
+  const melody = compileMelody(result.value);
+  const skipped = skipInitialRests(melody);
+  assert.deepEqual(
+    skipped.notes.map((note) => note.chord),
+    [[60], [62]],
+  );
+  assert.ok(exportMidiBytes(result.value, 0, { omitInitialRests: true }).length < exportMidiBytes(result.value).length);
+});
+
+test("omitting initial rests preserves all-rest melodies as empty", () => {
+  const result = parse("0 0");
+  assert.equal(result.ok, true);
+  assert.deepEqual(skipInitialRests(compileMelody(result.value)).notes, []);
 });
 
 test("exports tempo and time signature MIDI meta events", () => {

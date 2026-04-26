@@ -1,6 +1,10 @@
 import type { Document } from "../core/index.js";
 import { actualNotePerBeat } from "../core/index.js";
-import { compileMelody, type Melody } from "./melody.js";
+import { compileMelody, skipInitialRests, type Melody } from "./melody.js";
+
+export interface MidiExportOptions {
+  omitInitialRests?: boolean;
+}
 
 const HEADER_CHUNK_TYPE = [0x4d, 0x54, 0x68, 0x64];
 const HEADER_CHUNK_LENGTH = [0x00, 0x00, 0x00, 0x06];
@@ -148,8 +152,9 @@ function buildMusicTrack(melody: Melody, program: number): number[] {
   return track.toBytes();
 }
 
-export function exportMidiBytes(document: Document, program = 0): Uint8Array {
-  const melody = compileMelody(document, program);
+export function exportMidiBytes(document: Document, program = 0, options: MidiExportOptions = {}): Uint8Array {
+  const compiled = compileMelody(document, program);
+  const melody = options.omitInitialRests ? skipInitialRests(compiled) : compiled;
   const tracks = [buildMetaTrack(melody), buildMusicTrack(melody, program)];
   const bytes = [
     ...HEADER_CHUNK_TYPE,

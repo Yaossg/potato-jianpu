@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import type { MouseEvent } from "react";
-import { compileMelody, DRUM_PROGRAMS, exportMidiBytes, GM_PROGRAMS, parse } from "../index.js";
+import { compileMelody, DRUM_PROGRAMS, exportMidiBytes, GM_PROGRAMS, parse, skipInitialRests } from "../index.js";
 import { renderSvg } from "../renderer/index.js";
 import { PreviewAudioPlayer } from "./audio.js";
 import scale from "../../examples/scale.jp?raw";
@@ -66,6 +66,7 @@ export function App() {
   const [pageBackground, setPageBackground] = useState("#ffffff");
   const [program, setProgram] = useState(0);
   const [volume, setVolume] = useState(0.8);
+  const [omitInitialRests, setOmitInitialRests] = useState(true);
   const playerRef = useRef<PreviewAudioPlayer | null>(null);
   const parsed = useMemo(() => parse(source), [source]);
   const svg = useMemo(
@@ -89,7 +90,7 @@ export function App() {
 
   function exportMidi() {
     if (parsed.ok) {
-      const midi = exportMidiBytes(parsed.value, program);
+      const midi = exportMidiBytes(parsed.value, program, { omitInitialRests });
       const buffer = midi.buffer.slice(midi.byteOffset, midi.byteOffset + midi.byteLength) as ArrayBuffer;
       downloadBytes(buffer, "score.mid", "audio/midi");
     }
@@ -101,9 +102,11 @@ export function App() {
     }
     const player = playerRef.current ?? new PreviewAudioPlayer();
     playerRef.current = player;
+    const compiled = compileMelody(parsed.value, program);
+    const melody = startNoteIndex === 0 && omitInitialRests ? skipInitialRests(compiled) : compiled;
     setIsPlaying(true);
     await player.play(
-      compileMelody(parsed.value, program),
+      melody,
       () => {
         setIsPlaying(false);
         setActiveNoteIndex(null);
@@ -198,6 +201,14 @@ export function App() {
               onChange={(event) => setVolume(Number(event.target.value))}
             />
             <span>{Math.round(volume * 100)}%</span>
+          </label>
+          <label className="checkbox-control">
+            <input
+              type="checkbox"
+              checked={omitInitialRests}
+              onChange={(event) => setOmitInitialRests(event.target.checked)}
+            />
+            Omit initial rests
           </label>
           {isPlaying ? (
             <button type="button" onClick={stop}>

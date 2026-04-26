@@ -35,6 +35,7 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(script, /Export MIDI/);
   assert.match(script, /General MIDI/);
   assert.match(script, /Volume/);
+  assert.match(script, /Omit initial rests/);
   assert.doesNotMatch(script, /Export PNG|Export WAV|Export MP3/);
   assert.match(style, /font-variant-ligatures:\s*none/);
   assert.match(style, /\.score-svg svg\{/);
