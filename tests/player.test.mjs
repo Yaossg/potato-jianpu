@@ -1,7 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { parse } from "../dist/parser/index.js";
-import { compileMelody, exportMidiBytes, midiToFrequency, skipInitialRests, SYNTH_WAVEFORM, triangleWave } from "../dist/player/index.js";
+import {
+  compileMelody,
+  exportMidiBytes,
+  midiToFrequency,
+  sampleWave,
+  skipInitialRests,
+  SYNTH_WAVEFORM,
+  triangleWave,
+  waveformForProgram,
+} from "../dist/player/index.js";
 
 test("compiles pitch notes to MIDI notes with key and octave", () => {
   const result = parse(`key: "D"\n=\n1 2 1'`);
@@ -100,4 +109,15 @@ test("exposes shared synth constants for playback and WAV export", () => {
   assert.equal(triangleWave(0), 0);
   assert.ok(triangleWave(Math.PI / 2) > 0.99);
   assert.ok(triangleWave((3 * Math.PI) / 2) < -0.99);
+});
+
+test("maps programs to deterministic synth waveforms", () => {
+  assert.equal(waveformForProgram(0), "triangle");
+  assert.equal(waveformForProgram(24), "sawtooth");
+  assert.equal(waveformForProgram(56), "sawtooth");
+  assert.equal(waveformForProgram(80), "square");
+  assert.equal(waveformForProgram(104), "sine");
+  assert.equal(waveformForProgram(128), "square");
+  assert.equal(sampleWave(Math.PI / 2, "sine"), 1);
+  assert.equal(sampleWave(Math.PI / 2, "square"), 1);
 });

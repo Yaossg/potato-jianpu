@@ -199,10 +199,20 @@ Clicking a rendered note starts playback from that note index.
 Browser playback and WAV export share the same basic synth constants from
 `src/player/synth.ts`:
 
-- waveform: `triangle`
+- default waveform: `triangle`
 - attack: `0.008` seconds
 - release: `0.02` seconds
 - browser oscillator gain: `0.12`
+
+Program values now choose a deterministic base waveform for browser playback and
+WAV export:
+
+| Program range | Waveform |
+| --- | --- |
+| `0..23`, `40..55`, `64..79`, `120..127` | `triangle` |
+| `24..39`, `56..63` | `sawtooth` |
+| `80..103`, `128..220` | `square` |
+| `104..119` | `sine` |
 
 ## MIDI Export
 
@@ -279,7 +289,7 @@ Output format:
 
 The WAV synthesizer is intentionally simple and deterministic:
 
-- triangle wave per MIDI note
+- deterministic waveform per MIDI note based on Program
 - chord notes mixed evenly
 - short attack of `0.008` seconds
 - short release of `0.02` seconds

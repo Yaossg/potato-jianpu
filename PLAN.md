@@ -88,6 +88,9 @@ Completed initial slices:
 - CLI `export-wav` exposes the backend amplitude option.
 - WAV export and browser preview playback share lightweight synth constants,
   MIDI frequency conversion, envelope timing, and triangle-wave tone shape.
+- WAV export and browser preview playback select a deterministic oscillator
+  waveform from the active Program, giving Program selection an audible effect
+  beyond MIDI export while remaining simpler than TinySynth.
 - Frontend source editor disables programming-font ligatures, and playback
   controls include grouped Program selection, browser preview volume, and
   Program audition.

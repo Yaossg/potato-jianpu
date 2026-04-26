@@ -1,6 +1,6 @@
 import type { Document } from "../core/index.js";
 import { compileMelody, skipInitialRests, type Melody } from "../player/index.js";
-import { amplitudeEnvelope, midiToFrequency, triangleWave } from "../player/synth.js";
+import { amplitudeEnvelope, midiToFrequency, sampleWave, waveformForProgram, type SynthWaveform } from "../player/synth.js";
 
 export interface WavExportOptions {
   sampleRate?: number;
@@ -40,7 +40,7 @@ function writeInt16(bytes: Uint8Array, offset: number, value: number) {
   view.setInt16(offset, value, true);
 }
 
-function renderPcm(melody: Melody, sampleRate: number, amplitude: number): Int16Array {
+function renderPcm(melody: Melody, sampleRate: number, amplitude: number, waveform: SynthWaveform): Int16Array {
   const secondsPerWhole = secondsPerWholeNote(melody);
   const totalSeconds = melody.notes.reduce((sum, note) => sum + note.duration * secondsPerWhole, 0);
   const totalSamples = Math.max(1, Math.ceil(totalSeconds * sampleRate));
@@ -54,7 +54,8 @@ function renderPcm(melody: Melody, sampleRate: number, amplitude: number): Int16
       for (let index = 0; index < sampleLength && cursor + index < samples.length; index += 1) {
         const time = index / sampleRate;
         const mixed =
-          frequencies.reduce((sum, frequency) => sum + triangleWave(2 * Math.PI * frequency * time), 0) / frequencies.length;
+          frequencies.reduce((sum, frequency) => sum + sampleWave(2 * Math.PI * frequency * time, waveform), 0) /
+          frequencies.length;
         samples[cursor + index] += mixed * amplitude * amplitudeEnvelope(index, sampleLength, sampleRate);
       }
     }
@@ -79,9 +80,10 @@ export function exportWavBytes(document: Document, options: WavExportOptions = {
     throw new Error("WAV amplitude must be greater than 0 and no more than 1.");
   }
 
-  const compiled = compileMelody(document, options.program ?? 0);
+  const program = options.program ?? 0;
+  const compiled = compileMelody(document, program);
   const melody = options.omitInitialRests ? skipInitialRests(compiled) : compiled;
-  const pcm = renderPcm(melody, sampleRate, amplitude);
+  const pcm = renderPcm(melody, sampleRate, amplitude, waveformForProgram(program));
   const dataBytes = pcm.length * 2;
   const bytes = new Uint8Array(HEADER_SIZE + dataBytes);
 

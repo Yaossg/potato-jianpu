@@ -1,5 +1,5 @@
 import type { Melody, MelodyNote } from "../player/index.js";
-import { midiToFrequency, SYNTH_ATTACK_SECONDS, SYNTH_BROWSER_GAIN, SYNTH_RELEASE_SECONDS, SYNTH_WAVEFORM } from "../player/synth.js";
+import { midiToFrequency, SYNTH_ATTACK_SECONDS, SYNTH_BROWSER_GAIN, SYNTH_RELEASE_SECONDS, waveformForProgram } from "../player/synth.js";
 
 function totalSeconds(notes: MelodyNote[], secondsPerWholeNote: number): number {
   return notes.reduce((sum, note) => sum + note.duration * secondsPerWholeNote, 0);
@@ -11,7 +11,14 @@ export class PreviewAudioPlayer {
   private stopTimer: number | null = null;
   private noteTimers: number[] = [];
 
-  async play(melody: Melody, onEnded: () => void, onNoteStart?: (noteIndex: number) => void, startNoteIndex = 0, volume = 1) {
+  async play(
+    melody: Melody,
+    onEnded: () => void,
+    onNoteStart?: (noteIndex: number) => void,
+    startNoteIndex = 0,
+    volume = 1,
+    program = 0,
+  ) {
     this.stop();
     const startIndex = melody.notes.findIndex((note) => note.index >= startNoteIndex);
     const notes = startIndex >= 0 ? melody.notes.slice(startIndex) : [];
@@ -31,7 +38,7 @@ export class PreviewAudioPlayer {
       );
       if (note.chord !== "rest") {
         for (const midiNote of note.chord) {
-          this.scheduleTone(midiNote, currentTime, duration, volume);
+          this.scheduleTone(midiNote, currentTime, duration, volume, program);
         }
       }
       currentTime += duration;
@@ -65,13 +72,13 @@ export class PreviewAudioPlayer {
     this.context = null;
   }
 
-  private scheduleTone(midiNote: number, start: number, duration: number, volume: number) {
+  private scheduleTone(midiNote: number, start: number, duration: number, volume: number, program: number) {
     if (!this.context) {
       return;
     }
     const oscillator = this.context.createOscillator();
     const gain = this.context.createGain();
-    oscillator.type = SYNTH_WAVEFORM;
+    oscillator.type = waveformForProgram(program);
     oscillator.frequency.setValueAtTime(midiToFrequency(midiNote), start);
     gain.gain.setValueAtTime(0.0001, start);
     const gainValue = Math.max(0.0001, SYNTH_BROWSER_GAIN * Math.max(0, Math.min(2, volume)));

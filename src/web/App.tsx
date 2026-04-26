@@ -175,6 +175,7 @@ export function App() {
       setActiveNoteIndex,
       startNoteIndex,
       volume / 100,
+      program,
     );
   }
 
@@ -196,6 +197,7 @@ export function App() {
       undefined,
       0,
       volume / 100,
+      program,
     );
   }
 

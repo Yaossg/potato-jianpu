@@ -156,8 +156,9 @@ Drum behavior:
 - drum mode maps `X` to `program - 128 + 35`
 - MIDI drum mode uses channel 10 and omits program change
 
-Browser playback and WAV export use simple triangle-wave synthesis. They do not
-attempt to emulate real instrument timbres.
+Browser playback and WAV export use simple deterministic oscillator synthesis.
+Programs select a base waveform, but this still does not attempt to emulate real
+instrument timbres.
 
 ## Export Differences
 

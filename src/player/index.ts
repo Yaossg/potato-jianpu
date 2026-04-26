@@ -11,5 +11,8 @@ export {
   SYNTH_BROWSER_GAIN,
   SYNTH_RELEASE_SECONDS,
   SYNTH_WAVEFORM,
+  sampleWave,
   triangleWave,
+  waveformForProgram,
 } from "./synth.js";
+export type { SynthWaveform } from "./synth.js";
