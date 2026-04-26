@@ -283,6 +283,10 @@ Dashes and slash/dot suffixes are mutually exclusive in the current parser.
 Inputs such as `1-/` or `1/-` are rejected with a specific duration diagnostic
 rather than being treated as separate note syntax.
 
+Duration suffixes must follow a note, rest, drum note, or chord. In compact
+notation, stray suffixes such as `/1`, `.1`, or `-1` are rejected with a
+specific diagnostic rather than a generic note-start error.
+
 Examples:
 
 ```jianpu
@@ -301,6 +305,10 @@ Chords are enclosed in braces:
 
 Only pitch notes are valid inside a chord. Rests and drum notes are not valid
 chord members. Empty chords are invalid.
+
+A closing brace without a matching `{` is invalid. For example, `1}2` reports
+the stray `}` as an unmatched chord end rather than treating it as generic score
+syntax.
 
 The duration suffix belongs after the closing brace and applies to the whole
 chord:
@@ -403,6 +411,8 @@ The parser currently reports errors for:
 - empty measures
 - invalid note/chord/tie syntax
 - mixed dash and slash/dot duration suffixes
+- stray duration suffixes
+- unmatched chord closing braces
 - first note tied
 - tied note after rest
 - tied note target mismatch

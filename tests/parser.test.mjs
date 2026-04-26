@@ -100,6 +100,18 @@ test("reports invalid compact notation characters at their source position", () 
   assert.doesNotMatch(result.diagnostics.map((item) => item.message).join("\n"), /Expected note, rest, drum note, chord, or tie/);
 });
 
+test("reports specific diagnostics for stray compact duration and chord markers", () => {
+  const duration = parse("/1");
+  assert.equal(duration.ok, false);
+  assert.match(duration.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Duration mark must follow/);
+  assert.doesNotMatch(duration.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Expected note, rest, drum note, chord, or tie/);
+
+  const chordEnd = parse("1}2");
+  assert.equal(chordEnd.ok, false);
+  assert.match(chordEnd.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Unexpected '\}' without matching chord start/);
+  assert.doesNotMatch(chordEnd.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Expected note, rest, drum note, chord, or tie/);
+});
+
 
 test("rejects invalid header values", () => {
   const result = parse(`tempo: "-1"\ntime: "5/4"\nkey: "H"\n=\n1234`);

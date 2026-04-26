@@ -215,8 +215,7 @@ class Parser {
     const notes: Note[] = [];
     while (!this.at("bar") && !this.at("newline") && !this.at("eof")) {
       if (!this.isDurableNoteStart()) {
-        this.error("Expected note, rest, drum note, chord, or tie.");
-        this.index += 1;
+        this.parseUnexpectedScoreToken();
         continue;
       }
       notes.push(this.parseDurableNote(octavePrefix));
@@ -395,6 +394,23 @@ class Parser {
     while (this.at("half") || this.at("dot")) {
       this.index += 1;
     }
+  }
+
+  private parseUnexpectedScoreToken() {
+    if (this.at("rbrace")) {
+      this.error("Unexpected '}' without matching chord start.");
+      this.index += 1;
+      return;
+    }
+    if (this.at("half") || this.at("dot") || this.at("dash")) {
+      this.error("Duration mark must follow a note, rest, drum note, or chord.");
+      while (this.at("half") || this.at("dot") || this.at("dash")) {
+        this.index += 1;
+      }
+      return;
+    }
+    this.error("Expected note, rest, drum note, chord, or tie.");
+    this.index += 1;
   }
 
   private validateTies(lines: ScoreLine[]) {
