@@ -33,6 +33,7 @@ Completed initial slices:
 - Backend WAV export through the CLI.
 - Drum MIDI export coverage with percussion-channel program handling.
 - Export behavior documentation in `docs/EXPORTS.md`.
+- Current grammar documentation in `docs/GRAMMAR.md`.
 
 Current test status:
 

@@ -31,4 +31,5 @@ pnpm run web:build
 ```
 
 Implementation is intentionally incremental. See `PLAN.md` for the full rewrite
-plan. Export behavior is documented in `docs/EXPORTS.md`.
+plan. Syntax is documented in `docs/GRAMMAR.md`, and export behavior is
+documented in `docs/EXPORTS.md`.
