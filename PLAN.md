@@ -50,6 +50,8 @@ Completed initial slices:
   `bB`.
 - Parser tests cover empty files, multiple header separator characters, and
   optional leading/trailing score bars.
+- Parser tests cover raw header string escape text and unterminated string
+  diagnostics.
 - CLI rejects flags with missing values.
 - CLI rejects unknown options per command.
 - Player APIs reject out-of-range programs.

@@ -156,6 +156,24 @@ test("accepts legacy accidental-first key spellings", () => {
   assert.equal(flat.value.header.keySignatureText, "bB");
 });
 
+test("keeps raw header string escape text", () => {
+  const result = parse(`title: "A \\"quoted\\" title"\n=\n1`);
+  assert.equal(result.ok, true);
+  assert.equal(result.value.header.title, `A \\"quoted\\" title`);
+});
+
+test("reports unterminated header strings", () => {
+  const result = parse(`title: "unterminated\n=\n1 2`);
+  assert.equal(result.ok, false);
+  const messages = result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
+  assert.match(messages, /Unterminated string literal/);
+  assert.match(messages, /Expected quoted string header value/);
+  const diagnostic = result.diagnostics.find((item) => item.message === "Unterminated string literal.");
+  assert.ok(diagnostic?.range);
+  assert.equal(diagnostic.range.start.line, 1);
+  assert.equal(diagnostic.range.start.column, 8);
+});
+
 test("recovers malformed header lines without score-syntax cascades", () => {
   const result = parse("title: Missing Quotes\ncomposer: \"Ada\"\n=\n1 2 3 4");
   assert.equal(result.ok, false);
