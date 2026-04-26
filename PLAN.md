@@ -91,6 +91,8 @@ Completed initial slices:
 - Frontend source editor disables programming-font ligatures, and playback
   controls include grouped Program selection, browser preview volume, and
   Program audition.
+- Frontend volume control matches the original 0-200 percent range and 100
+  percent default.
 - Frontend source editor restores the original placeholder text.
 - Frontend initial editor content is empty, matching the original app startup
   state.

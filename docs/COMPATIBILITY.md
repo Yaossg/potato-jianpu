@@ -178,6 +178,7 @@ Frontend currently supports:
   saved preference and system dark-mode initialization
 - Settings panel for page width, preview/export colors, Program, volume,
   Program audition, and initial-rest omission
+- volume uses the original `0..200%` frontend range and `100%` default
 - empty initial source editor and placeholder text from the original frontend
 - Examples panel with the migrated legacy examples and focused two-column
   editor/preview workspace. Loading an example stops active playback and closes

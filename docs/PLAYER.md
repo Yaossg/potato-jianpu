@@ -184,7 +184,8 @@ Program. The browser UI presents it as a grouped selection list with General
 MIDI programs and drum-note programs. Values `128..220` trigger the drum mapping
 described above.
 
-The frontend also exposes playback volume. This controls browser preview gain
+The frontend also exposes playback volume as a `0..200%` slider with a `100%`
+default, matching the original settings UI. This controls browser preview gain
 only; it does not alter the parsed score, MIDI note velocity, or exported SVG.
 
 The Audition button plays a short built-in phrase with the current Program and

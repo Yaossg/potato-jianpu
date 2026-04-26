@@ -74,7 +74,7 @@ export class PreviewAudioPlayer {
     oscillator.type = SYNTH_WAVEFORM;
     oscillator.frequency.setValueAtTime(midiToFrequency(midiNote), start);
     gain.gain.setValueAtTime(0.0001, start);
-    const gainValue = Math.max(0.0001, SYNTH_BROWSER_GAIN * Math.max(0, Math.min(1, volume)));
+    const gainValue = Math.max(0.0001, SYNTH_BROWSER_GAIN * Math.max(0, Math.min(2, volume)));
     gain.gain.exponentialRampToValueAtTime(gainValue, start + SYNTH_ATTACK_SECONDS);
     gain.gain.setValueAtTime(
       gainValue,

@@ -109,7 +109,7 @@ export function App() {
   const [scoreColor, setScoreColor] = useState(() => themeColors(initialTheme()).scoreColor);
   const [pageBackground, setPageBackground] = useState(() => themeColors(initialTheme()).pageBackground);
   const [program, setProgram] = useState(0);
-  const [volume, setVolume] = useState(0.8);
+  const [volume, setVolume] = useState(100);
   const [omitInitialRests, setOmitInitialRests] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [showExamples, setShowExamples] = useState(false);
@@ -174,7 +174,7 @@ export function App() {
       },
       setActiveNoteIndex,
       startNoteIndex,
-      volume,
+      volume / 100,
     );
   }
 
@@ -195,7 +195,7 @@ export function App() {
       },
       undefined,
       0,
-      volume,
+      volume / 100,
     );
   }
 
@@ -323,12 +323,12 @@ export function App() {
               <input
                 type="range"
                 min={0}
-                max={1}
-                step={0.05}
+                max={200}
+                step={1}
                 value={volume}
                 onChange={(event) => setVolume(Number(event.target.value))}
               />
-              <span>{Math.round(volume * 100)}%</span>
+              <span>{Math.round(volume)}%</span>
             </label>
             <label className="checkbox-control">
               <input
