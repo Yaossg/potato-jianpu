@@ -30,7 +30,7 @@ pnpm run cli -- parse examples/twinkle.jp --json
 pnpm run cli -- export-svg examples/twinkle.jp -o twinkle.svg --page-width 1000 --color "#111827" --background "#ffffff"
 pnpm run cli -- export-png examples/twinkle.jp -o twinkle.png --page-width 1000 --color "#111827" --background "#ffffff"
 pnpm run cli -- export-midi examples/twinkle.jp -o twinkle.mid --program 0
-pnpm run cli -- export-wav examples/twinkle.jp -o twinkle.wav --sample-rate 44100
+pnpm run cli -- export-wav examples/twinkle.jp -o twinkle.wav --sample-rate 44100 --amplitude 0.24
 ```
 
 The built package also exposes a `jianpu` binary mapped to
@@ -149,13 +149,15 @@ WAV export uses the same melody compiler as MIDI export and writes a mono
 16-bit PCM WAV file:
 
 ```sh
-pnpm run cli -- export-wav input.jp -o output.wav --program 0 --sample-rate 44100
+pnpm run cli -- export-wav input.jp -o output.wav --program 0 --sample-rate 44100 --amplitude 0.24
 ```
 
 Options:
 
 - `--program <number>`: same range and drum mapping as MIDI export.
 - `--sample-rate <hz>`: positive number. Defaults to `44100`.
+- `--amplitude <number>`: number greater than `0` and no more than `1`.
+  Defaults to `0.24`.
 
 The current synthesizer is intentionally simple and deterministic:
 

@@ -13,7 +13,7 @@ function usage(): string {
     "  jianpu export-svg <file> -o <output.svg> [--page-width <px>] [--color <css>] [--background <css>]",
     "  jianpu export-png <file> -o <output.png> [--page-width <px>] [--color <css>] [--background <css>]",
     "  jianpu export-midi <file> -o <output.mid> [--program <number>]",
-    "  jianpu export-wav <file> -o <output.wav> [--program <number>] [--sample-rate <hz>]",
+    "  jianpu export-wav <file> -o <output.wav> [--program <number>] [--sample-rate <hz>] [--amplitude <0-1>]",
     "",
     "Current rewrite status: parse/validate/export-svg/export-png/export-midi/export-wav are implemented.",
   ].join("\n");
@@ -49,7 +49,7 @@ function commandFlags(command: string): Set<string> {
     case "export-midi":
       return new Set(["-o", "--program"]);
     case "export-wav":
-      return new Set(["-o", "--program", "--sample-rate"]);
+      return new Set(["-o", "--program", "--sample-rate", "--amplitude"]);
     default:
       return new Set();
   }
@@ -110,7 +110,7 @@ async function main(argv: string[]): Promise<number> {
     console.error(`error: unknown option ${unknown}`);
     return 2;
   }
-  const missingFlagValue = validateFlagValues(flags, ["-o", "--page-width", "--color", "--background", "--program", "--sample-rate"]);
+  const missingFlagValue = validateFlagValues(flags, ["-o", "--page-width", "--color", "--background", "--program", "--sample-rate", "--amplitude"]);
   if (missingFlagValue) {
     console.error(`error: ${missingFlagValue} requires a value`);
     return 2;
@@ -221,7 +221,12 @@ async function main(argv: string[]): Promise<number> {
       console.error("error: --sample-rate must be a positive number");
       return 2;
     }
-    await writeFile(output, exportWavBytes(result.value, { program, sampleRate }));
+    const amplitude = readPositiveNumberFlag(flags, "--amplitude");
+    if (Number.isNaN(amplitude) || (amplitude !== undefined && amplitude > 1)) {
+      console.error("error: --amplitude must be a number greater than 0 and no more than 1");
+      return 2;
+    }
+    await writeFile(output, exportWavBytes(result.value, { program, sampleRate, amplitude }));
     console.log(output);
   }
 

@@ -82,6 +82,7 @@ Completed initial slices:
 - CLI `--version` reports the package version for release checks.
 - Package metadata pins the expected package manager version.
 - npm publication is explicitly deferred while the package remains private.
+- CLI `export-wav` exposes the backend amplitude option.
 
 Current test status:
 

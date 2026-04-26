@@ -159,7 +159,7 @@ test("CLI export-wav writes a WAV file", async () => {
   const output = join(dir, "score.wav");
   await writeFile(input, `tempo: "120"\n=\n1 2 3 4`, "utf8");
 
-  await execFileAsync(process.execPath, ["dist/cli/main.js", "export-wav", input, "-o", output, "--sample-rate", "8000"], {
+  await execFileAsync(process.execPath, ["dist/cli/main.js", "export-wav", input, "-o", output, "--sample-rate", "8000", "--amplitude", "0.5"], {
     cwd: repoDir,
   });
 
@@ -180,6 +180,20 @@ test("CLI rejects invalid WAV sample rates", async () => {
       cwd: repoDir,
     }),
     /--sample-rate must be a positive number/,
+  );
+});
+
+test("CLI rejects invalid WAV amplitudes", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
+  const input = join(dir, "score.jp");
+  const output = join(dir, "score.wav");
+  await writeFile(input, "1 2 3 4", "utf8");
+
+  await assert.rejects(
+    execFileAsync(process.execPath, ["dist/cli/main.js", "export-wav", input, "-o", output, "--amplitude", "2"], {
+      cwd: repoDir,
+    }),
+    /--amplitude must be a number greater than 0 and no more than 1/,
   );
 });
 

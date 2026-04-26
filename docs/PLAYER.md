@@ -254,6 +254,8 @@ The WAV synthesizer is intentionally simple and deterministic:
 
 Invalid sample rates and amplitudes throw errors.
 
+The CLI exposes WAV amplitude through `export-wav --amplitude`.
+
 ## Current Limitations
 
 The current player/export layer is functional but not a full synthesizer:
