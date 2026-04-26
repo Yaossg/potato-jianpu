@@ -1,11 +1,8 @@
 import { actualNotePerBeat, type Document, type Measure, type Note, type Pitch, type PitchNote, type ScoreLine } from "../core/index.js";
-
-export interface RenderOptions {
-  pageWidth?: number;
-  activeNoteIndex?: number;
-  color?: string;
-  background?: string;
-}
+import { DIMENSIONS } from "./dimensions.js";
+import { DEFAULT_OPTIONS, type RenderOptions } from "./options.js";
+import { SVG_STYLE } from "./styles.js";
+import { escapeXml } from "./xml.js";
 
 interface MeasureLayout {
   measure: Measure;
@@ -23,37 +20,6 @@ interface LineLayout {
   maxPaddingUp: number;
 }
 
-const DEFAULT_OPTIONS: Required<RenderOptions> = {
-  pageWidth: 1000,
-  activeNoteIndex: -1,
-  color: "currentColor",
-  background: "",
-};
-
-const DIMENSIONS = {
-  baseNoteWidth: 24,
-  baseNoteHeight: 24,
-  leftPadding: 18,
-  measureSpacing: 0,
-  accidentalOffset: 10,
-  tieHeight: 16,
-  tieCurveHeight: 13,
-  tiePadding: 24,
-  octaveSpacing: 5,
-  noteBottomPadding: 10,
-  underlineSpacing: 5,
-  dotSpacing: 12,
-  dashSpacing: 24,
-  lineSpacing: 10,
-  octaveDotVerticalOffset: 22,
-  octaveDotBelowOffset: 5,
-  accidentalVerticalOffset: 8,
-  underlineXStart: -10,
-  underlineXEndOffset: 14,
-  dotXOffset: 12,
-  dashXOffset: 12,
-};
-
 const accidentalMap = new Map([
   [2, "&#119082;"],
   [1, "&#9839;"],
@@ -61,14 +27,6 @@ const accidentalMap = new Map([
   [-1, "&#9837;"],
   [-2, "&#119083;"],
 ]);
-
-function escapeXml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
-}
 
 function formatKey(key: string): string {
   return key.replace("#", "&#9839;").replace("b", "&#9837;");
@@ -460,21 +418,7 @@ export function renderSvg(document: Document, options: RenderOptions = {}): stri
 <svg xmlns="http://www.w3.org/2000/svg" width="${resolved.pageWidth}" height="${height}" viewBox="0 0 ${resolved.pageWidth} ${height}"${rootStyle}>
 <defs>
 <style>
-.title { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 32px; font-weight: 700; }
-.subtitle { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 20px; font-weight: 400; }
-.metadata { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 20px; font-weight: 400; }
-.note { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 24px; font-weight: 700; }
-.accidental { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-weight: 700; text-anchor: middle; }
-.dot { fill: currentColor; }
-.bar-thin { stroke: currentColor; stroke-width: 2.5; stroke-linecap: butt; }
-.bar-final { stroke: currentColor; stroke-width: 5; stroke-linecap: butt; }
-.tempo-mark { fill: currentColor; font-family: "Segoe UI Symbol", "Noto Music", "Noto Sans Symbols 2", Arial, Helvetica, sans-serif; font-size: 22px; font-weight: 400; }
-.underline { stroke: currentColor; stroke-width: 2.5; }
-.dash { stroke: currentColor; stroke-width: 3; }
-.tie { fill: currentColor; stroke: currentColor; stroke-width: 1; }
-.note-item { cursor: pointer; }
-.note-item.active .note, .note-item.active .accidental, .note-item.active .dot { fill: #dc2626; }
-.note-item.active .underline, .note-item.active .dash { stroke: #dc2626; }
+${SVG_STYLE}
 </style>
 </defs>
 ${background}

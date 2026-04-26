@@ -54,6 +54,8 @@ Completed initial slices:
 - Minimal renderer SVG snapshot coverage exists.
 - CLI WAV sample-rate behavior is covered.
 - Parser rejects mixed duration suffix styles with a specific diagnostic.
+- Renderer options, dimensions, styles, and XML helpers are split from the main
+  SVG renderer.
 
 Current test status:
 
