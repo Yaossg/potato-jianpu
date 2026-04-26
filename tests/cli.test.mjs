@@ -152,6 +152,29 @@ test("CLI parse JSON keeps diagnostics machine-readable", async () => {
   assert.match(payload.diagnostics[0].message, /Measure duration/);
 });
 
+test("CLI parse JSON keeps parse errors machine-readable", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
+  const input = join(dir, "score.jp");
+  await writeFile(input, `title: "unterminated\n=\n1 2`, "utf8");
+
+  await assert.rejects(
+    async () => {
+      await execFileAsync(process.execPath, ["dist/cli/main.js", "parse", input, "--json"], {
+        cwd: repoDir,
+      });
+    },
+    (error) => {
+      const stdout = String(error.stdout);
+      const stderr = String(error.stderr);
+      const payload = JSON.parse(stdout);
+      assert.equal(stderr, "");
+      assert.equal(payload.ok, false);
+      assert.match(payload.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Unterminated string literal/);
+      return true;
+    },
+  );
+});
+
 
 test("CLI export-wav writes a WAV file", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
