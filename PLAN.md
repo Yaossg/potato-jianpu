@@ -91,6 +91,7 @@ Completed initial slices:
 - Frontend source editor disables programming-font ligatures, and playback
   controls include grouped Program selection, browser preview volume, and
   Program audition.
+- Frontend source editor restores the original placeholder text.
 - Frontend settings panel restores the original Settings entry point and groups
   page width, export colors, Program, volume, audition, and initial-rest
   controls outside the top action bar.

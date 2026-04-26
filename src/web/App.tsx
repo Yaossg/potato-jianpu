@@ -391,6 +391,7 @@ export function App() {
             value={source}
             onChange={(event) => setSource(event.target.value)}
             onFocus={() => setShowExamples(false)}
+            placeholder="Enter your Jianpu here..."
             spellCheck={false}
           />
           {parsed.diagnostics.length > 0 && (
