@@ -32,6 +32,7 @@ Completed initial slices:
 - MIDI tempo and time-signature meta event coverage.
 - Backend WAV export through the CLI.
 - Drum MIDI export coverage with percussion-channel program handling.
+- Export behavior documentation in `docs/EXPORTS.md`.
 
 Current test status:
 
