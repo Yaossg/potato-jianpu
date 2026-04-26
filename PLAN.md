@@ -135,6 +135,9 @@ Completed initial slices:
   as `examples/*.jp` fixtures and are covered by parse/render/export tests.
 - Initial-rest omission from the original player settings is available for
   frontend from-start playback, MIDI export, WAV export, and CLI export flags.
+- Frontend browser playback now uses the legacy WebAudioTinySynth adapter for
+  real-time Program and drum timbres while backend WAV export stays
+  deterministic.
 
 Current test status:
 
@@ -163,9 +166,9 @@ Medium priority:
 
 Lower priority or post-parity improvements:
 
-- Continue improving WAV and browser playback sound quality. Playback/export now
-  share deterministic triangle-wave synthesis, but still do not use instrument
-  samples or realistic program-specific synthesis.
+- Continue improving WAV sound quality. Browser playback now uses the legacy
+  WebAudioTinySynth path, but WAV export remains a simple deterministic synth
+  without samples or realistic program-specific synthesis.
 - Add optional musical features such as velocity, multi-track arrangements,
   stereo audio, richer drum audio, and fuller instrument handling.
 - Improve renderer layout capabilities such as pagination, finer note-level

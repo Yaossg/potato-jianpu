@@ -16,6 +16,7 @@ src/player/
 
 src/web/
   audio.ts    browser preview player
+  webaudio-tinysynth.js
 
 src/backend/
   wav.ts      backend WAV writer
@@ -130,7 +131,7 @@ Pitch notes with multiple chord members compile to a MIDI note array:
 { chord: [60, 64, 67], duration, index }
 ```
 
-Browser playback schedules one oscillator per MIDI note.
+Browser playback schedules note-on and note-off events for every MIDI note.
 
 MIDI export emits note-on events for every chord note at the same logical start
 time and note-off events after the shared duration.
@@ -166,15 +167,20 @@ The CLI rejects programs outside `0..220` before calling the player APIs.
 
 ## Browser Preview Playback
 
-`PreviewAudioPlayer` in `src/web/audio.ts` uses the Web Audio API.
+`PreviewAudioPlayer` in `src/web/audio.ts` uses the legacy
+`WebAudioTinySynth` adapter copied into `src/web/webaudio-tinysynth.js`.
 
 Behavior:
 
-- creates a new `AudioContext` for each play request
+- lazily creates one `WebAudioTinySynth` instance
+- resumes the synth-owned `AudioContext` for each play request
 - stops any existing playback before starting a new one
-- schedules triangle oscillators for pitch/chord events
+- resets active synth voices before starting a new play request
+- sets the selected melodic Program for programs `0..127`
+- schedules note-on and note-off events for pitch/chord events
+- uses WebAudioTinySynth percussion channel playback for drum programs
+  `128..220`
 - skips sound generation for rests
-- uses exponential gain ramps for a short attack and release
 - schedules note-start timers for frontend highlighting
 - supports starting from a parsed note index
 
@@ -196,23 +202,11 @@ highlight the currently playing note.
 
 Clicking a rendered note starts playback from that note index.
 
-Browser playback and WAV export share the same basic synth constants from
-`src/player/synth.ts`:
+Browser playback velocity is currently fixed at MIDI velocity `64`. Volume is
+applied through WebAudioTinySynth master volume.
 
-- default waveform: `triangle`
-- attack: `0.008` seconds
-- release: `0.02` seconds
-- browser oscillator gain: `0.12`
-
-Program values now choose a deterministic base waveform for browser playback and
-WAV export:
-
-| Program range | Waveform |
-| --- | --- |
-| `0..23`, `40..55`, `64..79`, `120..127` | `triangle` |
-| `24..39`, `56..63` | `sawtooth` |
-| `80..103`, `128..220` | `square` |
-| `104..119` | `sine` |
+WAV export does not use WebAudioTinySynth. It remains a backend-only,
+deterministic renderer based on the helpers in `src/player/synth.ts`.
 
 ## MIDI Export
 
@@ -306,14 +300,15 @@ WAV export.
 
 The current player/export layer is functional but not a full synthesizer:
 
-- no instrument synthesis for melodic MIDI programs in browser or WAV
+- browser playback uses WebAudioTinySynth timbres rather than sampled
+  instruments
+- no instrument synthesis for melodic MIDI programs in WAV
 - no velocity syntax
 - no multi-track arrangement model
 - no stereo output
 - MP3 export is deferred from the current release target
 - drum WAV output currently uses triangle waves at percussion MIDI note
   frequencies, not drum samples
-- browser playback uses simple oscillators rather than a sampled instrument
 
 These limitations keep the rewrite dependency-light and deterministic while the
 core parser, renderer, and export surfaces stabilize.

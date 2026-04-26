@@ -1,13 +1,16 @@
 import type { Melody, MelodyNote } from "../player/index.js";
-import { midiToFrequency, SYNTH_ATTACK_SECONDS, SYNTH_BROWSER_GAIN, SYNTH_RELEASE_SECONDS, waveformForProgram } from "../player/synth.js";
+import WebAudioTinySynth from "./webaudio-tinysynth.js";
+
+const DEFAULT_VELOCITY = 64;
+const DRUM_CHANNEL = 9;
+const MELODIC_CHANNEL = 0;
 
 function totalSeconds(notes: MelodyNote[], secondsPerWholeNote: number): number {
   return notes.reduce((sum, note) => sum + note.duration * secondsPerWholeNote, 0);
 }
 
 export class PreviewAudioPlayer {
-  private context: AudioContext | null = null;
-  private oscillators: OscillatorNode[] = [];
+  private synth: WebAudioTinySynth | null = null;
   private stopTimer: number | null = null;
   private noteTimers: number[] = [];
 
@@ -22,12 +25,14 @@ export class PreviewAudioPlayer {
     this.stop();
     const startIndex = melody.notes.findIndex((note) => note.index >= startNoteIndex);
     const notes = startIndex >= 0 ? melody.notes.slice(startIndex) : [];
-    this.context = new AudioContext();
-    await this.context.resume();
+    const synth = await this.getSynth(volume, program);
+    const context = synth.getAudioContext();
+    await context.resume();
 
     const secondsPerWholeNote = (60 / melody.tempo) * melody.beatsPerWholeNote;
-    let currentTime = this.context.currentTime;
+    let currentTime = context.currentTime;
     let elapsedSeconds = 0;
+    const channel = program >= 128 ? DRUM_CHANNEL : MELODIC_CHANNEL;
 
     for (const note of notes) {
       const duration = note.duration * secondsPerWholeNote;
@@ -38,7 +43,8 @@ export class PreviewAudioPlayer {
       );
       if (note.chord !== "rest") {
         for (const midiNote of note.chord) {
-          this.scheduleTone(midiNote, currentTime, duration, volume, program);
+          synth.noteOn(channel, midiNote, DEFAULT_VELOCITY, currentTime);
+          synth.noteOff(channel, midiNote, currentTime + duration);
         }
       }
       currentTime += duration;
@@ -60,37 +66,17 @@ export class PreviewAudioPlayer {
       window.clearTimeout(timer);
     }
     this.noteTimers = [];
-    for (const oscillator of this.oscillators) {
-      try {
-        oscillator.stop();
-      } catch {
-        // Oscillator may already have stopped.
-      }
-    }
-    this.oscillators = [];
-    void this.context?.close();
-    this.context = null;
+    this.synth?.reset();
   }
 
-  private scheduleTone(midiNote: number, start: number, duration: number, volume: number, program: number) {
-    if (!this.context) {
-      return;
+  private async getSynth(volume: number, program: number): Promise<WebAudioTinySynth> {
+    this.synth ??= new WebAudioTinySynth();
+    await this.synth.ready();
+    this.synth.reset();
+    this.synth.setMasterVol(Math.max(0, Math.min(2, volume)));
+    if (program < 128) {
+      this.synth.setProgram(MELODIC_CHANNEL, program);
     }
-    const oscillator = this.context.createOscillator();
-    const gain = this.context.createGain();
-    oscillator.type = waveformForProgram(program);
-    oscillator.frequency.setValueAtTime(midiToFrequency(midiNote), start);
-    gain.gain.setValueAtTime(0.0001, start);
-    const gainValue = Math.max(0.0001, SYNTH_BROWSER_GAIN * Math.max(0, Math.min(2, volume)));
-    gain.gain.exponentialRampToValueAtTime(gainValue, start + SYNTH_ATTACK_SECONDS);
-    gain.gain.setValueAtTime(
-      gainValue,
-      Math.max(start + SYNTH_ATTACK_SECONDS, start + duration - SYNTH_RELEASE_SECONDS),
-    );
-    gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-    oscillator.connect(gain).connect(this.context.destination);
-    oscillator.start(start);
-    oscillator.stop(start + duration + 0.02);
-    this.oscillators.push(oscillator);
+    return this.synth;
   }
 }

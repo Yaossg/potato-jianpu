@@ -103,7 +103,7 @@ test("rejects out-of-range programs in player APIs", () => {
   assert.throws(() => exportMidiBytes(result.value, -1), /Program must be an integer from 0 to 220/);
 });
 
-test("exposes shared synth constants for playback and WAV export", () => {
+test("exposes lightweight WAV synth constants", () => {
   assert.equal(SYNTH_WAVEFORM, "triangle");
   assert.equal(midiToFrequency(69), 440);
   assert.equal(triangleWave(0), 0);
