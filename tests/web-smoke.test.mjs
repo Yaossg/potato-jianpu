@@ -34,6 +34,8 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(script, /Export SVG/);
   assert.match(script, /Export MIDI/);
   assert.match(script, /Theme:/);
+  assert.match(script, /Grammar/);
+  assert.match(script, /Grammar Reference/);
   assert.match(script, /General MIDI/);
   assert.match(script, /Volume/);
   assert.match(script, /Audition/);
@@ -41,6 +43,7 @@ test("frontend production build emits the expected app shell", async () => {
   assert.doesNotMatch(script, /Export PNG|Export WAV|Export MP3/);
   assert.match(style, /font-variant-ligatures:\s*none/);
   assert.match(style, /\.theme-dark/);
+  assert.match(style, /\.grammar-panel/);
   assert.match(style, /--app-bg:/);
   assert.match(style, /\.score-svg svg\{/);
   assert.match(style, /max-width:100%/);

@@ -93,6 +93,8 @@ Completed initial slices:
   Program audition.
 - Frontend theme toggle restores the original light/dark workflow while syncing
   SVG preview/export color presets.
+- Frontend grammar help restores the original help entry point using the
+  maintained `docs/GRAMMAR.md` reference.
 - Legacy example songs from the original frontend examples panel are available
   as `examples/*.jp` fixtures and are covered by parse/render/export tests.
 - Initial-rest omission from the original player settings is available for

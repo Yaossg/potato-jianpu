@@ -173,6 +173,7 @@ Frontend currently supports:
 - SVG download
 - MIDI download
 - light/dark theme toggle for the app and preview/export color presets
+- grammar help panel backed by `docs/GRAMMAR.md`
 
 Frontend intentionally does not support:
 

@@ -16,6 +16,7 @@ import dearLittleWish from "../../examples/dear-little-wish.jp?raw";
 import burningField from "../../examples/burning-field.jp?raw";
 import blockyHeroes from "../../examples/blocky-heroes.jp?raw";
 import shining from "../../examples/shining-from-the-underground.jp?raw";
+import grammarReference from "../../docs/GRAMMAR.md?raw";
 
 const examples = [
   { name: "Scale", source: scale },
@@ -81,6 +82,7 @@ export function App() {
   const [program, setProgram] = useState(0);
   const [volume, setVolume] = useState(0.8);
   const [omitInitialRests, setOmitInitialRests] = useState(true);
+  const [showGrammar, setShowGrammar] = useState(false);
   const playerRef = useRef<PreviewAudioPlayer | null>(null);
   const parsed = useMemo(() => parse(source), [source]);
   const svg = useMemo(
@@ -185,6 +187,9 @@ export function App() {
           <button type="button" onClick={toggleTheme}>
             Theme: {theme === "light" ? "Light" : "Dark"}
           </button>
+          <button type="button" onClick={() => setShowGrammar((visible) => !visible)}>
+            Grammar
+          </button>
           <label className="number-control">
             Width
             <input
@@ -276,6 +281,18 @@ export function App() {
           </button>
         </div>
       </header>
+
+      {showGrammar && (
+        <section className="grammar-panel">
+          <div className="panel-title">
+            <h2>Grammar</h2>
+            <button type="button" onClick={() => setShowGrammar(false)}>
+              Close
+            </button>
+          </div>
+          <pre>{grammarReference}</pre>
+        </section>
+      )}
 
       <section className="workspace">
         <aside className="examples">
