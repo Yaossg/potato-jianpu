@@ -15,7 +15,7 @@ function usage(): string {
     "  jianpu export-midi <file> -o <output.mid> [--program <number>]",
     "  jianpu export-wav <file> -o <output.wav> [--program <number>] [--sample-rate <hz>]",
     "",
-    "Current rewrite status: parse/validate/export-svg/export-png/export-midi are implemented.",
+    "Current rewrite status: parse/validate/export-svg/export-png/export-midi/export-wav are implemented.",
   ].join("\n");
 }
 
