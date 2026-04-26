@@ -10,6 +10,7 @@ function readSnapshot(name) {
 
 const minimalSnapshot = readSnapshot("minimal.svg");
 const fullHeaderSnapshot = readSnapshot("full-header.svg");
+const notationFeaturesSnapshot = readSnapshot("notation-features.svg");
 
 test("renders a parse result as an SVG document", () => {
   const result = parse(`title: "Render Test"\nkey: "F#"\n=\n1 #4/ 5-|`);
@@ -38,6 +39,13 @@ test("matches the full header SVG snapshot", () => {
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 500, color: "#111827", background: "#ffffff" });
   assert.equal(svg, fullHeaderSnapshot);
+});
+
+test("matches the notation features SVG snapshot", () => {
+  const result = parse(`{#1 3 5'}/. 0 X// | b7, - ~b7,/ |`);
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 420, color: "#111827", background: "#ffffff" });
+  assert.equal(svg, notationFeaturesSnapshot);
 });
 
 test("renders tempo without musical glyph codepoints", () => {

@@ -61,6 +61,8 @@ Completed initial slices:
 - Renderer score, note, bar, and tie drawing are split from top-level SVG
   document serialization.
 - Renderer golden snapshots cover both a minimal score and full header metadata.
+- Renderer golden snapshots cover accidentals, octave dots, chords, rests,
+  drums, dashes, dots, underlines, ties, and final bars.
 
 Current test status:
 
