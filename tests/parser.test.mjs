@@ -69,6 +69,14 @@ test("rejects unterminated chords with a specific diagnostic", () => {
   assert.doesNotMatch(messages, /Expected '\}' after chord/);
 });
 
+test("stops unterminated chords at the current line", () => {
+  const result = parse("{1 3\n2 4");
+  assert.equal(result.ok, false);
+  const messages = result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
+  assert.match(messages, /Unterminated chord; expected '\}' before end of line/);
+  assert.doesNotMatch(messages, /Expected pitch note inside chord/);
+});
+
 test("rejects mixed dash and slash duration marks with a specific diagnostic", () => {
   const dashThenSlash = parse("1-/ 2");
   assert.equal(dashThenSlash.ok, false);

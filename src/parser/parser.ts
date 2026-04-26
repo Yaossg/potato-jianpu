@@ -291,7 +291,7 @@ class Parser {
     }
     if (this.match("lbrace")) {
       const chord: Pitch[] = [];
-      while (!this.at("rbrace") && !this.at("eof")) {
+      while (!this.at("rbrace") && !this.at("newline") && !this.at("eof")) {
         if (!this.isPitchStart()) {
           this.error("Expected pitch note inside chord.");
           this.index += 1;
@@ -301,6 +301,8 @@ class Parser {
       }
       if (this.at("eof")) {
         this.error("Unterminated chord; expected '}' before end of file.");
+      } else if (this.at("newline")) {
+        this.error("Unterminated chord; expected '}' before end of line.");
       } else {
         this.consume("rbrace", "Expected '}' after chord.");
       }

@@ -78,6 +78,7 @@ Completed initial slices:
 - Parser tests cover comment/newline boundaries and invalid compact notation
   character positions.
 - Renderer displays score line labels with reserved horizontal space.
+- Parser stops unterminated chords at line boundaries with a specific diagnostic.
 
 Current test status:
 
