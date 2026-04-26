@@ -44,8 +44,37 @@ const DARK_THEME = {
   scoreColor: "#f8fafc",
   pageBackground: "#111827",
 };
+const THEME_STORAGE_KEY = "modern-jianpu-reloaded-theme";
 
 type ThemeName = "light" | "dark";
+
+function themeColors(theme: ThemeName) {
+  return theme === "light" ? LIGHT_THEME : DARK_THEME;
+}
+
+function isThemeName(value: string | null): value is ThemeName {
+  return value === "light" || value === "dark";
+}
+
+function storedTheme(): ThemeName | null {
+  try {
+    const value = window.localStorage.getItem(THEME_STORAGE_KEY);
+    return isThemeName(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function systemTheme(): ThemeName {
+  return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function initialTheme(): ThemeName {
+  if (typeof window === "undefined") {
+    return "light";
+  }
+  return storedTheme() ?? systemTheme();
+}
 
 function downloadBytes(data: BlobPart, filename: string, type: string) {
   const blob = new Blob([data], { type });
@@ -76,9 +105,9 @@ export function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeNoteIndex, setActiveNoteIndex] = useState<number | null>(null);
   const [pageWidth, setPageWidth] = useState(1000);
-  const [theme, setTheme] = useState<ThemeName>("light");
-  const [scoreColor, setScoreColor] = useState(LIGHT_THEME.scoreColor);
-  const [pageBackground, setPageBackground] = useState(LIGHT_THEME.pageBackground);
+  const [theme, setTheme] = useState<ThemeName>(() => initialTheme());
+  const [scoreColor, setScoreColor] = useState(() => themeColors(initialTheme()).scoreColor);
+  const [pageBackground, setPageBackground] = useState(() => themeColors(initialTheme()).pageBackground);
   const [program, setProgram] = useState(0);
   const [volume, setVolume] = useState(0.8);
   const [omitInitialRests, setOmitInitialRests] = useState(true);
@@ -114,10 +143,15 @@ export function App() {
 
   function toggleTheme() {
     const nextTheme = theme === "light" ? "dark" : "light";
-    const colors = nextTheme === "light" ? LIGHT_THEME : DARK_THEME;
+    const colors = themeColors(nextTheme);
     setTheme(nextTheme);
     setScoreColor(colors.scoreColor);
     setPageBackground(colors.pageBackground);
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+    } catch {
+      // Theme persistence is optional.
+    }
   }
 
   async function play(startNoteIndex = 0) {

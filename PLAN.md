@@ -92,7 +92,8 @@ Completed initial slices:
   controls include grouped Program selection, browser preview volume, and
   Program audition.
 - Frontend theme toggle restores the original light/dark workflow while syncing
-  SVG preview/export color presets.
+  SVG preview/export color presets, saved preference, and system theme
+  initialization.
 - Frontend grammar help restores the original help entry point using the
   maintained `docs/GRAMMAR.md` reference.
 - Legacy example songs from the original frontend examples panel are available

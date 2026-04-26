@@ -289,6 +289,8 @@ these as `--color` and `--background` for SVG and PNG export.
 The frontend also has a Theme toggle. It changes the application colors and
 sets the SVG preview/export `color` and `background` values to matching light or
 dark presets. The individual color controls remain editable after selecting a
+theme. The selected theme is saved in `localStorage`; if no saved choice exists,
+the frontend uses the browser `prefers-color-scheme` setting as its initial
 theme.
 
 ## Current Limitations
