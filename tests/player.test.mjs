@@ -41,3 +41,16 @@ test("exports a standard MIDI header", () => {
   assert.equal(bytes[9], 1);
 });
 
+test("exports tempo and time signature MIDI meta events", () => {
+  const result = parse(`tempo: "120"\ntime: "6/8"\n=\n1/ 2/ 3/ 4/ 5/ 6/`);
+  assert.equal(result.ok, true);
+  const bytes = [...exportMidiBytes(result.value)];
+
+  const tempoIndex = bytes.findIndex((byte, index) => byte === 0xff && bytes[index + 1] === 0x51);
+  assert.notEqual(tempoIndex, -1);
+  assert.deepEqual(bytes.slice(tempoIndex, tempoIndex + 6), [0xff, 0x51, 0x03, 0x0f, 0x42, 0x40]);
+
+  const timeSignatureIndex = bytes.findIndex((byte, index) => byte === 0xff && bytes[index + 1] === 0x58);
+  assert.notEqual(timeSignatureIndex, -1);
+  assert.deepEqual(bytes.slice(timeSignatureIndex, timeSignatureIndex + 7), [0xff, 0x58, 0x04, 0x06, 0x03, 0x24, 0x08]);
+});

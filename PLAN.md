@@ -29,6 +29,7 @@ Completed initial slices:
 - CLI `--page-width` option for SVG and PNG export.
 - Frontend page width control shared by preview and SVG export.
 - Machine-readable CLI diagnostics for `parse --json` and `validate --json`.
+- MIDI tempo and time-signature meta event coverage.
 
 Current test status:
 
