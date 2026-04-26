@@ -10,6 +10,7 @@ function readSnapshot(name) {
 
 const minimalSnapshot = readSnapshot("minimal.svg");
 const fullHeaderSnapshot = readSnapshot("full-header.svg");
+const hiddenHeaderSnapshot = readSnapshot("hidden-header.svg");
 const notationFeaturesSnapshot = readSnapshot("notation-features.svg");
 const wrappedTieSnapshot = readSnapshot("wrapped-tie.svg");
 
@@ -40,6 +41,16 @@ test("matches the full header SVG snapshot", () => {
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 500, color: "#111827", background: "#ffffff" });
   assert.equal(svg, fullHeaderSnapshot);
+});
+
+test("matches the hidden header SVG snapshot", () => {
+  const result = parse(
+    `title: "Hidden Title"\nsubtitle: "Hidden Subtitle"\ncomposer: "Hidden Composer"\nhidden: "yes"\n=\n1 2 | 3 4 |`,
+  );
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 320, color: "#111827", background: "#ffffff" });
+  assert.equal(svg, hiddenHeaderSnapshot);
+  assert.doesNotMatch(svg, /Hidden Title|Hidden Subtitle|Hidden Composer|class="metadata"/);
 });
 
 test("matches the notation features SVG snapshot", () => {
