@@ -172,6 +172,8 @@ Frontend currently supports:
 
 - SVG download
 - MIDI download
+- original frontend download filename convention: `jianpu-score.svg` and
+  `jianpu-score.mid`
 - light/dark theme toggle for the app and preview/export color presets, with
   saved preference and system dark-mode initialization
 - Settings panel for page width, preview/export colors, Program, volume,

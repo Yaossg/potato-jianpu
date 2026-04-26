@@ -33,6 +33,8 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(script, /Modern Jianpu Reloaded/);
   assert.match(script, /Export SVG/);
   assert.match(script, /Export MIDI/);
+  assert.match(script, /jianpu-score\.svg/);
+  assert.match(script, /jianpu-score\.mid/);
   assert.match(script, /Theme:/);
   assert.match(script, /Settings/);
   assert.match(script, /modern-jianpu-reloaded-theme/);

@@ -131,7 +131,7 @@ export function App() {
 
   function exportSvg() {
     if (svg) {
-      downloadBytes(svg, "score.svg", "image/svg+xml");
+      downloadBytes(svg, "jianpu-score.svg", "image/svg+xml");
     }
   }
 
@@ -139,7 +139,7 @@ export function App() {
     if (parsed.ok) {
       const midi = exportMidiBytes(parsed.value, program, { omitInitialRests });
       const buffer = midi.buffer.slice(midi.byteOffset, midi.byteOffset + midi.byteLength) as ArrayBuffer;
-      downloadBytes(buffer, "score.mid", "audio/midi");
+      downloadBytes(buffer, "jianpu-score.mid", "audio/midi");
     }
   }
 

@@ -98,6 +98,8 @@ Completed initial slices:
   keeping the main workspace focused on source editing and preview.
 - Loading a frontend example now stops active playback and closes the examples
   panel, matching the original interaction model.
+- Frontend SVG and MIDI downloads use the original `jianpu-score.*` filename
+  convention.
 - Frontend theme toggle restores the original light/dark workflow while syncing
   SVG preview/export color presets, saved preference, and system theme
   initialization.
