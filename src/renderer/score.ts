@@ -182,6 +182,10 @@ function renderLine(layout: LineLayout, lineY: number, allNotes: Note[], documen
   return parts.join("\n");
 }
 
+function lineVisualWidth(layout: LineLayout): number {
+  return layout.width + (layout.line.label ? DIMENSIONS.labelWidth : 0);
+}
+
 export function renderScore(document: Document, yStart: number, pageWidth: number, activeNoteIndex: number): { svg: string; height: number; width: number } {
   const allNotes = flattenNotes(document);
   const layouts = document.score.flatMap((line) => {
@@ -191,12 +195,15 @@ export function renderScore(document: Document, yStart: number, pageWidth: numbe
   let y = yStart;
   const parts: string[] = [];
   for (const layout of layouts) {
-    parts.push(renderLine(layout, y, allNotes, document, activeNoteIndex));
+    const width = lineVisualWidth(layout);
+    const scaleX = width > pageWidth ? pageWidth / width : 1;
+    const line = renderLine(layout, y, allNotes, document, activeNoteIndex);
+    parts.push(scaleX < 1 ? `<g class="score-line scaled" transform="scale(${scaleX},1)">${line}</g>` : line);
     y += layout.height + DIMENSIONS.lineSpacing;
   }
   return {
     svg: parts.join("\n"),
-    width: Math.max(0, ...layouts.map((layout) => layout.width + (layout.line.label ? DIMENSIONS.labelWidth : 0))),
+    width: Math.min(pageWidth, Math.max(0, ...layouts.map(lineVisualWidth))),
     height: layouts.reduce((sum, layout) => sum + layout.height + DIMENSIONS.lineSpacing, 0),
   };
 }

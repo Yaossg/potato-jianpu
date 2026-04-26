@@ -84,6 +84,14 @@ test("wraps score measures when page width is narrow", () => {
   assert.ok(narrowHeight > wideHeight);
 });
 
+test("scales a single overwide score line into the page width", () => {
+  const result = parse("1--- 2--- 3--- 4---");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 120 });
+  assert.match(svg, /<svg[^>]+width="120"/);
+  assert.match(svg, /<g class="score-line scaled" transform="scale\(0\.\d+,1\)">/);
+});
+
 test("renders chord notes as stacked text instead of slash-joined text", () => {
   const result = parse("{1 3 5}/");
   assert.equal(result.ok, true);

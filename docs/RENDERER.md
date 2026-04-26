@@ -35,8 +35,8 @@ interface RenderOptions {
 }
 ```
 
-- `pageWidth` controls the SVG `width`, `viewBox` width, header layout, and
-  measure wrapping. Default: `1000`.
+- `pageWidth` controls the SVG `width`, `viewBox` width, header layout, measure
+  wrapping, and maximum visual line width. Default: `1000`.
 - `activeNoteIndex` marks one parsed note as active for frontend playback
   highlighting. Default: no active note.
 - `color` sets the root SVG `color` style used by `currentColor` notation
@@ -67,8 +67,9 @@ The renderer follows a measurement-first pipeline:
 2. Measure each note.
 3. Build measure layouts.
 4. Wrap measure layouts into visual lines based on `pageWidth`.
-5. Draw bars, ties, notes, and duration marks.
-6. Compute final SVG height from header height and rendered score lines.
+5. Horizontally scale any single visual line that still exceeds `pageWidth`.
+6. Draw bars, ties, notes, and duration marks.
+7. Compute final SVG height from header height and rendered score lines.
 
 The main internal layout records are:
 
@@ -125,7 +126,8 @@ Important details:
 
 - wrapping never splits a measure internally
 - source line breaks are preserved as natural line boundaries
-- a single measure wider than `pageWidth` remains on its own line
+- a single measure wider than `pageWidth` remains on its own line and is
+  horizontally scaled to fit the SVG viewport
 - `pageWidth` also sets the SVG viewport width
 
 The CLI exposes this through:
@@ -135,7 +137,9 @@ pnpm run cli -- export-svg input.jp -o output.svg --page-width 800
 pnpm run cli -- export-png input.jp -o output.png --page-width 800
 ```
 
-The frontend exposes it through the Width numeric control.
+The frontend exposes it through the Width numeric control. The preview panel also
+uses responsive CSS so a wide exported page scales down visually instead of
+forcing horizontal page overflow.
 
 ## Header Rendering
 
@@ -288,7 +292,8 @@ The renderer is deterministic but still intentionally simple:
 
 - layout constants are internal, not configurable
 - measure wrapping only occurs between measures
-- no automatic horizontal scaling
+- horizontal scaling is line-level only; it does not re-space individual notes
+  inside an overwide measure
 - no full collision avoidance for dense chords and ties
 - no pagination
 - no staff or engraving model beyond the current Jianpu notation

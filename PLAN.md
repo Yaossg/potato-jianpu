@@ -26,6 +26,7 @@ Completed initial slices:
 - Measure duration mismatch warnings based on the active time signature.
 - Frontend playback highlighting and click-to-play-from-note behavior.
 - Renderer measure wrapping based on `pageWidth`.
+- Renderer horizontally scales overwide visual lines to stay within `pageWidth`.
 - CLI `--page-width` option for SVG and PNG export.
 - Frontend page width control shared by preview and SVG export.
 - Machine-readable CLI diagnostics for `parse --json` and `validate --json`.
@@ -122,8 +123,9 @@ Lower priority or post-parity improvements:
   samples or realistic program-specific synthesis.
 - Add optional musical features such as velocity, multi-track arrangements,
   stereo audio, richer drum audio, and fuller instrument handling.
-- Improve renderer layout capabilities such as pagination, automatic horizontal
-  scaling, and fuller collision avoidance for dense chords and ties.
+- Improve renderer layout capabilities such as pagination, finer note-level
+  horizontal re-spacing, and fuller collision avoidance for dense chords and
+  ties.
 
 ## Goals
 

@@ -237,11 +237,13 @@ textarea {
 
 .score-svg {
   color: #111827;
-  min-width: max-content;
+  width: 100%;
 }
 
 .score-svg svg {
   display: block;
+  max-width: 100%;
+  height: auto;
   background: #ffffff;
 }
 
