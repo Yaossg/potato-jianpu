@@ -56,6 +56,7 @@ Completed initial slices:
 - Parser rejects mixed duration suffix styles with a specific diagnostic.
 - Renderer options, dimensions, styles, and XML helpers are split from the main
   SVG renderer.
+- Renderer note metrics and measure/line layout are split from SVG drawing.
 
 Current test status:
 

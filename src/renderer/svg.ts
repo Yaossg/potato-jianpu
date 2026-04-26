@@ -1,24 +1,10 @@
-import { actualNotePerBeat, type Document, type Measure, type Note, type Pitch, type PitchNote, type ScoreLine } from "../core/index.js";
+import { actualNotePerBeat, type Document, type Measure, type Note, type Pitch, type PitchNote } from "../core/index.js";
 import { DIMENSIONS } from "./dimensions.js";
+import { flattenNotes, layoutLine, measureXOffset, type LineLayout } from "./layout.js";
+import { chordHeight, maxAccidentalOffset, noteTieAfter, widthOf } from "./metrics.js";
 import { DEFAULT_OPTIONS, type RenderOptions } from "./options.js";
 import { SVG_STYLE } from "./styles.js";
 import { escapeXml } from "./xml.js";
-
-interface MeasureLayout {
-  measure: Measure;
-  width: number;
-  notePositions: number[];
-  paddingUp: number;
-  paddingDown: number;
-}
-
-interface LineLayout {
-  line: ScoreLine;
-  measures: MeasureLayout[];
-  width: number;
-  height: number;
-  maxPaddingUp: number;
-}
 
 const accidentalMap = new Map([
   [2, "&#119082;"],
@@ -32,156 +18,8 @@ function formatKey(key: string): string {
   return key.replace("#", "&#9839;").replace("b", "&#9837;");
 }
 
-function hasAccidental(pitch: Pitch): boolean {
-  return pitch.accidental !== undefined;
-}
-
-function accidentalOffset(pitch: Pitch): number {
-  return hasAccidental(pitch) ? DIMENSIONS.accidentalOffset : 0;
-}
-
-function maxAccidentalOffset(chord: Pitch[] | undefined): number {
-  if (!chord || chord.length === 0) {
-    return 0;
-  }
-  return Math.max(...chord.map(accidentalOffset));
-}
-
-function widthOf(note: Note): number {
-  let width = DIMENSIONS.baseNoteWidth;
-  width += note.duration.dashes * DIMENSIONS.dashSpacing;
-  width += note.duration.dots * DIMENSIONS.dotSpacing;
-  width += note.kind === "pitch" ? maxAccidentalOffset(note.chord) : 0;
-  return width;
-}
-
-function chordHeight(note: Note): number {
-  if (note.kind !== "pitch") {
-    return DIMENSIONS.baseNoteHeight;
-  }
-  let height = 0;
-  for (let index = note.chord.length - 1; index >= 0; index -= 1) {
-    const pitch = note.chord[index]!;
-    const isBase = index === note.chord.length - 1;
-    if (!isBase && pitch.octave < 0) {
-      height += Math.abs(pitch.octave) * DIMENSIONS.octaveSpacing;
-    }
-    height += DIMENSIONS.baseNoteHeight;
-    if (pitch.octave > 0) {
-      height += pitch.octave * DIMENSIONS.octaveSpacing;
-    }
-  }
-  return height;
-}
-
-function paddingUpOf(note: Note, tieAfter: boolean): number {
-  let height = DIMENSIONS.baseNoteHeight;
-  if (note.kind === "pitch") {
-    const base = note.chord.at(-1);
-    height += base && base.octave > 0 ? base.octave * DIMENSIONS.octaveSpacing : 0;
-    for (const pitch of note.chord.slice(0, -1)) {
-      height += DIMENSIONS.baseNoteHeight;
-      height += Math.abs(pitch.octave) * DIMENSIONS.octaveSpacing;
-    }
-  }
-  height += note.tie || tieAfter ? DIMENSIONS.tieHeight : 0;
-  return height;
-}
-
-function paddingDownOf(note: Note): number {
-  let height = note.duration.halves * DIMENSIONS.underlineSpacing;
-  if (note.kind === "pitch") {
-    const base = note.chord.at(-1);
-    if (base && base.octave < 0) {
-      height += Math.abs(base.octave) * DIMENSIONS.octaveSpacing;
-    }
-  }
-  return height;
-}
-
-function flattenNotes(document: Document): Note[] {
-  return document.score.flatMap((line) => line.measures).flatMap((measure) => measure.notes);
-}
-
 function lastMeasure(document: Document): Measure | undefined {
   return document.score.at(-1)?.measures.at(-1);
-}
-
-function noteTieAfter(note: Note, allNotes: Note[]): boolean {
-  return Boolean(allNotes[note.index + 1]?.tie);
-}
-
-function layoutMeasure(measure: Measure, allNotes: Note[]): MeasureLayout {
-  const notePositions: number[] = [];
-  let totalWidth = 0;
-  let paddingUp = 0;
-  let paddingDown = 0;
-
-  for (const note of measure.notes) {
-    notePositions.push(totalWidth);
-    totalWidth += widthOf(note);
-    paddingUp = Math.max(paddingUp, paddingUpOf(note, noteTieAfter(note, allNotes)));
-    paddingDown = Math.max(paddingDown, paddingDownOf(note));
-  }
-
-  return {
-    measure,
-    width: totalWidth + DIMENSIONS.leftPadding + 4,
-    notePositions,
-    paddingUp,
-    paddingDown,
-  };
-}
-
-function lineWidth(measures: MeasureLayout[]): number {
-  return Math.max(
-    0,
-    measures.reduce((sum, measure) => sum + measure.width + DIMENSIONS.measureSpacing, 0) - DIMENSIONS.measureSpacing,
-  );
-}
-
-function buildLineLayout(line: ScoreLine, measures: MeasureLayout[]): LineLayout {
-  const width = lineWidth(measures);
-  const maxPaddingUp = Math.max(0, ...measures.map((measure) => measure.paddingUp));
-  const maxPaddingDown = Math.max(0, ...measures.map((measure) => measure.paddingDown));
-  return {
-    line,
-    measures,
-    width,
-    height: maxPaddingUp + maxPaddingDown + DIMENSIONS.noteBottomPadding,
-    maxPaddingUp,
-  };
-}
-
-function layoutLine(line: ScoreLine, allNotes: Note[], pageWidth: number): LineLayout[] {
-  const measures = line.measures.map((measure) => layoutMeasure(measure, allNotes));
-  const layouts: LineLayout[] = [];
-  let current: MeasureLayout[] = [];
-  let currentWidth = 0;
-
-  for (const measure of measures) {
-    const nextWidth = current.length === 0 ? measure.width : currentWidth + DIMENSIONS.measureSpacing + measure.width;
-    if (current.length > 0 && nextWidth > pageWidth) {
-      layouts.push(buildLineLayout(line, current));
-      current = [measure];
-      currentWidth = measure.width;
-    } else {
-      current.push(measure);
-      currentWidth = nextWidth;
-    }
-  }
-
-  if (current.length > 0) {
-    layouts.push(buildLineLayout(line, current));
-  }
-
-  return layouts;
-}
-
-function measureXOffset(measures: MeasureLayout[], measureIndex: number): number {
-  return measures
-    .slice(0, measureIndex)
-    .reduce((sum, measure) => sum + measure.width + DIMENSIONS.measureSpacing, 0);
 }
 
 function renderOctaveDots(pitch: Pitch, x: number, y: number, isBase: boolean, halves: number): string {
