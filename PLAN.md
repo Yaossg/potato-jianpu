@@ -34,6 +34,7 @@ Completed initial slices:
 - Drum MIDI export coverage with percussion-channel program handling.
 - Export behavior documentation in `docs/EXPORTS.md`.
 - Current grammar documentation in `docs/GRAMMAR.md`.
+- Current renderer documentation in `docs/RENDERER.md`.
 
 Current test status:
 
