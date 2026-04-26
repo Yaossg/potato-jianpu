@@ -24,6 +24,20 @@ function readFlag(flags: string[], name: string): string | undefined {
   return index >= 0 ? flags[index + 1] : undefined;
 }
 
+function hasFlagValue(flags: string[], name: string): boolean {
+  const index = flags.indexOf(name);
+  return index === -1 || (flags[index + 1] !== undefined && !flags[index + 1]!.startsWith("-"));
+}
+
+function validateFlagValues(flags: string[], names: string[]): string | null {
+  for (const name of names) {
+    if (!hasFlagValue(flags, name)) {
+      return name;
+    }
+  }
+  return null;
+}
+
 function formatDiagnostic(message: string, line?: number, column?: number): string {
   if (line === undefined || column === undefined) {
     return message;
@@ -62,6 +76,11 @@ async function main(argv: string[]): Promise<number> {
   const source = await readFile(file, "utf8");
   const result = parse(source);
   const json = flags.includes("--json");
+  const missingFlagValue = validateFlagValues(flags, ["-o", "--page-width", "--color", "--background", "--program", "--sample-rate"]);
+  if (missingFlagValue) {
+    console.error(`error: ${missingFlagValue} requires a value`);
+    return 2;
+  }
 
   if (json && (command === "parse" || command === "validate")) {
     console.log(JSON.stringify(command === "parse" ? result : { ok: result.ok, diagnostics: result.diagnostics }, null, 2));

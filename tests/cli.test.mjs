@@ -58,6 +58,21 @@ test("CLI rejects invalid page width", async () => {
   );
 });
 
+test("CLI rejects flags with missing values", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
+  const input = join(dir, "score.jp");
+  const output = join(dir, "score.svg");
+  await writeFile(input, "1 2 3 4", "utf8");
+
+  await assert.rejects(
+    execFileAsync(process.execPath, ["dist/cli/main.js", "export-svg", input, "-o", output, "--page-width"], {
+      cwd: repoDir,
+    }),
+    /--page-width requires a value/,
+  );
+});
+
+
 test("CLI validate can emit machine-readable diagnostics", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
   const input = join(dir, "score.jp");

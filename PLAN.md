@@ -45,6 +45,7 @@ Completed initial slices:
 - Frontend program control shared by playback and MIDI export.
 - CLI `parse --json` and parser source range coverage.
 - Parser diagnostics for empty chords and non-pitch chord members.
+- CLI rejects flags with missing values.
 
 Current test status:
 
