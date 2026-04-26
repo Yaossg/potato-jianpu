@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { parse } from "../dist/parser/index.js";
 import { renderSvg } from "../dist/renderer/index.js";
-import { renderPngBytes } from "../dist/backend/index.js";
+import { exportWavBytes, renderPngBytes } from "../dist/backend/index.js";
 
 test("renders SVG output to PNG bytes", () => {
   const result = parse(`title: "PNG"\n=\n1 2 3 4 | 5 - |`);
@@ -12,3 +12,12 @@ test("renders SVG output to PNG bytes", () => {
   assert.ok(png.length > 100);
 });
 
+test("exports melody to WAV bytes", () => {
+  const result = parse(`tempo: "120"\n=\n1 2 3 4`);
+  assert.equal(result.ok, true);
+  const wav = exportWavBytes(result.value, { sampleRate: 8000 });
+  assert.equal(String.fromCharCode(...wav.slice(0, 4)), "RIFF");
+  assert.equal(String.fromCharCode(...wav.slice(8, 12)), "WAVE");
+  assert.equal(String.fromCharCode(...wav.slice(36, 40)), "data");
+  assert.ok(wav.length > 44);
+});

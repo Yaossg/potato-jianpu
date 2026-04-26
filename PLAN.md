@@ -30,6 +30,7 @@ Completed initial slices:
 - Frontend page width control shared by preview and SVG export.
 - Machine-readable CLI diagnostics for `parse --json` and `validate --json`.
 - MIDI tempo and time-signature meta event coverage.
+- Backend WAV export through the CLI.
 
 Current test status:
 

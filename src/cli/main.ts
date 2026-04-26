@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { readFile, writeFile } from "node:fs/promises";
-import { renderPngBytes } from "../backend/index.js";
+import { exportWavBytes, renderPngBytes } from "../backend/index.js";
 import { parse } from "../parser/index.js";
 import { exportMidiBytes } from "../player/index.js";
 import { renderSvg } from "../renderer/index.js";
@@ -13,6 +13,7 @@ function usage(): string {
     "  jianpu export-svg <file> -o <output.svg> [--page-width <px>]",
     "  jianpu export-png <file> -o <output.png> [--page-width <px>]",
     "  jianpu export-midi <file> -o <output.mid> [--program <number>]",
+    "  jianpu export-wav <file> -o <output.wav> [--program <number>] [--sample-rate <hz>]",
     "",
     "Current rewrite status: parse/validate/export-svg/export-png/export-midi are implemented.",
   ].join("\n");
@@ -45,7 +46,7 @@ async function main(argv: string[]): Promise<number> {
     console.log(usage());
     return 0;
   }
-  if (!file || !["validate", "parse", "export-svg", "export-png", "export-midi"].includes(command)) {
+  if (!file || !["validate", "parse", "export-svg", "export-png", "export-midi", "export-wav"].includes(command)) {
     console.error(usage());
     return 2;
   }
@@ -123,6 +124,26 @@ async function main(argv: string[]): Promise<number> {
       return 2;
     }
     await writeFile(output, exportMidiBytes(result.value, program));
+    console.log(output);
+  }
+
+  if (command === "export-wav") {
+    const output = readFlag(flags, "-o");
+    if (!output) {
+      console.error("error: export-wav requires -o <output.wav>");
+      return 2;
+    }
+    const program = Number(readFlag(flags, "--program") ?? "0");
+    if (!Number.isInteger(program) || program < 0) {
+      console.error("error: --program must be a non-negative integer");
+      return 2;
+    }
+    const sampleRate = readPositiveNumberFlag(flags, "--sample-rate");
+    if (Number.isNaN(sampleRate)) {
+      console.error("error: --sample-rate must be a positive number");
+      return 2;
+    }
+    await writeFile(output, exportWavBytes(result.value, { program, sampleRate }));
     console.log(output);
   }
 

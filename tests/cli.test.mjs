@@ -60,3 +60,18 @@ test("CLI validate can emit machine-readable diagnostics", async () => {
     },
   );
 });
+
+test("CLI export-wav writes a WAV file", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
+  const input = join(dir, "score.jp");
+  const output = join(dir, "score.wav");
+  await writeFile(input, `tempo: "120"\n=\n1 2 3 4`, "utf8");
+
+  await execFileAsync(process.execPath, ["dist/cli/main.js", "export-wav", input, "-o", output, "--sample-rate", "8000"], {
+    cwd: repoDir,
+  });
+
+  const wav = await readFile(output);
+  assert.equal(String.fromCharCode(...wav.slice(0, 4)), "RIFF");
+  assert.equal(String.fromCharCode(...wav.slice(8, 12)), "WAVE");
+});
