@@ -1,830 +1,432 @@
-# Modern Jianpu Reloaded - Rewrite Plan
+# Modern Jianpu Reloaded - Current Plan
 
-This document is the implementation plan for rewriting the existing Modern
-Jianpu Markup project inside this standalone repository.
+This document describes the current state of the `reloaded/` rewrite and the
+remaining work. It is no longer a pre-implementation proposal. The rewrite has a
+working backend CLI, frontend web app, parser, renderer, player pipeline,
+exports, examples, tests, and documentation.
 
-The plan has been reviewed and implementation has started. This document remains
-the working plan for the rewrite and should be updated when scope or milestone
-decisions change.
+Use this file as the project roadmap. Historical implementation details belong
+in git history and the focused docs under `docs/`.
 
-## Implementation Status
+## Product Decisions
 
-Completed initial slices:
+The rewrite targets two editions built from shared TypeScript source:
 
-- Project scaffold with pnpm, TypeScript, build script, and Node test runner.
-- Shared core document model.
-- Hand-written tokenizer and parser.
-- CLI `parse` and `validate`.
-- Backend SVG renderer and CLI `export-svg`.
-- Melody compiler, MIDI writer, and CLI `export-midi`.
-- Frontend preview application with SVG/MIDI export and basic playback.
-- Example score set with parser/SVG/PNG/MIDI coverage.
-- Backend PNG export through the CLI.
-- Renderer layout pass closer to the legacy spacing/chord/tie model.
-- Tie validation for mismatched pitches, rests, drums, and measure-local
-  accidental persistence.
-- Measure duration mismatch warnings based on the active time signature.
-- Frontend playback highlighting and click-to-play-from-note behavior.
-- Renderer measure wrapping based on `pageWidth`.
-- Renderer horizontally scales overwide visual lines to stay within `pageWidth`.
-- CLI `--page-width` option for SVG and PNG export.
-- Frontend page width control shared by preview and SVG export.
-- Machine-readable CLI diagnostics for `parse --json` and `validate --json`.
-- CLI `parse --json` tests cover both warning success and parse-error failure
-  payloads.
-- CLI export tests cover warning diagnostics while still writing output.
-- MIDI tempo and time-signature meta event coverage.
-- Backend WAV export through the CLI.
-- Drum MIDI export coverage with percussion-channel program handling.
-- Export behavior documentation in `docs/EXPORTS.md`.
-- Current grammar documentation in `docs/GRAMMAR.md`.
-- Current renderer documentation in `docs/RENDERER.md`.
-- Current player documentation in `docs/PLAYER.md`.
-- Frontend diagnostics status shows warning and error counts.
-- Theme-aware SVG and PNG export color/background options.
-- Frontend color/background controls shared by preview and SVG export.
-- Example test coverage includes WAV export.
-- Architecture documentation in `docs/ARCHITECTURE.md`.
-- Compatibility documentation in `docs/COMPATIBILITY.md`.
-- Frontend program control shared by playback and MIDI export.
-- CLI `parse --json` and parser source range coverage.
-- Parser diagnostics for empty chords and non-pitch chord members.
-- Parser tests cover legacy accidental-first key spellings such as `#C` and
-  `bB`.
-- Parser tests cover empty files, multiple header separator characters, and
-  optional leading/trailing score bars.
-- Parser tests cover raw header string escape text and unterminated string
-  diagnostics.
-- CLI rejects flags with missing values.
-- CLI rejects unknown options per command.
-- CLI treats negative numeric flag values as values before reporting command
-  specific range errors.
-- CLI reports missing values when another flag follows a value-taking option.
-- Player APIs reject out-of-range programs.
-- CLI validates options before reading input files.
-- Unknown header fields are covered as preserved raw metadata.
-- WAV export option validation is covered.
-- Minimal renderer SVG snapshot coverage exists.
-- CLI WAV sample-rate behavior is covered.
-- Parser rejects mixed duration suffix styles with a specific diagnostic.
-- Renderer options, dimensions, styles, and XML helpers are split from the main
-  SVG renderer.
-- Renderer note metrics and measure/line layout are split from SVG drawing.
-- Renderer header and tempo mark drawing are split from score drawing.
-- Renderer score, note, bar, and tie drawing are split from top-level SVG
-  document serialization.
-- Renderer golden snapshots cover both a minimal score and full header metadata.
-- Renderer golden snapshots cover hidden headers.
-- Renderer golden snapshots cover accidentals, octave dots, chords, rests,
-  drums, dashes, dots, underlines, ties, and final bars.
-- Renderer cross-line tie continuation stays within the wrapped visual line and
-  is covered by a golden snapshot.
-- Frontend production build smoke test covers the app shell and SVG/MIDI export
-  controls while confirming PNG/WAV/MP3 exports stay out of the browser bundle.
-- Package metadata declares backend/library entry points, the CLI binary, and
-  release file boundaries, with tests covering built output paths.
-- Release and distribution shape is documented in `docs/RELEASE.md`.
-- MP3 export is explicitly deferred from the current release target; WAV is the
-  backend audio export for now.
-- Parser recovers malformed header lines without cascading into score syntax
-  errors.
-- Parser reports unterminated chords with a specific diagnostic.
-- Parser tests cover comment/newline boundaries and invalid compact notation
-  character positions.
-- Parser reports stray compact duration suffixes and unmatched chord closing
-  braces with specific diagnostics.
-- Renderer displays score line labels with reserved horizontal space.
-- Parser stops unterminated chords at line boundaries with a specific diagnostic.
-- CLI `--version` reports the package version for release checks.
-- CLI `--help` output is covered for release checks.
-- Package metadata pins the expected package manager version.
-- npm publication is explicitly deferred while the package remains private.
-- CLI `export-wav` exposes the backend amplitude option.
-- Browser preview playback uses the legacy WebAudioTinySynth adapter.
-- Backend WAV export uses the same WebAudioTinySynth adapter with
-  `@descript/web-audio-js` offline rendering, so Program and drum timbres match
-  browser playback more closely than the earlier deterministic oscillator path.
-- Frontend source editor disables programming-font ligatures, and playback
-  controls include grouped Program selection, browser preview volume, and
-  Program audition.
-- Frontend volume control matches the original 0-200 percent range and 100
-  percent default.
-- Original frontend sample-rate control is intentionally not restored because
-  browser WAV export is out of frontend scope; backend `export-wav` exposes
-  `--sample-rate`.
-- Frontend source editor restores the original placeholder text.
-- Frontend initial editor content is empty, matching the original app startup
-  state.
-- Frontend settings panel restores the original Settings entry point and groups
-  page width, export colors, Program, volume, audition, and initial-rest
-  controls outside the top action bar.
-- Frontend examples panel restores the original Examples entry point while
-  keeping the main workspace focused on source editing and preview.
-- Loading a frontend example now stops active playback and closes the examples
-  panel, matching the original interaction model.
-- Frontend Play and Stop actions close the examples panel like the original UI.
-- Frontend SVG and MIDI downloads use the original `jianpu-score.*` filename
-  convention.
-- Frontend theme toggle restores the original light/dark workflow while syncing
-  SVG preview/export color presets, saved preference, and system theme
-  initialization.
-- Frontend grammar help restores the original help entry point using the
-  maintained `docs/GRAMMAR.md` reference.
-- Legacy example songs from the original frontend examples panel are available
-  as `examples/*.jp` fixtures and are covered by parse/render/export tests.
-- Initial-rest omission from the original player settings is available for
-  frontend from-start playback, MIDI export, WAV export, and CLI export flags.
-- The shared WebAudioTinySynth adapter lives in `src/player` and is used by both
-  browser playback and backend WAV export.
+- Backend CLI edition
+- Frontend browser edition
 
-Current test status:
-
-- Parser, renderer, melody, MIDI, examples, and backend export tests pass.
-
-Remaining rewrite and improvement work:
-
-High priority:
-
-- Add browser-level frontend smoke tests. Current frontend verification is a
-  production build smoke test only; there is no automated test that opens the
-  app in a real browser, loads an example, verifies non-empty rendered SVG, or
-  exercises playback/export button interactions.
-- Continue adding renderer golden SVG snapshots only for newly changed behavior
-  or uncovered edge cases. Current snapshots already cover the main header,
-  notation, wrapping, and tie cases from the first renderer test plan.
-
-Medium priority:
-
-- Finalize distribution polish. Package metadata, release shape, package manager
-  version, and private npm-publish status are documented; automated browser
-  smoke testing still needs a final dependency/tooling decision.
-- Improve parser diagnostics and recovery for additional malformed inputs,
-  especially additional compact-notation edge cases found during compatibility
-  testing.
-
-Lower priority or post-parity improvements:
-
-- Continue validating WAV output quality and performance now that WAV export
-  uses the same TinySynth timbre path as browser playback.
-- Add optional musical features such as velocity, multi-track arrangements,
-  stereo audio, richer drum audio, and fuller instrument handling.
-- Improve renderer layout capabilities such as pagination, finer note-level
-  horizontal re-spacing, and fuller collision avoidance for dense chords and
-  ties.
-
-## Goals
-
-The rewrite should preserve the useful behavior of the current project while
-making the system easier to test, extend, and reason about.
-
-Primary goals:
-
-- Define a stable Jianpu document model independent of React and browser APIs.
-- Replace implicit parser/render/player coupling with explicit module contracts.
-- Make grammar behavior testable with fixture-based parser tests.
-- Make renderer output deterministic and snapshot-testable.
-- Make playback and export share one timing/melody pipeline.
-- Support a backend CLI edition with all export functionality.
-- Support a frontend web edition with editor, preview, playback, SVG export, and
-  MIDI export.
-- Share parsing, rendering, and playback logic between editions without
-  duplicating core behavior.
-- Improve documentation so syntax, rendering behavior, and playback behavior are
-  discoverable from the repo.
-
-Non-goals for the first rewrite pass:
-
-- Full music engraving quality.
-- Full Jianpu feature coverage beyond the current project.
-- Multi-track arrangement editing.
-- A large visual redesign.
-- Backward-incompatible syntax changes unless explicitly documented and migrated.
-
-## Current Project Lessons
-
-The existing project proves the core idea works:
-
-- Nearley/Moo can parse the current markup.
-- A parsed score can drive both SVG rendering and playback.
-- React SVG is a practical way to build the browser preview.
-- WebAudioTinySynth is adequate for lightweight browser playback.
-- MIDI export can be implemented without a heavy dependency.
-
-The rewrite should address these weaknesses:
-
-- The parser grammar, post-parse validation, renderer assumptions, and player
-  assumptions are not clearly separated.
-- Some generated build outputs live in tracked-looking source locations and
-  confuse linting.
-- Several APIs have type mismatches, for example SVG export returning a string
-  while some callers treat it like a Blob.
-- Rendering has many layout constants embedded in one large file.
-- Playback timing, highlighting, MIDI export, and WAV rendering share concepts
-  but do not share a formal timing model.
-- Documentation was not part of the original module boundaries.
-
-## Repository Scope
-
-This `reloaded/` directory is a separate Git repository. The outer repository
-must ignore it.
-
-Expected top-level shape once implementation begins:
-
-```text
-reloaded/
-  PLAN.md
-  README.md
-  package.json
-  pnpm-lock.yaml
-  src/
-    core/
-    parser/
-    renderer/
-    player/
-    cli/
-    web/
-  tests/
-    fixtures/
-    parser/
-    renderer/
-    player/
-  docs/
-```
-
-Exact tooling can still change before implementation starts.
-
-## Proposed Technology Choices
-
-Recommended baseline:
-
-- TypeScript for all new source files.
-- Vite for local development and browser build.
-- React for the interactive application shell and SVG preview.
-- Vitest for unit tests and snapshot tests.
-- ESLint with generated/build output ignored from the start.
-- Prettier or one consistent formatter if the team wants automatic formatting.
-- pnpm as the package manager.
-
-Parser decision: use a hand-written tokenizer and parser.
-
-The current language is small enough that a hand-written parser is preferable.
-It should make diagnostics, source spans, error recovery, and compatibility
-tests easier to control than a parser-generator pipeline.
-
-Renderer choices:
-
-- Keep React SVG for preview and SVG export.
-- Keep `canvg` or equivalent only at the export boundary.
-- Keep rendering pure: parsed score plus render options in, SVG tree/string out.
-
-Player choices:
-
-- Keep a pure melody/timing compiler as the shared core.
-- Keep real-time playback behind an interface.
-- Keep MIDI writer dependency-free unless new MIDI features justify a library.
-- Treat backend audio export as an adapter rather than core functionality.
-
-## Product Targets
-
-The rewrite should produce two deployable targets from shared core packages.
-
-### Backend Edition
-
-The backend edition is a command-line application. It should include all
-non-web functionality:
+The backend CLI includes the full export surface:
 
 - parse and validate Jianpu files
-- render/export SVG
-- render/export PNG
+- export SVG
+- export PNG
 - export MIDI
-- export WAV as the current backend audio format
-- export WAV if retained as an intermediate or user-facing format
-- print diagnostics
-- support fixture/debug commands useful during development
+- export WAV
+- print diagnostics for humans and JSON diagnostics for scripts
 
-It does not provide a web page.
+The frontend browser edition includes:
 
-### Frontend Edition
-
-The frontend edition is a browser application. It should include:
-
-- editor
+- source editor
 - SVG preview
 - real-time playback
 - note highlighting
-- export SVG
-- export MIDI
+- click-to-play-from-note
+- SVG download
+- MIDI download
 - examples
 - settings
+- grammar help
 - diagnostics display
 
-It should not include PNG or MP3 export. Those exports belong to the backend
-edition because they are harder to implement reliably in the browser.
+Frontend PNG, WAV, and MP3 export are intentionally out of scope. PNG and WAV
+belong to the backend CLI. MP3 export is deferred.
 
-### Serverless
+Serverless deployment is not a target. The backend CLI replaces the old
+serverless/API export path.
 
-Serverless deployment is no longer a target. The backend CLI edition replaces
-the need for serverless export endpoints.
+The parser is hand-written. The old Nearley/Moo grammar and `nearleyc` build
+plugin are not being carried forward.
 
-## Architecture Overview
+## Current Status
 
-The rewrite should use a layered architecture:
+Status: usable rewrite with remaining compatibility and quality work.
 
-```text
-Text Source
-  |
-  v
-Parser
-  |
-  v
-Core Document Model
-  |
-  +--> Diagnostics
-  |
-  +--> Renderer Model
-  |       |
-  |       +--> React Preview
-  |       +--> SVG Export
-  |       +--> PNG Export (backend edition)
-  |
-  +--> Timing/Melody Model
-          |
-          +--> Real-Time Playback
-          +--> MIDI Export
-  +--> WAV Export (backend edition)
+Current validation command:
+
+```sh
+pnpm -C reloaded run test
 ```
 
-Important rule: renderer and player should not parse source text directly except
-through a thin convenience function. The normal API should accept already parsed
-and validated models.
+Current known passing state:
 
-## Core Model
+- 75 tests pass.
+- The test suite builds TypeScript before running Node tests.
+- Coverage includes parser behavior, renderer snapshots, player timing, MIDI,
+  backend PNG/WAV export, examples, CLI behavior, release metadata, and a
+  frontend production build smoke test.
 
-Create a `src/core` package that owns shared data structures.
+## Implemented
 
-Suggested core types:
+Core:
 
-- `Document`
-- `Header`
-- `Score`
-- `ScoreLine`
-- `Measure`
-- `Note`
-- `Pitch`
-- `Duration`
-- `TimeSignature`
-- `KeySignature`
-- `SourceSpan`
-- `Diagnostic`
+- Standalone nested git repository in `reloaded/`.
+- pnpm package with TypeScript, Vite, React, Node test runner, and package
+  metadata.
+- Shared core document model for headers, score lines, measures, notes,
+  durations, diagnostics, source spans, and time signatures.
+- Public package entry points for core, parser, renderer, player, backend, and
+  CLI binary output.
 
-The core model should distinguish:
+Parser:
 
-- syntactic source representation
-- normalized semantic representation
-- render-specific layout representation
-- player-specific timing representation
-
-Avoid making React types, Web Audio types, or Blob APIs part of the core model.
-
-## Parser Plan
-
-Parser responsibilities:
-
-- Tokenize source text.
-- Parse header properties.
-- Parse score lines, measures, notes, chords, ties, durations, accidentals, and
-  octave marks.
-- Preserve source locations for useful diagnostics.
-- Apply basic normalization and validation.
-- Return either a valid document or diagnostics.
-
-Parser outputs should be deterministic and serializable.
-
-Required parser behaviors to preserve:
-
-- Score-only documents.
+- Hand-written tokenizer and parser.
 - Optional header with `=` separator.
+- Score-only documents.
+- Empty document support.
 - Header fields: `title`, `subtitle`, `composer`, `key`, `time`, `tempo`,
   `hidden`.
-- Notes `1` to `7`.
-- Rest `0`.
-- Drum note `X`.
+- Unknown header field preservation in raw metadata.
+- Notes `1..7`, rest `0`, drum note `X`.
 - Accidentals `#`, `##`, `b`, `bb`, `%`.
-- Octave suffixes `,` and `'`.
-- Measure-level octave prefixes.
+- Per-note octave suffixes and measure-level octave prefixes.
 - Chords with `{ ... }`.
-- Durations using `-`, `/`, and `.`.
-- Ties with leading `~`.
+- Duration suffixes with dashes, slashes, and dots.
+- Leading tie marker `~`.
 - Compact notation with optional spaces.
-- Comments beginning with `;`, if kept.
+- Comments beginning with `;`.
+- Source ranges for diagnostics.
+- Validation for invalid headers, empty measures, empty chords, non-pitch chord
+  members, malformed compact notation, stray duration suffixes, unmatched chord
+  braces, unterminated strings, unterminated chords, tie legality, and
+  measure-duration warnings.
+- Legacy accidental-first key spelling coverage such as `#C` and `bB`.
 
-Parser improvements:
+Renderer:
 
-- Decide and document whether empty files are valid.
-- Decide and document whether unknown header fields are allowed.
-- Add diagnostics for invalid measure duration as warning or error.
-- Add diagnostics for tied notes with mismatched pitch.
-- Add diagnostics for impossible or unsupported syntax rather than generic parser
-  failures.
-- Normalize accidental behavior explicitly.
+- Deterministic SVG string renderer.
+- Header, score, layout, metrics, dimensions, styles, XML helpers, and drawing
+  modules are split from the original monolithic renderer path.
+- Header metadata rendering including hidden-header behavior.
+- Notes, rests, drums, accidentals, octave dots, chords, duration dots,
+  dashes, underlines, ties, regular bars, and final bars.
+- Tempo marks rendered with stable character choices.
+- Score line labels with reserved horizontal space.
+- Active-note highlighting for frontend playback.
+- Note metadata for click-to-play.
+- Theme/export color and background options.
+- `pageWidth`-based measure wrapping.
+- Overwide visual line scaling to keep the score inside page width.
+- Golden SVG snapshots for minimal score, full headers, hidden headers,
+  notation features, and wrapped ties.
 
-Parser tests:
+Player and audio:
 
-- one fixture per grammar feature
-- compact notation fixtures
-- invalid syntax fixtures
-- header validation fixtures
-- tie/cross-measure fixtures
-- duration calculation fixtures
-- source-span fixtures
+- Shared melody compiler from parsed document to timed melody events.
+- Key signature, accidentals, octave marks, rests, chords, ties, and drum notes
+  compile into playback/export events.
+- Initial-rest omission helper.
+- Program validation for `0..220`.
+- Melodic programs `0..127`.
+- Drum programs `128..220`, mapping `X` to percussion note
+  `program - 128 + 35`.
+- MIDI export with format 1 header, meta track, tempo, time signature,
+  melodic program changes, channel 10 drum handling, note on/off events, and
+  deterministic bytes.
+- Browser playback uses the legacy `WebAudioTinySynth` adapter.
+- Backend WAV export uses the same `WebAudioTinySynth` adapter with
+  `@descript/web-audio-js` offline rendering, so WAV timbres follow browser
+  Program and drum playback more closely than the earlier simple oscillator
+  path.
+- WAV output is backend-only stereo 16-bit PCM.
+- Browser playback and exports use fixed MIDI velocity `64`.
 
-## Renderer Plan
+Backend CLI:
 
-Renderer responsibilities:
+- `validate`
+- `parse`
+- `export-svg`
+- `export-png`
+- `export-midi`
+- `export-wav`
+- `--version`
+- `--help`
+- Human-readable diagnostics on stderr.
+- JSON output for `parse --json` and `validate --json`.
+- Usage errors return exit code `2`.
+- Parse/export failures return exit code `1`.
+- CLI validates options before reading input files where possible.
+- Option handling covers missing values, unknown options, negative numeric
+  values, page width, WAV sample rate, WAV amplitude, and program range.
 
-- Accept a validated core document or render model.
-- Produce deterministic SVG output.
-- Support note click metadata for interactive preview.
-- Support playing-note highlighting.
-- Support SVG export without browser-only APIs.
-- Support PNG export at a backend adapter boundary.
+Frontend:
 
-Renderer modules:
+- React/Vite browser app.
+- Empty initial editor content and original editor placeholder text.
+- Source editor with programming-font ligatures disabled.
+- SVG preview with scrollable width management.
+- Play and Stop controls.
+- Note highlighting during playback.
+- Click rendered notes to start playback from that note.
+- SVG and MIDI downloads using the original `jianpu-score.*` filenames.
+- Theme toggle with saved preference and system dark-mode initialization.
+- Preview/export color and background controls.
+- Page width control shared by preview and SVG export.
+- Settings panel with grouped Program selection, volume, audition, and
+  initial-rest omission.
+- Program list covers General MIDI and drum-note programs.
+- Volume control uses the original `0..200%` range and `100%` default.
+- Examples panel with migrated legacy examples.
+- Loading an example stops active playback and closes the panel.
+- Play and Stop close the examples panel like the old UI.
+- Grammar help panel backed by `docs/GRAMMAR.md`.
+- Frontend production build smoke test confirms SVG/MIDI controls are present
+  and PNG/WAV/MP3 controls are absent.
+
+Examples:
+
+- Legacy examples from the original examples panel are available as
+  `examples/*.jp` fixtures.
+- Examples are covered by parse, SVG, PNG, MIDI, and WAV test paths.
+
+Documentation:
+
+- `README.md`
+- `docs/GRAMMAR.md`
+- `docs/RENDERER.md`
+- `docs/PLAYER.md`
+- `docs/EXPORTS.md`
+- `docs/ARCHITECTURE.md`
+- `docs/COMPATIBILITY.md`
+- `docs/RELEASE.md`
+
+Packaging and release shape:
+
+- Package metadata declares library entry points and CLI binary.
+- Release file boundaries are documented.
+- npm publishing is deferred while the package remains private.
+- Package manager version is pinned in package metadata.
+
+## Deliberately Not Ported
+
+The following old-project pieces are intentionally not part of the current
+rewrite target:
+
+- Serverless and API deployment folders.
+- Frontend PNG export.
+- Frontend WAV export.
+- Frontend MP3 export.
+- Old browser WAV sample-rate setting.
+- Nearley/Moo parser generation and `plugins/nearleyc.js`.
+- Generated `public/grammar.html` railroad diagram.
+
+The grammar is now maintained in `docs/GRAMMAR.md`. Backend WAV sample rate is
+available through `export-wav --sample-rate`.
+
+## Remaining Work
+
+High priority:
+
+- Add browser-level frontend smoke tests. Current frontend verification builds
+  the production bundle but does not open the app in a real browser, load an
+  example, verify non-empty rendered SVG, click a note, or exercise playback and
+  export buttons.
+- Decide the browser test tool. Playwright is the strongest fit, but it requires
+  adding a browser automation dependency and handling installation in this
+  environment.
+- Add focused renderer golden snapshots only when behavior changes or an
+  uncovered compatibility edge case is found. The current snapshot set already
+  covers the main header, notation, wrapping, and tie cases.
+
+Medium priority:
+
+- Improve parser diagnostics and recovery for additional malformed compact
+  notation and header edge cases discovered during compatibility testing.
+- Validate TinySynth WAV output quality and performance on longer example
+  scores. The current examples pass, but offline TinySynth rendering is slower
+  than the earlier simple waveform renderer.
+- Review frontend responsive layout in a real browser after browser automation
+  exists.
+- Finalize distribution polish once browser smoke testing is decided.
+
+Lower priority or post-parity improvements:
+
+- Pagination or multi-page output.
+- More sophisticated note-level horizontal re-spacing.
+- Fuller collision avoidance for dense chords, ties, and metadata.
+- Velocity syntax.
+- Multi-track arrangements.
+- Richer drum controls.
+- Optional MP3 backend export.
+- Optional npm publication after package policy is decided.
+- Optional favicon/static asset polish.
+
+## Current Architecture
 
 ```text
-src/renderer/
-  index.ts
-  render-document.ts
-  render-header.ts
-  render-score.ts
-  layout/
-    measure-layout.ts
-    line-layout.ts
-    chord-layout.ts
-    tie-layout.ts
-  svg/
-    primitives.tsx
-    styles.ts
+source text
+  |
+  v
+parser/tokenizer
+  |
+  v
+core Document
+  |
+  +--> renderer -> SVG string -> backend PNG adapter
+  |
+  +--> melody compiler -> browser TinySynth playback
+  |
+  +--> melody compiler -> MIDI writer
+  |
+  +--> melody compiler -> backend TinySynth WAV renderer
 ```
 
-Renderer improvements:
-
-- Separate measurement from drawing.
-- Keep all layout constants in one typed theme/options object.
-- Avoid relying on `props.height` from React elements as the layout API.
-- Make line width, page width, and wrapping behavior explicit.
-- Decide whether page width should constrain score line layout.
-- Make exported SVG colors explicit rather than relying only on `currentColor`.
-- Support deterministic final bar rendering with named symbols.
-- Document font assumptions.
-
-Renderer tests:
-
-- SVG snapshot for a minimal score.
-- Header snapshot with each metadata field.
-- Accidentals and octave dots.
-- Chords.
-- Rests and drums.
-- Dashes, dots, and underlines.
-- Local ties.
-- Cross-measure ties.
-- Cross-line ties.
-- Empty score/header cases.
-
-## Player Plan
-
-Player responsibilities:
-
-- Compile a validated document into a timing model.
-- Compile timing model into real-time playback events.
-- Compile timing model into MIDI events.
-- Optionally compile timing model into offline audio.
-- Provide predictable start/stop behavior and note highlighting.
-
-Player modules:
+Dependency direction:
 
 ```text
-src/player/
-  index.ts
-  melody-compiler.ts
-  timing.ts
-  realtime/
-    synth-player.ts
-  midi/
-    midi-file.ts
-    midi-export.ts
-  audio-export/
-    wav-export.ts
+core
+  ^
+parser
+renderer
+player
+  ^
+backend
+cli
+web
 ```
 
-Player improvements:
+Rules:
 
-- Create a single `TimedEvent` or `TimedNote` model shared by playback and MIDI.
-- Represent tempo and time signature explicitly.
-- Keep rests as timed events or gaps with clear semantics.
-- Make accidentals and key mapping testable.
-- Make drum program behavior explicit.
-- Validate ties before compiling playback.
-- Decouple note highlighting from sound scheduling.
-- Make cancellation robust for overlapping play requests.
+- Core stays platform-neutral.
+- Parser does not import renderer, player, backend, CLI, or web code.
+- Renderer does not parse source text and does not import backend code.
+- Player owns melody/MIDI/shared synth-facing logic but not UI.
+- Backend owns Node-capable PNG and WAV adapters.
+- Web does not import backend modules.
+- CLI coordinates modules but should keep business logic thin.
 
-Player tests:
+## Compatibility Position
 
-- pitch-to-MIDI mapping by key and octave.
-- accidental persistence/reset by measure.
-- tie duration merging.
-- rest skipping behavior.
-- drum mapping.
-- MIDI byte snapshots for small fixtures.
-- tempo and time-signature meta events.
+The rewrite currently aims for practical compatibility with the old project,
+not byte-for-byte or pixel-for-pixel identity.
 
-## CLI Plan
+Preserved or restored behavior:
 
-The backend edition should expose a CLI rather than a web server.
+- Current legacy examples parse and export.
+- Compact notation remains supported.
+- Header defaults and known semantic header fields are supported.
+- Unknown header fields are preserved.
+- Measure-local accidental persistence is implemented.
+- Ties merge playback/export duration.
+- Browser playback uses WebAudioTinySynth.
+- Program and drum controls are restored in the frontend.
+- Initial-rest omission is restored.
+- Frontend source/editor/settings/examples/grammar workflows are restored in
+  the current UI style.
 
-Possible commands:
+Intentional differences:
 
-```text
-jianpu parse input.jp
-jianpu validate input.jp
-jianpu export-svg input.jp -o score.svg
-jianpu export-png input.jp -o score.png
-jianpu export-midi input.jp -o score.mid
-jianpu export-wav input.jp -o score.wav
-```
+- Parser is stricter in several malformed cases.
+- Tie legality is validated before successful parse.
+- Empty measure syntax is rejected.
+- Measure duration mismatch is a warning, not a fatal error.
+- Renderer output is deterministic SVG strings rather than React element output.
+- Bars are SVG primitives rather than music-font glyphs.
+- PNG and WAV are backend-only.
+- Serverless is removed from the target architecture.
 
-Exact command names can change during implementation, but the CLI should keep
-input/output behavior explicit and scriptable.
+## Milestone Status
 
-CLI requirements:
+Milestone 0: project setup
 
-- non-zero exit code on fatal parse/export errors
-- human-readable diagnostics by default
-- optional machine-readable diagnostics, for example JSON
-- no browser-only APIs
-- export behavior should use the same core parser, renderer, and player modules
-  as the frontend edition
+- Status: complete.
+- Notes: pnpm, TypeScript, package metadata, test/build scripts, docs skeleton,
+  and nested repo are in place.
 
-## App/UI Plan
+Milestone 1: core model and parser
 
-The frontend application UI should be practical, not redesigned from scratch.
+- Status: complete for current grammar target.
+- Remaining work: more diagnostic recovery for newly found malformed inputs.
 
-Initial UI:
+Milestone 2: renderer
 
-- editor panel
-- SVG preview panel
-- play/stop controls
-- export SVG
-- export MIDI
-- settings modal or settings panel
-- examples panel
-- parse diagnostics display
+- Status: substantially complete for current parity target.
+- Remaining work: edge-case snapshots, pagination, finer spacing, and collision
+  avoidance.
 
-UI improvements:
+Milestone 3: playback and MIDI
 
-- Use clear buttons and accessible labels.
-- Avoid garbled icon glyphs by using text labels or an icon library.
-- Make mobile layout usable.
-- Keep examples in fixture files or data modules, not deeply embedded in a large
-  component.
-- Show parse errors with line/column when available.
+- Status: substantially complete for current parity target.
+- Notes: browser playback uses TinySynth; MIDI export supports melodic and drum
+  programs; note highlighting and click-to-play work.
+- Remaining work: browser-level automation and optional richer musical features.
 
-## Export Plan
+Milestone 4: backend exports and UI polish
 
-SVG:
+- Status: substantially complete.
+- Notes: CLI SVG/PNG/MIDI/WAV exports work; frontend intentionally excludes
+  PNG/WAV/MP3; settings/examples/theme/page-width workflows are present.
+- Remaining work: real-browser responsive and workflow checks.
 
-- Export should return a string or Blob consistently.
-- API should make the return type explicit.
-- Backend and frontend exports should share serialization code.
+Milestone 5: packaging and distribution
 
-PNG:
+- Status: partially complete.
+- Notes: package entry points, CLI binary, release file boundaries, and release
+  docs exist.
+- Remaining work: browser smoke tooling decision, final distribution checks,
+  and optional publication policy.
 
-- Backend edition only.
-- Render SVG into PNG through one Node-capable adapter.
-- Do not expose PNG export in the frontend edition.
-- Respect light/dark/export theme explicitly.
+## Test Strategy
 
-MIDI:
-
-- Keep deterministic writer.
-- Add tests around bytes and event timing.
-- Support one track initially.
-
-WAV/MP3:
-
-- WAV can be retained as an intermediate format if useful for MP3 encoding or as
-  a user-facing backend export.
-- Do not expose MP3 export in the frontend edition.
-- MP3 export is deferred from the current release target. If added later, it
-  should be implemented as a backend adapter on top of the audio pipeline.
-
-## Documentation Plan
-
-Docs should be part of the rewrite, not an afterthought.
-
-Initial docs:
-
-- `README.md`: what the project is and how to run it.
-- `docs/GRAMMAR.md`: user-facing syntax reference.
-- `docs/ARCHITECTURE.md`: module boundaries and data flow.
-- `docs/RENDERER.md`: renderer behavior and layout model.
-- `docs/PLAYER.md`: playback/export behavior.
-- `docs/COMPATIBILITY.md`: compatibility with the old project.
-
-Docs should be updated in the same milestone as behavior changes.
-
-## Migration And Compatibility
-
-Start with current syntax compatibility unless there is a clear reason to change
-behavior.
-
-Compatibility checklist:
-
-- Existing example scores parse.
-- Existing examples render recognizably.
-- Existing examples play with comparable pitches and durations.
-- SVG export works for example scores.
-- MIDI export works for example scores.
-
-If behavior changes are intentional, document them in `docs/COMPATIBILITY.md`.
-
-Potential behavior decisions:
-
-- Whether empty documents are valid.
-- Whether comments create newline separators.
-- Whether unknown header fields are kept.
-- Whether accidentals persist for the measure.
-- Whether ties must match pitch.
-- Whether measure duration mismatch is an error or warning.
-- Whether chord ordering should use first or last note as the visual base.
-
-## Milestones
-
-### Milestone 0: Project Setup
-
-Deliverables:
-
-- package manager and TypeScript setup
-- lint/test/build commands
-- basic directory structure
-- CI-ready scripts, even if CI is not configured yet
-- initial docs skeleton
-
-Exit criteria:
-
-- pnpm workspace/package setup exists
-- `install`, `test`, `lint`, and `build` commands exist
-- empty app or library builds
-- no generated files are linted
-
-### Milestone 1: Core Model And Parser
-
-Deliverables:
-
-- core data model
-- parser/tokenizer
-- diagnostics
-- parser fixtures
-- grammar documentation draft
-
-Exit criteria:
-
-- current examples parse
-- invalid fixtures produce useful diagnostics
-- duration/key/time parsing has tests
-
-### Milestone 2: Renderer
-
-Deliverables:
-
-- header renderer
-- score renderer
-- SVG serialization
-- renderer snapshots
-- browser preview integration
-
-Exit criteria:
-
-- current examples render
-- parse errors display in UI
-- SVG export returns a valid SVG string or Blob consistently
-
-### Milestone 3: Playback And MIDI
-
-Deliverables:
-
-- timing/melody compiler
-- real-time playback
-- note highlighting
-- MIDI export
-- player tests
-
-Exit criteria:
-
-- examples play
-- clicking a note starts playback from that note
-- MIDI exports open in common MIDI players
-- timing tests pass
-
-### Milestone 4: CLI Backend Exports And UI Polish
-
-Deliverables:
-
-- backend CLI shell
-- backend PNG export
-- backend WAV export implementation
-- theme-aware export behavior
-- settings UI
-- examples UI
-- responsive layout pass
-
-Exit criteria:
-
-- backend PNG export works from the CLI
-- frontend intentionally omits PNG and MP3 export
-- UI is usable on desktop and mobile widths
-- examples are easy to load and inspect
-
-### Milestone 5: Packaging And Distribution
-
-Deliverables:
-
-- CLI packaging
-- frontend production build
-- release documentation
-- compatibility documentation
-- optional WAV polishing
-
-Exit criteria:
-
-- backend CLI can run from a built package
-- frontend build runs without serverless support
-- export commands are documented
-- WAV export is tested on representative examples
-
-## Testing Strategy
-
-Prefer small deterministic tests over broad manual checks.
-
-Test layers:
+Current test layers:
 
 - parser unit tests
-- core model normalization tests
-- renderer SVG snapshots
-- player timing tests
-- MIDI byte/event tests
-- UI smoke tests
+- renderer SVG tests and golden snapshots
+- player melody/MIDI tests
+- backend PNG/WAV tests
+- CLI integration tests
+- examples compatibility test
+- package metadata test
+- frontend production build smoke test
 
-Recommended fixture layout:
+Testing gaps:
 
-```text
-tests/fixtures/
-  valid/
-  invalid/
-  examples/
-  snapshots/
-```
+- No real-browser UI automation yet.
+- No automated audio perceptual comparison.
+- No PNG golden image comparison.
 
-Every syntax feature should have at least one parser fixture and, when visual,
-one renderer fixture.
+Preferred additions:
+
+- Browser smoke test that starts the Vite build or preview, opens the app, loads
+  an example, verifies rendered SVG, clicks a rendered note, and exercises SVG
+  and MIDI export controls.
+- Focused regression tests whenever a compatibility bug is fixed.
+- Additional renderer snapshots only for meaningful visual behavior, not for
+  every fixture.
 
 ## Risks
 
-Parser ambiguity:
+Browser automation dependency:
 
-- Compact notation is convenient but can make diagnostics harder.
-- Mitigation: write a tokenizer that preserves source spans and test compact
-  cases carefully.
+- The largest remaining test gap needs a browser automation tool. This will add
+  dependency and installation complexity.
+
+TinySynth offline rendering performance:
+
+- WAV export now matches browser timbres more closely, but rendering long
+  examples is slower than the previous deterministic oscillator path.
 
 Renderer complexity:
 
-- Chords, octave dots, duration marks, and ties can overlap.
-- Mitigation: separate measurement from drawing and snapshot representative
-  cases.
+- Dense chords, ties, labels, metadata, and wrapping can still overlap in edge
+  cases. Current layout is practical but not full engraving.
 
-Playback compatibility:
+Parser compatibility:
 
-- The current implementation has implicit behavior around accidentals and ties.
-- Mitigation: write tests that capture the intended behavior before changing it.
-
-Platform API differences:
-
-- PNG and audio rendering should be backend responsibilities where practical.
-- Mitigation: isolate adapters and provide clear support/fallback decisions.
+- The hand-written parser is intentionally stricter in malformed cases. Future
+  compatibility issues should be resolved with explicit tests and documentation.
 
 Scope creep:
 
-- Music notation can expand indefinitely.
-- Mitigation: preserve current behavior first, then add features only after the
-  rewrite reaches parity.
-
-## Immediate Next Decision
-
-Before writing production code, decide:
-
-1. Exact package layout for shared core, backend CLI, and frontend app.
-2. Exact test tooling around Vitest, snapshots, and possible browser tests.
-3. Whether first milestone targets a library-only parser or a minimal app shell.
-4. WAV synthesis strategy and any future MP3 adapter decision.
-5. Compatibility rules for ties, accidentals, empty files, and measure duration
-   validation.
+- Jianpu notation can grow indefinitely. The rewrite should preserve current
+  project behavior first and add new notation features only when they have clear
+  syntax, rendering, playback, and test plans.
