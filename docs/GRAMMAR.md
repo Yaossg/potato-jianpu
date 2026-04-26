@@ -360,6 +360,10 @@ Whitespace between notes is optional when tokens remain unambiguous:
 Header syntax still requires line-oriented `name: "value"` fields before the
 separator.
 
+Only digits `1` through `7` are pitch notes. Compact text such as `18` is not
+parsed as a valid compact note sequence; `8` is reported as an unexpected
+character at its source position.
+
 ## Measure Duration Warnings
 
 The parser computes each measure duration and compares it with the active time

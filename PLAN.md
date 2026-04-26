@@ -74,6 +74,8 @@ Completed initial slices:
 - Parser recovers malformed header lines without cascading into score syntax
   errors.
 - Parser reports unterminated chords with a specific diagnostic.
+- Parser tests cover comment/newline boundaries and invalid compact notation
+  character positions.
 
 Current test status:
 
@@ -97,7 +99,8 @@ Medium priority:
   release file boundaries, but release versioning, publish workflow, and frontend
   deployment steps still need final decisions.
 - Improve parser diagnostics and recovery for additional malformed inputs,
-  especially compact-notation edge cases and comment/newline boundaries.
+  especially additional compact-notation edge cases found during compatibility
+  testing.
 
 Lower priority or post-parity improvements:
 

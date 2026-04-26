@@ -20,6 +20,15 @@ test("parses score-only documents", () => {
   assert.equal(result.value.score[0].measures.length, 2);
 });
 
+test("keeps comment boundaries between header and score lines", () => {
+  const result = parse(`title: "Comments" ; header comment\n=\n1 2 ; score comment\n; whole-line comment\n3 4`);
+  assert.equal(result.ok, true);
+  assert.equal(result.value.header.title, "Comments");
+  assert.equal(result.value.score.length, 2);
+  assert.equal(result.value.score[0].measures[0].notes.length, 2);
+  assert.equal(result.value.score[1].measures[0].notes.length, 2);
+});
+
 test("applies measure octave prefixes to pitch notes", () => {
   const result = parse("'' 2' 1'/. 1'//~ 1' 6//");
   assert.equal(result.ok, true);
@@ -70,6 +79,17 @@ test("rejects mixed dash and slash duration marks with a specific diagnostic", (
   assert.equal(slashThenDash.ok, false);
   assert.match(slashThenDash.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Dash duration marks cannot be combined/);
   assert.doesNotMatch(slashThenDash.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Expected note, rest, drum note, chord, or tie/);
+});
+
+test("reports invalid compact notation characters at their source position", () => {
+  const result = parse("18");
+  assert.equal(result.ok, false);
+  const diagnostic = result.diagnostics.find((item) => item.message.includes("Unexpected character '8'"));
+  assert.ok(diagnostic?.range);
+  assert.equal(diagnostic.range.start.line, 1);
+  assert.equal(diagnostic.range.start.column, 2);
+  assert.equal(diagnostic.range.end.column, 3);
+  assert.doesNotMatch(result.diagnostics.map((item) => item.message).join("\n"), /Expected note, rest, drum note, chord, or tie/);
 });
 
 
