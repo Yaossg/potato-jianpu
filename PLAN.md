@@ -59,6 +59,45 @@ Current test status:
 
 - Parser, renderer, melody, MIDI, examples, and backend export tests pass.
 
+Remaining rewrite and improvement work:
+
+High priority:
+
+- Split `src/renderer/svg.ts` into smaller renderer modules. The current file is
+  functional but still combines layout, SVG primitives, styles, header rendering,
+  score rendering, ties, bars, tempo marks, and note drawing in one large module.
+- Expand renderer golden SVG snapshots beyond the current minimal snapshot.
+  Needed cases include full header metadata, accidentals and octave dots, chords,
+  rests, drum notes, dashes, dots, underlines, local ties, cross-measure ties,
+  cross-line ties, and narrow-page wrapping.
+- Add browser-level frontend smoke tests. Current frontend verification is a
+  production build only; there is no automated test that opens the app, loads an
+  example, verifies non-empty SVG output, or exercises playback/export buttons.
+
+Medium priority:
+
+- Finalize packaging and distribution. The package already has a `bin` mapping
+  and build scripts, but release file selection, CLI usage from a built package,
+  frontend deployment steps, and release documentation still need to be made
+  explicit.
+- Decide the MP3 strategy. MP3 export is documented as not implemented. Either
+  add backend MP3 export on top of the WAV/audio pipeline or formally remove MP3
+  from the first release target.
+- Improve parser diagnostics and recovery for additional malformed inputs,
+  especially malformed headers, unterminated chords, compact-notation edge cases,
+  and comment/newline boundaries.
+
+Lower priority or post-parity improvements:
+
+- Improve WAV and browser playback sound quality. Current playback/export uses a
+  deterministic sine synthesizer rather than instrument samples or realistic
+  program-specific synthesis.
+- Add optional musical features such as velocity, multi-track arrangements,
+  stereo audio, richer drum audio, and fuller instrument handling.
+- Improve renderer layout capabilities such as source line label rendering,
+  pagination, automatic horizontal scaling, and fuller collision avoidance for
+  dense chords and ties.
+
 ## Goals
 
 The rewrite should preserve the useful behavior of the current project while
