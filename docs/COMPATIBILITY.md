@@ -178,7 +178,7 @@ Frontend currently supports:
   saved preference and system dark-mode initialization
 - Settings panel for page width, preview/export colors, Program, volume,
   Program audition, and initial-rest omission
-- source editor placeholder text from the original frontend
+- empty initial source editor and placeholder text from the original frontend
 - Examples panel with the migrated legacy examples and focused two-column
   editor/preview workspace. Loading an example stops active playback and closes
   the panel. Play and Stop actions also close the examples panel.

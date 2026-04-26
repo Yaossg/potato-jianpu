@@ -101,7 +101,7 @@ function diagnosticSummary(ok: boolean, diagnostics: Array<{ severity: "error" |
 }
 
 export function App() {
-  const [source, setSource] = useState(twinkle);
+  const [source, setSource] = useState("");
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeNoteIndex, setActiveNoteIndex] = useState<number | null>(null);
   const [pageWidth, setPageWidth] = useState(1000);
