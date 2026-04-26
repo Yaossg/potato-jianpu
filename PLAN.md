@@ -48,6 +48,8 @@ Completed initial slices:
 - Parser diagnostics for empty chords and non-pitch chord members.
 - Parser tests cover legacy accidental-first key spellings such as `#C` and
   `bB`.
+- Parser tests cover empty files, multiple header separator characters, and
+  optional leading/trailing score bars.
 - CLI rejects flags with missing values.
 - CLI rejects unknown options per command.
 - Player APIs reject out-of-range programs.

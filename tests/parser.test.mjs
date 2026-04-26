@@ -20,6 +20,29 @@ test("parses score-only documents", () => {
   assert.equal(result.value.score[0].measures.length, 2);
 });
 
+test("parses empty files with default header values", () => {
+  const result = parse("");
+  assert.equal(result.ok, true);
+  assert.equal(result.value.score.length, 0);
+  assert.equal(result.value.header.keySignatureText, "C");
+  assert.equal(result.value.header.tempo, 120);
+});
+
+test("accepts multiple header separator characters", () => {
+  const result = parse(`title: "Separator"\n===\n1 2`);
+  assert.equal(result.ok, true);
+  assert.equal(result.value.header.title, "Separator");
+  assert.equal(result.value.score[0].measures[0].notes.length, 2);
+});
+
+test("accepts optional leading and trailing bars", () => {
+  const result = parse("| 1 2 | 3 4 |");
+  assert.equal(result.ok, true);
+  assert.equal(result.value.score[0].measures.length, 2);
+  assert.equal(result.value.score[0].measures[0].notes[0].index, 0);
+  assert.equal(result.value.score[0].measures[1].notes[1].index, 3);
+});
+
 test("keeps comment boundaries between header and score lines", () => {
   const result = parse(`title: "Comments" ; header comment\n=\n1 2 ; score comment\n; whole-line comment\n3 4`);
   assert.equal(result.ok, true);
