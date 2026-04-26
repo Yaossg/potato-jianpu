@@ -25,10 +25,16 @@ function readFlag(flags: string[], name: string): string | undefined {
 }
 
 const VALUE_FLAGS = new Set(["-o", "--page-width", "--color", "--background", "--program", "--sample-rate", "--amplitude"]);
+const NEGATIVE_NUMBER_PATTERN = /^-\d+(?:\.\d+)?$/;
+
+function looksLikeFlag(value: string): boolean {
+  return value.startsWith("-") && !NEGATIVE_NUMBER_PATTERN.test(value);
+}
 
 function hasFlagValue(flags: string[], name: string): boolean {
   const index = flags.indexOf(name);
-  return index === -1 || (flags[index + 1] !== undefined && !VALUE_FLAGS.has(flags[index + 1]!));
+  const value = flags[index + 1];
+  return index === -1 || (value !== undefined && !looksLikeFlag(value));
 }
 
 function validateFlagValues(flags: string[], names: string[]): string | null {

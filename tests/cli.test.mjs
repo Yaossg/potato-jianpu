@@ -98,6 +98,20 @@ test("CLI rejects flags with missing values", async () => {
     }),
     /--page-width requires a value/,
   );
+
+  await assert.rejects(
+    execFileAsync(process.execPath, ["dist/cli/main.js", "export-svg", input, "-o", output, "--page-width", "--color", "#123456"], {
+      cwd: repoDir,
+    }),
+    /--page-width requires a value/,
+  );
+
+  await assert.rejects(
+    execFileAsync(process.execPath, ["dist/cli/main.js", "export-midi", input, "-o", join(dir, "score.mid"), "--program", "--omit-initial-rest"], {
+      cwd: repoDir,
+    }),
+    /--program requires a value/,
+  );
 });
 
 test("CLI rejects unknown options", async () => {
