@@ -286,7 +286,7 @@ Practical rules:
   `TimedNote` model.
 - Browser playback lives outside `src/player`, so the player package is not yet
   a complete runtime playback abstraction.
-- MP3 export is not implemented.
+- MP3 export is intentionally deferred from the current release target.
 
 These are acceptable for the current rewrite stage but should guide later
 refactors.

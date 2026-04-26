@@ -69,6 +69,8 @@ Completed initial slices:
   controls while confirming PNG/WAV/MP3 exports stay out of the browser bundle.
 - Package metadata declares backend/library entry points, the CLI binary, and
   release file boundaries, with tests covering built output paths.
+- MP3 export is explicitly deferred from the current release target; WAV is the
+  backend audio export for now.
 
 Current test status:
 
@@ -91,9 +93,6 @@ Medium priority:
 - Finalize distribution polish. Package metadata now declares entry points and
   release file boundaries, but release versioning, publish workflow, and frontend
   deployment steps still need final decisions.
-- Decide the MP3 strategy. MP3 export is documented as not implemented. Either
-  add backend MP3 export on top of the WAV/audio pipeline or formally remove MP3
-  from the first release target.
 - Improve parser diagnostics and recovery for additional malformed inputs,
   especially malformed headers, unterminated chords, compact-notation edge cases,
   and comment/newline boundaries.
@@ -234,7 +233,7 @@ non-web functionality:
 - render/export SVG
 - render/export PNG
 - export MIDI
-- export MP3 if audio encoding support is selected
+- export WAV as the current backend audio format
 - export WAV if retained as an intermediate or user-facing format
 - print diagnostics
 - support fixture/debug commands useful during development
@@ -288,7 +287,7 @@ Core Document Model
           |
           +--> Real-Time Playback
           +--> MIDI Export
-          +--> WAV/MP3 Export (backend edition, if enabled)
+  +--> WAV Export (backend edition)
 ```
 
 Important rule: renderer and player should not parse source text directly except
@@ -452,7 +451,6 @@ src/player/
     midi-export.ts
   audio-export/
     wav-export.ts
-    mp3-export.ts
 ```
 
 Player improvements:
@@ -488,7 +486,6 @@ jianpu validate input.jp
 jianpu export-svg input.jp -o score.svg
 jianpu export-png input.jp -o score.png
 jianpu export-midi input.jp -o score.mid
-jianpu export-mp3 input.jp -o score.mp3
 jianpu export-wav input.jp -o score.wav
 ```
 
@@ -551,11 +548,11 @@ MIDI:
 
 WAV/MP3:
 
-- Backend edition only for MP3.
 - WAV can be retained as an intermediate format if useful for MP3 encoding or as
   a user-facing backend export.
 - Do not expose MP3 export in the frontend edition.
-- Decide the audio synthesis and encoding stack before implementation.
+- MP3 export is deferred from the current release target. If added later, it
+  should be implemented as a backend adapter on top of the audio pipeline.
 
 ## Documentation Plan
 
@@ -671,7 +668,7 @@ Deliverables:
 
 - backend CLI shell
 - backend PNG export
-- backend MP3/WAV export decision and initial implementation if selected
+- backend WAV export implementation
 - theme-aware export behavior
 - settings UI
 - examples UI
@@ -692,14 +689,14 @@ Deliverables:
 - frontend production build
 - release documentation
 - compatibility documentation
-- optional WAV/MP3 polishing
+- optional WAV polishing
 
 Exit criteria:
 
 - backend CLI can run from a built package
 - frontend build runs without serverless support
 - export commands are documented
-- optional WAV/MP3 export is tested on representative examples if included
+- WAV export is tested on representative examples
 
 ## Testing Strategy
 
@@ -764,6 +761,6 @@ Before writing production code, decide:
 1. Exact package layout for shared core, backend CLI, and frontend app.
 2. Exact test tooling around Vitest, snapshots, and possible browser tests.
 3. Whether first milestone targets a library-only parser or a minimal app shell.
-4. MP3/WAV synthesis and encoding strategy for the backend edition.
+4. WAV synthesis strategy and any future MP3 adapter decision.
 5. Compatibility rules for ties, accidentals, empty files, and measure duration
    validation.

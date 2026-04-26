@@ -14,8 +14,9 @@ The rewrite has two product targets:
 PNG and WAV export are backend-only. The frontend intentionally does not expose
 PNG, WAV, or MP3 export.
 
-MP3 export is not implemented yet. WAV export is the current backend audio
-foundation and can be used as an intermediate if MP3 encoding is added later.
+MP3 export is intentionally deferred from the current release target. WAV export
+is the backend audio export for now and can be used as an intermediate if MP3
+encoding is added later.
 
 ## CLI Commands
 

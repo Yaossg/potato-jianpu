@@ -262,7 +262,7 @@ The current player/export layer is functional but not a full synthesizer:
 - no velocity syntax
 - no multi-track arrangement model
 - no stereo output
-- no MP3 export yet
+- MP3 export is deferred from the current release target
 - drum WAV output currently uses sine waves at percussion MIDI note
   frequencies, not drum samples
 - browser playback uses simple oscillators rather than a sampled instrument

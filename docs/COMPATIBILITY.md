@@ -175,7 +175,8 @@ Frontend intentionally does not support:
 - WAV export
 - MP3 export
 
-MP3 export is not implemented yet.
+MP3 export is intentionally deferred from the current release target. WAV is the
+current backend audio export.
 
 ## Dependency And Packaging Differences
 
