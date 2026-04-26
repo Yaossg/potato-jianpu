@@ -14,6 +14,7 @@ test("package metadata points at built backend and library files", async () => {
   const manifest = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
 
   assert.equal(manifest.type, "module");
+  assert.equal(manifest.packageManager, "pnpm@8.10.3");
   assert.equal(manifest.main, "./dist/index.js");
   assert.equal(manifest.types, "./dist/index.d.ts");
   assert.equal(manifest.bin.jianpu, "./dist/cli/main.js");

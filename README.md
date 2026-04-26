@@ -32,6 +32,9 @@ pnpm run dev
 pnpm run web:build
 ```
 
+This repository records `pnpm@8.10.3` in `package.json` as the expected package
+manager.
+
 ## Built Outputs
 
 `pnpm run build` emits the backend CLI and shared library modules in `dist/`.

@@ -80,6 +80,7 @@ Completed initial slices:
 - Renderer displays score line labels with reserved horizontal space.
 - Parser stops unterminated chords at line boundaries with a specific diagnostic.
 - CLI `--version` reports the package version for release checks.
+- Package metadata pins the expected package manager version.
 
 Current test status:
 

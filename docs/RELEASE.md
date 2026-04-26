@@ -74,6 +74,7 @@ surfaces. It exposes SVG and MIDI download only.
 
 Before cutting a release:
 
+- Use the package manager recorded in `package.json` (`pnpm@8.10.3`).
 - Run `pnpm install`.
 - Run `pnpm run test`.
 - Run `pnpm run web:build` if not already covered by the test output being
