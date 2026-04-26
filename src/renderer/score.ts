@@ -155,11 +155,12 @@ function renderLine(layout: LineLayout, lineY: number, allNotes: Note[], documen
       parts.push(renderTie(startX, endX, lineY + layout.maxPaddingUp - DIMENSIONS.tiePadding, Math.max(chordHeight(previous.note), chordHeight(entry.note))));
     } else if (entry.note.tie) {
       const endX = entry.x + (entry.note.kind === "pitch" ? maxAccidentalOffset(entry.note.chord) : 0);
-      parts.push(renderTie(endX - DIMENSIONS.baseNoteWidth * 2, endX, lineY + layout.maxPaddingUp - DIMENSIONS.tiePadding, chordHeight(entry.note)));
+      parts.push(renderTie(DIMENSIONS.leftPadding - DIMENSIONS.baseNoteWidth / 2, endX, lineY + layout.maxPaddingUp - DIMENSIONS.tiePadding, chordHeight(entry.note)));
     }
     if (noteTieAfter(entry.note, allNotes) && index === lineEntries.length - 1) {
       const startX = entry.x + (entry.note.kind === "pitch" ? maxAccidentalOffset(entry.note.chord) : 0);
-      parts.push(renderTie(startX, startX + widthOf(entry.note) * 2, lineY + layout.maxPaddingUp - DIMENSIONS.tiePadding, chordHeight(entry.note)));
+      const endX = Math.max(startX + DIMENSIONS.baseNoteWidth, layout.width - DIMENSIONS.leftPadding / 2);
+      parts.push(renderTie(startX, endX, lineY + layout.maxPaddingUp - DIMENSIONS.tiePadding, chordHeight(entry.note)));
     }
 
     const className = entry.note.index === activeNoteIndex ? "note-item active" : "note-item";

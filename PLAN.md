@@ -63,6 +63,8 @@ Completed initial slices:
 - Renderer golden snapshots cover both a minimal score and full header metadata.
 - Renderer golden snapshots cover accidentals, octave dots, chords, rests,
   drums, dashes, dots, underlines, ties, and final bars.
+- Renderer cross-line tie continuation stays within the wrapped visual line and
+  is covered by a golden snapshot.
 
 Current test status:
 
