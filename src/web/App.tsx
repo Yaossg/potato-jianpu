@@ -204,6 +204,12 @@ export function App() {
     setActiveNoteIndex(null);
   }
 
+  function loadSource(nextSource: string) {
+    stop();
+    setSource(nextSource);
+    setShowExamples(false);
+  }
+
   function playFromPreview(event: MouseEvent<HTMLDivElement>) {
     const target = event.target instanceof Element ? event.target.closest<SVGGElement>("[data-note-index]") : null;
     const noteIndex = Number(target?.dataset.noteIndex);
@@ -350,10 +356,7 @@ export function App() {
               <button
                 key={example.name}
                 type="button"
-                onClick={() => {
-                  setSource(example.source);
-                  setShowExamples(false);
-                }}
+                onClick={() => loadSource(example.source)}
               >
                 {example.name}
               </button>
@@ -382,7 +385,12 @@ export function App() {
               {diagnosticSummary(parsed.ok, parsed.diagnostics)}
             </span>
           </div>
-          <textarea value={source} onChange={(event) => setSource(event.target.value)} spellCheck={false} />
+          <textarea
+            value={source}
+            onChange={(event) => setSource(event.target.value)}
+            onFocus={() => setShowExamples(false)}
+            spellCheck={false}
+          />
           {parsed.diagnostics.length > 0 && (
             <div className="diagnostics">
               {parsed.diagnostics.map((diagnostic, index) => (

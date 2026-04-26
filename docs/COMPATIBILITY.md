@@ -177,7 +177,8 @@ Frontend currently supports:
 - Settings panel for page width, preview/export colors, Program, volume,
   Program audition, and initial-rest omission
 - Examples panel with the migrated legacy examples and focused two-column
-  editor/preview workspace
+  editor/preview workspace. Loading an example stops active playback and closes
+  the panel.
 - grammar help panel backed by `docs/GRAMMAR.md`
 
 Frontend intentionally does not support:
