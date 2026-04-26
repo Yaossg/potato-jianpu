@@ -94,6 +94,7 @@ Completed initial slices:
 - Renderer displays score line labels with reserved horizontal space.
 - Parser stops unterminated chords at line boundaries with a specific diagnostic.
 - CLI `--version` reports the package version for release checks.
+- CLI `--help` output is covered for release checks.
 - Package metadata pins the expected package manager version.
 - npm publication is explicitly deferred while the package remains private.
 - CLI `export-wav` exposes the backend amplitude option.

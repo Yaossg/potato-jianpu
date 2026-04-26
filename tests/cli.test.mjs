@@ -20,6 +20,17 @@ test("CLI prints package version", async () => {
   assert.equal(stdout.trim(), manifest.version);
 });
 
+test("CLI prints usage help", async () => {
+  const { stdout, stderr } = await execFileAsync(process.execPath, ["dist/cli/main.js", "--help"], {
+    cwd: repoDir,
+  });
+
+  assert.equal(stderr, "");
+  assert.match(stdout, /Usage:/);
+  assert.match(stdout, /export-svg/);
+  assert.match(stdout, /export-wav/);
+});
+
 test("CLI export-svg accepts page width", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
   const input = join(dir, "score.jp");
