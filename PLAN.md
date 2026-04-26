@@ -43,6 +43,7 @@ Completed initial slices:
 - Architecture documentation in `docs/ARCHITECTURE.md`.
 - Compatibility documentation in `docs/COMPATIBILITY.md`.
 - Frontend program control shared by playback and MIDI export.
+- CLI `parse --json` and parser source range coverage.
 
 Current test status:
 

@@ -83,3 +83,14 @@ test("warns when measure duration does not match the time signature", () => {
   assert.equal(compound.ok, true);
   assert.equal(compound.diagnostics.some((diagnostic) => diagnostic.message.includes("Measure duration")), false);
 });
+
+test("reports source ranges for parser diagnostics", () => {
+  const result = parse("1 2\n@");
+  assert.equal(result.ok, false);
+  const diagnostic = result.diagnostics.find((item) => item.message.includes("Unexpected character"));
+  assert.ok(diagnostic?.range);
+  assert.equal(diagnostic.range.start.line, 2);
+  assert.equal(diagnostic.range.start.column, 1);
+  assert.equal(diagnostic.range.end.line, 2);
+  assert.equal(diagnostic.range.end.column, 2);
+});
