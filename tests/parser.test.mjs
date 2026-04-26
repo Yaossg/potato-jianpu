@@ -121,6 +121,18 @@ test("rejects invalid header values", () => {
   assert.match(result.diagnostics.map((d) => d.message).join("\n"), /Invalid key signature/);
 });
 
+test("accepts legacy accidental-first key spellings", () => {
+  const sharp = parse(`key: "#C"\n=\n1`);
+  assert.equal(sharp.ok, true);
+  assert.equal(sharp.value.header.keySignature, 1);
+  assert.equal(sharp.value.header.keySignatureText, "#C");
+
+  const flat = parse(`key: "bB"\n=\n1`);
+  assert.equal(flat.ok, true);
+  assert.equal(flat.value.header.keySignature, 10);
+  assert.equal(flat.value.header.keySignatureText, "bB");
+});
+
 test("recovers malformed header lines without score-syntax cascades", () => {
   const result = parse("title: Missing Quotes\ncomposer: \"Ada\"\n=\n1 2 3 4");
   assert.equal(result.ok, false);

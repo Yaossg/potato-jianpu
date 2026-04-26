@@ -46,6 +46,8 @@ Completed initial slices:
 - Frontend program control shared by playback and MIDI export.
 - CLI `parse --json` and parser source range coverage.
 - Parser diagnostics for empty chords and non-pitch chord members.
+- Parser tests cover legacy accidental-first key spellings such as `#C` and
+  `bB`.
 - CLI rejects flags with missing values.
 - CLI rejects unknown options per command.
 - Player APIs reject out-of-range programs.
