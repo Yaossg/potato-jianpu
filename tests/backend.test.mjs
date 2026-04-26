@@ -21,3 +21,10 @@ test("exports melody to WAV bytes", () => {
   assert.equal(String.fromCharCode(...wav.slice(36, 40)), "data");
   assert.ok(wav.length > 44);
 });
+
+test("rejects invalid WAV export options", () => {
+  const result = parse("1 2 3 4");
+  assert.equal(result.ok, true);
+  assert.throws(() => exportWavBytes(result.value, { sampleRate: 0 }), /sample rate must be a positive number/i);
+  assert.throws(() => exportWavBytes(result.value, { amplitude: 2 }), /amplitude must be greater than 0/i);
+});

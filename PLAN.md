@@ -50,6 +50,7 @@ Completed initial slices:
 - Player APIs reject out-of-range programs.
 - CLI validates options before reading input files.
 - Unknown header fields are covered as preserved raw metadata.
+- WAV export option validation is covered.
 
 Current test status:
 
