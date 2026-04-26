@@ -34,6 +34,16 @@ test("uses a single sixteenth note for 16-denominator tempo marks", () => {
   assert.doesNotMatch(svg, /♬ = 96/);
 });
 
+test("wraps score measures when page width is narrow", () => {
+  const result = parse("1 2 | 3 4 | 5 6 | 7 1' |");
+  assert.equal(result.ok, true);
+  const wide = renderSvg(result.value, { pageWidth: 1000 });
+  const narrow = renderSvg(result.value, { pageWidth: 120 });
+  const wideHeight = Number(wide.match(/height="([^"]+)"/)?.[1]);
+  const narrowHeight = Number(narrow.match(/height="([^"]+)"/)?.[1]);
+  assert.ok(narrowHeight > wideHeight);
+});
+
 test("renders chord notes as stacked text instead of slash-joined text", () => {
   const result = parse("{1 3 5}/");
   assert.equal(result.ok, true);

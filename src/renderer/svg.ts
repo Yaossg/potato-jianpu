@@ -171,12 +171,15 @@ function layoutMeasure(measure: Measure, allNotes: Note[]): MeasureLayout {
   };
 }
 
-function layoutLine(line: ScoreLine, allNotes: Note[]): LineLayout {
-  const measures = line.measures.map((measure) => layoutMeasure(measure, allNotes));
-  const width = Math.max(
+function lineWidth(measures: MeasureLayout[]): number {
+  return Math.max(
     0,
     measures.reduce((sum, measure) => sum + measure.width + DIMENSIONS.measureSpacing, 0) - DIMENSIONS.measureSpacing,
   );
+}
+
+function buildLineLayout(line: ScoreLine, measures: MeasureLayout[]): LineLayout {
+  const width = lineWidth(measures);
   const maxPaddingUp = Math.max(0, ...measures.map((measure) => measure.paddingUp));
   const maxPaddingDown = Math.max(0, ...measures.map((measure) => measure.paddingDown));
   return {
@@ -186,6 +189,31 @@ function layoutLine(line: ScoreLine, allNotes: Note[]): LineLayout {
     height: maxPaddingUp + maxPaddingDown + DIMENSIONS.noteBottomPadding,
     maxPaddingUp,
   };
+}
+
+function layoutLine(line: ScoreLine, allNotes: Note[], pageWidth: number): LineLayout[] {
+  const measures = line.measures.map((measure) => layoutMeasure(measure, allNotes));
+  const layouts: LineLayout[] = [];
+  let current: MeasureLayout[] = [];
+  let currentWidth = 0;
+
+  for (const measure of measures) {
+    const nextWidth = current.length === 0 ? measure.width : currentWidth + DIMENSIONS.measureSpacing + measure.width;
+    if (current.length > 0 && nextWidth > pageWidth) {
+      layouts.push(buildLineLayout(line, current));
+      current = [measure];
+      currentWidth = measure.width;
+    } else {
+      current.push(measure);
+      currentWidth = nextWidth;
+    }
+  }
+
+  if (current.length > 0) {
+    layouts.push(buildLineLayout(line, current));
+  }
+
+  return layouts;
 }
 
 function measureXOffset(measures: MeasureLayout[], measureIndex: number): number {
@@ -394,9 +422,9 @@ function renderLine(layout: LineLayout, lineY: number, allNotes: Note[], documen
   return parts.join("\n");
 }
 
-function renderScore(document: Document, yStart: number, activeNoteIndex: number): { svg: string; height: number; width: number } {
+function renderScore(document: Document, yStart: number, pageWidth: number, activeNoteIndex: number): { svg: string; height: number; width: number } {
   const allNotes = flattenNotes(document);
-  const layouts = document.score.map((line) => layoutLine(line, allNotes));
+  const layouts = document.score.flatMap((line) => layoutLine(line, allNotes, pageWidth));
   let y = yStart;
   const parts: string[] = [];
   for (const layout of layouts) {
@@ -413,7 +441,7 @@ function renderScore(document: Document, yStart: number, activeNoteIndex: number
 export function renderSvg(document: Document, options: RenderOptions = {}): string {
   const resolved = { ...DEFAULT_OPTIONS, ...options };
   const header = renderHeader(document, resolved.pageWidth);
-  const score = renderScore(document, header.height, resolved.activeNoteIndex);
+  const score = renderScore(document, header.height, resolved.pageWidth, resolved.activeNoteIndex);
   const height = Math.max(1, header.height + score.height);
   return `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${resolved.pageWidth}" height="${height}" viewBox="0 0 ${resolved.pageWidth} ${height}">

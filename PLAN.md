@@ -25,6 +25,7 @@ Completed initial slices:
   accidental persistence.
 - Measure duration mismatch warnings based on the active time signature.
 - Frontend playback highlighting and click-to-play-from-note behavior.
+- Renderer measure wrapping based on `pageWidth`.
 
 Current test status:
 
