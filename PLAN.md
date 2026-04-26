@@ -93,6 +93,9 @@ Completed initial slices:
   Program audition.
 - Frontend volume control matches the original 0-200 percent range and 100
   percent default.
+- Original frontend sample-rate control is intentionally not restored because
+  browser WAV export is out of frontend scope; backend `export-wav` exposes
+  `--sample-rate`.
 - Frontend source editor restores the original placeholder text.
 - Frontend initial editor content is empty, matching the original app startup
   state.

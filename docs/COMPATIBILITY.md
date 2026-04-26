@@ -190,6 +190,8 @@ Frontend intentionally does not support:
 - PNG export
 - WAV export
 - MP3 export
+- the old frontend sample-rate setting, because it only applied to browser WAV
+  export. Use backend `export-wav --sample-rate` instead.
 
 MP3 export is intentionally deferred from the current release target. WAV is the
 current backend audio export.
