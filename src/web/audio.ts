@@ -1,8 +1,5 @@
 import type { Melody, MelodyNote } from "../player/index.js";
-
-function midiToFrequency(note: number): number {
-  return 440 * 2 ** ((note - 69) / 12);
-}
+import { midiToFrequency, SYNTH_ATTACK_SECONDS, SYNTH_BROWSER_GAIN, SYNTH_RELEASE_SECONDS, SYNTH_WAVEFORM } from "../player/synth.js";
 
 function totalSeconds(notes: MelodyNote[], secondsPerWholeNote: number): number {
   return notes.reduce((sum, note) => sum + note.duration * secondsPerWholeNote, 0);
@@ -74,11 +71,14 @@ export class PreviewAudioPlayer {
     }
     const oscillator = this.context.createOscillator();
     const gain = this.context.createGain();
-    oscillator.type = "sine";
+    oscillator.type = SYNTH_WAVEFORM;
     oscillator.frequency.setValueAtTime(midiToFrequency(midiNote), start);
     gain.gain.setValueAtTime(0.0001, start);
-    gain.gain.exponentialRampToValueAtTime(0.12, start + 0.01);
-    gain.gain.setValueAtTime(0.12, Math.max(start + 0.01, start + duration - 0.03));
+    gain.gain.exponentialRampToValueAtTime(SYNTH_BROWSER_GAIN, start + SYNTH_ATTACK_SECONDS);
+    gain.gain.setValueAtTime(
+      SYNTH_BROWSER_GAIN,
+      Math.max(start + SYNTH_ATTACK_SECONDS, start + duration - SYNTH_RELEASE_SECONDS),
+    );
     gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
     oscillator.connect(gain).connect(this.context.destination);
     oscillator.start(start);

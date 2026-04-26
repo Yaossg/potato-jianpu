@@ -83,6 +83,8 @@ Completed initial slices:
 - Package metadata pins the expected package manager version.
 - npm publication is explicitly deferred while the package remains private.
 - CLI `export-wav` exposes the backend amplitude option.
+- WAV export and browser preview playback share lightweight synth constants,
+  MIDI frequency conversion, envelope timing, and triangle-wave tone shape.
 
 Current test status:
 
@@ -111,9 +113,9 @@ Medium priority:
 
 Lower priority or post-parity improvements:
 
-- Improve WAV and browser playback sound quality. Current playback/export uses a
-  deterministic sine synthesizer rather than instrument samples or realistic
-  program-specific synthesis.
+- Continue improving WAV and browser playback sound quality. Playback/export now
+  share deterministic triangle-wave synthesis, but still do not use instrument
+  samples or realistic program-specific synthesis.
 - Add optional musical features such as velocity, multi-track arrangements,
   stereo audio, richer drum audio, and fuller instrument handling.
 - Improve renderer layout capabilities such as pagination, automatic horizontal

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { parse } from "../dist/parser/index.js";
-import { compileMelody, exportMidiBytes } from "../dist/player/index.js";
+import { compileMelody, exportMidiBytes, midiToFrequency, SYNTH_WAVEFORM, triangleWave } from "../dist/player/index.js";
 
 test("compiles pitch notes to MIDI notes with key and octave", () => {
   const result = parse(`key: "D"\n=\n1 2 1'`);
@@ -74,4 +74,12 @@ test("rejects out-of-range programs in player APIs", () => {
   assert.equal(result.ok, true);
   assert.throws(() => compileMelody(result.value, 221), /Program must be an integer from 0 to 220/);
   assert.throws(() => exportMidiBytes(result.value, -1), /Program must be an integer from 0 to 220/);
+});
+
+test("exposes shared synth constants for playback and WAV export", () => {
+  assert.equal(SYNTH_WAVEFORM, "triangle");
+  assert.equal(midiToFrequency(69), 440);
+  assert.equal(triangleWave(0), 0);
+  assert.ok(triangleWave(Math.PI / 2) > 0.99);
+  assert.ok(triangleWave((3 * Math.PI) / 2) < -0.99);
 });

@@ -1,5 +1,6 @@
 import type { Document } from "../core/index.js";
 import { compileMelody, type Melody } from "../player/index.js";
+import { amplitudeEnvelope, midiToFrequency, triangleWave } from "../player/synth.js";
 
 export interface WavExportOptions {
   sampleRate?: number;
@@ -12,12 +13,6 @@ const DEFAULT_AMPLITUDE = 0.24;
 const CHANNEL_COUNT = 1;
 const BITS_PER_SAMPLE = 16;
 const HEADER_SIZE = 44;
-const RELEASE_SECONDS = 0.02;
-const ATTACK_SECONDS = 0.008;
-
-function midiToFrequency(note: number): number {
-  return 440 * 2 ** ((note - 69) / 12);
-}
 
 function secondsPerWholeNote(melody: Melody): number {
   return (60 / melody.tempo) * melody.beatsPerWholeNote;
@@ -44,14 +39,6 @@ function writeInt16(bytes: Uint8Array, offset: number, value: number) {
   view.setInt16(offset, value, true);
 }
 
-function envelope(sampleOffset: number, sampleLength: number, sampleRate: number): number {
-  const attackSamples = Math.max(1, Math.round(ATTACK_SECONDS * sampleRate));
-  const releaseSamples = Math.max(1, Math.round(RELEASE_SECONDS * sampleRate));
-  const attack = Math.min(1, sampleOffset / attackSamples);
-  const release = Math.min(1, (sampleLength - sampleOffset) / releaseSamples);
-  return Math.max(0, Math.min(attack, release));
-}
-
 function renderPcm(melody: Melody, sampleRate: number, amplitude: number): Int16Array {
   const secondsPerWhole = secondsPerWholeNote(melody);
   const totalSeconds = melody.notes.reduce((sum, note) => sum + note.duration * secondsPerWhole, 0);
@@ -65,8 +52,9 @@ function renderPcm(melody: Melody, sampleRate: number, amplitude: number): Int16
       const frequencies = note.chord.map(midiToFrequency);
       for (let index = 0; index < sampleLength && cursor + index < samples.length; index += 1) {
         const time = index / sampleRate;
-        const mixed = frequencies.reduce((sum, frequency) => sum + Math.sin(2 * Math.PI * frequency * time), 0) / frequencies.length;
-        samples[cursor + index] += mixed * amplitude * envelope(index, sampleLength, sampleRate);
+        const mixed =
+          frequencies.reduce((sum, frequency) => sum + triangleWave(2 * Math.PI * frequency * time), 0) / frequencies.length;
+        samples[cursor + index] += mixed * amplitude * amplitudeEnvelope(index, sampleLength, sampleRate);
       }
     }
     cursor += sampleLength;

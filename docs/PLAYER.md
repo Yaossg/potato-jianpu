@@ -12,6 +12,7 @@ and backend export adapters:
 src/player/
   melody.ts   shared document-to-melody compiler
   midi.ts     MIDI writer
+  synth.ts    shared lightweight synthesis constants and helpers
 
 src/web/
   audio.ts    browser preview player
@@ -129,7 +130,8 @@ Browser playback schedules one oscillator per MIDI note.
 MIDI export emits note-on events for every chord note at the same logical start
 time and note-off events after the shared duration.
 
-WAV export mixes chord sine waves evenly before applying amplitude and envelope.
+WAV export mixes chord triangle waves evenly before applying amplitude and the
+shared envelope.
 
 ## Drum Mode
 
@@ -165,7 +167,7 @@ Behavior:
 
 - creates a new `AudioContext` for each play request
 - stops any existing playback before starting a new one
-- schedules sine oscillators for pitch/chord events
+- schedules triangle oscillators for pitch/chord events
 - skips sound generation for rests
 - uses exponential gain ramps for a short attack and release
 - schedules note-start timers for frontend highlighting
@@ -179,6 +181,14 @@ The frontend passes the active note index back into `renderSvg()` so the SVG can
 highlight the currently playing note.
 
 Clicking a rendered note starts playback from that note index.
+
+Browser playback and WAV export share the same basic synth constants from
+`src/player/synth.ts`:
+
+- waveform: `triangle`
+- attack: `0.008` seconds
+- release: `0.02` seconds
+- browser oscillator gain: `0.12`
 
 ## MIDI Export
 
@@ -246,7 +256,7 @@ Output format:
 
 The WAV synthesizer is intentionally simple and deterministic:
 
-- sine wave per MIDI note
+- triangle wave per MIDI note
 - chord notes mixed evenly
 - short attack of `0.008` seconds
 - short release of `0.02` seconds
@@ -265,7 +275,7 @@ The current player/export layer is functional but not a full synthesizer:
 - no multi-track arrangement model
 - no stereo output
 - MP3 export is deferred from the current release target
-- drum WAV output currently uses sine waves at percussion MIDI note
+- drum WAV output currently uses triangle waves at percussion MIDI note
   frequencies, not drum samples
 - browser playback uses simple oscillators rather than a sampled instrument
 
