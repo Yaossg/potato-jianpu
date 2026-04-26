@@ -25,8 +25,8 @@ pnpm run cli -- validate path/to/score.jp --json
 pnpm run cli -- parse path/to/score.jp --json
 pnpm run cli -- export-svg examples/twinkle.jp -o twinkle.svg --page-width 1000 --color "#111827" --background "#ffffff"
 pnpm run cli -- export-png examples/twinkle.jp -o twinkle.png --page-width 1000 --color "#111827" --background "#ffffff"
-pnpm run cli -- export-midi examples/twinkle.jp -o twinkle.mid
-pnpm run cli -- export-wav examples/twinkle.jp -o twinkle.wav
+pnpm run cli -- export-midi examples/twinkle.jp -o twinkle.mid --program 0
+pnpm run cli -- export-wav examples/twinkle.jp -o twinkle.wav --program 0 --sample-rate 44100
 pnpm run dev
 pnpm run web:build
 ```
