@@ -93,6 +93,15 @@ test("CLI rejects unknown options", async () => {
   );
 });
 
+test("CLI validates options before reading input files", async () => {
+  await assert.rejects(
+    execFileAsync(process.execPath, ["dist/cli/main.js", "export-svg", "missing.jp", "--widht", "1000"], {
+      cwd: repoDir,
+    }),
+    /unknown option --widht/,
+  );
+});
+
 
 
 test("CLI validate can emit machine-readable diagnostics", async () => {

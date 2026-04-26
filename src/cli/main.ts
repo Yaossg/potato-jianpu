@@ -100,9 +100,6 @@ async function main(argv: string[]): Promise<number> {
     return 2;
   }
 
-  const source = await readFile(file, "utf8");
-  const result = parse(source);
-  const json = flags.includes("--json");
   const unknown = unknownFlag(command, flags);
   if (unknown) {
     console.error(`error: unknown option ${unknown}`);
@@ -113,6 +110,10 @@ async function main(argv: string[]): Promise<number> {
     console.error(`error: ${missingFlagValue} requires a value`);
     return 2;
   }
+
+  const source = await readFile(file, "utf8");
+  const result = parse(source);
+  const json = flags.includes("--json");
 
   if (json && (command === "parse" || command === "validate")) {
     console.log(JSON.stringify(command === "parse" ? result : { ok: result.ok, diagnostics: result.diagnostics }, null, 2));

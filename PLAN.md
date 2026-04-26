@@ -48,6 +48,7 @@ Completed initial slices:
 - CLI rejects flags with missing values.
 - CLI rejects unknown options per command.
 - Player APIs reject out-of-range programs.
+- CLI validates options before reading input files.
 
 Current test status:
 
