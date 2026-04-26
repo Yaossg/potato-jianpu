@@ -33,6 +33,9 @@ const examples = [
   { name: "Shining", source: shining },
 ];
 
+const MELODIC_AUDITION_SOURCE = "1 2 3 4 5 6 7 1'";
+const DRUM_AUDITION_SOURCE = "X X X X";
+
 function downloadBytes(data: BlobPart, filename: string, type: string) {
   const blob = new Blob([data], { type });
   const url = URL.createObjectURL(blob);
@@ -113,6 +116,27 @@ export function App() {
       },
       setActiveNoteIndex,
       startNoteIndex,
+      volume,
+    );
+  }
+
+  async function auditionProgram() {
+    const result = parse(program >= 128 ? DRUM_AUDITION_SOURCE : MELODIC_AUDITION_SOURCE);
+    if (!result.ok) {
+      return;
+    }
+    const player = playerRef.current ?? new PreviewAudioPlayer();
+    playerRef.current = player;
+    setActiveNoteIndex(null);
+    setIsPlaying(true);
+    await player.play(
+      compileMelody(result.value, program),
+      () => {
+        setIsPlaying(false);
+        setActiveNoteIndex(null);
+      },
+      undefined,
+      0,
       volume,
     );
   }
@@ -219,6 +243,9 @@ export function App() {
               Play
             </button>
           )}
+          <button type="button" onClick={() => void auditionProgram()}>
+            Audition
+          </button>
           <button type="button" onClick={exportSvg} disabled={!svg}>
             Export SVG
           </button>

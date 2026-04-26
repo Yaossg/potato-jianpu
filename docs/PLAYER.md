@@ -186,6 +186,9 @@ described above.
 The frontend also exposes playback volume. This controls browser preview gain
 only; it does not alter the parsed score, MIDI note velocity, or exported SVG.
 
+The Audition button plays a short built-in phrase with the current Program and
+volume. Melodic programs play a scale; drum programs play repeated `X` notes.
+
 The frontend passes the active note index back into `renderSvg()` so the SVG can
 highlight the currently playing note.
 
