@@ -252,6 +252,17 @@ class Parser {
     );
   }
 
+  private isPitchStart(): boolean {
+    return (
+      this.at("note") ||
+      this.at("sharp") ||
+      this.at("sharpsharp") ||
+      this.at("flat") ||
+      this.at("flatflat") ||
+      this.at("natural")
+    );
+  }
+
   private parseDurableNote(measureOctave: number): Note {
     const start = this.current().range;
     const tie = Boolean(this.match("tie"));
@@ -271,9 +282,17 @@ class Parser {
     if (this.match("lbrace")) {
       const chord: Pitch[] = [];
       while (!this.at("rbrace") && !this.at("eof")) {
+        if (!this.isPitchStart()) {
+          this.error("Expected pitch note inside chord.");
+          this.index += 1;
+          continue;
+        }
         chord.push(this.parsePitch(measureOctave));
       }
       this.consume("rbrace", "Expected '}' after chord.");
+      if (chord.length === 0) {
+        this.error("Expected at least one pitch in chord.");
+      }
       return { kind: "pitch", chord };
     }
     return { kind: "pitch", chord: [this.parsePitch(measureOctave)] };

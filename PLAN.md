@@ -44,6 +44,7 @@ Completed initial slices:
 - Compatibility documentation in `docs/COMPATIBILITY.md`.
 - Frontend program control shared by playback and MIDI export.
 - CLI `parse --json` and parser source range coverage.
+- Parser diagnostics for empty chords and non-pitch chord members.
 
 Current test status:
 

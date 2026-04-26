@@ -298,7 +298,7 @@ Chords are enclosed in braces:
 ```
 
 Only pitch notes are valid inside a chord. Rests and drum notes are not valid
-chord members.
+chord members. Empty chords are invalid.
 
 The duration suffix belongs after the closing brace and applies to the whole
 chord:

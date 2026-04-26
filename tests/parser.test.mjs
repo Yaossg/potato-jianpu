@@ -42,6 +42,17 @@ test("parses chords, accidentals, rests, and drums", () => {
   assert.equal(notes[2].kind, "drum");
 });
 
+test("rejects empty chords and non-pitch chord members", () => {
+  const empty = parse("{}");
+  assert.equal(empty.ok, false);
+  assert.match(empty.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Expected at least one pitch in chord/);
+
+  const restMember = parse("{1 0 3}");
+  assert.equal(restMember.ok, false);
+  assert.match(restMember.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Expected pitch note inside chord/);
+});
+
+
 test("rejects invalid header values", () => {
   const result = parse(`tempo: "-1"\ntime: "5/4"\nkey: "H"\n=\n1234`);
   assert.equal(result.ok, false);
