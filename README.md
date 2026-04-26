@@ -31,6 +31,14 @@ pnpm run dev
 pnpm run web:build
 ```
 
+## Built Outputs
+
+`pnpm run build` emits the backend CLI and shared library modules in `dist/`.
+The package metadata exposes `jianpu` as the CLI binary and exports the shared
+core, parser, renderer, player, and backend modules.
+
+`pnpm run web:build` emits the browser application in `dist-web/`.
+
 Implementation is intentionally incremental. See `PLAN.md` for the full rewrite
 plan. Syntax is documented in `docs/GRAMMAR.md`, renderer behavior in
 `docs/RENDERER.md`, player behavior in `docs/PLAYER.md`, and export behavior in

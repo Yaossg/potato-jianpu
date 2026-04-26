@@ -67,6 +67,8 @@ Completed initial slices:
   is covered by a golden snapshot.
 - Frontend production build smoke test covers the app shell and SVG/MIDI export
   controls while confirming PNG/WAV/MP3 exports stay out of the browser bundle.
+- Package metadata declares backend/library entry points, the CLI binary, and
+  release file boundaries, with tests covering built output paths.
 
 Current test status:
 
@@ -86,10 +88,9 @@ High priority:
 
 Medium priority:
 
-- Finalize packaging and distribution. The package already has a `bin` mapping
-  and build scripts, but release file selection, CLI usage from a built package,
-  frontend deployment steps, and release documentation still need to be made
-  explicit.
+- Finalize distribution polish. Package metadata now declares entry points and
+  release file boundaries, but release versioning, publish workflow, and frontend
+  deployment steps still need final decisions.
 - Decide the MP3 strategy. MP3 export is documented as not implemented. Either
   add backend MP3 export on top of the WAV/audio pipeline or formally remove MP3
   from the first release target.
