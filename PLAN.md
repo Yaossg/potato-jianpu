@@ -74,13 +74,12 @@ Remaining rewrite and improvement work:
 
 High priority:
 
-- Expand renderer golden SVG snapshots beyond the current minimal snapshot.
-  Needed cases include full header metadata, accidentals and octave dots, chords,
-  rests, drum notes, dashes, dots, underlines, local ties, cross-measure ties,
-  cross-line ties, and narrow-page wrapping.
 - Add browser-level frontend smoke tests. Current frontend verification is a
   production build only; there is no automated test that opens the app, loads an
   example, verifies non-empty SVG output, or exercises playback/export buttons.
+- Continue adding renderer golden SVG snapshots only for newly changed behavior
+  or uncovered edge cases. Current snapshots already cover the main header,
+  notation, wrapping, and tie cases from the first renderer test plan.
 
 Medium priority:
 
