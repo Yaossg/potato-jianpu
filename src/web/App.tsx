@@ -50,11 +50,21 @@ export function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeNoteIndex, setActiveNoteIndex] = useState<number | null>(null);
   const [pageWidth, setPageWidth] = useState(1000);
+  const [scoreColor, setScoreColor] = useState("#111827");
+  const [pageBackground, setPageBackground] = useState("#ffffff");
   const playerRef = useRef<PreviewAudioPlayer | null>(null);
   const parsed = useMemo(() => parse(source), [source]);
   const svg = useMemo(
-    () => (parsed.ok ? renderSvg(parsed.value, { pageWidth, activeNoteIndex: activeNoteIndex ?? undefined }) : null),
-    [activeNoteIndex, pageWidth, parsed],
+    () =>
+      parsed.ok
+        ? renderSvg(parsed.value, {
+            pageWidth,
+            activeNoteIndex: activeNoteIndex ?? undefined,
+            color: scoreColor,
+            background: pageBackground,
+          })
+        : null,
+    [activeNoteIndex, pageBackground, pageWidth, parsed, scoreColor],
   );
 
   function exportSvg() {
@@ -126,6 +136,14 @@ export function App() {
                 }
               }}
             />
+          </label>
+          <label className="color-control">
+            Color
+            <input type="color" value={scoreColor} onChange={(event) => setScoreColor(event.target.value)} />
+          </label>
+          <label className="color-control">
+            Page
+            <input type="color" value={pageBackground} onChange={(event) => setPageBackground(event.target.value)} />
           </label>
           {isPlaying ? (
             <button type="button" onClick={stop}>

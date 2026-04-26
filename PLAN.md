@@ -38,6 +38,7 @@ Completed initial slices:
 - Current player documentation in `docs/PLAYER.md`.
 - Frontend diagnostics status shows warning and error counts.
 - Theme-aware SVG and PNG export color/background options.
+- Frontend color/background controls shared by preview and SVG export.
 
 Current test status:
 
