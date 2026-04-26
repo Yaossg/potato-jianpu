@@ -77,6 +77,7 @@ Completed initial slices:
 - Parser reports unterminated chords with a specific diagnostic.
 - Parser tests cover comment/newline boundaries and invalid compact notation
   character positions.
+- Renderer displays score line labels with reserved horizontal space.
 
 Current test status:
 
@@ -110,9 +111,8 @@ Lower priority or post-parity improvements:
   program-specific synthesis.
 - Add optional musical features such as velocity, multi-track arrangements,
   stereo audio, richer drum audio, and fuller instrument handling.
-- Improve renderer layout capabilities such as source line label rendering,
-  pagination, automatic horizontal scaling, and fuller collision avoidance for
-  dense chords and ties.
+- Improve renderer layout capabilities such as pagination, automatic horizontal
+  scaling, and fuller collision avoidance for dense chords and ties.
 
 ## Goals
 

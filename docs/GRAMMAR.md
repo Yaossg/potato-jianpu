@@ -159,7 +159,8 @@ verse: 1 2 3 4 | 5 6 7 1'
 ```
 
 Labels use the same token form as header names: ASCII letters or underscores.
-The label is preserved on the parsed score line. It is not currently rendered.
+The label is preserved on the parsed score line and rendered at the left edge of
+that score line.
 
 A leading bar is accepted:
 

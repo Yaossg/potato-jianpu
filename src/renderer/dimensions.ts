@@ -1,6 +1,7 @@
 export const DIMENSIONS = {
   baseNoteWidth: 24,
   baseNoteHeight: 24,
+  labelWidth: 54,
   leftPadding: 18,
   measureSpacing: 0,
   accidentalOffset: 10,

@@ -129,7 +129,6 @@ Known limitations:
 - no pagination
 - no full collision avoidance
 - no automatic splitting inside a measure
-- source line labels are parsed but not rendered
 
 ## Player Differences
 

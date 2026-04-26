@@ -287,7 +287,6 @@ these as `--color` and `--background` for SVG and PNG export.
 The renderer is deterministic but still intentionally simple:
 
 - layout constants are internal, not configurable
-- source line labels are parsed but not rendered
 - measure wrapping only occurs between measures
 - no automatic horizontal scaling
 - no full collision avoidance for dense chords and ties

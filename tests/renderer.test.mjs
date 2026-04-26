@@ -119,6 +119,14 @@ test("marks active notes for preview highlighting", () => {
   assert.match(svg, /<g class="note-item active" data-note-index="1">/);
 });
 
+test("renders score line labels with reserved horizontal space", () => {
+  const result = parse("verse: 1 2 | 3 4 |");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 160 });
+  assert.match(svg, /<text class="line-label" x="8" y="[^"]+" text-anchor="start">verse<\/text>/);
+  assert.match(svg, /<g class="note-item" data-note-index="0"><text class="note" x="72"/);
+});
+
 test("renders explicit export color and background", () => {
   const result = parse("1 2 3 4");
   assert.equal(result.ok, true);

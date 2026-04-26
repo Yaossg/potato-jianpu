@@ -2,6 +2,7 @@ import { actualNotePerBeat, type Document, type Measure, type Note, type Pitch, 
 import { DIMENSIONS } from "./dimensions.js";
 import { flattenNotes, layoutLine, measureXOffset, type LineLayout } from "./layout.js";
 import { chordHeight, maxAccidentalOffset, noteTieAfter, widthOf } from "./metrics.js";
+import { escapeXml } from "./xml.js";
 
 const accidentalMap = new Map([
   [2, "&#119082;"],
@@ -127,8 +128,12 @@ function renderLine(layout: LineLayout, lineY: number, allNotes: Note[], documen
   const lineEntries: Array<{ note: Note; x: number; y: number; full: boolean }> = [];
   const unit = actualNotePerBeat(document.header.timeSignature);
   const finalMeasure = lastMeasure(document);
+  const labelOffset = layout.line.label ? DIMENSIONS.labelWidth : 0;
+  if (layout.line.label) {
+    parts.push(`<text class="line-label" x="8" y="${lineY + layout.maxPaddingUp}" text-anchor="start">${escapeXml(layout.line.label)}</text>`);
+  }
   for (const [measureIndex, measureLayout] of layout.measures.entries()) {
-    const xOffset = measureXOffset(layout.measures, measureIndex);
+    const xOffset = labelOffset + measureXOffset(layout.measures, measureIndex);
     const fullness = measureFullness(measureLayout.measure, unit);
     for (const [noteIndex, note] of measureLayout.measure.notes.entries()) {
       lineEntries.push({
@@ -179,7 +184,10 @@ function renderLine(layout: LineLayout, lineY: number, allNotes: Note[], documen
 
 export function renderScore(document: Document, yStart: number, pageWidth: number, activeNoteIndex: number): { svg: string; height: number; width: number } {
   const allNotes = flattenNotes(document);
-  const layouts = document.score.flatMap((line) => layoutLine(line, allNotes, pageWidth));
+  const layouts = document.score.flatMap((line) => {
+    const labelOffset = line.label ? DIMENSIONS.labelWidth : 0;
+    return layoutLine(line, allNotes, Math.max(1, pageWidth - labelOffset));
+  });
   let y = yStart;
   const parts: string[] = [];
   for (const layout of layouts) {
@@ -188,7 +196,7 @@ export function renderScore(document: Document, yStart: number, pageWidth: numbe
   }
   return {
     svg: parts.join("\n"),
-    width: Math.max(0, ...layouts.map((layout) => layout.width)),
+    width: Math.max(0, ...layouts.map((layout) => layout.width + (layout.line.label ? DIMENSIONS.labelWidth : 0))),
     height: layouts.reduce((sum, layout) => sum + layout.height + DIMENSIONS.lineSpacing, 0),
   };
 }
