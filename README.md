@@ -6,12 +6,12 @@ Current status:
 
 - hand-written tokenizer/parser
 - shared core document model
-- CLI with `parse`, `validate`, `export-svg`, `export-png`, and `export-midi`
+- CLI with `parse`, `validate`, `export-svg`, `export-png`, `export-midi`, and `export-wav`
 - backend WAV export
 - frontend web preview with SVG and MIDI export
 - browser playback with current-note highlighting and click-to-play preview notes
 - example scores in `examples/`
-- Node built-in test runner for parser compatibility checks
+- Node built-in test runner for parser, renderer, player, backend, CLI, and examples
 
 ## Commands
 
