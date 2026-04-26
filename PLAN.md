@@ -90,6 +90,8 @@ Completed initial slices:
   MIDI frequency conversion, envelope timing, and triangle-wave tone shape.
 - Frontend source editor disables programming-font ligatures, and playback
   controls include grouped Program selection plus browser preview volume.
+- Legacy example songs from the original frontend examples panel are available
+  as `examples/*.jp` fixtures and are covered by parse/render/export tests.
 
 Current test status:
 

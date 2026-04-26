@@ -18,6 +18,11 @@ The reloaded implementation should:
 - keep compact notation convenient
 - avoid intentional syntax breakage unless documented here
 
+The legacy examples from the original frontend examples panel have been moved to
+`examples/*.jp` fixtures. The automated example test parses each file, renders
+SVG/PNG, and exports MIDI/WAV so these scores continue to act as compatibility
+coverage.
+
 ## Supported Syntax
 
 Current supported syntax is documented in `docs/GRAMMAR.md`.

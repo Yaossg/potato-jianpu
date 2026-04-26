@@ -10,6 +10,12 @@ import compound from "../../examples/compound-6-8.jp?raw";
 import accidentals from "../../examples/accidentals-and-ties.jp?raw";
 import chords from "../../examples/chords.jp?raw";
 import drums from "../../examples/drums.jp?raw";
+import jingleBells from "../../examples/jingle-bells.jp?raw";
+import happyBirthday from "../../examples/happy-birthday.jp?raw";
+import dearLittleWish from "../../examples/dear-little-wish.jp?raw";
+import burningField from "../../examples/burning-field.jp?raw";
+import blockyHeroes from "../../examples/blocky-heroes.jp?raw";
+import shining from "../../examples/shining-from-the-underground.jp?raw";
 
 const examples = [
   { name: "Scale", source: scale },
@@ -19,6 +25,12 @@ const examples = [
   { name: "Accidentals", source: accidentals },
   { name: "Chords", source: chords },
   { name: "Drums", source: drums },
+  { name: "Jingle Bells", source: jingleBells },
+  { name: "Happy Birthday", source: happyBirthday },
+  { name: "Dear Little Wish", source: dearLittleWish },
+  { name: "Burning Field", source: burningField },
+  { name: "Blocky Heroes", source: blockyHeroes },
+  { name: "Shining", source: shining },
 ];
 
 function downloadBytes(data: BlobPart, filename: string, type: string) {

@@ -22,4 +22,9 @@ pnpm run cli -- export-midi examples/twinkle.jp -o twinkle.mid
 | `accidentals-and-ties.jp` | Accidentals, naturals, ties across bars |
 | `chords.jp` | Chord syntax, octave marks, and rests |
 | `drums.jp` | Drum notes and short durations |
-
+| `jingle-bells.jp` | Legacy song example with dotted/slashed rhythms |
+| `happy-birthday.jp` | Legacy 3/4 example with compact rests |
+| `dear-little-wish.jp` | Long legacy compatibility example with dense compact notation |
+| `burning-field.jp` | Legacy compatibility example with rests, ties, and octave marks |
+| `blocky-heroes.jp` | Legacy compatibility example with naturals and dense sixteenth notes |
+| `shining-from-the-underground.jp` | Legacy compatibility example with measure octave prefixes |
