@@ -51,6 +51,7 @@ Completed initial slices:
 - CLI validates options before reading input files.
 - Unknown header fields are covered as preserved raw metadata.
 - WAV export option validation is covered.
+- Minimal renderer SVG snapshot coverage exists.
 
 Current test status:
 

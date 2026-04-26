@@ -1,7 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { parse } from "../dist/parser/index.js";
 import { renderSvg } from "../dist/renderer/index.js";
+
+const minimalSnapshot = readFileSync(new URL("./fixtures/snapshots/minimal.svg", import.meta.url), "utf8").replace(/\r?\n$/, "");
 
 test("renders a parse result as an SVG document", () => {
   const result = parse(`title: "Render Test"\nkey: "F#"\n=\n1 #4/ 5-|`);
@@ -14,6 +17,13 @@ test("renders a parse result as an SVG document", () => {
   assert.match(svg, /&#9839;/);
   assert.match(svg, /class="dash"/);
   assert.match(svg, /font-family: Arial, Helvetica, sans-serif/);
+});
+
+test("matches the minimal SVG snapshot", () => {
+  const result = parse(`title: "Snapshot"\nkey: "C"\ntime: "4/4"\ntempo: "120"\n=\n1 2 | 3 4 |`);
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 360, color: "#111827", background: "#ffffff" });
+  assert.equal(svg, minimalSnapshot);
 });
 
 test("renders tempo without musical glyph codepoints", () => {
