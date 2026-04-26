@@ -65,6 +65,8 @@ Completed initial slices:
   drums, dashes, dots, underlines, ties, and final bars.
 - Renderer cross-line tie continuation stays within the wrapped visual line and
   is covered by a golden snapshot.
+- Frontend production build smoke test covers the app shell and SVG/MIDI export
+  controls while confirming PNG/WAV/MP3 exports stay out of the browser bundle.
 
 Current test status:
 
@@ -75,8 +77,9 @@ Remaining rewrite and improvement work:
 High priority:
 
 - Add browser-level frontend smoke tests. Current frontend verification is a
-  production build only; there is no automated test that opens the app, loads an
-  example, verifies non-empty SVG output, or exercises playback/export buttons.
+  production build smoke test only; there is no automated test that opens the
+  app in a real browser, loads an example, verifies non-empty rendered SVG, or
+  exercises playback/export button interactions.
 - Continue adding renderer golden SVG snapshots only for newly changed behavior
   or uncovered edge cases. Current snapshots already cover the main header,
   notation, wrapping, and tie cases from the first renderer test plan.
