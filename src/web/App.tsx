@@ -160,6 +160,7 @@ export function App() {
     if (!parsed.ok) {
       return;
     }
+    setShowExamples(false);
     const player = playerRef.current ?? new PreviewAudioPlayer();
     playerRef.current = player;
     const compiled = compileMelody(parsed.value, program);
@@ -199,6 +200,7 @@ export function App() {
   }
 
   function stop() {
+    setShowExamples(false);
     playerRef.current?.stop();
     setIsPlaying(false);
     setActiveNoteIndex(null);

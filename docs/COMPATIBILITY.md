@@ -180,7 +180,7 @@ Frontend currently supports:
   Program audition, and initial-rest omission
 - Examples panel with the migrated legacy examples and focused two-column
   editor/preview workspace. Loading an example stops active playback and closes
-  the panel.
+  the panel. Play and Stop actions also close the examples panel.
 - grammar help panel backed by `docs/GRAMMAR.md`
 
 Frontend intentionally does not support:
