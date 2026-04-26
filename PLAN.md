@@ -69,6 +69,7 @@ Completed initial slices:
   controls while confirming PNG/WAV/MP3 exports stay out of the browser bundle.
 - Package metadata declares backend/library entry points, the CLI binary, and
   release file boundaries, with tests covering built output paths.
+- Release and distribution shape is documented in `docs/RELEASE.md`.
 - MP3 export is explicitly deferred from the current release target; WAV is the
   backend audio export for now.
 - Parser recovers malformed header lines without cascading into score syntax
@@ -95,9 +96,9 @@ High priority:
 
 Medium priority:
 
-- Finalize distribution polish. Package metadata now declares entry points and
-  release file boundaries, but release versioning, publish workflow, and frontend
-  deployment steps still need final decisions.
+- Finalize distribution polish. Package metadata and release shape are
+  documented, but release versioning, publish workflow, and automated browser
+  smoke testing still need final decisions.
 - Improve parser diagnostics and recovery for additional malformed inputs,
   especially additional compact-notation edge cases found during compatibility
   testing.
