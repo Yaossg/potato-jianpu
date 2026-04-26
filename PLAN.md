@@ -60,6 +60,7 @@ Completed initial slices:
 - Renderer header and tempo mark drawing are split from score drawing.
 - Renderer score, note, bar, and tie drawing are split from top-level SVG
   document serialization.
+- Renderer golden snapshots cover both a minimal score and full header metadata.
 
 Current test status:
 

@@ -4,7 +4,12 @@ import { readFileSync } from "node:fs";
 import { parse } from "../dist/parser/index.js";
 import { renderSvg } from "../dist/renderer/index.js";
 
-const minimalSnapshot = readFileSync(new URL("./fixtures/snapshots/minimal.svg", import.meta.url), "utf8").replace(/\r?\n$/, "");
+function readSnapshot(name) {
+  return readFileSync(new URL(`./fixtures/snapshots/${name}`, import.meta.url), "utf8").replace(/\r?\n$/, "");
+}
+
+const minimalSnapshot = readSnapshot("minimal.svg");
+const fullHeaderSnapshot = readSnapshot("full-header.svg");
 
 test("renders a parse result as an SVG document", () => {
   const result = parse(`title: "Render Test"\nkey: "F#"\n=\n1 #4/ 5-|`);
@@ -24,6 +29,15 @@ test("matches the minimal SVG snapshot", () => {
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 360, color: "#111827", background: "#ffffff" });
   assert.equal(svg, minimalSnapshot);
+});
+
+test("matches the full header SVG snapshot", () => {
+  const result = parse(
+    `title: "Full Header"\nsubtitle: "Snapshot Case"\ncomposer: "Composer Name"\nkey: "Bb"\ntime: "6/8"\ntempo: "96"\n=\n`,
+  );
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 500, color: "#111827", background: "#ffffff" });
+  assert.equal(svg, fullHeaderSnapshot);
 });
 
 test("renders tempo without musical glyph codepoints", () => {
