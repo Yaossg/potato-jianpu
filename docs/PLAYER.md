@@ -141,6 +141,8 @@ Program behavior:
 - `128` to `220`: drum mode. Drum note `X` maps to percussion note
   `program - 128 + 35`.
 
+Player APIs reject programs outside `0..220`.
+
 In MIDI export, drum mode uses channel 10, which is zero-based channel `9` in
 the MIDI bytes. Drum mode does not write a program-change event because
 percussion instruments are selected by note number.
@@ -153,7 +155,7 @@ Examples:
 | `129` | `36` |
 | `220` | `127` |
 
-The CLI rejects programs outside `0..220`.
+The CLI rejects programs outside `0..220` before calling the player APIs.
 
 ## Browser Preview Playback
 

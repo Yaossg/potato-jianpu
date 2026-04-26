@@ -14,6 +14,14 @@ export interface Melody {
 }
 
 const C_MAJOR_NOTE_MAP = [60, 62, 64, 65, 67, 69, 71] as const;
+const MIN_PROGRAM = 0;
+const MAX_PROGRAM = 220;
+
+function assertProgram(program: number) {
+  if (!Number.isInteger(program) || program < MIN_PROGRAM || program > MAX_PROGRAM) {
+    throw new Error(`Program must be an integer from ${MIN_PROGRAM} to ${MAX_PROGRAM}.`);
+  }
+}
 
 function pitchToMidi(pitch: Pitch, noteMap: number[]): number {
   return noteMap[pitch.note - 1]! + pitch.octave * 12;
@@ -62,6 +70,7 @@ function compileMeasure(measure: Measure, baseNoteMap: number[], program: number
 }
 
 export function compileMelody(document: Document, program = 0): Melody {
+  assertProgram(program);
   const baseNoteMap = C_MAJOR_NOTE_MAP.map((note) => note + document.header.keySignature);
   const notes: MelodyNote[] = [];
   for (const line of document.score) {
@@ -77,4 +86,3 @@ export function compileMelody(document: Document, program = 0): Melody {
     beatsPerWholeNote: document.header.timeSignature.beatsPerWholeNote,
   };
 }
-

@@ -68,3 +68,10 @@ test("maps drum programs to percussion channel notes", () => {
   assert.equal(bytes.includes(0xc9), false);
   assert.notEqual(bytes.findIndex((byte, index) => byte === 0x99 && bytes[index + 1] === 35), -1);
 });
+
+test("rejects out-of-range programs in player APIs", () => {
+  const result = parse("X");
+  assert.equal(result.ok, true);
+  assert.throws(() => compileMelody(result.value, 221), /Program must be an integer from 0 to 220/);
+  assert.throws(() => exportMidiBytes(result.value, -1), /Program must be an integer from 0 to 220/);
+});
