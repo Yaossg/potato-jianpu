@@ -40,6 +40,8 @@ Completed initial slices:
 - Theme-aware SVG and PNG export color/background options.
 - Frontend color/background controls shared by preview and SVG export.
 - Example test coverage includes WAV export.
+- Architecture documentation in `docs/ARCHITECTURE.md`.
+- Compatibility documentation in `docs/COMPATIBILITY.md`.
 
 Current test status:
 

@@ -34,4 +34,5 @@ pnpm run web:build
 Implementation is intentionally incremental. See `PLAN.md` for the full rewrite
 plan. Syntax is documented in `docs/GRAMMAR.md`, renderer behavior in
 `docs/RENDERER.md`, player behavior in `docs/PLAYER.md`, and export behavior in
-`docs/EXPORTS.md`.
+`docs/EXPORTS.md`. Module boundaries are documented in `docs/ARCHITECTURE.md`,
+and compatibility notes are in `docs/COMPATIBILITY.md`.
