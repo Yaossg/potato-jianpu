@@ -46,6 +46,7 @@ Completed initial slices:
 - CLI `parse --json` and parser source range coverage.
 - Parser diagnostics for empty chords and non-pitch chord members.
 - CLI rejects flags with missing values.
+- CLI rejects unknown options per command.
 
 Current test status:
 

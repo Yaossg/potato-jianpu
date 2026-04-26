@@ -38,6 +38,33 @@ function validateFlagValues(flags: string[], names: string[]): string | null {
   return null;
 }
 
+function commandFlags(command: string): Set<string> {
+  switch (command) {
+    case "parse":
+    case "validate":
+      return new Set(["--json"]);
+    case "export-svg":
+    case "export-png":
+      return new Set(["-o", "--page-width", "--color", "--background"]);
+    case "export-midi":
+      return new Set(["-o", "--program"]);
+    case "export-wav":
+      return new Set(["-o", "--program", "--sample-rate"]);
+    default:
+      return new Set();
+  }
+}
+
+function unknownFlag(command: string, flags: string[]): string | null {
+  const allowed = commandFlags(command);
+  for (const flag of flags) {
+    if (flag.startsWith("-") && !allowed.has(flag)) {
+      return flag;
+    }
+  }
+  return null;
+}
+
 function formatDiagnostic(message: string, line?: number, column?: number): string {
   if (line === undefined || column === undefined) {
     return message;
@@ -76,6 +103,11 @@ async function main(argv: string[]): Promise<number> {
   const source = await readFile(file, "utf8");
   const result = parse(source);
   const json = flags.includes("--json");
+  const unknown = unknownFlag(command, flags);
+  if (unknown) {
+    console.error(`error: unknown option ${unknown}`);
+    return 2;
+  }
   const missingFlagValue = validateFlagValues(flags, ["-o", "--page-width", "--color", "--background", "--program", "--sample-rate"]);
   if (missingFlagValue) {
     console.error(`error: ${missingFlagValue} requires a value`);

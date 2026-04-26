@@ -72,6 +72,28 @@ test("CLI rejects flags with missing values", async () => {
   );
 });
 
+test("CLI rejects unknown options", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
+  const input = join(dir, "score.jp");
+  const output = join(dir, "score.svg");
+  await writeFile(input, "1 2 3 4", "utf8");
+
+  await assert.rejects(
+    execFileAsync(process.execPath, ["dist/cli/main.js", "export-svg", input, "-o", output, "--widht", "1000"], {
+      cwd: repoDir,
+    }),
+    /unknown option --widht/,
+  );
+
+  await assert.rejects(
+    execFileAsync(process.execPath, ["dist/cli/main.js", "export-midi", input, "-o", join(dir, "score.mid"), "--json"], {
+      cwd: repoDir,
+    }),
+    /unknown option --json/,
+  );
+});
+
+
 
 test("CLI validate can emit machine-readable diagnostics", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));

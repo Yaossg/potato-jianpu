@@ -73,6 +73,9 @@ Fatal parse or validation errors return exit code `1`. Usage errors, such as a
 missing `-o`, invalid `--page-width`, invalid `--sample-rate`, or invalid
 `--program`, return exit code `2`.
 
+Unknown options and options missing their required value are rejected with exit
+code `2`.
+
 ## SVG Export
 
 SVG export uses the shared renderer:
