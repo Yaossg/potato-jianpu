@@ -176,6 +176,8 @@ Frontend currently supports:
   saved preference and system dark-mode initialization
 - Settings panel for page width, preview/export colors, Program, volume,
   Program audition, and initial-rest omission
+- Examples panel with the migrated legacy examples and focused two-column
+  editor/preview workspace
 - grammar help panel backed by `docs/GRAMMAR.md`
 
 Frontend intentionally does not support:

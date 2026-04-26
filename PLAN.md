@@ -94,6 +94,8 @@ Completed initial slices:
 - Frontend settings panel restores the original Settings entry point and groups
   page width, export colors, Program, volume, audition, and initial-rest
   controls outside the top action bar.
+- Frontend examples panel restores the original Examples entry point while
+  keeping the main workspace focused on source editing and preview.
 - Frontend theme toggle restores the original light/dark workflow while syncing
   SVG preview/export color presets, saved preference, and system theme
   initialization.

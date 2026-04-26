@@ -112,6 +112,7 @@ export function App() {
   const [volume, setVolume] = useState(0.8);
   const [omitInitialRests, setOmitInitialRests] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
+  const [showExamples, setShowExamples] = useState(false);
   const [showGrammar, setShowGrammar] = useState(false);
   const playerRef = useRef<PreviewAudioPlayer | null>(null);
   const parsed = useMemo(() => parse(source), [source]);
@@ -228,6 +229,9 @@ export function App() {
           <button type="button" onClick={() => setShowSettings((visible) => !visible)}>
             Settings
           </button>
+          <button type="button" onClick={() => setShowExamples((visible) => !visible)}>
+            Examples
+          </button>
           {isPlaying ? (
             <button type="button" onClick={stop}>
               Stop
@@ -333,6 +337,31 @@ export function App() {
         </section>
       )}
 
+      {showExamples && (
+        <section className="examples-panel">
+          <div className="panel-title">
+            <h2>Examples</h2>
+            <button type="button" onClick={() => setShowExamples(false)}>
+              Close
+            </button>
+          </div>
+          <div className="examples-grid">
+            {examples.map((example) => (
+              <button
+                key={example.name}
+                type="button"
+                onClick={() => {
+                  setSource(example.source);
+                  setShowExamples(false);
+                }}
+              >
+                {example.name}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
       {showGrammar && (
         <section className="grammar-panel">
           <div className="panel-title">
@@ -346,15 +375,6 @@ export function App() {
       )}
 
       <section className="workspace">
-        <aside className="examples">
-          <h2>Examples</h2>
-          {examples.map((example) => (
-            <button key={example.name} type="button" onClick={() => setSource(example.source)}>
-              {example.name}
-            </button>
-          ))}
-        </aside>
-
         <section className="editor-panel">
           <div className="panel-title">
             <h2>Source</h2>

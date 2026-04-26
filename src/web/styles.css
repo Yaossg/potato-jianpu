@@ -100,7 +100,7 @@ button:disabled {
 }
 
 .actions,
-.examples {
+.examples-grid {
   display: flex;
   gap: 8px;
 }
@@ -174,30 +174,23 @@ button:disabled {
 
 .workspace {
   display: grid;
-  grid-template-columns: 180px minmax(320px, 0.9fr) minmax(360px, 1.1fr);
+  grid-template-columns: minmax(320px, 0.9fr) minmax(360px, 1.1fr);
   gap: 16px;
   padding: 16px;
   min-height: 0;
   flex: 1;
 }
 
-.examples,
 .editor-panel,
 .preview-panel,
 .grammar-panel,
-.settings-panel {
+.settings-panel,
+.examples-panel {
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
   border-radius: 8px;
 }
 
-.examples {
-  flex-direction: column;
-  align-self: start;
-  padding: 12px;
-}
-
-.examples h2,
 .panel-title h2 {
   margin: 0;
   font-size: 15px;
@@ -218,7 +211,8 @@ button:disabled {
   flex-direction: column;
 }
 
-.settings-panel {
+.settings-panel,
+.examples-panel {
   margin: 16px 16px 0;
 }
 
@@ -240,6 +234,11 @@ button:disabled {
 
 .settings-grid button {
   justify-self: start;
+}
+
+.examples-grid {
+  flex-wrap: wrap;
+  padding: 14px;
 }
 
 .panel-title {
@@ -338,11 +337,6 @@ textarea {
 
   .workspace {
     grid-template-columns: 1fr;
-  }
-
-  .examples {
-    flex-direction: row;
-    flex-wrap: wrap;
   }
 
   .settings-grid .select-control {
