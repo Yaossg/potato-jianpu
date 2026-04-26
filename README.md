@@ -19,6 +19,7 @@ pnpm install
 pnpm run build
 pnpm run test
 pnpm run cli -- validate path/to/score.jp
+pnpm run cli -- validate path/to/score.jp --json
 pnpm run cli -- parse path/to/score.jp --json
 pnpm run cli -- export-svg examples/twinkle.jp -o twinkle.svg --page-width 1000
 pnpm run cli -- export-png examples/twinkle.jp -o twinkle.png --page-width 1000

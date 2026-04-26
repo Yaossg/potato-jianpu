@@ -8,7 +8,7 @@ import { renderSvg } from "../renderer/index.js";
 function usage(): string {
   return [
     "Usage:",
-    "  jianpu validate <file>",
+    "  jianpu validate <file> [--json]",
     "  jianpu parse <file> [--json]",
     "  jianpu export-svg <file> -o <output.svg> [--page-width <px>]",
     "  jianpu export-png <file> -o <output.png> [--page-width <px>]",
@@ -54,10 +54,13 @@ async function main(argv: string[]): Promise<number> {
   const result = parse(source);
   const json = flags.includes("--json");
 
+  if (json && (command === "parse" || command === "validate")) {
+    console.log(JSON.stringify(command === "parse" ? result : { ok: result.ok, diagnostics: result.diagnostics }, null, 2));
+    return result.ok ? 0 : 1;
+  }
+
   if (command === "parse") {
-    if (json) {
-      console.log(JSON.stringify(result, null, 2));
-    } else if (result.ok) {
+    if (result.ok) {
       console.log(`Parsed ${result.value.score.length} score line(s).`);
     }
   }

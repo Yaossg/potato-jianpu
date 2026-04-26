@@ -28,6 +28,7 @@ Completed initial slices:
 - Renderer measure wrapping based on `pageWidth`.
 - CLI `--page-width` option for SVG and PNG export.
 - Frontend page width control shared by preview and SVG export.
+- Machine-readable CLI diagnostics for `parse --json` and `validate --json`.
 
 Current test status:
 

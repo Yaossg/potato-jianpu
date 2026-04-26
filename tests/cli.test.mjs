@@ -37,3 +37,26 @@ test("CLI rejects invalid page width", async () => {
     /--page-width must be a positive number/,
   );
 });
+
+test("CLI validate can emit machine-readable diagnostics", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
+  const input = join(dir, "score.jp");
+  await writeFile(input, "~1", "utf8");
+
+  await assert.rejects(
+    async () => {
+      await execFileAsync(process.execPath, ["dist/cli/main.js", "validate", input, "--json"], {
+        cwd: repoDir,
+      });
+    },
+    (error) => {
+      const stdout = String(error.stdout);
+      const stderr = String(error.stderr);
+      const payload = JSON.parse(stdout);
+      assert.equal(stderr, "");
+      assert.equal(payload.ok, false);
+      assert.match(payload.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /First note cannot be tied/);
+      return true;
+    },
+  );
+});
