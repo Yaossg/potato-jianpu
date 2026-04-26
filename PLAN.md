@@ -58,6 +58,8 @@ Completed initial slices:
   SVG renderer.
 - Renderer note metrics and measure/line layout are split from SVG drawing.
 - Renderer header and tempo mark drawing are split from score drawing.
+- Renderer score, note, bar, and tie drawing are split from top-level SVG
+  document serialization.
 
 Current test status:
 
