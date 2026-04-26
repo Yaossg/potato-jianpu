@@ -42,6 +42,7 @@ Completed initial slices:
 - Example test coverage includes WAV export.
 - Architecture documentation in `docs/ARCHITECTURE.md`.
 - Compatibility documentation in `docs/COMPATIBILITY.md`.
+- Frontend program control shared by playback and MIDI export.
 
 Current test status:
 

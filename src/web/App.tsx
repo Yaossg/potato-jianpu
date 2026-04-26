@@ -52,6 +52,7 @@ export function App() {
   const [pageWidth, setPageWidth] = useState(1000);
   const [scoreColor, setScoreColor] = useState("#111827");
   const [pageBackground, setPageBackground] = useState("#ffffff");
+  const [program, setProgram] = useState(0);
   const playerRef = useRef<PreviewAudioPlayer | null>(null);
   const parsed = useMemo(() => parse(source), [source]);
   const svg = useMemo(
@@ -75,7 +76,7 @@ export function App() {
 
   function exportMidi() {
     if (parsed.ok) {
-      const midi = exportMidiBytes(parsed.value);
+      const midi = exportMidiBytes(parsed.value, program);
       const buffer = midi.buffer.slice(midi.byteOffset, midi.byteOffset + midi.byteLength) as ArrayBuffer;
       downloadBytes(buffer, "score.mid", "audio/midi");
     }
@@ -89,7 +90,7 @@ export function App() {
     playerRef.current = player;
     setIsPlaying(true);
     await player.play(
-      compileMelody(parsed.value),
+      compileMelody(parsed.value, program),
       () => {
         setIsPlaying(false);
         setActiveNoteIndex(null);
@@ -144,6 +145,22 @@ export function App() {
           <label className="color-control">
             Page
             <input type="color" value={pageBackground} onChange={(event) => setPageBackground(event.target.value)} />
+          </label>
+          <label className="number-control">
+            Program
+            <input
+              type="number"
+              min={0}
+              max={220}
+              step={1}
+              value={program}
+              onChange={(event) => {
+                const value = Number(event.target.value);
+                if (Number.isInteger(value) && value >= 0 && value <= 220) {
+                  setProgram(value);
+                }
+              }}
+            />
           </label>
           {isPlaying ? (
             <button type="button" onClick={stop}>

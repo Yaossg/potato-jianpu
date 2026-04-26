@@ -169,6 +169,10 @@ Behavior:
 - schedules note-start timers for frontend highlighting
 - supports starting from a parsed note index
 
+The frontend exposes a Program numeric control. Browser playback and MIDI
+download use that value. Values `128..220` trigger the drum mapping described
+above.
+
 The frontend passes the active note index back into `renderSvg()` so the SVG can
 highlight the currently playing note.
 
