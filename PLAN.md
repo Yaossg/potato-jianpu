@@ -73,6 +73,7 @@ Completed initial slices:
   backend audio export for now.
 - Parser recovers malformed header lines without cascading into score syntax
   errors.
+- Parser reports unterminated chords with a specific diagnostic.
 
 Current test status:
 
@@ -96,8 +97,7 @@ Medium priority:
   release file boundaries, but release versioning, publish workflow, and frontend
   deployment steps still need final decisions.
 - Improve parser diagnostics and recovery for additional malformed inputs,
-  especially unterminated chords, compact-notation edge cases, and
-  comment/newline boundaries.
+  especially compact-notation edge cases and comment/newline boundaries.
 
 Lower priority or post-parity improvements:
 

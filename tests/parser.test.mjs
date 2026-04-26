@@ -52,6 +52,14 @@ test("rejects empty chords and non-pitch chord members", () => {
   assert.match(restMember.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Expected pitch note inside chord/);
 });
 
+test("rejects unterminated chords with a specific diagnostic", () => {
+  const result = parse("{1 3 5");
+  assert.equal(result.ok, false);
+  const messages = result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
+  assert.match(messages, /Unterminated chord/);
+  assert.doesNotMatch(messages, /Expected '\}' after chord/);
+});
+
 test("rejects mixed dash and slash duration marks with a specific diagnostic", () => {
   const dashThenSlash = parse("1-/ 2");
   assert.equal(dashThenSlash.ok, false);

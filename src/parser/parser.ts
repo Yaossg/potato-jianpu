@@ -299,7 +299,11 @@ class Parser {
         }
         chord.push(this.parsePitch(measureOctave));
       }
-      this.consume("rbrace", "Expected '}' after chord.");
+      if (this.at("eof")) {
+        this.error("Unterminated chord; expected '}' before end of file.");
+      } else {
+        this.consume("rbrace", "Expected '}' after chord.");
+      }
       if (chord.length === 0) {
         this.error("Expected at least one pitch in chord.");
       }
