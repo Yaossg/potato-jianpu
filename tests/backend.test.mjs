@@ -19,6 +19,8 @@ test("exports melody to WAV bytes", () => {
   assert.equal(String.fromCharCode(...wav.slice(0, 4)), "RIFF");
   assert.equal(String.fromCharCode(...wav.slice(8, 12)), "WAVE");
   assert.equal(String.fromCharCode(...wav.slice(36, 40)), "data");
+  assert.equal(new DataView(wav.buffer, wav.byteOffset, wav.byteLength).getUint16(22, true), 2);
+  assert.ok(wav.slice(44).some((byte) => byte !== 0));
   assert.ok(wav.length > 44);
 });
 

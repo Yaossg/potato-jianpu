@@ -464,7 +464,7 @@ export default class WebAudioTinySynth {
     this.rhythm[9]=1;
     this.preroll=0.2;
     this.relcnt=0;
-    setInterval(
+    const interval = setInterval(
       function(){
         if(++this.relcnt>=3){
           this.relcnt=0;
@@ -506,6 +506,7 @@ export default class WebAudioTinySynth {
         }
       }.bind(this),60
     );
+    interval.unref?.();
     if(this.debug)
       console.log("internalcontext:"+this.internalcontext)
     if(this.internalcontext){

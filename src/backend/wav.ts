@@ -1,6 +1,7 @@
 import type { Document } from "../core/index.js";
 import { compileMelody, skipInitialRests, type Melody } from "../player/index.js";
-import { amplitudeEnvelope, midiToFrequency, sampleWave, waveformForProgram, type SynthWaveform } from "../player/synth.js";
+import WebAudioTinySynth from "../player/webaudio-tinysynth.js";
+import { RenderingAudioContext } from "@descript/web-audio-js";
 
 export interface WavExportOptions {
   sampleRate?: number;
@@ -10,10 +11,14 @@ export interface WavExportOptions {
 }
 
 const DEFAULT_SAMPLE_RATE = 44100;
-const DEFAULT_AMPLITUDE = 0.24;
-const CHANNEL_COUNT = 1;
+const DEFAULT_AMPLITUDE = 1;
+const CHANNEL_COUNT = 2;
 const BITS_PER_SAMPLE = 16;
 const HEADER_SIZE = 44;
+const DEFAULT_VELOCITY = 64;
+const DRUM_CHANNEL = 9;
+const MELODIC_CHANNEL = 0;
+const RENDER_TAIL_SECONDS = 0.25;
 
 function secondsPerWholeNote(melody: Melody): number {
   return (60 / melody.tempo) * melody.beatsPerWholeNote;
@@ -40,32 +45,63 @@ function writeInt16(bytes: Uint8Array, offset: number, value: number) {
   view.setInt16(offset, value, true);
 }
 
-function renderPcm(melody: Melody, sampleRate: number, amplitude: number, waveform: SynthWaveform): Int16Array {
+function totalSeconds(melody: Melody): number {
   const secondsPerWhole = secondsPerWholeNote(melody);
-  const totalSeconds = melody.notes.reduce((sum, note) => sum + note.duration * secondsPerWhole, 0);
-  const totalSamples = Math.max(1, Math.ceil(totalSeconds * sampleRate));
-  const samples = new Float32Array(totalSamples);
-  let cursor = 0;
+  return melody.notes.reduce((sum, note) => sum + note.duration * secondsPerWhole, 0);
+}
+
+function scheduleTinySynth(synth: WebAudioTinySynth, melody: Melody, program: number) {
+  const secondsPerWhole = secondsPerWholeNote(melody);
+  const channel = program >= 128 ? DRUM_CHANNEL : MELODIC_CHANNEL;
+  const context = synth.getAudioContext();
+  let currentTime = context.currentTime;
 
   for (const note of melody.notes) {
-    const sampleLength = Math.max(1, Math.round(note.duration * secondsPerWhole * sampleRate));
+    const duration = note.duration * secondsPerWhole;
     if (note.chord !== "rest") {
-      const frequencies = note.chord.map(midiToFrequency);
-      for (let index = 0; index < sampleLength && cursor + index < samples.length; index += 1) {
-        const time = index / sampleRate;
-        const mixed =
-          frequencies.reduce((sum, frequency) => sum + sampleWave(2 * Math.PI * frequency * time, waveform), 0) /
-          frequencies.length;
-        samples[cursor + index] += mixed * amplitude * amplitudeEnvelope(index, sampleLength, sampleRate);
+      for (const midiNote of note.chord) {
+        synth.noteOn(channel, midiNote, DEFAULT_VELOCITY, currentTime);
+        synth.noteOff(channel, midiNote, currentTime + duration);
       }
     }
-    cursor += sampleLength;
+    currentTime += duration;
   }
+}
 
-  const pcm = new Int16Array(samples.length);
-  for (let index = 0; index < samples.length; index += 1) {
-    const clamped = Math.max(-1, Math.min(1, samples[index]!));
-    pcm[index] = Math.round(clamped * 32767);
+function renderPcm(melody: Melody, sampleRate: number, amplitude: number, program: number): Int16Array {
+  const synth = new WebAudioTinySynth({
+    voices: Math.max(64, melody.notes.length),
+    internalcontext: false,
+  });
+  const context = new RenderingAudioContext({
+    sampleRate,
+    blockSize: 128,
+    numberOfChannels: CHANNEL_COUNT,
+    bitDepth: BITS_PER_SAMPLE,
+    floatingPoint: false,
+  });
+  synth.setAudioContext(context as unknown as AudioContext);
+  synth.reset();
+  synth.setMasterVol(amplitude);
+  if (program < 128) {
+    synth.setProgram(MELODIC_CHANNEL, program);
+  }
+  scheduleTinySynth(synth, melody, program);
+
+  context.processTo(Math.max(0.01, totalSeconds(melody) + RENDER_TAIL_SECONDS));
+  const audioData = context.exportAsAudioData() as {
+    channelData: Float32Array[];
+    length: number;
+    numberOfChannels: number;
+  };
+  const pcm = new Int16Array(audioData.length * audioData.numberOfChannels);
+
+  for (let index = 0; index < audioData.length; index += 1) {
+    for (let channel = 0; channel < audioData.numberOfChannels; channel += 1) {
+      const sample = audioData.channelData[channel]?.[index] ?? 0;
+      const clamped = Math.max(-1, Math.min(1, sample));
+      pcm[index * audioData.numberOfChannels + channel] = Math.round(clamped * 32767);
+    }
   }
   return pcm;
 }
@@ -83,7 +119,7 @@ export function exportWavBytes(document: Document, options: WavExportOptions = {
   const program = options.program ?? 0;
   const compiled = compileMelody(document, program);
   const melody = options.omitInitialRests ? skipInitialRests(compiled) : compiled;
-  const pcm = renderPcm(melody, sampleRate, amplitude, waveformForProgram(program));
+  const pcm = renderPcm(melody, sampleRate, amplitude, program);
   const dataBytes = pcm.length * 2;
   const bytes = new Uint8Array(HEADER_SIZE + dataBytes);
 

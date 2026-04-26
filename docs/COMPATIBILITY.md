@@ -156,10 +156,11 @@ Drum behavior:
 - drum mode maps `X` to `program - 128 + 35`
 - MIDI drum mode uses channel 10 and omits program change
 
-Browser playback uses the legacy WebAudioTinySynth implementation for
-lightweight real-time Program and drum timbres. WAV export remains a simple
-deterministic backend synthesizer; its Program setting selects a base waveform
-and still does not attempt to emulate real instrument timbres.
+Browser playback and backend WAV export both use the legacy WebAudioTinySynth
+implementation for lightweight Program and drum timbres. Browser playback uses a
+real `AudioContext`; backend WAV export uses an offline
+`@descript/web-audio-js` rendering context and writes the rendered samples into a
+WAV container.
 
 ## Export Differences
 

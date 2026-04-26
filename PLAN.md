@@ -100,11 +100,10 @@ Completed initial slices:
 - Package metadata pins the expected package manager version.
 - npm publication is explicitly deferred while the package remains private.
 - CLI `export-wav` exposes the backend amplitude option.
-- WAV export and browser preview playback share lightweight synth constants,
-  MIDI frequency conversion, envelope timing, and triangle-wave tone shape.
-- WAV export and browser preview playback select a deterministic oscillator
-  waveform from the active Program, giving Program selection an audible effect
-  beyond MIDI export while remaining simpler than TinySynth.
+- Browser preview playback uses the legacy WebAudioTinySynth adapter.
+- Backend WAV export uses the same WebAudioTinySynth adapter with
+  `@descript/web-audio-js` offline rendering, so Program and drum timbres match
+  browser playback more closely than the earlier deterministic oscillator path.
 - Frontend source editor disables programming-font ligatures, and playback
   controls include grouped Program selection, browser preview volume, and
   Program audition.
@@ -135,9 +134,8 @@ Completed initial slices:
   as `examples/*.jp` fixtures and are covered by parse/render/export tests.
 - Initial-rest omission from the original player settings is available for
   frontend from-start playback, MIDI export, WAV export, and CLI export flags.
-- Frontend browser playback now uses the legacy WebAudioTinySynth adapter for
-  real-time Program and drum timbres while backend WAV export stays
-  deterministic.
+- The shared WebAudioTinySynth adapter lives in `src/player` and is used by both
+  browser playback and backend WAV export.
 
 Current test status:
 
@@ -166,9 +164,8 @@ Medium priority:
 
 Lower priority or post-parity improvements:
 
-- Continue improving WAV sound quality. Browser playback now uses the legacy
-  WebAudioTinySynth path, but WAV export remains a simple deterministic synth
-  without samples or realistic program-specific synthesis.
+- Continue validating WAV output quality and performance now that WAV export
+  uses the same TinySynth timbre path as browser playback.
 - Add optional musical features such as velocity, multi-track arrangements,
   stereo audio, richer drum audio, and fuller instrument handling.
 - Improve renderer layout capabilities such as pagination, finer note-level

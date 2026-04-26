@@ -13,10 +13,10 @@ src/player/
   melody.ts   shared document-to-melody compiler
   midi.ts     MIDI writer
   synth.ts    shared lightweight synthesis constants and helpers
+  webaudio-tinysynth.js
 
 src/web/
   audio.ts    browser preview player
-  webaudio-tinysynth.js
 
 src/backend/
   wav.ts      backend WAV writer
@@ -136,8 +136,8 @@ Browser playback schedules note-on and note-off events for every MIDI note.
 MIDI export emits note-on events for every chord note at the same logical start
 time and note-off events after the shared duration.
 
-WAV export mixes chord triangle waves evenly before applying amplitude and the
-shared envelope.
+WAV export schedules the same note-on and note-off events into an offline
+WebAudioTinySynth rendering context.
 
 ## Drum Mode
 
@@ -168,7 +168,7 @@ The CLI rejects programs outside `0..220` before calling the player APIs.
 ## Browser Preview Playback
 
 `PreviewAudioPlayer` in `src/web/audio.ts` uses the legacy
-`WebAudioTinySynth` adapter copied into `src/web/webaudio-tinysynth.js`.
+`WebAudioTinySynth` adapter in `src/player/webaudio-tinysynth.js`.
 
 Behavior:
 
@@ -205,8 +205,8 @@ Clicking a rendered note starts playback from that note index.
 Browser playback velocity is currently fixed at MIDI velocity `64`. Volume is
 applied through WebAudioTinySynth master volume.
 
-WAV export does not use WebAudioTinySynth. It remains a backend-only,
-deterministic renderer based on the helpers in `src/player/synth.ts`.
+WAV export uses the same WebAudioTinySynth adapter with an offline rendering
+context, so Program and drum timbres are aligned with browser playback.
 
 ## MIDI Export
 
@@ -271,22 +271,25 @@ interface WavExportOptions {
 Defaults:
 
 - sample rate: `44100`
-- amplitude: `0.24`
+- amplitude: `1`
 - program: `0`
 
 Output format:
 
 - RIFF/WAVE
-- mono
+- stereo
 - 16-bit PCM
 - one data chunk
 
-The WAV synthesizer is intentionally simple and deterministic:
+The WAV synthesizer uses WebAudioTinySynth offline:
 
-- deterministic waveform per MIDI note based on Program
-- chord notes mixed evenly
-- short attack of `0.008` seconds
-- short release of `0.02` seconds
+- `@descript/web-audio-js` provides the backend `RenderingAudioContext`
+- the shared melody compiler provides note timing and MIDI note numbers
+- melodic programs `0..127` set TinySynth channel 1 Program
+- drum programs `128..220` use TinySynth percussion channel 10 and the same
+  percussion note mapping as MIDI export
+- note velocity is fixed at `64`
+- `amplitude` is applied as TinySynth master volume
 - rest events are silence
 
 Invalid sample rates and amplitudes throw errors.
@@ -302,13 +305,10 @@ The current player/export layer is functional but not a full synthesizer:
 
 - browser playback uses WebAudioTinySynth timbres rather than sampled
   instruments
-- no instrument synthesis for melodic MIDI programs in WAV
+- WAV export uses the same WebAudioTinySynth timbres through an offline context
 - no velocity syntax
 - no multi-track arrangement model
-- no stereo output
 - MP3 export is deferred from the current release target
-- drum WAV output currently uses triangle waves at percussion MIDI note
-  frequencies, not drum samples
 
-These limitations keep the rewrite dependency-light and deterministic while the
-core parser, renderer, and export surfaces stabilize.
+These limitations keep the rewrite focused while the core parser, renderer, and
+export surfaces stabilize.

@@ -1,5 +1,5 @@
 import type { Melody, MelodyNote } from "../player/index.js";
-import WebAudioTinySynth from "./webaudio-tinysynth.js";
+import WebAudioTinySynth from "../player/webaudio-tinysynth.js";
 
 const DEFAULT_VELOCITY = 64;
 const DRUM_CHANNEL = 9;

@@ -145,10 +145,12 @@ Responsibilities:
 
 The melody compiler is shared by browser playback, MIDI export, and WAV export.
 
-Browser playback itself lives in `src/web/audio.ts` and
-`src/web/webaudio-tinysynth.js` because it depends on Web Audio APIs.
+Browser playback itself lives in `src/web/audio.ts` and uses the shared
+`src/player/webaudio-tinysynth.js` adapter.
 
 WAV export lives in `src/backend/wav.ts` because it is a backend export feature.
+It uses the same TinySynth adapter with `@descript/web-audio-js` as an offline
+Web Audio context.
 
 ## Backend
 

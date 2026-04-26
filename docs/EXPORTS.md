@@ -30,7 +30,7 @@ pnpm run cli -- parse examples/twinkle.jp --json
 pnpm run cli -- export-svg examples/twinkle.jp -o twinkle.svg --page-width 1000 --color "#111827" --background "#ffffff"
 pnpm run cli -- export-png examples/twinkle.jp -o twinkle.png --page-width 1000 --color "#111827" --background "#ffffff"
 pnpm run cli -- export-midi examples/twinkle.jp -o twinkle.mid --program 0 --omit-initial-rest
-pnpm run cli -- export-wav examples/twinkle.jp -o twinkle.wav --sample-rate 44100 --amplitude 0.24 --omit-initial-rest
+pnpm run cli -- export-wav examples/twinkle.jp -o twinkle.wav --sample-rate 44100 --amplitude 1 --omit-initial-rest
 ```
 
 The built package also exposes a `jianpu` binary mapped to
@@ -146,11 +146,12 @@ the melody compiler before MIDI writing.
 
 ## WAV Export
 
-WAV export uses the same melody compiler as MIDI export and writes a mono
-16-bit PCM WAV file:
+WAV export uses the same melody compiler as MIDI export and renders through the
+same WebAudioTinySynth timbre engine used by browser preview playback. It
+writes a stereo 16-bit PCM WAV file:
 
 ```sh
-pnpm run cli -- export-wav input.jp -o output.wav --program 0 --sample-rate 44100 --amplitude 0.24
+pnpm run cli -- export-wav input.jp -o output.wav --program 0 --sample-rate 44100 --amplitude 1
 ```
 
 Options:
@@ -158,15 +159,16 @@ Options:
 - `--program <number>`: same range and drum mapping as MIDI export.
 - `--sample-rate <hz>`: positive number. Defaults to `44100`.
 - `--amplitude <number>`: number greater than `0` and no more than `1`.
-  Defaults to `0.24`.
+  Defaults to `1`.
 - `--omit-initial-rest`: remove leading rests before rendering audio.
 
-The current synthesizer is intentionally simple and deterministic:
+The WAV renderer:
 
-- deterministic waveform per MIDI note, shared with browser preview playback
-- chord notes mixed evenly
-- short attack and release envelope
+- uses `WebAudioTinySynth` with an offline `RenderingAudioContext`
+- uses the same Program and drum-channel behavior as browser preview playback
+- uses fixed MIDI velocity `64`
+- treats `--amplitude` as TinySynth master volume
 - rests render as silence
-- mono 16-bit PCM output
+- writes stereo 16-bit PCM output
 
 This is a backend export feature, not a browser feature.
