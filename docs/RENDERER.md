@@ -1,7 +1,18 @@
 # Renderer Reference
 
-This document describes the renderer currently implemented in
-`src/renderer/svg.ts`.
+This document describes the SVG renderer implemented in `src/renderer`.
+
+Current renderer modules:
+
+- `svg.ts`: top-level SVG document serialization.
+- `header.ts`: title, subtitle, key, time, tempo, and composer drawing.
+- `score.ts`: score, note, rest, drum, duration, bar, and tie drawing.
+- `layout.ts`: measure and line layout, including page-width wrapping.
+- `metrics.ts`: note width, chord height, accidental offset, and tie lookahead.
+- `dimensions.ts`: shared renderer layout constants.
+- `styles.ts`: inline SVG stylesheet.
+- `options.ts`: public render options and defaults.
+- `xml.ts`: XML escaping helper.
 
 ## Public API
 
@@ -50,8 +61,7 @@ and passes the string to the backend PNG adapter in `src/backend/png.ts`.
 
 ## Layout Pipeline
 
-The current renderer has one file, but it already follows a measurement-first
-pipeline:
+The renderer follows a measurement-first pipeline:
 
 1. Flatten all notes in document order.
 2. Measure each note.

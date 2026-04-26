@@ -69,9 +69,6 @@ Remaining rewrite and improvement work:
 
 High priority:
 
-- Split `src/renderer/svg.ts` into smaller renderer modules. The current file is
-  functional but still combines layout, SVG primitives, styles, header rendering,
-  score rendering, ties, bars, tempo marks, and note drawing in one large module.
 - Expand renderer golden SVG snapshots beyond the current minimal snapshot.
   Needed cases include full header metadata, accidentals and octave dots, chords,
   rests, drum notes, dashes, dots, underlines, local ties, cross-measure ties,
