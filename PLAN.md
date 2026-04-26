@@ -52,6 +52,7 @@ Completed initial slices:
 - Unknown header fields are covered as preserved raw metadata.
 - WAV export option validation is covered.
 - Minimal renderer SVG snapshot coverage exists.
+- CLI WAV sample-rate behavior is covered.
 
 Current test status:
 

@@ -156,6 +156,21 @@ test("CLI export-wav writes a WAV file", async () => {
   const wav = await readFile(output);
   assert.equal(String.fromCharCode(...wav.slice(0, 4)), "RIFF");
   assert.equal(String.fromCharCode(...wav.slice(8, 12)), "WAVE");
+  assert.equal(wav.readUInt32LE(24), 8000);
+});
+
+test("CLI rejects invalid WAV sample rates", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
+  const input = join(dir, "score.jp");
+  const output = join(dir, "score.wav");
+  await writeFile(input, "1 2 3 4", "utf8");
+
+  await assert.rejects(
+    execFileAsync(process.execPath, ["dist/cli/main.js", "export-wav", input, "-o", output, "--sample-rate", "0"], {
+      cwd: repoDir,
+    }),
+    /--sample-rate must be a positive number/,
+  );
 });
 
 test("CLI rejects out-of-range MIDI programs", async () => {
