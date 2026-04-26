@@ -145,6 +145,18 @@ button:disabled {
   font-size: 13px;
 }
 
+.panel-title .status-ok {
+  color: #2f6f3e;
+}
+
+.panel-title .status-warning {
+  color: #8a5b00;
+}
+
+.panel-title .status-error {
+  color: #b3261e;
+}
+
 textarea {
   min-height: 520px;
   resize: vertical;

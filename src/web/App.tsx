@@ -33,6 +33,18 @@ function downloadBytes(data: BlobPart, filename: string, type: string) {
   URL.revokeObjectURL(url);
 }
 
+function diagnosticSummary(ok: boolean, diagnostics: Array<{ severity: "error" | "warning" }>): string {
+  const errors = diagnostics.filter((diagnostic) => diagnostic.severity === "error").length;
+  const warnings = diagnostics.filter((diagnostic) => diagnostic.severity === "warning").length;
+  if (!ok) {
+    return errors === 1 ? "1 error" : `${errors} errors`;
+  }
+  if (warnings > 0) {
+    return warnings === 1 ? "Valid, 1 warning" : `Valid, ${warnings} warnings`;
+  }
+  return "Valid";
+}
+
 export function App() {
   const [source, setSource] = useState(twinkle);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -146,7 +158,9 @@ export function App() {
         <section className="editor-panel">
           <div className="panel-title">
             <h2>Source</h2>
-            <span>{parsed.ok ? "Valid" : "Has errors"}</span>
+            <span className={parsed.ok ? (parsed.diagnostics.length > 0 ? "status-warning" : "status-ok") : "status-error"}>
+              {diagnosticSummary(parsed.ok, parsed.diagnostics)}
+            </span>
           </div>
           <textarea value={source} onChange={(event) => setSource(event.target.value)} spellCheck={false} />
           {parsed.diagnostics.length > 0 && (

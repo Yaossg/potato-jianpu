@@ -36,6 +36,7 @@ Completed initial slices:
 - Current grammar documentation in `docs/GRAMMAR.md`.
 - Current renderer documentation in `docs/RENDERER.md`.
 - Current player documentation in `docs/PLAYER.md`.
+- Frontend diagnostics status shows warning and error counts.
 
 Current test status:
 
