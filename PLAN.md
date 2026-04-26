@@ -91,6 +91,9 @@ Completed initial slices:
 - Frontend source editor disables programming-font ligatures, and playback
   controls include grouped Program selection, browser preview volume, and
   Program audition.
+- Frontend settings panel restores the original Settings entry point and groups
+  page width, export colors, Program, volume, audition, and initial-rest
+  controls outside the top action bar.
 - Frontend theme toggle restores the original light/dark workflow while syncing
   SVG preview/export color presets, saved preference, and system theme
   initialization.

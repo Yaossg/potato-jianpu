@@ -111,6 +111,7 @@ export function App() {
   const [program, setProgram] = useState(0);
   const [volume, setVolume] = useState(0.8);
   const [omitInitialRests, setOmitInitialRests] = useState(true);
+  const [showSettings, setShowSettings] = useState(false);
   const [showGrammar, setShowGrammar] = useState(false);
   const playerRef = useRef<PreviewAudioPlayer | null>(null);
   const parsed = useMemo(() => parse(source), [source]);
@@ -224,77 +225,9 @@ export function App() {
           <button type="button" onClick={() => setShowGrammar((visible) => !visible)}>
             Grammar
           </button>
-          <label className="number-control">
-            Width
-            <input
-              type="number"
-              min={240}
-              max={2000}
-              step={20}
-              value={pageWidth}
-              onChange={(event) => {
-                const value = Number(event.target.value);
-                if (Number.isFinite(value) && value > 0) {
-                  setPageWidth(value);
-                }
-              }}
-            />
-          </label>
-          <label className="color-control">
-            Color
-            <input type="color" value={scoreColor} onChange={(event) => setScoreColor(event.target.value)} />
-          </label>
-          <label className="color-control">
-            Page
-            <input type="color" value={pageBackground} onChange={(event) => setPageBackground(event.target.value)} />
-          </label>
-          <label className="select-control">
-            Program
-            <select
-              value={program}
-              onChange={(event) => {
-                const value = Number(event.target.value);
-                if (Number.isInteger(value) && value >= 0 && value <= 220) {
-                  setProgram(value);
-                }
-              }}
-            >
-              <optgroup label="General MIDI">
-                {GM_PROGRAMS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="Drums">
-                {DRUM_PROGRAMS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </optgroup>
-            </select>
-          </label>
-          <label className="range-control">
-            Volume
-            <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.05}
-              value={volume}
-              onChange={(event) => setVolume(Number(event.target.value))}
-            />
-            <span>{Math.round(volume * 100)}%</span>
-          </label>
-          <label className="checkbox-control">
-            <input
-              type="checkbox"
-              checked={omitInitialRests}
-              onChange={(event) => setOmitInitialRests(event.target.checked)}
-            />
-            Omit initial rests
-          </label>
+          <button type="button" onClick={() => setShowSettings((visible) => !visible)}>
+            Settings
+          </button>
           {isPlaying ? (
             <button type="button" onClick={stop}>
               Stop
@@ -304,9 +237,6 @@ export function App() {
               Play
             </button>
           )}
-          <button type="button" onClick={() => void auditionProgram()}>
-            Audition
-          </button>
           <button type="button" onClick={exportSvg} disabled={!svg}>
             Export SVG
           </button>
@@ -315,6 +245,93 @@ export function App() {
           </button>
         </div>
       </header>
+
+      {showSettings && (
+        <section className="settings-panel">
+          <div className="panel-title">
+            <h2>Settings</h2>
+            <button type="button" onClick={() => setShowSettings(false)}>
+              Close
+            </button>
+          </div>
+          <div className="settings-grid">
+            <label className="number-control">
+              Width
+              <input
+                type="number"
+                min={240}
+                max={2000}
+                step={20}
+                value={pageWidth}
+                onChange={(event) => {
+                  const value = Number(event.target.value);
+                  if (Number.isFinite(value) && value > 0) {
+                    setPageWidth(value);
+                  }
+                }}
+              />
+            </label>
+            <label className="color-control">
+              Color
+              <input type="color" value={scoreColor} onChange={(event) => setScoreColor(event.target.value)} />
+            </label>
+            <label className="color-control">
+              Page
+              <input type="color" value={pageBackground} onChange={(event) => setPageBackground(event.target.value)} />
+            </label>
+            <label className="select-control">
+              Program
+              <select
+                value={program}
+                onChange={(event) => {
+                  const value = Number(event.target.value);
+                  if (Number.isInteger(value) && value >= 0 && value <= 220) {
+                    setProgram(value);
+                  }
+                }}
+              >
+                <optgroup label="General MIDI">
+                  {GM_PROGRAMS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="Drums">
+                  {DRUM_PROGRAMS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
+            </label>
+            <label className="range-control">
+              Volume
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.05}
+                value={volume}
+                onChange={(event) => setVolume(Number(event.target.value))}
+              />
+              <span>{Math.round(volume * 100)}%</span>
+            </label>
+            <label className="checkbox-control">
+              <input
+                type="checkbox"
+                checked={omitInitialRests}
+                onChange={(event) => setOmitInitialRests(event.target.checked)}
+              />
+              Omit initial rests
+            </label>
+            <button type="button" onClick={() => void auditionProgram()}>
+              Audition
+            </button>
+          </div>
+        </section>
+      )}
 
       {showGrammar && (
         <section className="grammar-panel">

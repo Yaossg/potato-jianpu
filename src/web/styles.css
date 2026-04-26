@@ -184,7 +184,8 @@ button:disabled {
 .examples,
 .editor-panel,
 .preview-panel,
-.grammar-panel {
+.grammar-panel,
+.settings-panel {
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
   border-radius: 8px;
@@ -215,6 +216,30 @@ button:disabled {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+.settings-panel {
+  margin: 16px 16px 0;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  padding: 14px;
+  align-items: center;
+}
+
+.settings-grid .select-control {
+  grid-column: span 2;
+}
+
+.settings-grid .select-control select {
+  width: min(420px, 100%);
+}
+
+.settings-grid button {
+  justify-self: start;
 }
 
 .panel-title {
@@ -318,6 +343,10 @@ textarea {
   .examples {
     flex-direction: row;
     flex-wrap: wrap;
+  }
+
+  .settings-grid .select-control {
+    grid-column: auto;
   }
 
   textarea {

@@ -137,9 +137,9 @@ pnpm run cli -- export-svg input.jp -o output.svg --page-width 800
 pnpm run cli -- export-png input.jp -o output.png --page-width 800
 ```
 
-The frontend exposes it through the Width numeric control. The preview panel also
-uses responsive CSS so a wide exported page scales down visually instead of
-forcing horizontal page overflow.
+The frontend exposes it through the Settings panel's Width numeric control. The
+preview panel also uses responsive CSS so a wide exported page scales down
+visually instead of forcing horizontal page overflow.
 
 ## Header Rendering
 

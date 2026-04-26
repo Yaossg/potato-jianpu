@@ -174,6 +174,8 @@ Frontend currently supports:
 - MIDI download
 - light/dark theme toggle for the app and preview/export color presets, with
   saved preference and system dark-mode initialization
+- Settings panel for page width, preview/export colors, Program, volume,
+  Program audition, and initial-rest omission
 - grammar help panel backed by `docs/GRAMMAR.md`
 
 Frontend intentionally does not support:

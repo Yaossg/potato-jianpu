@@ -178,8 +178,9 @@ Behavior:
 - schedules note-start timers for frontend highlighting
 - supports starting from a parsed note index
 
-The frontend exposes a Program control. Browser playback and MIDI download use
-that value. The browser UI presents it as a grouped selection list with General
+The frontend exposes a Settings panel with Program, volume, audition, and
+initial-rest controls. Browser playback and MIDI download use the selected
+Program. The browser UI presents it as a grouped selection list with General
 MIDI programs and drum-note programs. Values `128..220` trigger the drum mapping
 described above.
 
