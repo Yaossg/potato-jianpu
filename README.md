@@ -20,6 +20,7 @@ pnpm install
 pnpm run build
 pnpm run check
 pnpm run test
+pnpm run cli -- --version
 pnpm run cli -- validate path/to/score.jp
 pnpm run cli -- validate path/to/score.jp --json
 pnpm run cli -- parse path/to/score.jp --json

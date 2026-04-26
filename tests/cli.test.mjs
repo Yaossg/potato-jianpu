@@ -10,6 +10,16 @@ import { promisify } from "node:util";
 const execFileAsync = promisify(execFile);
 const repoDir = fileURLToPath(new URL("../", import.meta.url));
 
+test("CLI prints package version", async () => {
+  const manifest = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
+  const { stdout, stderr } = await execFileAsync(process.execPath, ["dist/cli/main.js", "--version"], {
+    cwd: repoDir,
+  });
+
+  assert.equal(stderr, "");
+  assert.equal(stdout.trim(), manifest.version);
+});
+
 test("CLI export-svg accepts page width", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
   const input = join(dir, "score.jp");

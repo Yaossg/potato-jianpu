@@ -80,6 +80,7 @@ Before cutting a release:
   inspected.
 - Check `git status --short` in `reloaded/`.
 - Confirm `package.json` versioning and release notes.
+- Confirm `pnpm run cli -- --version` prints the intended package version.
 - Smoke test the CLI with at least one example input.
 - Smoke test the static frontend build in a browser.
 

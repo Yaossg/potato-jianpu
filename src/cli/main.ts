@@ -91,6 +91,11 @@ function readProgram(flags: string[]): number | null {
 
 async function main(argv: string[]): Promise<number> {
   const [command, file, ...flags] = argv;
+  if (command === "--version" || command === "-v") {
+    const manifest = JSON.parse(await readFile(new URL("../../package.json", import.meta.url), "utf8")) as { version?: string };
+    console.log(manifest.version ?? "0.0.0");
+    return 0;
+  }
   if (!command || command === "--help" || command === "-h") {
     console.log(usage());
     return 0;

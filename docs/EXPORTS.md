@@ -24,6 +24,7 @@ Run commands through the package script during development:
 
 ```sh
 pnpm run cli -- validate examples/twinkle.jp
+pnpm run cli -- --version
 pnpm run cli -- validate examples/twinkle.jp --json
 pnpm run cli -- parse examples/twinkle.jp --json
 pnpm run cli -- export-svg examples/twinkle.jp -o twinkle.svg --page-width 1000 --color "#111827" --background "#ffffff"
