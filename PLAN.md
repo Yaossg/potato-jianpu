@@ -81,6 +81,7 @@ Completed initial slices:
 - Parser stops unterminated chords at line boundaries with a specific diagnostic.
 - CLI `--version` reports the package version for release checks.
 - Package metadata pins the expected package manager version.
+- npm publication is explicitly deferred while the package remains private.
 
 Current test status:
 
@@ -100,9 +101,9 @@ High priority:
 
 Medium priority:
 
-- Finalize distribution polish. Package metadata and release shape are
-  documented, but release versioning, publish workflow, and automated browser
-  smoke testing still need final decisions.
+- Finalize distribution polish. Package metadata, release shape, package manager
+  version, and private npm-publish status are documented; automated browser
+  smoke testing still needs a final dependency/tooling decision.
 - Improve parser diagnostics and recovery for additional malformed inputs,
   especially additional compact-notation edge cases found during compatibility
   testing.

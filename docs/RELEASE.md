@@ -33,6 +33,14 @@ includes a frontend production-build smoke test.
 
 ## Backend CLI Package
 
+The package is currently marked `"private": true`. The current release shape is
+therefore repository-local distribution: build the backend and frontend outputs
+from this repository and use the generated `dist/` and `dist-web/` artifacts.
+
+Publishing to npm is intentionally deferred. Before enabling npm publication,
+remove `"private": true`, confirm package naming/versioning, and add an explicit
+publish workflow.
+
 `package.json` exposes the backend CLI binary:
 
 ```json
