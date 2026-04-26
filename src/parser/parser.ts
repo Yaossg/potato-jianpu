@@ -57,6 +57,7 @@ class Parser {
     this.skipNewlines();
     const score = this.at("eof") ? [] : this.parseScore();
     this.validateTies(score);
+    this.validateMeasureDurations(score, header.timeSignature.beatsPerMeasure / header.timeSignature.beatsPerWholeNote);
 
     if (this.diagnostics.some((diagnostic) => diagnostic.severity === "error")) {
       return { ok: false, diagnostics: this.diagnostics };
@@ -97,6 +98,10 @@ class Parser {
 
   private error(message: string, range = this.current().range) {
     this.diagnostics.push({ severity: "error", message, range });
+  }
+
+  private warning(message: string, range = this.current().range) {
+    this.diagnostics.push({ severity: "warning", message, range });
   }
 
   private skipNewlines() {
@@ -396,6 +401,27 @@ class Parser {
       return false;
     }
     return previous.pitches.length === current.pitches.length && previous.pitches.every((pitch, index) => pitch === current.pitches[index]);
+  }
+
+  private validateMeasureDurations(lines: ScoreLine[], expectedDuration: number) {
+    for (const line of lines) {
+      for (const measure of line.measures) {
+        if (measure.notes.length === 0) {
+          continue;
+        }
+        const actualDuration = measure.notes.reduce((sum, note) => sum + note.duration.value, 0);
+        if (Math.abs(actualDuration - expectedDuration) > 1e-9) {
+          this.warning(
+            `Measure duration ${this.formatDuration(actualDuration)} does not match time signature duration ${this.formatDuration(expectedDuration)}.`,
+            measure.range,
+          );
+        }
+      }
+    }
+  }
+
+  private formatDuration(duration: number): string {
+    return Number.isInteger(duration) ? String(duration) : Number(duration.toFixed(6)).toString();
   }
 
   private synchronizeLine() {

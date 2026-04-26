@@ -68,3 +68,18 @@ test("validates tied note targets", () => {
   assert.equal(afterRest.ok, false);
   assert.match(afterRest.diagnostics.map((d) => d.message).join("\n"), /Tied note must follow/);
 });
+
+test("warns when measure duration does not match the time signature", () => {
+  const complete = parse(`time: "4/4"\n=\n1 2 3 4`);
+  assert.equal(complete.ok, true);
+  assert.equal(complete.diagnostics.some((diagnostic) => diagnostic.message.includes("Measure duration")), false);
+
+  const short = parse(`time: "4/4"\n=\n1 2`);
+  assert.equal(short.ok, true);
+  assert.equal(short.diagnostics.some((diagnostic) => diagnostic.severity === "warning"), true);
+  assert.match(short.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Measure duration 0.5 does not match/);
+
+  const compound = parse(`time: "6/8"\n=\n1/ 2/ 3/ 4/ 5/ 6/`);
+  assert.equal(compound.ok, true);
+  assert.equal(compound.diagnostics.some((diagnostic) => diagnostic.message.includes("Measure duration")), false);
+});
