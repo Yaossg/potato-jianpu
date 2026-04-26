@@ -57,6 +57,7 @@ Completed initial slices:
 - Renderer options, dimensions, styles, and XML helpers are split from the main
   SVG renderer.
 - Renderer note metrics and measure/line layout are split from SVG drawing.
+- Renderer header and tempo mark drawing are split from score drawing.
 
 Current test status:
 
