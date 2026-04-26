@@ -6,11 +6,11 @@ import { fileURLToPath } from "node:url";
 import { parse } from "../dist/parser/index.js";
 import { renderSvg } from "../dist/renderer/index.js";
 import { exportMidiBytes } from "../dist/player/index.js";
-import { renderPngBytes } from "../dist/backend/index.js";
+import { exportWavBytes, renderPngBytes } from "../dist/backend/index.js";
 
 const examplesDir = fileURLToPath(new URL("../examples/", import.meta.url));
 
-test("all examples parse, render SVG, and export MIDI", async () => {
+test("all examples parse, render SVG, and export audio", async () => {
   const files = (await readdir(examplesDir)).filter((file) => file.endsWith(".jp"));
   assert.ok(files.length > 0);
 
@@ -27,5 +27,9 @@ test("all examples parse, render SVG, and export MIDI", async () => {
 
     const midi = exportMidiBytes(result.value);
     assert.equal(String.fromCharCode(...midi.slice(0, 4)), "MThd");
+
+    const wav = exportWavBytes(result.value, { sampleRate: 8000 });
+    assert.equal(String.fromCharCode(...wav.slice(0, 4)), "RIFF");
+    assert.equal(String.fromCharCode(...wav.slice(8, 12)), "WAVE");
   }
 });
