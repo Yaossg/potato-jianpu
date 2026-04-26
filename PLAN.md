@@ -49,6 +49,7 @@ Completed initial slices:
 - CLI rejects unknown options per command.
 - Player APIs reject out-of-range programs.
 - CLI validates options before reading input files.
+- Unknown header fields are covered as preserved raw metadata.
 
 Current test status:
 

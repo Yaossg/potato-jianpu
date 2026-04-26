@@ -61,6 +61,13 @@ test("rejects invalid header values", () => {
   assert.match(result.diagnostics.map((d) => d.message).join("\n"), /Invalid key signature/);
 });
 
+test("preserves unknown header fields in raw metadata", () => {
+  const result = parse(`arranger: "Ada"\ntitle: "Raw Header"\n=\n1 2 3 4`);
+  assert.equal(result.ok, true);
+  assert.equal(result.value.header.raw.arranger, "Ada");
+  assert.equal(result.value.header.title, "Raw Header");
+});
+
 test("rejects a tie on the first note", () => {
   const result = parse("~1 2 3 4");
   assert.equal(result.ok, false);
