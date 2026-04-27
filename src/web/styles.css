@@ -183,7 +183,6 @@ button:disabled {
 
 .editor-panel,
 .preview-panel,
-.grammar-panel,
 .settings-panel,
 .examples-panel {
   background: var(--panel-bg);
@@ -196,22 +195,9 @@ button:disabled {
   font-size: 15px;
 }
 
-.panel-actions {
-  display: inline-flex;
-  gap: 8px;
-}
-
 .editor-panel,
 .preview-panel {
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.grammar-panel {
-  margin: 16px 16px 0;
-  max-height: 360px;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -305,16 +291,6 @@ textarea {
 
 .diagnostics .warning {
   color: #8a5b00;
-}
-
-.grammar-panel pre {
-  margin: 0;
-  padding: 14px;
-  overflow: auto;
-  white-space: pre-wrap;
-  font-family: "Cascadia Code", Consolas, monospace;
-  font-size: 13px;
-  line-height: 1.5;
 }
 
 .preview-scroll {

@@ -170,9 +170,9 @@
       <div class="diagram">
         <div class="railroad">
           <span class="repeat">NEWLINE*</span>
-          <span class="arrow">→</span>
+          <span class="arrow">-&gt;</span>
           <span class="choice">header-document | score-document</span>
-          <span class="arrow">→</span>
+          <span class="arrow">-&gt;</span>
           <span class="token">EOF</span>
         </div>
       </div>
@@ -189,9 +189,9 @@ score_document  ::= score?</pre>
       <div class="diagram">
         <div class="railroad">
           <span class="repeat">(NEWLINE | header-property)*</span>
-          <span class="arrow">→</span>
+          <span class="arrow">-&gt;</span>
           <span class="repeat">EQUALS+</span>
-          <span class="arrow">→</span>
+          <span class="arrow">-&gt;</span>
           <span class="repeat">NEWLINE+</span>
         </div>
       </div>
@@ -199,11 +199,11 @@ score_document  ::= score?</pre>
       <div class="diagram">
         <div class="railroad">
           <span class="token">IDENTIFIER</span>
-          <span class="arrow">→</span>
+          <span class="arrow">-&gt;</span>
           <span class="token">:</span>
-          <span class="arrow">→</span>
+          <span class="arrow">-&gt;</span>
           <span class="token">STRING</span>
-          <span class="arrow">→</span>
+          <span class="arrow">-&gt;</span>
           <span class="choice">NEWLINE | before EQUALS</span>
         </div>
       </div>
@@ -230,13 +230,13 @@ header_property ::= IDENTIFIER ":" STRING (NEWLINE | before EQUALS)</pre>
       <div class="diagram">
         <div class="railroad">
           <span class="optional">label?</span>
-          <span class="arrow">→</span>
+          <span class="arrow">-&gt;</span>
           <span class="optional">leading BAR?</span>
-          <span class="arrow">→</span>
+          <span class="arrow">-&gt;</span>
           <span class="rule">measure</span>
-          <span class="arrow">→</span>
+          <span class="arrow">-&gt;</span>
           <span class="repeat">(BAR measure)*</span>
-          <span class="arrow">→</span>
+          <span class="arrow">-&gt;</span>
           <span class="optional">trailing BAR?</span>
         </div>
       </div>
@@ -253,7 +253,7 @@ label ::= IDENTIFIER ":"</pre>
       <div class="diagram">
         <div class="railroad">
           <span class="optional">measure-octave?</span>
-          <span class="arrow">→</span>
+          <span class="arrow">-&gt;</span>
           <span class="repeat">durable-note+</span>
         </div>
       </div>
@@ -270,9 +270,9 @@ measure_octave ::= LOWER+ | HIGHER+</pre>
       <div class="diagram">
         <div class="railroad">
           <span class="optional">TIE?</span>
-          <span class="arrow">→</span>
+          <span class="arrow">-&gt;</span>
           <span class="rule">general-note</span>
-          <span class="arrow">→</span>
+          <span class="arrow">-&gt;</span>
           <span class="optional">duration?</span>
         </div>
       </div>
@@ -297,9 +297,9 @@ measure_octave ::= LOWER+ | HIGHER+</pre>
       <div class="diagram">
         <div class="railroad">
           <span class="optional">accidental?</span>
-          <span class="arrow">→</span>
+          <span class="arrow">-&gt;</span>
           <span class="token">NOTE</span>
-          <span class="arrow">→</span>
+          <span class="arrow">-&gt;</span>
           <span class="optional">octave-suffix?</span>
         </div>
       </div>
@@ -312,9 +312,9 @@ octave_suffix ::= LOWER+ | HIGHER+</pre>
       <div class="diagram">
         <div class="railroad">
           <span class="token">{</span>
-          <span class="arrow">→</span>
+          <span class="arrow">-&gt;</span>
           <span class="repeat">pitch+</span>
-          <span class="arrow">→</span>
+          <span class="arrow">-&gt;</span>
           <span class="token">}</span>
         </div>
       </div>
@@ -344,7 +344,7 @@ octave_suffix ::= LOWER+ | HIGHER+</pre>
       <div class="diagram">
         <div class="railroad">
           <span class="choice">space | tab | comment</span>
-          <span class="arrow">→</span>
+          <span class="arrow">-&gt;</span>
           <span class="token">skipped</span>
         </div>
       </div>
@@ -369,6 +369,73 @@ TIE        ::= "~"
 EQUALS     ::= "="
 NEWLINE    ::= "\n" | "\r\n" | "\r"
 COMMENT    ::= ";" characters-until-newline</pre>
+
+      <h2>Reference Details</h2>
+
+      <h3>Whitespace And Comments</h3>
+      <p>
+        Spaces and tabs may appear between tokens and are ignored. Line breaks separate header properties and score
+        lines. Comments begin with <code>;</code> and continue until the next line break.
+      </p>
+      <pre class="ebnf">1 2 3 4 ; this comment is ignored
+5 6 7 1'</pre>
+
+      <h3>Header Values</h3>
+      <p>
+        Header values are double-quoted strings. A backslash skips the following character while tokenizing, but the
+        parser currently stores the raw inner text and does not unescape sequences.
+      </p>
+      <pre class="ebnf">title: "Twinkle"
+subtitle: "Traditional"
+composer: "Traditional"
+key: "C"
+time: "4/4"
+tempo: "120"
+=
+1 1 5 5 | 6 6 5 - |</pre>
+
+      <h3>Key, Time, And Tempo</h3>
+      <p>
+        Supported keys are <code>C C# Db D D# Eb E F F# Gb G G# Ab A A# Bb B</code>. One space inside the key value is
+        ignored, and legacy accidental-first spellings such as <code>#C</code> and <code>bB</code> are accepted.
+      </p>
+      <p>
+        Time signatures use <code>beatsPerMeasure/beatsPerWholeNote</code>. Numerators are
+        <code>2 3 4 6 9 12</code>; denominators are <code>2 4 8 16</code>. Tempo must be a positive number.
+      </p>
+
+      <h3>Notes, Accidentals, And Octaves</h3>
+      <p>
+        Pitch notes are <code>1</code> through <code>7</code>. Rest is <code>0</code>. Drum note is uppercase
+        <code>X</code>. Accidentals before pitch notes are <code>#</code>, <code>##</code>, <code>b</code>,
+        <code>bb</code>, and <code>%</code>. Octave suffixes after pitch notes use <code>'</code> and <code>,</code>.
+      </p>
+      <pre class="ebnf">#4 b7 %4 ##1 bb6
+1' 2'' 6, 5,,</pre>
+
+      <h3>Durations</h3>
+      <p>
+        The default note duration is a quarter note. Dashes extend duration by quarter-note units. Slashes halve the
+        duration. Dots add dotted rhythm. Dashes cannot be combined with slash/dot suffixes.
+      </p>
+      <pre class="ebnf">1     = 1/4 whole note
+1-    = 1/2 whole note
+1--   = 3/4 whole note
+1---  = 1 whole note
+1/    = 1/8 whole note
+1//   = 1/16 whole note
+1.    = 3/8 whole note
+1/.   = 3/16 whole note</pre>
+
+      <h3>Chords And Ties</h3>
+      <p>
+        Chords are enclosed in braces and contain pitch notes only. The duration suffix follows the closing brace and
+        applies to the whole chord. Tie markers appear before the tied note.
+      </p>
+      <pre class="ebnf">{1 3 5}
+{#1 3 b5}/
+1 ~1
+3 - ~3/</pre>
 
       <h2>Semantic Checks Not Shown As Syntax</h2>
       <ul>

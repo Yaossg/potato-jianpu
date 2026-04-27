@@ -191,7 +191,7 @@ Frontend currently supports:
 - Examples panel with the migrated legacy examples and focused two-column
   editor/preview workspace. Loading an example stops active playback and closes
   the panel. Play and Stop actions also close the examples panel.
-- grammar help panel backed by `docs/GRAMMAR.md`
+- grammar reference page at `grammar.html`
 
 Frontend intentionally does not support:
 

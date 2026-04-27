@@ -194,9 +194,9 @@ Frontend:
 - Examples panel with migrated legacy examples.
 - Loading an example stops active playback and closes the panel.
 - Play and Stop close the examples panel like the old UI.
-- Grammar help panel backed by `docs/GRAMMAR.md`.
-- Railroad-style grammar page at `public/grammar.html`, copied into the
-  frontend build and linked from the UI.
+- Grammar button opens `public/grammar.html`, copied into the frontend build.
+  That page contains the parser-shaped railroad/EBNF reference and the prose
+  grammar notes that used to be shown in the main app.
 - Frontend production build smoke test confirms SVG/PNG/MIDI/WAV/MP3 controls
   and download filenames are present.
 
@@ -235,10 +235,11 @@ rewrite target:
 - Serverless and API deployment folders.
 - Old browser WAV sample-rate setting.
 - Nearley/Moo parser generation and `plugins/nearleyc.js`.
-- Generated `public/grammar.html` railroad diagram.
+- Old generated Nearley `public/grammar.html` railroad diagram.
 
-The grammar is now maintained in `docs/GRAMMAR.md`. Backend audio sample rate is
-available through `export-wav --sample-rate` and `export-mp3 --sample-rate`.
+The grammar is maintained in `docs/GRAMMAR.md` and mirrored for users in the
+frontend static `grammar.html` reference. Backend audio sample rate is available
+through `export-wav --sample-rate` and `export-mp3 --sample-rate`.
 
 ## Remaining Work
 

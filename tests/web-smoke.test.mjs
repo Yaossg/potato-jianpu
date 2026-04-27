@@ -50,11 +50,10 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(script, /modern-jianpu-reloaded-theme/);
   assert.match(script, /prefers-color-scheme: dark/);
   assert.match(script, /Grammar/);
-  assert.match(script, /Railroad/);
   assert.match(script, /grammar\.html/);
   assert.match(script, /Examples/);
   assert.match(script, /Enter your Jianpu here/);
-  assert.match(script, /Grammar Reference/);
+  assert.doesNotMatch(script, /Grammar Reference/);
   assert.match(script, /General MIDI/);
   assert.match(script, /Volume/);
   assert.match(script, /max:200/);
@@ -67,8 +66,7 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(style, /\.settings-grid/);
   assert.match(style, /\.examples-panel/);
   assert.match(style, /\.examples-grid/);
-  assert.match(style, /\.grammar-panel/);
-  assert.match(style, /\.panel-actions/);
+  assert.doesNotMatch(style, /\.grammar-panel/);
   assert.match(style, /--app-bg:/);
   assert.match(style, /\.score-svg svg\{/);
   assert.match(style, /max-width:100%/);
@@ -78,5 +76,7 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(grammar, /class="railroad"/);
   assert.match(grammar, /durable_note ::= TIE\? general_note duration\?/);
   assert.match(grammar, /IDENTIFIER ::=/);
+  assert.match(grammar, /Reference Details/);
+  assert.match(grammar, /Key, Time, And Tempo/);
   assert.match(grammar, /docs\/GRAMMAR\.md/);
 });
