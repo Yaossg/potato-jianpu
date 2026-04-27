@@ -32,9 +32,12 @@ test("frontend production build emits the expected app shell", async () => {
 
   assert.match(script, /Modern Jianpu Reloaded/);
   assert.match(script, /Export SVG/);
+  assert.match(script, /Export PNG/);
   assert.match(script, /Export MIDI/);
   assert.match(script, /jianpu-score\.svg/);
+  assert.match(script, /jianpu-score\.png/);
   assert.match(script, /jianpu-score\.mid/);
+  assert.match(script, /image\/png/);
   assert.match(script, /Theme:/);
   assert.match(script, /Settings/);
   assert.match(script, /modern-jianpu-reloaded-theme/);
@@ -49,7 +52,7 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(script, /Audition/);
   assert.match(script, /internalcontext/);
   assert.match(script, /Omit initial rests/);
-  assert.doesNotMatch(script, /Export PNG|Export WAV|Export MP3/);
+  assert.doesNotMatch(script, /Export WAV|Export MP3/);
   assert.match(style, /font-variant-ligatures:\s*none/);
   assert.match(style, /\.theme-dark/);
   assert.match(style, /\.settings-panel/);

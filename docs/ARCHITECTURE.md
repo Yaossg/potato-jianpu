@@ -13,8 +13,8 @@ The repository builds two targets from shared TypeScript source:
 The backend CLI provides parse, validate, SVG, PNG, MIDI, and WAV export.
 
 The frontend web app provides editing, SVG preview, playback, note highlighting,
-SVG download, MIDI download, examples, and diagnostics. It intentionally does
-not expose PNG, WAV, or MP3 export.
+SVG download, PNG download, MIDI download, examples, and diagnostics. It
+intentionally does not expose WAV or MP3 export.
 
 ## Data Flow
 
@@ -27,7 +27,7 @@ parser/tokenizer
   v
 core Document
   |
-  +--> renderer -> SVG string -> PNG adapter
+  +--> renderer -> SVG string -> PNG adapters
   |
   +--> melody compiler -> browser playback
   |
@@ -50,7 +50,7 @@ export * from "./player/index.js";
 export * from "./renderer/index.js";
 ```
 
-Backend-only exports such as PNG and WAV are exported from `src/backend`.
+Backend-only exports such as WAV are exported from `src/backend`.
 
 ## Core
 
@@ -125,8 +125,9 @@ Responsibilities:
 
 The renderer does not parse source text and does not use browser-only APIs.
 
-PNG export is not part of the renderer. PNG export is a backend adapter that
-consumes the SVG string.
+PNG export is not part of the renderer. Backend PNG export uses a Node-capable
+adapter that consumes the SVG string. Frontend PNG export uses a browser adapter
+that loads the SVG string into an image and draws it to canvas.
 
 ## Player
 
@@ -220,11 +221,13 @@ Responsibilities:
 - note highlighting
 - click-to-play-from-note
 - SVG download
+- PNG download
 - MIDI download
 - preview/export page width and theme controls
 
 The frontend imports shared parser, renderer, and player code. It does not
-import backend PNG or WAV modules.
+import backend PNG or WAV modules; browser PNG export stays in `src/web` and
+uses DOM canvas APIs.
 
 ## Tests
 

@@ -13,7 +13,7 @@ The reloaded implementation should:
 - parse current example scores
 - render recognizable Jianpu SVG
 - support browser preview and playback
-- export SVG and MIDI
+- export SVG, PNG, and MIDI
 - provide backend PNG export
 - keep compact notation convenient
 - avoid intentional syntax breakage unless documented here
@@ -174,9 +174,10 @@ Backend CLI currently supports:
 Frontend currently supports:
 
 - SVG download
+- PNG download through browser SVG-to-canvas rendering
 - MIDI download
-- original frontend download filename convention: `jianpu-score.svg` and
-  `jianpu-score.mid`
+- original frontend download filename convention: `jianpu-score.svg`,
+  `jianpu-score.png`, and `jianpu-score.mid`
 - light/dark theme toggle for the app and preview/export color presets, with
   saved preference and system dark-mode initialization
 - Settings panel for page width, preview/export colors, Program, volume,
@@ -190,7 +191,6 @@ Frontend currently supports:
 
 Frontend intentionally does not support:
 
-- PNG export
 - WAV export
 - MP3 export
 - the old frontend sample-rate setting, because it only applied to browser WAV

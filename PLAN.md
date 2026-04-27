@@ -32,14 +32,17 @@ The frontend browser edition includes:
 - note highlighting
 - click-to-play-from-note
 - SVG download
+- PNG download
 - MIDI download
 - examples
 - settings
 - grammar help
 - diagnostics display
 
-Frontend PNG, WAV, and MP3 export are intentionally out of scope. PNG and WAV
-belong to the backend CLI. MP3 export is deferred.
+Frontend WAV and MP3 export are intentionally out of scope. PNG export is
+available in both editions: the backend uses a Node-capable adapter, while the
+frontend uses browser SVG-to-canvas rendering. WAV belongs to the backend CLI.
+MP3 export is deferred.
 
 Serverless deployment is not a target. The backend CLI replaces the old
 serverless/API export path.
@@ -168,6 +171,8 @@ Frontend:
 - Note highlighting during playback.
 - Click rendered notes to start playback from that note.
 - SVG and MIDI downloads using the original `jianpu-score.*` filenames.
+- PNG download using browser SVG-to-canvas rendering and the
+  `jianpu-score.png` filename.
 - Theme toggle with saved preference and system dark-mode initialization.
 - Preview/export color and background controls.
 - Page width control shared by preview and SVG export.
@@ -179,8 +184,8 @@ Frontend:
 - Loading an example stops active playback and closes the panel.
 - Play and Stop close the examples panel like the old UI.
 - Grammar help panel backed by `docs/GRAMMAR.md`.
-- Frontend production build smoke test confirms SVG/MIDI controls are present
-  and PNG/WAV/MP3 controls are absent.
+- Frontend production build smoke test confirms SVG/PNG/MIDI controls are
+  present and WAV/MP3 controls are absent.
 
 Examples:
 
@@ -212,7 +217,6 @@ The following old-project pieces are intentionally not part of the current
 rewrite target:
 
 - Serverless and API deployment folders.
-- Frontend PNG export.
 - Frontend WAV export.
 - Frontend MP3 export.
 - Old browser WAV sample-rate setting.
@@ -271,7 +275,7 @@ parser/tokenizer
   v
 core Document
   |
-  +--> renderer -> SVG string -> backend PNG adapter
+  +--> renderer -> SVG string -> backend/browser PNG adapters
   |
   +--> melody compiler -> browser TinySynth playback
   |
@@ -301,6 +305,7 @@ Rules:
 - Renderer does not parse source text and does not import backend code.
 - Player owns melody/MIDI/shared synth-facing logic but not UI.
 - Backend owns Node-capable PNG and WAV adapters.
+- Web owns the browser PNG adapter.
 - Web does not import backend modules.
 - CLI coordinates modules but should keep business logic thin.
 
@@ -331,7 +336,8 @@ Intentional differences:
 - Measure duration mismatch is a warning, not a fatal error.
 - Renderer output is deterministic SVG strings rather than React element output.
 - Bars are SVG primitives rather than music-font glyphs.
-- PNG and WAV are backend-only.
+- WAV is backend-only; PNG is available in both editions through different
+  adapters.
 - Serverless is removed from the target architecture.
 
 ## Milestone Status
@@ -363,8 +369,9 @@ Milestone 3: playback and MIDI
 Milestone 4: backend exports and UI polish
 
 - Status: substantially complete.
-- Notes: CLI SVG/PNG/MIDI/WAV exports work; frontend intentionally excludes
-  PNG/WAV/MP3; settings/examples/theme/page-width workflows are present.
+- Notes: CLI SVG/PNG/MIDI/WAV exports work; frontend exposes SVG/PNG/MIDI and
+  intentionally excludes WAV/MP3; settings/examples/theme/page-width workflows
+  are present.
 - Remaining work: real-browser responsive and workflow checks.
 
 Milestone 5: packaging and distribution

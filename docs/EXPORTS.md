@@ -8,11 +8,11 @@ reloaded backend CLI and frontend application.
 The rewrite has two product targets:
 
 - Backend CLI: supports validation, parsing, SVG, PNG, MIDI, and WAV export.
-- Frontend web app: supports editing, preview, playback, SVG export, and MIDI
-  export.
+- Frontend web app: supports editing, preview, playback, SVG export, PNG
+  export, and MIDI export.
 
-PNG and WAV export are backend-only. The frontend intentionally does not expose
-PNG, WAV, or MP3 export.
+WAV export is backend-only. The frontend intentionally does not expose WAV or
+MP3 export.
 
 MP3 export is intentionally deferred from the current release target. WAV export
 is the backend audio export for now and can be used as an intermediate if MP3
@@ -100,7 +100,7 @@ own line rather than split internally.
 
 ## PNG Export
 
-PNG export renders the same SVG output through the backend PNG adapter:
+The backend CLI renders the same SVG output through the backend PNG adapter:
 
 ```sh
 pnpm run cli -- export-png input.jp -o output.png --page-width 1000
@@ -115,6 +115,12 @@ Options:
 
 PNG export uses the backend dependency `@resvg/resvg-js`. Font behavior is
 intended to match the SVG preview by using the same SVG text and style output.
+
+The frontend also exposes PNG download. Browser PNG export uses a different
+adapter: it turns the current SVG string into an SVG `Blob`, loads it into an
+`Image`, draws that image to a canvas, and downloads the canvas result as
+`jianpu-score.png`. It uses the same preview/export color, background, and page
+width settings as SVG download.
 
 ## MIDI Export
 
