@@ -77,7 +77,7 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(style, /height:auto/);
   assert.match(style, /\.preview-panel/);
   assert.match(grammar, /Modern Jianpu Reloaded Grammar Reference/);
-  assert.match(grammar, /class="railroad"/);
+  assert.match(grammar, /class="railroad-diagram"/);
   assert.match(grammar, /durable_note ::= TIE\? general_note duration\?/);
   assert.match(grammar, /IDENTIFIER ::=/);
   assert.match(grammar, /Reference Details/);

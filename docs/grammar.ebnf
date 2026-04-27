@@ -1,0 +1,53 @@
+document = { NEWLINE }, ( header_document | score_document ), EOF ;
+
+header_document = header, { NEWLINE }, [ score ] ;
+score_document = [ score ] ;
+
+header = { NEWLINE | header_property }, EQUALS, { EQUALS }, NEWLINE, { NEWLINE } ;
+header_property = IDENTIFIER, ":", STRING, ( NEWLINE | BEFORE_EQUALS ) ;
+
+score = { NEWLINE | line } ;
+
+line = [ label ], [ BAR ], measure, { BAR, measure }, [ BAR ] ;
+label = IDENTIFIER, ":" ;
+
+measure = [ measure_octave ], durable_note, { durable_note } ;
+measure_octave = LOWER, { LOWER } | HIGHER, { HIGHER } ;
+
+durable_note = [ TIE ], general_note, [ duration ] ;
+general_note = pitch | REST | DRUM | chord ;
+
+pitch = [ accidental ], NOTE, [ octave_suffix ] ;
+accidental = SHARPSHARP | SHARP | FLATFLAT | FLAT | NATURAL ;
+octave_suffix = LOWER, { LOWER } | HIGHER, { HIGHER } ;
+
+chord = "{", pitch, { pitch }, "}" ;
+
+duration = DASH, { DASH } | ( HALF | DOT ), { HALF | DOT } ;
+
+skipped = SPACE | TAB | COMMENT ;
+
+IDENTIFIER = "[A-Za-z_]+ except bb, b, X" ;
+STRING = "quoted string" ;
+NOTE = "1" | "2" | "3" | "4" | "5" | "6" | "7" ;
+REST = "0" ;
+DRUM = "X" ;
+BAR = "|" ;
+SHARPSHARP = "##" ;
+SHARP = "#" ;
+FLATFLAT = "bb" ;
+FLAT = "b" ;
+NATURAL = "%" ;
+HALF = "/" ;
+DOT = "." ;
+DASH = "-" ;
+LOWER = "," ;
+HIGHER = "'" ;
+TIE = "~" ;
+EQUALS = "=" ;
+NEWLINE = "\n" | "\r\n" | "\r" ;
+SPACE = "space" ;
+TAB = "tab" ;
+COMMENT = "comment" ;
+EOF = "end of file" ;
+BEFORE_EQUALS = "before EQUALS" ;
