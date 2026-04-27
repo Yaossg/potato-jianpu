@@ -10,16 +10,16 @@ const grammarPath = new URL("../docs/grammar.ebnf", import.meta.url);
 const pagePath = new URL("../public/grammar.html", import.meta.url);
 
 const diagramTargets = [
-  { heading: "Parser Overview", rules: ["document"] },
-  { heading: "Header", rules: ["header", "header_property"] },
+  { heading: "Parser Overview", rules: ["file"] },
+  { heading: "Header", rules: ["header", "property"] },
   { heading: "Score", rules: ["score"] },
   { heading: "Line", rules: ["line"] },
   { heading: "Measure", rules: ["measure"] },
   { heading: "Durable Note", rules: ["durable_note"] },
   { heading: "General Note", rules: ["general_note"] },
-  { heading: "Pitch", rules: ["pitch"] },
+  { heading: "Pitch", rules: ["pitch_note"] },
   { heading: "Chord", rules: ["chord"] },
-  { heading: "Duration", rules: ["duration"] },
+  { heading: "Duration", rules: ["length"] },
   { heading: "Tokenizer", rules: ["skipped"] },
 ];
 

@@ -1,31 +1,32 @@
-document = { NEWLINE }, ( header_document | score_document ), EOF ;
+file = { NEWLINE }, [ header ], [ score ], EOF ;
 
-header_document = header, { NEWLINE }, [ score ] ;
-score_document = [ score ] ;
+header = { property }, EQUALS, { EQUALS }, NEWLINE, { NEWLINE } ;
+property = label, STRING, NEWLINE, { NEWLINE } ;
 
-header = { NEWLINE | header_property }, EQUALS, { EQUALS }, NEWLINE, { NEWLINE } ;
-header_property = IDENTIFIER, ":", STRING, ( NEWLINE | BEFORE_EQUALS ) ;
-
-score = { NEWLINE | line } ;
-
-line = [ label ], [ BAR ], measure, { BAR, measure }, [ BAR ] ;
 label = IDENTIFIER, ":" ;
 
-measure = [ measure_octave ], durable_note, { durable_note } ;
-measure_octave = LOWER, { LOWER } | HIGHER, { HIGHER } ;
+score = line, { NEWLINE, { NEWLINE }, line }, { NEWLINE } ;
 
-durable_note = [ TIE ], general_note, [ duration ] ;
-general_note = pitch | REST | DRUM | chord ;
+line = [ label ], [ BAR ], measure, { BAR, measure }, [ BAR ] ;
 
-pitch = [ accidental ], NOTE, [ octave_suffix ] ;
+measure = [ octave ], durable_note, { durable_note } ;
+octave = LOWER, { LOWER } | HIGHER, { HIGHER } ;
+
+durable_note = [ tie ], general_note, [ length ] ;
+tie = TIE ;
+
+general_note = chord | rest | drum ;
+chord = pitch_note | "{", pitch_note, { pitch_note }, "}" ;
+
+pitch_note = [ accidental ], NOTE, [ octave ] ;
 accidental = SHARPSHARP | SHARP | FLATFLAT | FLAT | NATURAL ;
-octave_suffix = LOWER, { LOWER } | HIGHER, { HIGHER } ;
 
-chord = "{", pitch, { pitch }, "}" ;
+rest = REST ;
+drum = DRUM ;
 
-duration = DASH, { DASH } | ( HALF | DOT ), { HALF | DOT } ;
+length = DASH, { DASH } | ( HALF | DOT ), { HALF | DOT } ;
 
-skipped = SPACE | TAB | COMMENT ;
+skipped = WS | COMMENT ;
 
 IDENTIFIER = "[A-Za-z_]+ except bb, b, X" ;
 STRING = "quoted string" ;
@@ -46,8 +47,6 @@ HIGHER = "'" ;
 TIE = "~" ;
 EQUALS = "=" ;
 NEWLINE = "\n" | "\r\n" | "\r" ;
-SPACE = "space" ;
-TAB = "tab" ;
+WS = "space or tab" ;
 COMMENT = "comment" ;
 EOF = "end of file" ;
-BEFORE_EQUALS = "before EQUALS" ;
