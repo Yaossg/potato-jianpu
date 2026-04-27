@@ -59,68 +59,47 @@
       }
 
       .railroad {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
+        display: block;
         min-width: max-content;
         font-family: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
       }
 
-      .railroad::before,
-      .railroad::after {
-        content: "";
-        width: 32px;
-        border-top: 2px solid #596577;
+      .railroad path,
+      .railroad line {
+        stroke: #596577;
+        stroke-width: 2;
+        fill: none;
       }
 
-      .arrow {
-        color: #596577;
+      .railroad text {
+        fill: #202124;
+        font-size: 13px;
+        dominant-baseline: middle;
+        text-anchor: middle;
       }
 
-      .rule,
-      .token,
-      .choice,
-      .repeat,
-      .optional {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 34px;
-        border-radius: 7px;
-        padding: 5px 10px;
-        white-space: nowrap;
-        font-size: 14px;
+      .railroad .terminal {
+        fill: #fff7ed;
+        stroke: #b45309;
+        stroke-width: 1.5;
       }
 
-      .rule {
-        border: 1.5px solid #50627a;
-        background: #f8fafc;
-        color: #202124;
+      .railroad .nonterminal {
+        fill: #f8fafc;
+        stroke: #50627a;
+        stroke-width: 1.5;
       }
 
-      .token {
-        border: 1.5px solid #b45309;
-        background: #fff7ed;
-        color: #202124;
+      .railroad .modifier {
+        fill: #fff;
+        stroke: #50627a;
+        stroke-width: 1.5;
+        stroke-dasharray: 5 4;
       }
 
-      .choice {
-        border: 1.5px solid #7c3aed;
-        background: #f5f3ff;
-        color: #202124;
-      }
-
-      .repeat,
-      .optional {
-        border: 1.5px dashed #50627a;
-        background: #ffffff;
-        color: #202124;
-      }
-
-      .stack {
-        display: inline-flex;
-        flex-direction: column;
-        gap: 6px;
+      .railroad .label {
+        fill: #5c6878;
+        font-size: 12px;
       }
 
       .caption {
@@ -147,6 +126,32 @@
         flex-wrap: wrap;
         gap: 12px;
         margin: 14px 0 20px;
+      }
+
+      .legend span {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        border-radius: 6px;
+        padding: 3px 8px;
+        font-family: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+        font-size: 12px;
+      }
+
+      .legend .rule {
+        border: 1.5px solid #50627a;
+        background: #f8fafc;
+      }
+
+      .legend .token {
+        border: 1.5px solid #b45309;
+        background: #fff7ed;
+      }
+
+      .legend .optional,
+      .legend .repeat {
+        border: 1.5px dashed #50627a;
+        background: #fff;
       }
     </style>
   </head>
@@ -238,20 +243,30 @@ tempo: "120"
       <div class="legend">
         <span class="rule">rule</span>
         <span class="token">literal or token</span>
-        <span class="choice">choice</span>
         <span class="optional">optional</span>
         <span class="repeat">repeat</span>
       </div>
 
       <h2>Parser Overview</h2>
       <div class="diagram">
-        <div class="railroad">
-          <span class="repeat">NEWLINE*</span>
-          <span class="arrow">-&gt;</span>
-          <span class="choice">header-document | score-document</span>
-          <span class="arrow">-&gt;</span>
-          <span class="token">EOF</span>
-        </div>
+        <svg class="railroad" width="720" height="116" viewBox="0 0 720 116" role="img" aria-label="document railroad diagram">
+          <path d="M20 58h40" />
+          <rect class="modifier" x="60" y="42" width="92" height="32" rx="10" />
+          <text x="106" y="59">NEWLINE*</text>
+          <path d="M152 58h48" />
+          <path d="M200 58c18 0 18-34 36-34h150" />
+          <path d="M200 58c18 0 18 34 36 34h150" />
+          <rect class="nonterminal" x="236" y="8" width="150" height="32" rx="4" />
+          <text x="311" y="25">header_document</text>
+          <rect class="nonterminal" x="236" y="76" width="150" height="32" rx="4" />
+          <text x="311" y="93">score_document</text>
+          <path d="M386 24c18 0 18 34 36 34" />
+          <path d="M386 92c18 0 18-34 36-34" />
+          <path d="M422 58h56" />
+          <rect class="terminal" x="478" y="42" width="58" height="32" rx="10" />
+          <text x="507" y="59">EOF</text>
+          <path d="M536 58h164" />
+        </svg>
       </div>
       <p class="caption">
         The parser chooses <code>header-document</code> if any <code>=</code> token appears ahead in the file. Otherwise
@@ -264,25 +279,42 @@ score_document  ::= score?</pre>
 
       <h2>Header</h2>
       <div class="diagram">
-        <div class="railroad">
-          <span class="repeat">(NEWLINE | header-property)*</span>
-          <span class="arrow">-&gt;</span>
-          <span class="repeat">EQUALS+</span>
-          <span class="arrow">-&gt;</span>
-          <span class="repeat">NEWLINE+</span>
-        </div>
+        <svg class="railroad" width="760" height="92" viewBox="0 0 760 92" role="img" aria-label="header railroad diagram">
+          <path d="M20 46h42" />
+          <rect class="modifier" x="62" y="30" width="194" height="32" rx="10" />
+          <text x="159" y="47">(NEWLINE | header_property)*</text>
+          <path d="M256 46h48" />
+          <rect class="modifier" x="304" y="30" width="76" height="32" rx="10" />
+          <text x="342" y="47">EQUALS+</text>
+          <path d="M380 46h48" />
+          <rect class="modifier" x="428" y="30" width="86" height="32" rx="10" />
+          <text x="471" y="47">NEWLINE+</text>
+          <path d="M514 46h226" />
+        </svg>
       </div>
 
       <div class="diagram">
-        <div class="railroad">
-          <span class="token">IDENTIFIER</span>
-          <span class="arrow">-&gt;</span>
-          <span class="token">:</span>
-          <span class="arrow">-&gt;</span>
-          <span class="token">STRING</span>
-          <span class="arrow">-&gt;</span>
-          <span class="choice">NEWLINE | before EQUALS</span>
-        </div>
+        <svg class="railroad" width="760" height="116" viewBox="0 0 760 116" role="img" aria-label="header property railroad diagram">
+          <path d="M20 58h40" />
+          <rect class="terminal" x="60" y="42" width="94" height="32" rx="10" />
+          <text x="107" y="59">IDENTIFIER</text>
+          <path d="M154 58h34" />
+          <rect class="terminal" x="188" y="42" width="36" height="32" rx="10" />
+          <text x="206" y="59">:</text>
+          <path d="M224 58h34" />
+          <rect class="terminal" x="258" y="42" width="68" height="32" rx="10" />
+          <text x="292" y="59">STRING</text>
+          <path d="M326 58h44" />
+          <path d="M370 58c18 0 18-34 36-34h112" />
+          <path d="M370 58c18 0 18 34 36 34h112" />
+          <rect class="terminal" x="406" y="8" width="82" height="32" rx="10" />
+          <text x="447" y="25">NEWLINE</text>
+          <rect class="terminal" x="406" y="76" width="112" height="32" rx="10" />
+          <text x="462" y="93">before EQUALS</text>
+          <path d="M488 24c16 0 16 34 34 34" />
+          <path d="M518 92c18 0 18-34 36-34" />
+          <path d="M554 58h186" />
+        </svg>
       </div>
 
       <pre class="ebnf">header          ::= (NEWLINE | header_property)* EQUALS+ NEWLINE+
@@ -296,26 +328,36 @@ header_property ::= IDENTIFIER ":" STRING (NEWLINE | before EQUALS)</pre>
 
       <h2>Score</h2>
       <div class="diagram">
-        <div class="railroad">
-          <span class="repeat">(NEWLINE | line)*</span>
-        </div>
+        <svg class="railroad" width="520" height="72" viewBox="0 0 520 72" role="img" aria-label="score railroad diagram">
+          <path d="M20 36h40" />
+          <rect class="modifier" x="60" y="20" width="150" height="32" rx="10" />
+          <text x="135" y="37">(NEWLINE | line)*</text>
+          <path d="M210 36h290" />
+        </svg>
       </div>
 
       <pre class="ebnf">score ::= (NEWLINE | line)*</pre>
 
       <h2>Line</h2>
       <div class="diagram">
-        <div class="railroad">
-          <span class="optional">label?</span>
-          <span class="arrow">-&gt;</span>
-          <span class="optional">leading BAR?</span>
-          <span class="arrow">-&gt;</span>
-          <span class="rule">measure</span>
-          <span class="arrow">-&gt;</span>
-          <span class="repeat">(BAR measure)*</span>
-          <span class="arrow">-&gt;</span>
-          <span class="optional">trailing BAR?</span>
-        </div>
+        <svg class="railroad" width="820" height="72" viewBox="0 0 820 72" role="img" aria-label="line railroad diagram">
+          <path d="M20 36h40" />
+          <rect class="modifier" x="60" y="20" width="70" height="32" rx="10" />
+          <text x="95" y="37">label?</text>
+          <path d="M130 36h38" />
+          <rect class="modifier" x="168" y="20" width="58" height="32" rx="10" />
+          <text x="197" y="37">BAR?</text>
+          <path d="M226 36h38" />
+          <rect class="nonterminal" x="264" y="20" width="76" height="32" rx="4" />
+          <text x="302" y="37">measure</text>
+          <path d="M340 36h38" />
+          <rect class="modifier" x="378" y="20" width="124" height="32" rx="10" />
+          <text x="440" y="37">(BAR measure)*</text>
+          <path d="M502 36h38" />
+          <rect class="modifier" x="540" y="20" width="58" height="32" rx="10" />
+          <text x="569" y="37">BAR?</text>
+          <path d="M598 36h202" />
+        </svg>
       </div>
 
       <pre class="ebnf">line  ::= label? BAR? measure (BAR measure)* BAR?
@@ -328,11 +370,15 @@ label ::= IDENTIFIER ":"</pre>
 
       <h2>Measure</h2>
       <div class="diagram">
-        <div class="railroad">
-          <span class="optional">measure-octave?</span>
-          <span class="arrow">-&gt;</span>
-          <span class="repeat">durable-note+</span>
-        </div>
+        <svg class="railroad" width="640" height="72" viewBox="0 0 640 72" role="img" aria-label="measure railroad diagram">
+          <path d="M20 36h40" />
+          <rect class="modifier" x="60" y="20" width="132" height="32" rx="10" />
+          <text x="126" y="37">measure_octave?</text>
+          <path d="M192 36h44" />
+          <rect class="modifier" x="236" y="20" width="118" height="32" rx="10" />
+          <text x="295" y="37">durable_note+</text>
+          <path d="M354 36h266" />
+        </svg>
       </div>
 
       <pre class="ebnf">measure        ::= measure_octave? durable_note+
@@ -345,13 +391,18 @@ measure_octave ::= LOWER+ | HIGHER+</pre>
 
       <h2>Durable Note</h2>
       <div class="diagram">
-        <div class="railroad">
-          <span class="optional">TIE?</span>
-          <span class="arrow">-&gt;</span>
-          <span class="rule">general-note</span>
-          <span class="arrow">-&gt;</span>
-          <span class="optional">duration?</span>
-        </div>
+        <svg class="railroad" width="680" height="72" viewBox="0 0 680 72" role="img" aria-label="durable note railroad diagram">
+          <path d="M20 36h40" />
+          <rect class="modifier" x="60" y="20" width="52" height="32" rx="10" />
+          <text x="86" y="37">TIE?</text>
+          <path d="M112 36h42" />
+          <rect class="nonterminal" x="154" y="20" width="110" height="32" rx="4" />
+          <text x="209" y="37">general_note</text>
+          <path d="M264 36h42" />
+          <rect class="modifier" x="306" y="20" width="86" height="32" rx="10" />
+          <text x="349" y="37">duration?</text>
+          <path d="M392 36h268" />
+        </svg>
       </div>
 
       <pre class="ebnf">durable_note ::= TIE? general_note duration?</pre>
@@ -363,22 +414,44 @@ measure_octave ::= LOWER+ | HIGHER+</pre>
 
       <h2>General Note</h2>
       <div class="diagram">
-        <div class="railroad">
-          <span class="choice">pitch | rest | drum | chord</span>
-        </div>
+        <svg class="railroad" width="520" height="184" viewBox="0 0 520 184" role="img" aria-label="general note railroad diagram">
+          <path d="M20 92h44" />
+          <path d="M64 92c20 0 20-66 44-66h74" />
+          <path d="M64 92c20 0 20-22 44-22h74" />
+          <path d="M64 92c20 0 20 22 44 22h74" />
+          <path d="M64 92c20 0 20 66 44 66h74" />
+          <rect class="nonterminal" x="108" y="10" width="74" height="32" rx="4" />
+          <text x="145" y="27">pitch</text>
+          <rect class="terminal" x="108" y="54" width="74" height="32" rx="10" />
+          <text x="145" y="71">REST</text>
+          <rect class="terminal" x="108" y="98" width="74" height="32" rx="10" />
+          <text x="145" y="115">DRUM</text>
+          <rect class="nonterminal" x="108" y="142" width="74" height="32" rx="4" />
+          <text x="145" y="159">chord</text>
+          <path d="M182 26c26 0 26 66 58 66" />
+          <path d="M182 70c26 0 26 22 58 22" />
+          <path d="M182 114c26 0 26-22 58-22" />
+          <path d="M182 158c26 0 26-66 58-66" />
+          <path d="M240 92h260" />
+        </svg>
       </div>
 
       <pre class="ebnf">general_note ::= pitch | REST | DRUM | chord</pre>
 
       <h2>Pitch</h2>
       <div class="diagram">
-        <div class="railroad">
-          <span class="optional">accidental?</span>
-          <span class="arrow">-&gt;</span>
-          <span class="token">NOTE</span>
-          <span class="arrow">-&gt;</span>
-          <span class="optional">octave-suffix?</span>
-        </div>
+        <svg class="railroad" width="700" height="72" viewBox="0 0 700 72" role="img" aria-label="pitch railroad diagram">
+          <path d="M20 36h40" />
+          <rect class="modifier" x="60" y="20" width="102" height="32" rx="10" />
+          <text x="111" y="37">accidental?</text>
+          <path d="M162 36h42" />
+          <rect class="terminal" x="204" y="20" width="60" height="32" rx="10" />
+          <text x="234" y="37">NOTE</text>
+          <path d="M264 36h42" />
+          <rect class="modifier" x="306" y="20" width="120" height="32" rx="10" />
+          <text x="366" y="37">octave_suffix?</text>
+          <path d="M426 36h254" />
+        </svg>
       </div>
 
       <pre class="ebnf">pitch         ::= accidental? NOTE octave_suffix?
@@ -387,13 +460,18 @@ octave_suffix ::= LOWER+ | HIGHER+</pre>
 
       <h2>Chord</h2>
       <div class="diagram">
-        <div class="railroad">
-          <span class="token">{</span>
-          <span class="arrow">-&gt;</span>
-          <span class="repeat">pitch+</span>
-          <span class="arrow">-&gt;</span>
-          <span class="token">}</span>
-        </div>
+        <svg class="railroad" width="560" height="72" viewBox="0 0 560 72" role="img" aria-label="chord railroad diagram">
+          <path d="M20 36h40" />
+          <rect class="terminal" x="60" y="20" width="36" height="32" rx="10" />
+          <text x="78" y="37">{</text>
+          <path d="M96 36h38" />
+          <rect class="modifier" x="134" y="20" width="70" height="32" rx="10" />
+          <text x="169" y="37">pitch+</text>
+          <path d="M204 36h38" />
+          <rect class="terminal" x="242" y="20" width="36" height="32" rx="10" />
+          <text x="260" y="37">}</text>
+          <path d="M278 36h262" />
+        </svg>
       </div>
 
       <pre class="ebnf">chord ::= "{" pitch+ "}"</pre>
@@ -405,9 +483,18 @@ octave_suffix ::= LOWER+ | HIGHER+</pre>
 
       <h2>Duration</h2>
       <div class="diagram">
-        <div class="railroad">
-          <span class="choice">DASH+ | (HALF | DOT)+</span>
-        </div>
+        <svg class="railroad" width="620" height="116" viewBox="0 0 620 116" role="img" aria-label="duration railroad diagram">
+          <path d="M20 58h44" />
+          <path d="M64 58c18 0 18-34 40-34h118" />
+          <path d="M64 58c18 0 18 34 40 34h118" />
+          <rect class="modifier" x="104" y="8" width="72" height="32" rx="10" />
+          <text x="140" y="25">DASH+</text>
+          <rect class="modifier" x="104" y="76" width="118" height="32" rx="10" />
+          <text x="163" y="93">(HALF | DOT)+</text>
+          <path d="M176 24c28 0 28 34 66 34" />
+          <path d="M222 92c22 0 22-34 52-34" />
+          <path d="M274 58h326" />
+        </svg>
       </div>
 
       <pre class="ebnf">duration ::= DASH+ | (HALF | DOT)+</pre>
@@ -419,11 +506,25 @@ octave_suffix ::= LOWER+ | HIGHER+</pre>
 
       <h2>Tokenizer</h2>
       <div class="diagram">
-        <div class="railroad">
-          <span class="choice">space | tab | comment</span>
-          <span class="arrow">-&gt;</span>
-          <span class="token">skipped</span>
-        </div>
+        <svg class="railroad" width="620" height="140" viewBox="0 0 620 140" role="img" aria-label="skipped tokenizer railroad diagram">
+          <path d="M20 70h44" />
+          <path d="M64 70c18 0 18-44 40-44h94" />
+          <path d="M64 70h40" />
+          <path d="M64 70c18 0 18 44 40 44h94" />
+          <rect class="terminal" x="104" y="10" width="94" height="32" rx="10" />
+          <text x="151" y="27">space</text>
+          <rect class="terminal" x="104" y="54" width="94" height="32" rx="10" />
+          <text x="151" y="71">tab</text>
+          <rect class="terminal" x="104" y="98" width="94" height="32" rx="10" />
+          <text x="151" y="115">comment</text>
+          <path d="M198 26c24 0 24 44 56 44" />
+          <path d="M198 70h56" />
+          <path d="M198 114c24 0 24-44 56-44" />
+          <path d="M254 70h48" />
+          <rect class="terminal" x="302" y="54" width="80" height="32" rx="10" />
+          <text x="342" y="71">skipped</text>
+          <path d="M382 70h218" />
+        </svg>
       </div>
 
       <pre class="ebnf">IDENTIFIER ::= /[A-Za-z_]+/ except bb, b, X
