@@ -72,11 +72,11 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(style, /max-width:100%/);
   assert.match(style, /height:auto/);
   assert.match(style, /\.preview-panel/);
-  assert.match(grammar, /Modern Jianpu Reloaded Grammar Railroad/);
+  assert.match(grammar, /Modern Jianpu Reloaded Grammar Reference/);
   assert.match(grammar, /class="railroad"/);
   assert.match(grammar, /durable_note ::= TIE\? general_note duration\?/);
   assert.match(grammar, /IDENTIFIER ::=/);
   assert.match(grammar, /Reference Details/);
   assert.match(grammar, /Key, Time, And Tempo/);
-  assert.match(grammar, /docs\/GRAMMAR\.md/);
+  assert.ok(grammar.indexOf("Reference Details") < grammar.indexOf("Railroad And EBNF"));
 });
