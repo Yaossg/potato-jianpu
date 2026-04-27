@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Modern Jianpu Reloaded Grammar Railroad</title>
+    <style>
+      :root {
+        color: #202124;
+        background: #f6f7f8;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      body {
+        margin: 0;
+      }
+
+      main {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 28px 20px 56px;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 28px;
+      }
+
+      h2 {
+        margin: 28px 0 10px;
+        font-size: 18px;
+      }
+
+      p {
+        color: #5c6878;
+        line-height: 1.55;
+      }
+
+      code {
+        font-family: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+        background: #eef1f5;
+        border-radius: 4px;
+        padding: 1px 5px;
+      }
+
+      .diagram {
+        overflow-x: auto;
+        margin: 10px 0 22px;
+        padding: 16px;
+        border: 1px solid #d7dce3;
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      svg.railroad {
+        display: block;
+        min-width: max-content;
+      }
+
+      .rail {
+        fill: none;
+        stroke: #596577;
+        stroke-width: 2;
+      }
+
+      .node rect {
+        fill: #f8fafc;
+        stroke: #50627a;
+        stroke-width: 1.5;
+        rx: 6;
+      }
+
+      .terminal rect {
+        fill: #fff7ed;
+        stroke: #b45309;
+      }
+
+      .note {
+        fill: #5c6878;
+        font-size: 13px;
+      }
+
+      text {
+        fill: #202124;
+        font-family: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+        font-size: 14px;
+        dominant-baseline: middle;
+        text-anchor: middle;
+      }
+
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 14px;
+        color: #5c6878;
+        font-size: 14px;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .swatch {
+        width: 28px;
+        height: 16px;
+        border-radius: 4px;
+        border: 1px solid #50627a;
+        background: #f8fafc;
+      }
+
+      .swatch.terminal {
+        border-color: #b45309;
+        background: #fff7ed;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Modern Jianpu Reloaded Grammar Railroad</h1>
+      <p>
+        This page is an informal railroad-style view of the current hand-written parser grammar.
+        The authoritative prose reference remains <code>docs/GRAMMAR.md</code>.
+      </p>
+      <div class="legend">
+        <span class="pill"><span class="swatch"></span>rule</span>
+        <span class="pill"><span class="swatch terminal"></span>literal/token</span>
+      </div>
+
+      <h2>File</h2>
+      <div class="diagram">
+        <svg class="railroad" width="820" height="120" viewBox="0 0 820 120" role="img" aria-label="file grammar diagram">
+          <path class="rail" d="M20 60 H80 M210 60 H260 M390 60 H450 M580 60 H650 M760 60 H800" />
+          <path class="rail" d="M260 60 C300 20 350 20 390 60" />
+          <path class="rail" d="M260 60 C300 100 350 100 390 60" />
+          <g class="node"><rect x="80" y="38" width="130" height="44" /><text x="145" y="60">header?</text></g>
+          <g class="terminal"><rect x="450" y="38" width="130" height="44" /><text x="515" y="60">=+</text></g>
+          <g class="node"><rect x="650" y="38" width="110" height="44" /><text x="705" y="60">score</text></g>
+          <text class="note" x="325" y="22">optional when score-only</text>
+        </svg>
+      </div>
+
+      <h2>Header</h2>
+      <div class="diagram">
+        <svg class="railroad" width="900" height="130" viewBox="0 0 900 130" role="img" aria-label="header grammar diagram">
+          <path class="rail" d="M20 65 H70 M170 65 H220 M300 65 H360 M500 65 H560 M700 65 H820" />
+          <path class="rail" d="M820 65 C860 65 860 25 820 25 H70 C30 25 30 65 70 65" />
+          <g class="node"><rect x="70" y="43" width="100" height="44" /><text x="120" y="65">name</text></g>
+          <g class="terminal"><rect x="220" y="43" width="80" height="44" /><text x="260" y="65">:</text></g>
+          <g class="node"><rect x="360" y="43" width="140" height="44" /><text x="430" y="65">string</text></g>
+          <g class="terminal"><rect x="560" y="43" width="140" height="44" /><text x="630" y="65">newline</text></g>
+          <text class="note" x="455" y="112">semantic names: title, subtitle, composer, key, time, tempo, hidden</text>
+        </svg>
+      </div>
+
+      <h2>Score</h2>
+      <div class="diagram">
+        <svg class="railroad" width="900" height="150" viewBox="0 0 900 150" role="img" aria-label="score grammar diagram">
+          <path class="rail" d="M20 75 H80 M200 75 H270 M390 75 H460 M580 75 H660 M780 75 H860" />
+          <path class="rail" d="M660 75 C700 35 740 35 780 75" />
+          <path class="rail" d="M660 75 C700 115 740 115 780 75" />
+          <g class="node"><rect x="80" y="53" width="120" height="44" /><text x="140" y="75">line</text></g>
+          <g class="terminal"><rect x="270" y="53" width="120" height="44" /><text x="330" y="75">newline</text></g>
+          <g class="node"><rect x="460" y="53" width="120" height="44" /><text x="520" y="75">line*</text></g>
+          <text class="note" x="720" y="35">blank/comment lines allowed</text>
+        </svg>
+      </div>
+
+      <h2>Line And Measures</h2>
+      <div class="diagram">
+        <svg class="railroad" width="980" height="150" viewBox="0 0 980 150" role="img" aria-label="line and measure grammar diagram">
+          <path class="rail" d="M20 75 H70 M180 75 H230 M350 75 H400 M500 75 H560 M680 75 H730 M850 75 H940" />
+          <path class="rail" d="M400 75 C440 35 520 35 560 75" />
+          <path class="rail" d="M730 75 C770 35 810 35 850 75" />
+          <g class="node"><rect x="70" y="53" width="110" height="44" /><text x="125" y="75">label?</text></g>
+          <g class="node"><rect x="230" y="53" width="120" height="44" /><text x="290" y="75">measure</text></g>
+          <g class="terminal"><rect x="560" y="53" width="120" height="44" /><text x="620" y="75">|</text></g>
+          <g class="node"><rect x="850" y="53" width="80" height="44" /><text x="890" y="75">*</text></g>
+          <text class="note" x="480" y="35">repeat measure separator</text>
+        </svg>
+      </div>
+
+      <h2>Measure</h2>
+      <div class="diagram">
+        <svg class="railroad" width="900" height="150" viewBox="0 0 900 150" role="img" aria-label="measure grammar diagram">
+          <path class="rail" d="M20 75 H80 M210 75 H280 M410 75 H480 M610 75 H690 M820 75 H870" />
+          <path class="rail" d="M80 75 C120 35 170 35 210 75" />
+          <path class="rail" d="M480 75 C520 35 570 35 610 75" />
+          <g class="node"><rect x="80" y="53" width="130" height="44" /><text x="145" y="75">octave?</text></g>
+          <g class="node"><rect x="280" y="53" width="130" height="44" /><text x="345" y="75">note item</text></g>
+          <g class="node"><rect x="610" y="53" width="80" height="44" /><text x="650" y="75">*</text></g>
+          <g class="terminal"><rect x="720" y="53" width="100" height="44" /><text x="770" y="75">| or ||</text></g>
+          <text class="note" x="545" y="35">one or more note items</text>
+        </svg>
+      </div>
+
+      <h2>Note Item</h2>
+      <div class="diagram">
+        <svg class="railroad" width="980" height="210" viewBox="0 0 980 210" role="img" aria-label="note item grammar diagram">
+          <path class="rail" d="M20 105 H80 M190 105 H260 M460 105 H540 M650 105 H720 M840 105 H940" />
+          <path class="rail" d="M260 105 C320 35 400 35 460 105" />
+          <path class="rail" d="M260 105 C320 105 400 105 460 105" />
+          <path class="rail" d="M260 105 C320 175 400 175 460 105" />
+          <path class="rail" d="M650 105 C690 65 680 65 720 105" />
+          <g class="terminal"><rect x="80" y="83" width="110" height="44" /><text x="135" y="105">~?</text></g>
+          <g class="node"><rect x="300" y="20" width="120" height="44" /><text x="360" y="42">pitch</text></g>
+          <g class="node"><rect x="300" y="83" width="120" height="44" /><text x="360" y="105">rest</text></g>
+          <g class="node"><rect x="300" y="146" width="120" height="44" /><text x="360" y="168">chord</text></g>
+          <g class="node"><rect x="540" y="83" width="110" height="44" /><text x="595" y="105">duration?</text></g>
+          <g class="node"><rect x="720" y="83" width="120" height="44" /><text x="780" y="105">octave?</text></g>
+          <text class="note" x="135" y="145">leading tie</text>
+        </svg>
+      </div>
+
+      <h2>Pitch, Rest, Drum</h2>
+      <div class="diagram">
+        <svg class="railroad" width="980" height="190" viewBox="0 0 980 190" role="img" aria-label="pitch rest drum grammar diagram">
+          <path class="rail" d="M20 95 H80 M230 95 H300 M450 95 H520 M670 95 H740 M890 95 H950" />
+          <path class="rail" d="M80 95 C140 35 170 35 230 95" />
+          <path class="rail" d="M80 95 C140 155 170 155 230 95" />
+          <g class="node"><rect x="100" y="20" width="110" height="44" /><text x="155" y="42">accidental?</text></g>
+          <g class="terminal"><rect x="100" y="126" width="110" height="44" /><text x="155" y="148">0 or X</text></g>
+          <g class="terminal"><rect x="300" y="73" width="150" height="44" /><text x="375" y="95">1..7</text></g>
+          <g class="node"><rect x="520" y="73" width="150" height="44" /><text x="595" y="95">octave?</text></g>
+          <g class="node"><rect x="740" y="73" width="150" height="44" /><text x="815" y="95">duration?</text></g>
+        </svg>
+      </div>
+
+      <h2>Chord</h2>
+      <div class="diagram">
+        <svg class="railroad" width="980" height="140" viewBox="0 0 980 140" role="img" aria-label="chord grammar diagram">
+          <path class="rail" d="M20 70 H80 M170 70 H240 M360 70 H430 M550 70 H620 M710 70 H950" />
+          <path class="rail" d="M430 70 C470 30 510 30 550 70" />
+          <g class="terminal"><rect x="80" y="48" width="90" height="44" /><text x="125" y="70">{</text></g>
+          <g class="node"><rect x="240" y="48" width="120" height="44" /><text x="300" y="70">pitch</text></g>
+          <g class="node"><rect x="550" y="48" width="70" height="44" /><text x="585" y="70">+</text></g>
+          <g class="terminal"><rect x="710" y="48" width="90" height="44" /><text x="755" y="70">}</text></g>
+          <text class="note" x="490" y="30">one or more pitch notes; rests and drums are invalid inside chords</text>
+        </svg>
+      </div>
+
+      <h2>Suffixes</h2>
+      <div class="diagram">
+        <svg class="railroad" width="980" height="210" viewBox="0 0 980 210" role="img" aria-label="suffix grammar diagram">
+          <path class="rail" d="M20 105 H80 M210 105 H280 M410 105 H480 M610 105 H680 M810 105 H940" />
+          <path class="rail" d="M80 105 C120 45 170 45 210 105" />
+          <path class="rail" d="M280 105 C320 45 370 45 410 105" />
+          <path class="rail" d="M480 105 C520 45 570 45 610 105" />
+          <path class="rail" d="M680 105 C720 45 770 45 810 105" />
+          <g class="terminal"><rect x="80" y="83" width="130" height="44" /><text x="145" y="105">' or ,</text></g>
+          <g class="terminal"><rect x="280" y="83" width="130" height="44" /><text x="345" y="105">-*</text></g>
+          <g class="terminal"><rect x="480" y="83" width="130" height="44" /><text x="545" y="105">/*</text></g>
+          <g class="terminal"><rect x="680" y="83" width="130" height="44" /><text x="745" y="105">.*</text></g>
+          <text class="note" x="345" y="155">dashes extend duration; slashes halve duration; dots add dotted rhythm</text>
+        </svg>
+      </div>
+
+      <h2>Token Sets</h2>
+      <div class="diagram">
+        <svg class="railroad" width="980" height="220" viewBox="0 0 980 220" role="img" aria-label="token sets grammar diagram">
+          <g class="node"><rect x="40" y="24" width="190" height="44" /><text x="135" y="46">accidental</text></g>
+          <g class="terminal"><rect x="280" y="24" width="310" height="44" /><text x="435" y="46">#, ##, b, bb, %</text></g>
+          <path class="rail" d="M230 46 H280" />
+          <g class="node"><rect x="40" y="88" width="190" height="44" /><text x="135" y="110">octave</text></g>
+          <g class="terminal"><rect x="280" y="88" width="310" height="44" /><text x="435" y="110">one or more ' or ,</text></g>
+          <path class="rail" d="M230 110 H280" />
+          <g class="node"><rect x="40" y="152" width="190" height="44" /><text x="135" y="174">comment</text></g>
+          <g class="terminal"><rect x="280" y="152" width="520" height="44" /><text x="540" y="174">; then characters until newline</text></g>
+          <path class="rail" d="M230 174 H280" />
+        </svg>
+      </div>
+    </main>
+  </body>
+</html>

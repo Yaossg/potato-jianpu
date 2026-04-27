@@ -29,6 +29,7 @@ test("frontend production build emits the expected app shell", async () => {
 
   const script = await readFile(new URL(`../dist-web/${scriptPath.replace(/^\//, "")}`, import.meta.url), "utf8");
   const style = await readFile(new URL(`../dist-web/${stylePath.replace(/^\//, "")}`, import.meta.url), "utf8");
+  const grammar = await readFile(new URL("../dist-web/grammar.html", import.meta.url), "utf8");
 
   assert.match(script, /Modern Jianpu Reloaded/);
   assert.match(script, /Export SVG/);
@@ -49,6 +50,8 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(script, /modern-jianpu-reloaded-theme/);
   assert.match(script, /prefers-color-scheme: dark/);
   assert.match(script, /Grammar/);
+  assert.match(script, /Railroad/);
+  assert.match(script, /grammar\.html/);
   assert.match(script, /Examples/);
   assert.match(script, /Enter your Jianpu here/);
   assert.match(script, /Grammar Reference/);
@@ -65,9 +68,13 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(style, /\.examples-panel/);
   assert.match(style, /\.examples-grid/);
   assert.match(style, /\.grammar-panel/);
+  assert.match(style, /\.panel-actions/);
   assert.match(style, /--app-bg:/);
   assert.match(style, /\.score-svg svg\{/);
   assert.match(style, /max-width:100%/);
   assert.match(style, /height:auto/);
   assert.match(style, /\.preview-panel/);
+  assert.match(grammar, /Modern Jianpu Reloaded Grammar Railroad/);
+  assert.match(grammar, /svg class="railroad"/);
+  assert.match(grammar, /docs\/GRAMMAR\.md/);
 });

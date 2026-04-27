@@ -195,6 +195,8 @@ Frontend:
 - Loading an example stops active playback and closes the panel.
 - Play and Stop close the examples panel like the old UI.
 - Grammar help panel backed by `docs/GRAMMAR.md`.
+- Railroad-style grammar page at `public/grammar.html`, copied into the
+  frontend build and linked from the UI.
 - Frontend production build smoke test confirms SVG/PNG/MIDI/WAV/MP3 controls
   and download filenames are present.
 

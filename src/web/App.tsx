@@ -77,6 +77,10 @@ function initialTheme(): ThemeName {
   return storedTheme() ?? systemTheme();
 }
 
+function openGrammarRailroad() {
+  window.open("grammar.html", "_blank", "noopener,noreferrer");
+}
+
 function downloadBytes(data: BlobPart, filename: string, type: string) {
   const blob = new Blob([data], { type });
   downloadBlob(blob, filename);
@@ -354,6 +358,9 @@ export function App() {
           <button type="button" onClick={() => setShowGrammar((visible) => !visible)}>
             Grammar
           </button>
+          <button type="button" onClick={openGrammarRailroad}>
+            Railroad
+          </button>
           <button type="button" onClick={() => setShowSettings((visible) => !visible)}>
             Settings
           </button>
@@ -500,9 +507,14 @@ export function App() {
         <section className="grammar-panel">
           <div className="panel-title">
             <h2>Grammar</h2>
-            <button type="button" onClick={() => setShowGrammar(false)}>
-              Close
-            </button>
+            <div className="panel-actions">
+              <button type="button" onClick={openGrammarRailroad}>
+                Railroad
+              </button>
+              <button type="button" onClick={() => setShowGrammar(false)}>
+                Close
+              </button>
+            </div>
           </div>
           <pre>{grammarReference}</pre>
         </section>
