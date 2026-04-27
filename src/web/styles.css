@@ -207,11 +207,28 @@ button:disabled {
   margin: 16px 16px 0;
 }
 
+.settings-sections {
+  padding: 0 14px;
+}
+
+.settings-section {
+  padding: 14px 0;
+}
+
+.settings-section + .settings-section {
+  border-top: 1px solid var(--subtle-border);
+}
+
+.settings-section h3 {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--muted-text);
+}
+
 .settings-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 12px;
-  padding: 14px;
   align-items: center;
 }
 

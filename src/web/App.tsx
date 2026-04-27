@@ -397,81 +397,92 @@ export function App() {
               Close
             </button>
           </div>
-          <div className="settings-grid">
-            <label className="number-control">
-              Width
-              <input
-                type="number"
-                min={240}
-                max={2000}
-                step={20}
-                value={pageWidth}
-                onChange={(event) => {
-                  const value = Number(event.target.value);
-                  if (Number.isFinite(value) && value > 0) {
-                    setPageWidth(value);
-                  }
-                }}
-              />
-            </label>
-            <label className="color-control">
-              Color
-              <input type="color" value={scoreColor} onChange={(event) => setScoreColor(event.target.value)} />
-            </label>
-            <label className="color-control">
-              Page
-              <input type="color" value={pageBackground} onChange={(event) => setPageBackground(event.target.value)} />
-            </label>
-            <label className="select-control">
-              Program
-              <select
-                value={program}
-                onChange={(event) => {
-                  const value = Number(event.target.value);
-                  if (Number.isInteger(value) && value >= 0 && value <= 220) {
-                    setProgram(value);
-                  }
-                }}
-              >
-                <optgroup label="General MIDI">
-                  {GM_PROGRAMS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </optgroup>
-                <optgroup label="Drums">
-                  {DRUM_PROGRAMS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </optgroup>
-              </select>
-            </label>
-            <label className="range-control">
-              Volume
-              <input
-                type="range"
-                min={0}
-                max={200}
-                step={1}
-                value={volume}
-                onChange={(event) => setVolume(Number(event.target.value))}
-              />
-              <span>{Math.round(volume)}%</span>
-            </label>
-            <label className="checkbox-control">
-              <input
-                type="checkbox"
-                checked={omitInitialRests}
-                onChange={(event) => setOmitInitialRests(event.target.checked)}
-              />
-              Omit initial rests
-            </label>
-            <button type="button" onClick={() => void auditionProgram()}>
-              Audition
-            </button>
+          <div className="settings-sections">
+            <section className="settings-section">
+              <h3>Page Settings</h3>
+              <div className="settings-grid">
+                <label className="number-control">
+                  Width
+                  <input
+                    type="number"
+                    min={240}
+                    max={2000}
+                    step={20}
+                    value={pageWidth}
+                    onChange={(event) => {
+                      const value = Number(event.target.value);
+                      if (Number.isFinite(value) && value > 0) {
+                        setPageWidth(value);
+                      }
+                    }}
+                  />
+                </label>
+                <label className="color-control">
+                  Color
+                  <input type="color" value={scoreColor} onChange={(event) => setScoreColor(event.target.value)} />
+                </label>
+                <label className="color-control">
+                  Page
+                  <input type="color" value={pageBackground} onChange={(event) => setPageBackground(event.target.value)} />
+                </label>
+              </div>
+            </section>
+
+            <section className="settings-section">
+              <h3>Sound Settings</h3>
+              <div className="settings-grid">
+                <label className="select-control">
+                  Program
+                  <select
+                    value={program}
+                    onChange={(event) => {
+                      const value = Number(event.target.value);
+                      if (Number.isInteger(value) && value >= 0 && value <= 220) {
+                        setProgram(value);
+                      }
+                    }}
+                  >
+                    <optgroup label="General MIDI">
+                      {GM_PROGRAMS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Drums">
+                      {DRUM_PROGRAMS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </optgroup>
+                  </select>
+                </label>
+                <label className="range-control">
+                  Volume
+                  <input
+                    type="range"
+                    min={0}
+                    max={200}
+                    step={1}
+                    value={volume}
+                    onChange={(event) => setVolume(Number(event.target.value))}
+                  />
+                  <span>{Math.round(volume)}%</span>
+                </label>
+                <label className="checkbox-control">
+                  <input
+                    type="checkbox"
+                    checked={omitInitialRests}
+                    onChange={(event) => setOmitInitialRests(event.target.checked)}
+                  />
+                  Omit initial rests
+                </label>
+                <button type="button" onClick={() => void auditionProgram()}>
+                  Audition
+                </button>
+              </div>
+            </section>
           </div>
         </section>
       )}

@@ -47,6 +47,8 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(script, /audio\/mpeg/);
   assert.match(script, /Theme:/);
   assert.match(script, /Settings/);
+  assert.match(script, /Page Settings/);
+  assert.match(script, /Sound Settings/);
   assert.match(script, /modern-jianpu-reloaded-theme/);
   assert.match(script, /prefers-color-scheme: dark/);
   assert.match(script, /Grammar/);
@@ -63,6 +65,7 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(style, /font-variant-ligatures:\s*none/);
   assert.match(style, /\.theme-dark/);
   assert.match(style, /\.settings-panel/);
+  assert.match(style, /\.settings-section\s*\+\s*\.settings-section/);
   assert.match(style, /\.settings-grid/);
   assert.match(style, /\.examples-panel/);
   assert.match(style, /\.examples-grid/);
