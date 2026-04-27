@@ -202,6 +202,8 @@ Examples:
 
 - Legacy examples from the original examples panel are available as
   `examples/*.jp` fixtures.
+- Examples have consistent metadata headers and are expected to parse without
+  warnings.
 - Examples are covered by parse, SVG, PNG, MIDI, and WAV test paths. MP3 export
   is covered by focused backend and CLI tests.
 

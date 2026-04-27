@@ -1,8 +1,10 @@
 title: "Drum Pattern"
+subtitle: "Percussion note example"
+composer: "Modern Jianpu Reloaded"
+key: "C"
 time: "4/4"
 tempo: "120"
 =
 X/ X// X// X/ X/ X/ X/ X/ X/ |
 X// X// X/ X// X// X/ X// X// X/ X// X// X/ |
 X/ X/ X/ X/ X/ X/ X/ 0/ |
-

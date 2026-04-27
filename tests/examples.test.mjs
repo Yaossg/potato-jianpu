@@ -18,6 +18,7 @@ test("all examples parse, render SVG, and export audio", async () => {
     const source = await readFile(join(examplesDir, file), "utf8");
     const result = parse(source);
     assert.equal(result.ok, true, `${file} should parse: ${result.diagnostics.map((d) => d.message).join(", ")}`);
+    assert.equal(result.diagnostics.length, 0, `${file} should be warning-free: ${result.diagnostics.map((d) => d.message).join(", ")}`);
 
     const svg = renderSvg(result.value);
     assert.match(svg, /<svg/);
