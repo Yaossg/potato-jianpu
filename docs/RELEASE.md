@@ -75,9 +75,10 @@ The release file allow-list currently includes:
 The frontend edition is a static Vite build. Deploy the contents of
 `dist-web/` to any static hosting target.
 
-The frontend exposes SVG, PNG, and MIDI download. Frontend PNG export is a
-browser canvas adapter over the rendered SVG. WAV and MP3 export remain excluded
-from the frontend and are available through the backend CLI.
+The frontend exposes SVG, PNG, MIDI, WAV, and MP3 download. Frontend PNG export
+is a browser canvas adapter over the rendered SVG. Frontend WAV and MP3 export
+render audio with browser `OfflineAudioContext`; MP3 encoding is bundled into
+the frontend.
 
 ## Pre-Release Checklist
 

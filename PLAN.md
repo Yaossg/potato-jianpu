@@ -35,15 +35,17 @@ The frontend browser edition includes:
 - SVG download
 - PNG download
 - MIDI download
+- WAV download
+- MP3 download
 - examples
 - settings
 - grammar help
 - diagnostics display
 
-Frontend WAV and MP3 export are intentionally out of scope. PNG export is
-available in both editions: the backend uses a Node-capable adapter, while the
-frontend uses browser SVG-to-canvas rendering. WAV belongs to the backend CLI.
-MP3 also belongs to the backend CLI.
+PNG, WAV, and MP3 export are available in both editions through target-specific
+adapters. The backend uses Node-capable adapters; the frontend uses browser
+SVG-to-canvas rendering for PNG, `OfflineAudioContext` for WAV/MP3 audio
+rendering, and bundled `lamejs` for browser MP3 encoding.
 
 Serverless deployment is not a target. The backend CLI replaces the old
 serverless/API export path.
@@ -67,7 +69,7 @@ Current known passing state:
 - The test suite builds TypeScript before running Node tests.
 - Coverage includes parser behavior, renderer snapshots, player timing, MIDI,
   backend PNG/WAV/MP3 export, examples, CLI behavior, release metadata, and a
-  frontend production build smoke test.
+  frontend production build smoke test covering SVG/PNG/MIDI/WAV/MP3 controls.
 
 ## Implemented
 
@@ -143,8 +145,11 @@ Player and audio:
   path.
 - Backend MP3 export shares the same offline TinySynth render path and encodes
   the resulting stereo PCM with `lamejs`.
-- WAV output is backend-only stereo 16-bit PCM; MP3 output is backend-only
-  compressed audio.
+- Backend WAV output is stereo 16-bit PCM; backend MP3 output is compressed
+  audio.
+- Frontend WAV/MP3 export uses the browser `OfflineAudioContext` with the same
+  TinySynth adapter as preview playback. Browser MP3 is encoded locally with
+  `lamejs`.
 - Browser playback and exports use fixed MIDI velocity `64`.
 
 Backend CLI:
@@ -190,8 +195,8 @@ Frontend:
 - Loading an example stops active playback and closes the panel.
 - Play and Stop close the examples panel like the old UI.
 - Grammar help panel backed by `docs/GRAMMAR.md`.
-- Frontend production build smoke test confirms SVG/PNG/MIDI controls are
-  present and WAV/MP3 controls are absent.
+- Frontend production build smoke test confirms SVG/PNG/MIDI/WAV/MP3 controls
+  and download filenames are present.
 
 Examples:
 
@@ -224,8 +229,6 @@ The following old-project pieces are intentionally not part of the current
 rewrite target:
 
 - Serverless and API deployment folders.
-- Frontend WAV export.
-- Frontend MP3 export.
 - Old browser WAV sample-rate setting.
 - Nearley/Moo parser generation and `plugins/nearleyc.js`.
 - Generated `public/grammar.html` railroad diagram.
@@ -253,8 +256,9 @@ Medium priority:
 - Improve parser diagnostics and recovery for additional malformed compact
   notation and header edge cases discovered during compatibility testing.
 - Validate TinySynth WAV/MP3 output quality and performance on longer example
-  scores. The current examples pass, but offline TinySynth rendering is slower
-  than the earlier simple waveform renderer.
+  scores in both backend and browser exporters. The current examples pass, but
+  offline TinySynth rendering is slower than the earlier simple waveform
+  renderer.
 - Review frontend responsive layout in a real browser after browser automation
   exists.
 - Finalize distribution polish once browser smoke testing is decided.
@@ -283,7 +287,7 @@ core Document
   |
   +--> renderer -> SVG string -> backend/browser PNG adapters
   |
-  +--> melody compiler -> browser TinySynth playback
+  +--> melody compiler -> browser TinySynth playback / browser audio export
   |
   +--> melody compiler -> MIDI writer
   |
@@ -342,8 +346,7 @@ Intentional differences:
 - Measure duration mismatch is a warning, not a fatal error.
 - Renderer output is deterministic SVG strings rather than React element output.
 - Bars are SVG primitives rather than music-font glyphs.
-- WAV and MP3 are backend-only; PNG is available in both editions through
-  different adapters.
+- PNG, WAV, and MP3 are available in both editions through different adapters.
 - Serverless is removed from the target architecture.
 
 ## Milestone Status
@@ -375,9 +378,9 @@ Milestone 3: playback and MIDI
 Milestone 4: backend exports and UI polish
 
 - Status: substantially complete.
-- Notes: CLI SVG/PNG/MIDI/WAV/MP3 exports work; frontend exposes SVG/PNG/MIDI and
-  intentionally excludes WAV/MP3; settings/examples/theme/page-width workflows
-  are present.
+- Notes: CLI SVG/PNG/MIDI/WAV/MP3 exports work; frontend exposes
+  SVG/PNG/MIDI/WAV/MP3; settings/examples/theme/page-width workflows are
+  present.
 - Remaining work: real-browser responsive and workflow checks.
 
 Milestone 5: packaging and distribution
@@ -406,6 +409,9 @@ Testing gaps:
 - No real-browser UI automation yet.
 - No automated audio perceptual comparison.
 - No PNG golden image comparison.
+- No real-browser assertion that WAV/MP3 downloads complete successfully yet;
+  current coverage verifies the production bundle contains the controls and
+  export code.
 
 Preferred additions:
 

@@ -177,8 +177,11 @@ Frontend currently supports:
 - SVG download
 - PNG download through browser SVG-to-canvas rendering
 - MIDI download
+- WAV download through browser `OfflineAudioContext`
+- MP3 download through browser `OfflineAudioContext` and bundled `lamejs`
 - original frontend download filename convention: `jianpu-score.svg`,
-  `jianpu-score.png`, and `jianpu-score.mid`
+  `jianpu-score.png`, `jianpu-score.mid`, `jianpu-score.wav`, and
+  `jianpu-score.mp3`
 - light/dark theme toggle for the app and preview/export color presets, with
   saved preference and system dark-mode initialization
 - Settings panel for page width, preview/export colors, Program, volume,
@@ -192,11 +195,10 @@ Frontend currently supports:
 
 Frontend intentionally does not support:
 
-- WAV export
-- MP3 export
 - the old frontend sample-rate setting, because it only applied to browser WAV
-  export. Use backend `export-wav --sample-rate` or
-  `export-mp3 --sample-rate` instead.
+  export. The current frontend audio exporters use `44100` Hz; use backend
+  `export-wav --sample-rate` or `export-mp3 --sample-rate` when a custom sample
+  rate is required.
 
 ## Dependency And Packaging Differences
 

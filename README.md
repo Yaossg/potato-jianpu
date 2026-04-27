@@ -8,7 +8,7 @@ Current status:
 - shared core document model
 - CLI with `parse`, `validate`, `export-svg`, `export-png`, `export-midi`, `export-wav`, and `export-mp3`
 - backend WAV and MP3 export
-- frontend web preview with SVG, PNG, and MIDI export
+- frontend web preview with SVG, PNG, MIDI, WAV, and MP3 export
 - browser playback with current-note highlighting and click-to-play preview notes
 - example scores in `examples/`
 - Node built-in test runner for parser, renderer, player, backend, CLI, and examples

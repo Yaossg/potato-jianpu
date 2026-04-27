@@ -9,10 +9,12 @@ The rewrite has two product targets:
 
 - Backend CLI: supports validation, parsing, SVG, PNG, MIDI, WAV, and MP3 export.
 - Frontend web app: supports editing, preview, playback, SVG export, PNG
-  export, and MIDI export.
+  export, MIDI export, WAV export, and MP3 export.
 
-WAV and MP3 export are backend-only. The frontend intentionally does not expose
-WAV or MP3 export.
+The backend and frontend use different adapters for binary exports. Backend PNG
+uses `@resvg/resvg-js`, while frontend PNG uses SVG-to-canvas. Backend WAV/MP3
+use a Node offline Web Audio adapter, while frontend WAV/MP3 use browser
+`OfflineAudioContext` and local JavaScript MP3 encoding.
 
 ## CLI Commands
 
@@ -174,7 +176,10 @@ The WAV renderer:
 - rests render as silence
 - writes stereo 16-bit PCM output
 
-This is a backend export feature, not a browser feature.
+The frontend also exposes WAV download. Browser WAV export uses
+`OfflineAudioContext` with the same TinySynth adapter as preview playback, then
+writes a RIFF/WAVE container locally in the browser. The frontend uses the
+current Program, volume, and initial-rest settings.
 
 ## MP3 Export
 
@@ -201,4 +206,7 @@ The MP3 renderer:
 - renders stereo PCM through the backend offline Web Audio context
 - encodes the resulting samples as MP3 frames through `lamejs`
 
-This is a backend export feature, not a browser feature.
+The frontend also exposes MP3 download. Browser MP3 export uses
+`OfflineAudioContext` with the same TinySynth adapter as preview playback, then
+encodes the rendered stereo PCM samples locally with `lamejs`. The frontend uses
+the current Program, volume, and initial-rest settings.

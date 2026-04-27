@@ -17,6 +17,7 @@ src/player/
 
 src/web/
   audio.ts    browser preview player
+  audio-export.ts browser WAV/MP3 export adapter
 
 src/backend/
   audio.ts    backend TinySynth offline PCM renderer
@@ -25,7 +26,7 @@ src/backend/
 ```
 
 The shared compiler is the common timing and pitch source for browser playback,
-MIDI export, WAV export, and MP3 export.
+MIDI export, backend audio export, and browser audio export.
 
 ## Melody Model
 
@@ -207,9 +208,10 @@ Clicking a rendered note starts playback from that note index.
 Browser playback velocity is currently fixed at MIDI velocity `64`. Volume is
 applied through WebAudioTinySynth master volume.
 
-WAV and MP3 export use the same WebAudioTinySynth adapter with an offline
-rendering context, so Program and drum timbres are aligned with browser
-playback.
+Backend WAV and MP3 export use the same WebAudioTinySynth adapter with an
+offline rendering context, so Program and drum timbres are aligned with browser
+playback. Browser WAV and MP3 export use `OfflineAudioContext` with the same
+adapter directly in the frontend.
 
 ## MIDI Export
 
@@ -326,6 +328,11 @@ The CLI exposes MP3 export as:
 ```sh
 jianpu export-mp3 input.jp -o output.mp3 --program 0 --sample-rate 44100 --amplitude 1 --bit-rate 128
 ```
+
+The frontend exposes WAV and MP3 download through `src/web/audio-export.ts`.
+Browser audio export uses the current Program, volume, and initial-rest settings
+from the Settings panel. Browser MP3 uses the same `lamejs` encoder bundled into
+the web build.
 
 ## Current Limitations
 

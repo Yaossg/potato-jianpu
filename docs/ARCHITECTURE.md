@@ -13,8 +13,8 @@ The repository builds two targets from shared TypeScript source:
 The backend CLI provides parse, validate, SVG, PNG, MIDI, WAV, and MP3 export.
 
 The frontend web app provides editing, SVG preview, playback, note highlighting,
-SVG download, PNG download, MIDI download, examples, and diagnostics. It
-intentionally does not expose WAV or MP3 export.
+SVG download, PNG download, MIDI download, WAV download, MP3 download, examples,
+and diagnostics.
 
 ## Data Flow
 
@@ -29,7 +29,7 @@ core Document
   |
   +--> renderer -> SVG string -> PNG adapters
   |
-  +--> melody compiler -> browser playback
+  +--> melody compiler -> browser playback / browser audio export
   |
   +--> melody compiler -> MIDI writer
   |
@@ -150,10 +150,9 @@ MP3 export.
 Browser playback itself lives in `src/web/audio.ts` and uses the shared
 `src/player/webaudio-tinysynth.js` adapter.
 
-WAV and MP3 export live in `src/backend` because they are backend export
-features. They share a TinySynth offline render path built on
-`@descript/web-audio-js`; WAV writes the PCM samples directly, while MP3 encodes
-them with `lamejs`.
+Backend WAV and MP3 export live in `src/backend`. They share a TinySynth offline
+render path built on `@descript/web-audio-js`; WAV writes the PCM samples
+directly, while MP3 encodes them with `lamejs`.
 
 ## Backend
 
@@ -226,11 +225,14 @@ Responsibilities:
 - SVG download
 - PNG download
 - MIDI download
+- WAV download
+- MP3 download
 - preview/export page width and theme controls
 
 The frontend imports shared parser, renderer, and player code. It does not
-import backend PNG or WAV modules; browser PNG export stays in `src/web` and
-uses DOM canvas APIs.
+import backend PNG, WAV, or MP3 modules. Browser PNG and audio export adapters
+stay in `src/web` and use DOM canvas APIs, `OfflineAudioContext`, and browser
+bundled encoders.
 
 ## Tests
 

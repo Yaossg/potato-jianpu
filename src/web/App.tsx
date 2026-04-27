@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import type { MouseEvent } from "react";
 import { compileMelody, DRUM_PROGRAMS, exportMidiBytes, GM_PROGRAMS, parse, skipInitialRests } from "../index.js";
 import { renderSvg } from "../renderer/index.js";
+import { exportBrowserMp3Bytes, exportBrowserWavBytes } from "./audio-export.js";
 import { PreviewAudioPlayer } from "./audio.js";
 import scale from "../../examples/scale.jp?raw";
 import twinkle from "../../examples/twinkle.jp?raw";
@@ -176,6 +177,7 @@ export function App() {
   const [program, setProgram] = useState(0);
   const [volume, setVolume] = useState(100);
   const [omitInitialRests, setOmitInitialRests] = useState(true);
+  const [exportingAudio, setExportingAudio] = useState<"wav" | "mp3" | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showExamples, setShowExamples] = useState(false);
   const [showGrammar, setShowGrammar] = useState(false);
@@ -216,6 +218,46 @@ export function App() {
       const midi = exportMidiBytes(parsed.value, program, { omitInitialRests });
       const buffer = midi.buffer.slice(midi.byteOffset, midi.byteOffset + midi.byteLength) as ArrayBuffer;
       downloadBytes(buffer, "jianpu-score.mid", "audio/midi");
+    }
+  }
+
+  async function exportWav() {
+    if (!parsed.ok || exportingAudio) {
+      return;
+    }
+    setExportingAudio("wav");
+    try {
+      const wav = await exportBrowserWavBytes(parsed.value, {
+        program,
+        amplitude: Math.min(1, Math.max(0, volume / 100)),
+        omitInitialRests,
+      });
+      const buffer = wav.buffer.slice(wav.byteOffset, wav.byteOffset + wav.byteLength) as ArrayBuffer;
+      downloadBytes(buffer, "jianpu-score.wav", "audio/wav");
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "Failed to export WAV.");
+    } finally {
+      setExportingAudio(null);
+    }
+  }
+
+  async function exportMp3() {
+    if (!parsed.ok || exportingAudio) {
+      return;
+    }
+    setExportingAudio("mp3");
+    try {
+      const mp3 = await exportBrowserMp3Bytes(parsed.value, {
+        program,
+        amplitude: Math.min(1, Math.max(0, volume / 100)),
+        omitInitialRests,
+      });
+      const buffer = mp3.buffer.slice(mp3.byteOffset, mp3.byteOffset + mp3.byteLength) as ArrayBuffer;
+      downloadBytes(buffer, "jianpu-score.mp3", "audio/mpeg");
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "Failed to export MP3.");
+    } finally {
+      setExportingAudio(null);
     }
   }
 
@@ -303,7 +345,7 @@ export function App() {
       <header className="topbar">
         <div>
           <h1>Modern Jianpu Reloaded</h1>
-          <p>Browser preview for the rewritten parser, SVG renderer, and MIDI exporter.</p>
+          <p>Browser preview for the rewritten parser, SVG renderer, and audio exporters.</p>
         </div>
         <div className="actions">
           <button type="button" onClick={toggleTheme}>
@@ -335,6 +377,12 @@ export function App() {
           </button>
           <button type="button" onClick={exportMidi} disabled={!parsed.ok}>
             Export MIDI
+          </button>
+          <button type="button" onClick={() => void exportWav()} disabled={!parsed.ok || exportingAudio !== null}>
+            {exportingAudio === "wav" ? "Exporting WAV..." : "Export WAV"}
+          </button>
+          <button type="button" onClick={() => void exportMp3()} disabled={!parsed.ok || exportingAudio !== null}>
+            {exportingAudio === "mp3" ? "Exporting MP3..." : "Export MP3"}
           </button>
         </div>
       </header>
