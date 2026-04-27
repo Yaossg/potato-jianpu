@@ -371,21 +371,26 @@ export function App() {
               Play
             </button>
           )}
-          <button type="button" onClick={exportSvg} disabled={!svg}>
-            Export SVG
-          </button>
-          <button type="button" onClick={() => void exportPng()} disabled={!svg}>
-            Export PNG
-          </button>
-          <button type="button" onClick={exportMidi} disabled={!parsed.ok}>
-            Export MIDI
-          </button>
-          <button type="button" onClick={() => void exportWav()} disabled={!parsed.ok || exportingAudio !== null}>
-            {exportingAudio === "wav" ? "Exporting WAV..." : "Export WAV"}
-          </button>
-          <button type="button" onClick={() => void exportMp3()} disabled={!parsed.ok || exportingAudio !== null}>
-            {exportingAudio === "mp3" ? "Exporting MP3..." : "Export MP3"}
-          </button>
+          <details className="export-menu">
+            <summary>Export</summary>
+            <div className="export-menu-items">
+              <button type="button" onClick={exportSvg} disabled={!svg}>
+                SVG
+              </button>
+              <button type="button" onClick={() => void exportPng()} disabled={!svg}>
+                PNG
+              </button>
+              <button type="button" onClick={exportMidi} disabled={!parsed.ok}>
+                MIDI
+              </button>
+              <button type="button" onClick={() => void exportWav()} disabled={!parsed.ok || exportingAudio !== null}>
+                {exportingAudio === "wav" ? "Exporting WAV..." : "WAV"}
+              </button>
+              <button type="button" onClick={() => void exportMp3()} disabled={!parsed.ok || exportingAudio !== null}>
+                {exportingAudio === "mp3" ? "Exporting MP3..." : "MP3"}
+              </button>
+            </div>
+          </details>
         </div>
       </header>
 

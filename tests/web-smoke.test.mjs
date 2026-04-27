@@ -32,11 +32,10 @@ test("frontend production build emits the expected app shell", async () => {
   const grammar = await readFile(new URL("../dist-web/grammar.html", import.meta.url), "utf8");
 
   assert.match(script, /Modern Jianpu Reloaded/);
-  assert.match(script, /Export SVG/);
-  assert.match(script, /Export PNG/);
-  assert.match(script, /Export MIDI/);
-  assert.match(script, /Export WAV/);
-  assert.match(script, /Export MP3/);
+  assert.match(script, /Export/);
+  assert.doesNotMatch(script, /Export SVG/);
+  assert.doesNotMatch(script, /Export PNG/);
+  assert.doesNotMatch(script, /Export MIDI/);
   assert.match(script, /jianpu-score\.svg/);
   assert.match(script, /jianpu-score\.png/);
   assert.match(script, /jianpu-score\.mid/);
@@ -64,6 +63,8 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(script, /Omit initial rests/);
   assert.match(style, /font-variant-ligatures:\s*none/);
   assert.match(style, /\.theme-dark/);
+  assert.match(style, /\.export-menu/);
+  assert.match(style, /\.export-menu-items/);
   assert.match(style, /\.settings-panel/);
   assert.match(style, /\.settings-section\s*\+\s*\.settings-section/);
   assert.match(style, /\.settings-grid/);
