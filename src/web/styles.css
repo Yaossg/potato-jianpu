@@ -332,6 +332,7 @@ button:disabled {
 }
 
 textarea {
+  flex: 1;
   min-height: 520px;
   resize: vertical;
   border: 0;
