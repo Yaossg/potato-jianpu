@@ -7,16 +7,12 @@ reloaded backend CLI and frontend application.
 
 The rewrite has two product targets:
 
-- Backend CLI: supports validation, parsing, SVG, PNG, MIDI, and WAV export.
+- Backend CLI: supports validation, parsing, SVG, PNG, MIDI, WAV, and MP3 export.
 - Frontend web app: supports editing, preview, playback, SVG export, PNG
   export, and MIDI export.
 
-WAV export is backend-only. The frontend intentionally does not expose WAV or
-MP3 export.
-
-MP3 export is intentionally deferred from the current release target. WAV export
-is the backend audio export for now and can be used as an intermediate if MP3
-encoding is added later.
+WAV and MP3 export are backend-only. The frontend intentionally does not expose
+WAV or MP3 export.
 
 ## CLI Commands
 
@@ -31,6 +27,7 @@ pnpm run cli -- export-svg examples/twinkle.jp -o twinkle.svg --page-width 1000 
 pnpm run cli -- export-png examples/twinkle.jp -o twinkle.png --page-width 1000 --color "#111827" --background "#ffffff"
 pnpm run cli -- export-midi examples/twinkle.jp -o twinkle.mid --program 0 --omit-initial-rest
 pnpm run cli -- export-wav examples/twinkle.jp -o twinkle.wav --sample-rate 44100 --amplitude 1 --omit-initial-rest
+pnpm run cli -- export-mp3 examples/twinkle.jp -o twinkle.mp3 --sample-rate 44100 --amplitude 1 --bit-rate 128 --omit-initial-rest
 ```
 
 The built package also exposes a `jianpu` binary mapped to
@@ -176,5 +173,32 @@ The WAV renderer:
 - treats `--amplitude` as TinySynth master volume
 - rests render as silence
 - writes stereo 16-bit PCM output
+
+This is a backend export feature, not a browser feature.
+
+## MP3 Export
+
+MP3 export uses the same offline audio render path as WAV export, then encodes
+the stereo PCM samples with `lamejs`:
+
+```sh
+pnpm run cli -- export-mp3 input.jp -o output.mp3 --program 0 --sample-rate 44100 --amplitude 1 --bit-rate 128
+```
+
+Options:
+
+- `--program <number>`: same range and drum mapping as MIDI and WAV export.
+- `--sample-rate <hz>`: positive number. Defaults to `44100`.
+- `--amplitude <number>`: number greater than `0` and no more than `1`.
+  Defaults to `1`.
+- `--bit-rate <kbps>`: positive number. Defaults to `128`.
+- `--omit-initial-rest`: remove leading rests before rendering audio.
+
+The MP3 renderer:
+
+- shares TinySynth scheduling, Program behavior, drum behavior, velocity, and
+  rest handling with WAV export
+- renders stereo PCM through the backend offline Web Audio context
+- encodes the resulting samples as MP3 frames through `lamejs`
 
 This is a backend export feature, not a browser feature.

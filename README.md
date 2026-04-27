@@ -6,8 +6,8 @@ Current status:
 
 - hand-written tokenizer/parser
 - shared core document model
-- CLI with `parse`, `validate`, `export-svg`, `export-png`, `export-midi`, and `export-wav`
-- backend WAV export
+- CLI with `parse`, `validate`, `export-svg`, `export-png`, `export-midi`, `export-wav`, and `export-mp3`
+- backend WAV and MP3 export
 - frontend web preview with SVG, PNG, and MIDI export
 - browser playback with current-note highlighting and click-to-play preview notes
 - example scores in `examples/`
@@ -28,6 +28,7 @@ pnpm run cli -- export-svg examples/twinkle.jp -o twinkle.svg --page-width 1000 
 pnpm run cli -- export-png examples/twinkle.jp -o twinkle.png --page-width 1000 --color "#111827" --background "#ffffff"
 pnpm run cli -- export-midi examples/twinkle.jp -o twinkle.mid --program 0
 pnpm run cli -- export-wav examples/twinkle.jp -o twinkle.wav --program 0 --sample-rate 44100 --amplitude 1
+pnpm run cli -- export-mp3 examples/twinkle.jp -o twinkle.mp3 --program 0 --sample-rate 44100 --amplitude 1 --bit-rate 128
 pnpm run dev
 pnpm run web:build
 ```

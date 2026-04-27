@@ -10,7 +10,7 @@ The repository builds two targets from shared TypeScript source:
 - Backend CLI
 - Frontend web app
 
-The backend CLI provides parse, validate, SVG, PNG, MIDI, and WAV export.
+The backend CLI provides parse, validate, SVG, PNG, MIDI, WAV, and MP3 export.
 
 The frontend web app provides editing, SVG preview, playback, note highlighting,
 SVG download, PNG download, MIDI download, examples, and diagnostics. It
@@ -33,7 +33,7 @@ core Document
   |
   +--> melody compiler -> MIDI writer
   |
-  +--> melody compiler -> WAV writer
+  +--> melody compiler -> backend audio renderer -> WAV writer / MP3 encoder
 ```
 
 The parser is the only module that understands source text. Renderer, player,
@@ -50,7 +50,7 @@ export * from "./player/index.js";
 export * from "./renderer/index.js";
 ```
 
-Backend-only exports such as WAV are exported from `src/backend`.
+Backend-only exports such as WAV and MP3 are exported from `src/backend`.
 
 ## Core
 
@@ -144,14 +144,16 @@ Responsibilities:
   and drum notes
 - export MIDI bytes from the shared melody model
 
-The melody compiler is shared by browser playback, MIDI export, and WAV export.
+The melody compiler is shared by browser playback, MIDI export, WAV export, and
+MP3 export.
 
 Browser playback itself lives in `src/web/audio.ts` and uses the shared
 `src/player/webaudio-tinysynth.js` adapter.
 
-WAV export lives in `src/backend/wav.ts` because it is a backend export feature.
-It uses the same TinySynth adapter with `@descript/web-audio-js` as an offline
-Web Audio context.
+WAV and MP3 export live in `src/backend` because they are backend export
+features. They share a TinySynth offline render path built on
+`@descript/web-audio-js`; WAV writes the PCM samples directly, while MP3 encodes
+them with `lamejs`.
 
 ## Backend
 
@@ -164,7 +166,7 @@ src/backend/
 Responsibilities:
 
 - PNG export from SVG using `@resvg/resvg-js`
-- WAV export from parsed document using the shared melody compiler
+- WAV and MP3 export from parsed document using the shared melody compiler
 
 Backend modules may use Node-capable dependencies and binary export formats.
 They should not be imported into the frontend bundle.
@@ -193,6 +195,7 @@ Implemented commands:
 - `export-png`
 - `export-midi`
 - `export-wav`
+- `export-mp3`
 
 The CLI returns:
 
@@ -243,7 +246,7 @@ Current coverage areas:
 
 - parser behavior and diagnostics
 - renderer SVG behavior
-- backend PNG and WAV export
+- backend PNG, WAV, and MP3 export
 - CLI behavior
 - all examples parsing and exporting
 - melody compiler behavior
@@ -291,7 +294,8 @@ Practical rules:
   `TimedNote` model.
 - Browser playback lives outside `src/player`, so the player package is not yet
   a complete runtime playback abstraction.
-- MP3 export is intentionally deferred from the current release target.
+- Backend audio export now has a shared render helper, but the WAV and MP3
+  writers still own format-specific byte generation directly.
 
 These are acceptable for the current rewrite stage but should guide later
 refactors.

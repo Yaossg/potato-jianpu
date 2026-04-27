@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { readFile, writeFile } from "node:fs/promises";
-import { exportWavBytes, renderPngBytes } from "../backend/index.js";
+import { exportMp3Bytes, exportWavBytes, renderPngBytes } from "../backend/index.js";
 import { parse } from "../parser/index.js";
 import { exportMidiBytes } from "../player/index.js";
 import { renderSvg } from "../renderer/index.js";
@@ -14,8 +14,9 @@ function usage(): string {
     "  jianpu export-png <file> -o <output.png> [--page-width <px>] [--color <css>] [--background <css>]",
     "  jianpu export-midi <file> -o <output.mid> [--program <number>] [--omit-initial-rest]",
     "  jianpu export-wav <file> -o <output.wav> [--program <number>] [--sample-rate <hz>] [--amplitude <0-1>] [--omit-initial-rest]",
+    "  jianpu export-mp3 <file> -o <output.mp3> [--program <number>] [--sample-rate <hz>] [--amplitude <0-1>] [--bit-rate <kbps>] [--omit-initial-rest]",
     "",
-    "Current rewrite status: parse/validate/export-svg/export-png/export-midi/export-wav are implemented.",
+    "Current rewrite status: parse/validate/export-svg/export-png/export-midi/export-wav/export-mp3 are implemented.",
   ].join("\n");
 }
 
@@ -24,7 +25,7 @@ function readFlag(flags: string[], name: string): string | undefined {
   return index >= 0 ? flags[index + 1] : undefined;
 }
 
-const VALUE_FLAGS = new Set(["-o", "--page-width", "--color", "--background", "--program", "--sample-rate", "--amplitude"]);
+const VALUE_FLAGS = new Set(["-o", "--page-width", "--color", "--background", "--program", "--sample-rate", "--amplitude", "--bit-rate"]);
 const NEGATIVE_NUMBER_PATTERN = /^-\d+(?:\.\d+)?$/;
 
 function looksLikeFlag(value: string): boolean {
@@ -57,7 +58,8 @@ function commandFlags(command: string): Set<string> {
     case "export-midi":
       return new Set(["-o", "--program", "--omit-initial-rest"]);
     case "export-wav":
-      return new Set(["-o", "--program", "--sample-rate", "--amplitude", "--omit-initial-rest"]);
+    case "export-mp3":
+      return new Set(["-o", "--program", "--sample-rate", "--amplitude", "--bit-rate", "--omit-initial-rest"]);
     default:
       return new Set();
   }
@@ -112,7 +114,7 @@ async function main(argv: string[]): Promise<number> {
     console.log(usage());
     return 0;
   }
-  if (!file || !["validate", "parse", "export-svg", "export-png", "export-midi", "export-wav"].includes(command)) {
+  if (!file || !["validate", "parse", "export-svg", "export-png", "export-midi", "export-wav", "export-mp3"].includes(command)) {
     console.error(usage());
     return 2;
   }
@@ -122,7 +124,16 @@ async function main(argv: string[]): Promise<number> {
     console.error(`error: unknown option ${unknown}`);
     return 2;
   }
-  const missingFlagValue = validateFlagValues(flags, ["-o", "--page-width", "--color", "--background", "--program", "--sample-rate", "--amplitude"]);
+  const missingFlagValue = validateFlagValues(flags, [
+    "-o",
+    "--page-width",
+    "--color",
+    "--background",
+    "--program",
+    "--sample-rate",
+    "--amplitude",
+    "--bit-rate",
+  ]);
   if (missingFlagValue) {
     console.error(`error: ${missingFlagValue} requires a value`);
     return 2;
@@ -239,6 +250,39 @@ async function main(argv: string[]): Promise<number> {
       return 2;
     }
     await writeFile(output, exportWavBytes(result.value, { program, sampleRate, amplitude, omitInitialRests: flags.includes("--omit-initial-rest") }));
+    console.log(output);
+  }
+
+  if (command === "export-mp3") {
+    const output = readFlag(flags, "-o");
+    if (!output) {
+      console.error("error: export-mp3 requires -o <output.mp3>");
+      return 2;
+    }
+    const program = readProgram(flags);
+    if (program === null) {
+      console.error("error: --program must be an integer from 0 to 220");
+      return 2;
+    }
+    const sampleRate = readPositiveNumberFlag(flags, "--sample-rate");
+    if (Number.isNaN(sampleRate)) {
+      console.error("error: --sample-rate must be a positive number");
+      return 2;
+    }
+    const amplitude = readPositiveNumberFlag(flags, "--amplitude");
+    if (Number.isNaN(amplitude) || (amplitude !== undefined && amplitude > 1)) {
+      console.error("error: --amplitude must be a number greater than 0 and no more than 1");
+      return 2;
+    }
+    const bitRate = readPositiveNumberFlag(flags, "--bit-rate");
+    if (Number.isNaN(bitRate)) {
+      console.error("error: --bit-rate must be a positive number");
+      return 2;
+    }
+    await writeFile(
+      output,
+      exportMp3Bytes(result.value, { program, sampleRate, amplitude, bitRate, omitInitialRests: flags.includes("--omit-initial-rest") }),
+    );
     console.log(output);
   }
 

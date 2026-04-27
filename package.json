@@ -64,6 +64,7 @@
   "dependencies": {
     "@descript/web-audio-js": "0.15.3-patched.6",
     "@resvg/resvg-js": "^2.6.2",
+    "lamejs": "^1.2.1",
     "react": "^19.2.5",
     "react-dom": "^19.2.5"
   }

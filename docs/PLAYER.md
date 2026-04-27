@@ -19,11 +19,13 @@ src/web/
   audio.ts    browser preview player
 
 src/backend/
+  audio.ts    backend TinySynth offline PCM renderer
   wav.ts      backend WAV writer
+  mp3.ts      backend MP3 encoder
 ```
 
 The shared compiler is the common timing and pitch source for browser playback,
-MIDI export, and WAV export.
+MIDI export, WAV export, and MP3 export.
 
 ## Melody Model
 
@@ -116,12 +118,12 @@ Rests compile to:
 
 MIDI export advances delta time without writing note events.
 
-Browser playback and WAV export render the duration as silence.
+Browser playback, WAV export, and MP3 export render the duration as silence.
 
 `skipInitialRests(melody)` removes leading rest events while preserving tempo,
 time-signature metadata, and note indexes for the remaining events. The frontend
-uses this for from-start playback when "Omit initial rests" is enabled. MIDI and
-WAV export can also opt into the same behavior.
+uses this for from-start playback when "Omit initial rests" is enabled. MIDI,
+WAV, and MP3 export can also opt into the same behavior.
 
 ## Chords
 
@@ -136,8 +138,8 @@ Browser playback schedules note-on and note-off events for every MIDI note.
 MIDI export emits note-on events for every chord note at the same logical start
 time and note-off events after the shared duration.
 
-WAV export schedules the same note-on and note-off events into an offline
-WebAudioTinySynth rendering context.
+WAV and MP3 export schedule the same note-on and note-off events into an
+offline WebAudioTinySynth rendering context.
 
 ## Drum Mode
 
@@ -205,8 +207,9 @@ Clicking a rendered note starts playback from that note index.
 Browser playback velocity is currently fixed at MIDI velocity `64`. Volume is
 applied through WebAudioTinySynth master volume.
 
-WAV export uses the same WebAudioTinySynth adapter with an offline rendering
-context, so Program and drum timbres are aligned with browser playback.
+WAV and MP3 export use the same WebAudioTinySynth adapter with an offline
+rendering context, so Program and drum timbres are aligned with browser
+playback.
 
 ## MIDI Export
 
@@ -296,8 +299,33 @@ Invalid sample rates and amplitudes throw errors.
 
 The CLI exposes WAV amplitude through `export-wav --amplitude`.
 
-The CLI exposes initial-rest omission through `--omit-initial-rest` for MIDI and
-WAV export.
+The CLI exposes initial-rest omission through `--omit-initial-rest` for MIDI,
+WAV, and MP3 export.
+
+## MP3 Export
+
+`exportMp3Bytes(document, options?)` returns a `Uint8Array`.
+
+Options:
+
+```ts
+interface Mp3ExportOptions {
+  sampleRate?: number;
+  program?: number;
+  amplitude?: number;
+  omitInitialRests?: boolean;
+  bitRate?: number;
+}
+```
+
+MP3 export shares the same backend TinySynth PCM render path as WAV export, then
+encodes the stereo samples with `lamejs`. The default bit rate is `128` kbps.
+
+The CLI exposes MP3 export as:
+
+```sh
+jianpu export-mp3 input.jp -o output.mp3 --program 0 --sample-rate 44100 --amplitude 1 --bit-rate 128
+```
 
 ## Current Limitations
 
@@ -305,10 +333,10 @@ The current player/export layer is functional but not a full synthesizer:
 
 - browser playback uses WebAudioTinySynth timbres rather than sampled
   instruments
-- WAV export uses the same WebAudioTinySynth timbres through an offline context
+- WAV and MP3 export use the same WebAudioTinySynth timbres through an offline
+  context
 - no velocity syntax
 - no multi-track arrangement model
-- MP3 export is deferred from the current release target
 
 These limitations keep the rewrite focused while the core parser, renderer, and
 export surfaces stabilize.

@@ -21,7 +21,7 @@ The reloaded implementation should:
 The legacy examples from the original frontend examples panel have been moved to
 `examples/*.jp` fixtures. The automated example test parses each file, renders
 SVG/PNG, and exports MIDI/WAV so these scores continue to act as compatibility
-coverage.
+coverage. MP3 export is covered by focused backend and CLI tests.
 
 ## Supported Syntax
 
@@ -138,7 +138,7 @@ Known limitations:
 ## Player Differences
 
 The reloaded player uses one shared melody compiler for browser playback, MIDI
-export, and WAV export.
+export, WAV export, and MP3 export.
 
 Preserved behavior:
 
@@ -156,11 +156,11 @@ Drum behavior:
 - drum mode maps `X` to `program - 128 + 35`
 - MIDI drum mode uses channel 10 and omits program change
 
-Browser playback and backend WAV export both use the legacy WebAudioTinySynth
+Browser playback and backend audio export both use the legacy WebAudioTinySynth
 implementation for lightweight Program and drum timbres. Browser playback uses a
-real `AudioContext`; backend WAV export uses an offline
-`@descript/web-audio-js` rendering context and writes the rendered samples into a
-WAV container.
+real `AudioContext`; backend WAV/MP3 export uses an offline
+`@descript/web-audio-js` rendering context. WAV writes the rendered samples into
+a WAV container, while MP3 encodes the same rendered samples with `lamejs`.
 
 ## Export Differences
 
@@ -170,6 +170,7 @@ Backend CLI currently supports:
 - PNG
 - MIDI
 - WAV
+- MP3
 
 Frontend currently supports:
 
@@ -194,10 +195,8 @@ Frontend intentionally does not support:
 - WAV export
 - MP3 export
 - the old frontend sample-rate setting, because it only applied to browser WAV
-  export. Use backend `export-wav --sample-rate` instead.
-
-MP3 export is intentionally deferred from the current release target. WAV is the
-current backend audio export.
+  export. Use backend `export-wav --sample-rate` or
+  `export-mp3 --sample-rate` instead.
 
 ## Dependency And Packaging Differences
 
@@ -224,6 +223,7 @@ The current automated test suite covers:
 - PNG export
 - MIDI export
 - WAV export
+- MP3 export
 - CLI behavior
 - all example files through parse, SVG, PNG, MIDI, and WAV paths
 

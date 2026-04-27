@@ -29,6 +29,7 @@ test("CLI prints usage help", async () => {
   assert.match(stdout, /Usage:/);
   assert.match(stdout, /export-svg/);
   assert.match(stdout, /export-wav/);
+  assert.match(stdout, /export-mp3/);
 });
 
 test("CLI export-svg accepts page width", async () => {
@@ -241,6 +242,26 @@ test("CLI export-wav writes a WAV file", async () => {
   assert.equal(wav.readUInt32LE(24), 8000);
 });
 
+test("CLI export-mp3 writes an MP3 file", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
+  const input = join(dir, "score.jp");
+  const output = join(dir, "score.mp3");
+  await writeFile(input, `tempo: "120"\n=\n1 2 3 4`, "utf8");
+
+  await execFileAsync(
+    process.execPath,
+    ["dist/cli/main.js", "export-mp3", input, "-o", output, "--sample-rate", "44100", "--amplitude", "0.5", "--bit-rate", "64"],
+    {
+      cwd: repoDir,
+    },
+  );
+
+  const mp3 = await readFile(output);
+  const syncOffset = mp3.findIndex((byte, index) => byte === 0xff && (mp3[index + 1] & 0xe0) === 0xe0);
+  assert.ok(syncOffset >= 0);
+  assert.ok(mp3.length > 100);
+});
+
 test("CLI export-midi and export-wav can omit initial rests", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
   const input = join(dir, "score.jp");
@@ -292,6 +313,20 @@ test("CLI rejects invalid WAV amplitudes", async () => {
       cwd: repoDir,
     }),
     /--amplitude must be a number greater than 0 and no more than 1/,
+  );
+});
+
+test("CLI rejects invalid MP3 bit rates", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
+  const input = join(dir, "score.jp");
+  const output = join(dir, "score.mp3");
+  await writeFile(input, "1 2 3 4", "utf8");
+
+  await assert.rejects(
+    execFileAsync(process.execPath, ["dist/cli/main.js", "export-mp3", input, "-o", output, "--bit-rate", "0"], {
+      cwd: repoDir,
+    }),
+    /--bit-rate must be a positive number/,
   );
 });
 

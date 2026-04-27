@@ -22,6 +22,7 @@ The backend CLI includes the full export surface:
 - export PNG
 - export MIDI
 - export WAV
+- export MP3
 - print diagnostics for humans and JSON diagnostics for scripts
 
 The frontend browser edition includes:
@@ -42,7 +43,7 @@ The frontend browser edition includes:
 Frontend WAV and MP3 export are intentionally out of scope. PNG export is
 available in both editions: the backend uses a Node-capable adapter, while the
 frontend uses browser SVG-to-canvas rendering. WAV belongs to the backend CLI.
-MP3 export is deferred.
+MP3 also belongs to the backend CLI.
 
 Serverless deployment is not a target. The backend CLI replaces the old
 serverless/API export path.
@@ -62,10 +63,10 @@ pnpm -C reloaded run test
 
 Current known passing state:
 
-- 75 tests pass.
+- 79 tests pass.
 - The test suite builds TypeScript before running Node tests.
 - Coverage includes parser behavior, renderer snapshots, player timing, MIDI,
-  backend PNG/WAV export, examples, CLI behavior, release metadata, and a
+  backend PNG/WAV/MP3 export, examples, CLI behavior, release metadata, and a
   frontend production build smoke test.
 
 ## Implemented
@@ -140,7 +141,10 @@ Player and audio:
   `@descript/web-audio-js` offline rendering, so WAV timbres follow browser
   Program and drum playback more closely than the earlier simple oscillator
   path.
-- WAV output is backend-only stereo 16-bit PCM.
+- Backend MP3 export shares the same offline TinySynth render path and encodes
+  the resulting stereo PCM with `lamejs`.
+- WAV output is backend-only stereo 16-bit PCM; MP3 output is backend-only
+  compressed audio.
 - Browser playback and exports use fixed MIDI velocity `64`.
 
 Backend CLI:
@@ -151,6 +155,7 @@ Backend CLI:
 - `export-png`
 - `export-midi`
 - `export-wav`
+- `export-mp3`
 - `--version`
 - `--help`
 - Human-readable diagnostics on stderr.
@@ -159,7 +164,8 @@ Backend CLI:
 - Parse/export failures return exit code `1`.
 - CLI validates options before reading input files where possible.
 - Option handling covers missing values, unknown options, negative numeric
-  values, page width, WAV sample rate, WAV amplitude, and program range.
+  values, page width, audio sample rate, WAV/MP3 amplitude, MP3 bit rate, and
+  program range.
 
 Frontend:
 
@@ -191,7 +197,8 @@ Examples:
 
 - Legacy examples from the original examples panel are available as
   `examples/*.jp` fixtures.
-- Examples are covered by parse, SVG, PNG, MIDI, and WAV test paths.
+- Examples are covered by parse, SVG, PNG, MIDI, and WAV test paths. MP3 export
+  is covered by focused backend and CLI tests.
 
 Documentation:
 
@@ -223,8 +230,8 @@ rewrite target:
 - Nearley/Moo parser generation and `plugins/nearleyc.js`.
 - Generated `public/grammar.html` railroad diagram.
 
-The grammar is now maintained in `docs/GRAMMAR.md`. Backend WAV sample rate is
-available through `export-wav --sample-rate`.
+The grammar is now maintained in `docs/GRAMMAR.md`. Backend audio sample rate is
+available through `export-wav --sample-rate` and `export-mp3 --sample-rate`.
 
 ## Remaining Work
 
@@ -245,7 +252,7 @@ Medium priority:
 
 - Improve parser diagnostics and recovery for additional malformed compact
   notation and header edge cases discovered during compatibility testing.
-- Validate TinySynth WAV output quality and performance on longer example
+- Validate TinySynth WAV/MP3 output quality and performance on longer example
   scores. The current examples pass, but offline TinySynth rendering is slower
   than the earlier simple waveform renderer.
 - Review frontend responsive layout in a real browser after browser automation
@@ -260,7 +267,6 @@ Lower priority or post-parity improvements:
 - Velocity syntax.
 - Multi-track arrangements.
 - Richer drum controls.
-- Optional MP3 backend export.
 - Optional npm publication after package policy is decided.
 - Optional favicon/static asset polish.
 
@@ -281,7 +287,7 @@ core Document
   |
   +--> melody compiler -> MIDI writer
   |
-  +--> melody compiler -> backend TinySynth WAV renderer
+  +--> melody compiler -> backend TinySynth audio renderer -> WAV / MP3
 ```
 
 Dependency direction:
@@ -304,7 +310,7 @@ Rules:
 - Parser does not import renderer, player, backend, CLI, or web code.
 - Renderer does not parse source text and does not import backend code.
 - Player owns melody/MIDI/shared synth-facing logic but not UI.
-- Backend owns Node-capable PNG and WAV adapters.
+- Backend owns Node-capable PNG, WAV, and MP3 adapters.
 - Web owns the browser PNG adapter.
 - Web does not import backend modules.
 - CLI coordinates modules but should keep business logic thin.
@@ -336,8 +342,8 @@ Intentional differences:
 - Measure duration mismatch is a warning, not a fatal error.
 - Renderer output is deterministic SVG strings rather than React element output.
 - Bars are SVG primitives rather than music-font glyphs.
-- WAV is backend-only; PNG is available in both editions through different
-  adapters.
+- WAV and MP3 are backend-only; PNG is available in both editions through
+  different adapters.
 - Serverless is removed from the target architecture.
 
 ## Milestone Status
@@ -369,7 +375,7 @@ Milestone 3: playback and MIDI
 Milestone 4: backend exports and UI polish
 
 - Status: substantially complete.
-- Notes: CLI SVG/PNG/MIDI/WAV exports work; frontend exposes SVG/PNG/MIDI and
+- Notes: CLI SVG/PNG/MIDI/WAV/MP3 exports work; frontend exposes SVG/PNG/MIDI and
   intentionally excludes WAV/MP3; settings/examples/theme/page-width workflows
   are present.
 - Remaining work: real-browser responsive and workflow checks.
@@ -389,7 +395,7 @@ Current test layers:
 - parser unit tests
 - renderer SVG tests and golden snapshots
 - player melody/MIDI tests
-- backend PNG/WAV tests
+- backend PNG/WAV/MP3 tests
 - CLI integration tests
 - examples compatibility test
 - package metadata test
@@ -419,7 +425,7 @@ Browser automation dependency:
 
 TinySynth offline rendering performance:
 
-- WAV export now matches browser timbres more closely, but rendering long
+- WAV and MP3 export now match browser timbres more closely, but rendering long
   examples is slower than the previous deterministic oscillator path.
 
 Renderer complexity:
