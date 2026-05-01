@@ -419,11 +419,17 @@ octave     ::= LOWER+ | HIGHER+</pre>
         forms such as <code>1-/</code> and <code>1/-</code>.
       </p>
 
-      <h3>Tokenizer</h3>
-      <div class="diagram">
-        <svg class="railroad-diagram" width="199.5" style="max-height: 92px;" viewBox="0 0 199.5 92"><g transform="translate(.5 .5)"><g><path d="M20 21v20m0 -10h20"></path></g><g><path d="M40 31h0"></path><path d="M159.5 31h0"></path><path d="M40 31h20"></path><g class="non-terminal"><path d="M60 31h21.25"></path><path d="M118.25 31h21.25"></path><rect x="81.25" y="20" width="37" height="22"></rect><a xlink:href="#WS"><text x="99.75" y="35">WS</text></a></g><path d="M139.5 31h20"></path><path d="M40 31a10 10 0 0 1 10 10v10a10 10 0 0 0 10 10"></path><g class="non-terminal"><path d="M60 61h0"></path><path d="M139.5 61h0"></path><rect x="60" y="50" width="79.5" height="22"></rect><a xlink:href="#COMMENT"><text x="99.75" y="65">COMMENT</text></a></g><path d="M139.5 61a10 10 0 0 0 10 -10v-10a10 10 0 0 1 10 -10"></path></g><path d="M 159.5 31 h 20 m 0 -10 v 20"></path></g></svg>
-      </div>
-      <pre class="ebnf">SKIPPED    ::= WS | COMMENT
+      <h3>Token Reference</h3>
+      <p>
+        The parser consumes whitespace and comments between grammar tokens, so they are listed separately from tokens
+        that become part of the parsed structure. Reserved token spellings such as <code>bb</code>, <code>b</code>, and
+        <code>X</code> are matched before identifiers.
+      </p>
+      <pre class="ebnf">Ignored between tokens:
+WS         ::= " " | "\t"
+COMMENT    ::= ";" characters-until-newline
+
+Structural tokens:
 IDENTIFIER ::= /[A-Za-z_]+/ except bb, b, X
 STRING     ::= '"' (escaped-char | non-newline-non-quote)* '"'
 NOTE       ::= "1" | "2" | "3" | "4" | "5" | "6" | "7"
@@ -443,8 +449,7 @@ HIGHER     ::= "'"
 TIE        ::= "~"
 EQUALS     ::= "="
 NEWLINE    ::= "\n" | "\r\n" | "\r"
-WS         ::= " " | "\t"
-COMMENT    ::= ";" characters-until-newline</pre>
+EOF        ::= end-of-file</pre>
 
     </main>
   </body>

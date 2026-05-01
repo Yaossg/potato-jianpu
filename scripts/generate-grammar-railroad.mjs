@@ -20,7 +20,6 @@ const diagramTargets = [
   { heading: "Pitch", rules: ["pitch_note"] },
   { heading: "Chord", rules: ["chord"] },
   { heading: "Duration", rules: ["length"] },
-  { heading: "Tokenizer", rules: ["skipped"] },
 ];
 
 function generatedDiagramMap(generatedHtml) {
