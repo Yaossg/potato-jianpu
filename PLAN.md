@@ -68,6 +68,9 @@ Current known passing state:
 - Coverage includes parser behavior, renderer snapshots, player timing, MIDI,
   backend PNG/WAV/MP3 export, examples, CLI behavior, release metadata, and a
   frontend production build smoke test covering SVG/PNG/MIDI/WAV/MP3 controls.
+- The examples directory currently contains 11 curated `.jp` fixtures.
+- Browser automation dependencies such as Playwright are intentionally not part
+  of the current dependency set.
 
 ## Implemented
 
@@ -137,6 +140,9 @@ Player and audio:
   melodic program changes, channel 10 drum handling, note on/off events, and
   deterministic bytes.
 - Browser playback uses the `WebAudioTinySynth` adapter.
+- Browser playback schedules TinySynth events incrementally instead of queuing
+  an entire song at once.
+- Browser playback stops when the source editor changes.
 - Backend WAV export uses the same `WebAudioTinySynth` adapter with
   `@descript/web-audio-js` offline rendering, so WAV timbres align with browser
   Program and drum playback.
@@ -192,16 +198,18 @@ Frontend:
 - Loading an example stops active playback and closes the panel.
 - Play and Stop close the examples panel.
 - Grammar button opens `public/grammar.html`, copied into the frontend build.
-  That page contains the parser-shaped railroad/EBNF reference and the prose
-  grammar notes.
+  That page contains a prose Reference section followed by a Railroad and EBNF
+  appendix generated from `docs/grammar.ebnf`.
 - Frontend production build smoke test confirms SVG/PNG/MIDI/WAV/MP3 controls
   and download filenames are present.
 
 Examples:
 
-- Example scores are available as `examples/*.jp` fixtures.
+- 11 example scores are available as `examples/*.jp` fixtures.
 - Examples have consistent metadata headers and are expected to parse without
   warnings.
+- The examples panel intentionally omits standalone Accidentals and Chords
+  entries; those syntax features remain covered by parser and renderer tests.
 - Examples are covered by parse, SVG, PNG, MIDI, and WAV test paths. MP3 export
   is covered by focused backend and CLI tests.
 
@@ -240,28 +248,21 @@ through `export-wav --sample-rate` and `export-mp3 --sample-rate`.
 
 High priority:
 
-- Add browser-level frontend smoke tests. Current frontend verification builds
-  the production bundle but does not open the app in a real browser, load an
-  example, verify non-empty rendered SVG, click a note, or exercise playback and
-  export buttons.
-- Decide the browser test tool. Playwright is the strongest fit, but it requires
-  adding a browser automation dependency and handling installation in this
-  environment.
 - Add focused renderer golden snapshots only when behavior changes or an
   uncovered behavior edge case is found. The current snapshot set already
   covers the main header, notation, wrapping, and tie cases.
-
-Medium priority:
-
 - Improve parser diagnostics and recovery for additional malformed compact
   notation and header edge cases discovered during testing.
 - Validate TinySynth WAV/MP3 output quality and performance on longer example
-  scores in both backend and browser exporters. The current examples pass, but
-  offline TinySynth rendering is slower than the earlier simple waveform
-  renderer.
-- Review frontend responsive layout in a real browser after browser automation
-  exists.
-- Finalize distribution polish once browser smoke testing is decided.
+  scores in both backend and browser exporters.
+
+Medium priority:
+
+- Review frontend responsive layout manually in real browsers when UI structure
+  changes.
+- Keep `public/grammar.html`, `docs/GRAMMAR.md`, and `docs/grammar.ebnf`
+  aligned when grammar behavior changes.
+- Finalize distribution polish after the current CLI/frontend surfaces settle.
 
 Lower priority improvements:
 
@@ -273,6 +274,19 @@ Lower priority improvements:
 - Richer drum controls.
 - Optional npm publication after package policy is decided.
 - Optional favicon/static asset polish.
+- Optional browser-level automation after the dependency policy changes.
+
+## Browser Automation Policy
+
+Playwright or another browser automation dependency is not being introduced for
+now. The project currently favors lightweight Node tests plus Vite production
+build smoke coverage. Real-browser checks remain useful, but they are manual for
+the current phase to avoid adding browser installation, CI, and sandbox
+complexity before the UI and release workflow settle.
+
+If this policy changes later, the first browser smoke test should load the built
+frontend, open an example, verify non-empty rendered SVG, click a rendered note,
+and exercise the export menu without relying on audio perception.
 
 ## Current Architecture
 
@@ -333,6 +347,7 @@ Supported behavior:
 - Measure-local accidental persistence is implemented.
 - Ties merge playback/export duration.
 - Browser playback uses WebAudioTinySynth.
+- Browser playback is chunk-scheduled and is cancelled by source edits.
 - Program and drum controls are available in the frontend.
 - Initial-rest omission is available.
 - Frontend source/editor/settings/examples/grammar workflows are available in
@@ -372,24 +387,24 @@ Milestone 3: playback and MIDI
 
 - Status: substantially complete for the current playback and MIDI target.
 - Notes: browser playback uses TinySynth; MIDI export supports melodic and drum
-  programs; note highlighting and click-to-play work.
-- Remaining work: browser-level automation and optional richer musical features.
+  programs; note highlighting, click-to-play, chunked scheduling, and
+  edit-to-stop behavior work.
+- Remaining work: optional richer musical features.
 
 Milestone 4: backend exports and UI polish
 
 - Status: substantially complete.
 - Notes: CLI SVG/PNG/MIDI/WAV/MP3 exports work; frontend exposes
   SVG/PNG/MIDI/WAV/MP3; settings/examples/theme/page-width workflows are
-  present.
-- Remaining work: real-browser responsive and workflow checks.
+  present; grammar.html is organized as Reference first, Railroad/EBNF second.
+- Remaining work: manual real-browser responsive and workflow checks.
 
 Milestone 5: packaging and distribution
 
 - Status: partially complete.
 - Notes: package entry points, CLI binary, release file boundaries, and release
   docs exist.
-- Remaining work: browser smoke tooling decision, final distribution checks,
-  and optional publication policy.
+- Remaining work: final distribution checks and optional publication policy.
 
 ## Test Strategy
 
@@ -406,7 +421,7 @@ Current test layers:
 
 Testing gaps:
 
-- No real-browser UI automation yet.
+- No real-browser UI automation by current policy.
 - No automated audio perceptual comparison.
 - No PNG golden image comparison.
 - No real-browser assertion that WAV/MP3 downloads complete successfully yet;
@@ -415,19 +430,18 @@ Testing gaps:
 
 Preferred additions:
 
-- Browser smoke test that starts the Vite build or preview, opens the app, loads
-  an example, verifies rendered SVG, clicks a rendered note, and exercises SVG
-  and MIDI export controls.
 - Focused regression tests whenever a behavior bug is fixed.
 - Additional renderer snapshots only for meaningful visual behavior, not for
   every fixture.
+- Source-level or jsdom-light smoke checks for frontend behavior that can be
+  verified without adding a browser automation dependency.
 
 ## Risks
 
 Browser automation dependency:
 
-- The largest remaining test gap needs a browser automation tool. This will add
-  dependency and installation complexity.
+- Browser automation remains intentionally deferred. Adding it would improve UI
+  confidence but also adds installation, CI, and sandbox complexity.
 
 TinySynth offline rendering performance:
 
