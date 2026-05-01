@@ -334,6 +334,13 @@ export function App() {
     setShowExamples(false);
   }
 
+  function updateSource(nextSource: string) {
+    playerRef.current?.stop();
+    setIsPlaying(false);
+    setActiveNoteIndex(null);
+    setSource(nextSource);
+  }
+
   function playFromPreview(event: MouseEvent<HTMLDivElement>) {
     const target = event.target instanceof Element ? event.target.closest<SVGGElement>("[data-note-index]") : null;
     const noteIndex = Number(target?.dataset.noteIndex);
@@ -524,7 +531,7 @@ export function App() {
           </div>
           <textarea
             value={source}
-            onChange={(event) => setSource(event.target.value)}
+            onChange={(event) => updateSource(event.target.value)}
             onFocus={() => setShowExamples(false)}
             placeholder="Enter your Jianpu here..."
             spellCheck={false}
