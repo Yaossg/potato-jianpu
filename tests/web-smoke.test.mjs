@@ -30,6 +30,7 @@ test("frontend production build emits the expected app shell", async () => {
   const script = await readFile(new URL(`../dist-web/${scriptPath.replace(/^\//, "")}`, import.meta.url), "utf8");
   const style = await readFile(new URL(`../dist-web/${stylePath.replace(/^\//, "")}`, import.meta.url), "utf8");
   const grammar = await readFile(new URL("../dist-web/grammar.html", import.meta.url), "utf8");
+  const audioSource = await readFile(new URL("../src/web/audio.ts", import.meta.url), "utf8");
 
   assert.match(script, /Modern Jianpu Reloaded/);
   assert.match(script, /Export/);
@@ -83,4 +84,6 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(grammar, /Reference Details/);
   assert.match(grammar, /Key, Time, And Tempo/);
   assert.ok(grammar.indexOf("Reference Details") < grammar.indexOf("Railroad And EBNF"));
+  assert.match(audioSource, /SCHEDULE_AHEAD_SECONDS/);
+  assert.match(audioSource, /currentTime > context\.currentTime \+ SCHEDULE_AHEAD_SECONDS/);
 });
