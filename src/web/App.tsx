@@ -8,8 +8,6 @@ import scale from "../../examples/scale.jp?raw";
 import twinkle from "../../examples/twinkle.jp?raw";
 import odeToJoy from "../../examples/ode-to-joy.jp?raw";
 import compound from "../../examples/compound-6-8.jp?raw";
-import accidentals from "../../examples/accidentals-and-ties.jp?raw";
-import chords from "../../examples/chords.jp?raw";
 import drums from "../../examples/drums.jp?raw";
 import jingleBells from "../../examples/jingle-bells.jp?raw";
 import happyBirthday from "../../examples/happy-birthday.jp?raw";
@@ -23,8 +21,6 @@ const examples = [
   { name: "Twinkle", source: twinkle },
   { name: "Ode to Joy", source: odeToJoy },
   { name: "6/8 Study", source: compound },
-  { name: "Accidentals", source: accidentals },
-  { name: "Chords", source: chords },
   { name: "Drums", source: drums },
   { name: "Jingle Bells", source: jingleBells },
   { name: "Happy Birthday", source: happyBirthday },
