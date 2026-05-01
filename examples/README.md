@@ -26,9 +26,9 @@ pnpm run cli -- export-mp3 examples/twinkle.jp -o twinkle.mp3
 | `accidentals-and-ties.jp` | Accidentals, naturals, ties, and warning-free measures |
 | `chords.jp` | Brace chord syntax, octave marks, rests, and warning-free measures |
 | `drums.jp` | Drum-note syntax and short durations |
-| `jingle-bells.jp` | Legacy song example with dotted/slashed rhythms |
-| `happy-birthday.jp` | Legacy 3/4 example with compact rests |
-| `dear-little-wish.jp` | Long legacy compatibility example with dense compact notation |
-| `burning-field.jp` | Legacy compatibility example with rests, ties, and octave marks |
-| `blocky-heroes.jp` | Legacy compatibility example with naturals and dense sixteenth notes |
-| `shining-from-the-underground.jp` | Legacy compatibility example with measure octave prefixes |
+| `jingle-bells.jp` | Song example with dotted/slashed rhythms |
+| `happy-birthday.jp` | 3/4 example with compact rests |
+| `dear-little-wish.jp` | Long example with dense compact notation |
+| `burning-field.jp` | Example with rests, ties, and octave marks |
+| `blocky-heroes.jp` | Example with naturals and dense sixteenth notes |
+| `shining-from-the-underground.jp` | Example with measure octave prefixes |

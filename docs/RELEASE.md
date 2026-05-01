@@ -1,7 +1,6 @@
 # Release And Distribution
 
-This document describes the current release shape for the reloaded
-implementation.
+This document describes the current release shape.
 
 ## Build Outputs
 

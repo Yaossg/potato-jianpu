@@ -305,5 +305,5 @@ The renderer is deterministic but still intentionally simple:
 - no pagination
 - no staff or engraving model beyond the current Jianpu notation
 
-These limits are acceptable for the current rewrite milestone and should be
-revisited only after parser/player/export parity is stable.
+These limits are acceptable for the current milestone and should be revisited
+only after parser, player, and export behavior is stable.

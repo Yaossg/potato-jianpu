@@ -1,6 +1,7 @@
 # Modern Jianpu Reloaded
 
-This is the rewrite workspace for Modern Jianpu Markup.
+Modern Jianpu Reloaded is a TypeScript toolkit and browser app for parsing,
+rendering, playing, and exporting Jianpu scores.
 
 Current status:
 
@@ -44,10 +45,10 @@ core, parser, renderer, player, and backend modules.
 
 `pnpm run web:build` emits the browser application in `dist-web/`.
 
-Implementation is intentionally incremental. See `PLAN.md` for the full rewrite
-plan. Syntax is documented in `docs/GRAMMAR.md`, renderer behavior in
+See `PLAN.md` for the current roadmap. Syntax is documented in
+`docs/GRAMMAR.md`, renderer behavior in
 `docs/RENDERER.md`, player behavior in `docs/PLAYER.md`, and export behavior in
 `docs/EXPORTS.md`. Module boundaries are documented in `docs/ARCHITECTURE.md`,
-compatibility notes are in `docs/COMPATIBILITY.md`, and release shape is
+behavior notes are in `docs/COMPATIBILITY.md`, and release shape is
 documented in `docs/RELEASE.md`. The frontend build also includes
 `grammar.html`, a railroad-style visual grammar reference.

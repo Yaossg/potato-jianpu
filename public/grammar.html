@@ -193,7 +193,7 @@ tempo: "120"
       <h3>Key, Time, And Tempo</h3>
       <p>
         Supported keys are <code>C C# Db D D# Eb E F F# Gb G G# Ab A A# Bb B</code>. One space inside the key value is
-        ignored, and legacy accidental-first spellings such as <code>#C</code> and <code>bB</code> are accepted.
+        ignored. Accidentals may also be written before the key letter, such as <code>#C</code> and <code>bB</code>.
       </p>
       <p>
         Time signatures use <code>beatsPerMeasure/beatsPerWholeNote</code>. Numerators are
@@ -255,8 +255,7 @@ tempo: "120"
         <svg class="railroad-diagram" width="508.5" style="max-height: 79px;" viewBox="0 0 508.5 79"><g transform="translate(.5 .5)"><g><path d="M20 29v20m0 -10h20"></path></g><path d="M40 39h10"></path><g><path d="M50 39h0"></path><path d="M458.5 39h0"></path><g><path d="M50 39h0"></path><path d="M189.5 39h0"></path><path d="M50 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M70 19h99.5"></path></g><path d="M169.5 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M50 39h20"></path><g><path d="M70 39h0"></path><path d="M169.5 39h0"></path><path d="M70 39h10"></path><g class="non-terminal"><path d="M80 39h0"></path><path d="M159.5 39h0"></path><rect x="80" y="28" width="79.5" height="22"></rect><a xlink:href="#NEWLINE"><text x="119.75" y="43">NEWLINE</text></a></g><path d="M159.5 39h10"></path><path d="M80 39a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M80 59h79.5"></path></g><path d="M159.5 59a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M169.5 39h20"></path></g><g><path d="M189.5 39h0"></path><path d="M300.5 39h0"></path><path d="M189.5 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M209.5 19h71"></path></g><path d="M280.5 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M189.5 39h20"></path><g class="non-terminal"><path d="M209.5 39h0"></path><path d="M280.5 39h0"></path><rect x="209.5" y="28" width="71" height="22"></rect><a xlink:href="#header"><text x="245" y="43">header</text></a></g><path d="M280.5 39h20"></path></g><g><path d="M300.5 39h0"></path><path d="M403 39h0"></path><path d="M300.5 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M320.5 19h62.5"></path></g><path d="M383 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M300.5 39h20"></path><g class="non-terminal"><path d="M320.5 39h0"></path><path d="M383 39h0"></path><rect x="320.5" y="28" width="62.5" height="22"></rect><a xlink:href="#score"><text x="351.75" y="43">score</text></a></g><path d="M383 39h20"></path></g><path d="M403 39h10"></path><g class="non-terminal"><path d="M413 39h0"></path><path d="M458.5 39h0"></path><rect x="413" y="28" width="45.5" height="22"></rect><a xlink:href="#EOF"><text x="435.75" y="43">EOF</text></a></g></g><path d="M458.5 39h10"></path><path d="M 468.5 39 h 20 m 0 -10 v 20"></path></g></svg>
       </div>
       <p class="caption">
-        This follows the original grammar shape: leading newlines are ignored, then an optional header and optional score
-        are parsed before end of file. The rewritten parser uses the same surface syntax with additional recovery logic.
+        Leading newlines are ignored, then an optional header and optional score are parsed before end of file.
       </p>
 
       <pre class="ebnf">file ::= NEWLINE* header? score? EOF</pre>

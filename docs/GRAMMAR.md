@@ -1,7 +1,7 @@
 # Grammar Reference
 
-This document describes the syntax currently implemented by the reloaded
-hand-written tokenizer and parser.
+This document describes the syntax currently implemented by the hand-written
+tokenizer and parser.
 
 ## File Structure
 

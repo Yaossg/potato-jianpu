@@ -144,7 +144,7 @@ test("rejects invalid header values", () => {
   assert.match(result.diagnostics.map((d) => d.message).join("\n"), /Invalid key signature/);
 });
 
-test("accepts legacy accidental-first key spellings", () => {
+test("accepts accidental-first key spellings", () => {
   const sharp = parse(`key: "#C"\n=\n1`);
   assert.equal(sharp.ok, true);
   assert.equal(sharp.value.header.keySignature, 1);

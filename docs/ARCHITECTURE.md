@@ -1,7 +1,6 @@
 # Architecture
 
-This document describes the current module boundaries in the reloaded
-implementation.
+This document describes the current module boundaries.
 
 ## Product Targets
 
@@ -299,5 +298,5 @@ Practical rules:
 - Backend audio export now has a shared render helper, but the WAV and MP3
   writers still own format-specific byte generation directly.
 
-These are acceptable for the current rewrite stage but should guide later
+These are acceptable for the current development stage but should guide later
 refactors.

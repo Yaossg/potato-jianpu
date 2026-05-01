@@ -16,7 +16,7 @@ function usage(): string {
     "  jianpu export-wav <file> -o <output.wav> [--program <number>] [--sample-rate <hz>] [--amplitude <0-1>] [--omit-initial-rest]",
     "  jianpu export-mp3 <file> -o <output.mp3> [--program <number>] [--sample-rate <hz>] [--amplitude <0-1>] [--bit-rate <kbps>] [--omit-initial-rest]",
     "",
-    "Current rewrite status: parse/validate/export-svg/export-png/export-midi/export-wav/export-mp3 are implemented.",
+    "Implemented commands: parse, validate, export-svg, export-png, export-midi, export-wav, and export-mp3.",
   ].join("\n");
 }
 

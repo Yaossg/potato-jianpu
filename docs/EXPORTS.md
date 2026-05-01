@@ -1,11 +1,11 @@
 # Export Behavior
 
-This document describes the export surfaces currently implemented by the
-reloaded backend CLI and frontend application.
+This document describes the export surfaces currently implemented by the backend
+CLI and frontend application.
 
 ## Targets
 
-The rewrite has two product targets:
+The project has two product targets:
 
 - Backend CLI: supports validation, parsing, SVG, PNG, MIDI, WAV, and MP3 export.
 - Frontend web app: supports editing, preview, playback, SVG export, PNG

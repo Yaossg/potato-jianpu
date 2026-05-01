@@ -1,16 +1,15 @@
 # Modern Jianpu Reloaded - Current Plan
 
-This document describes the current state of the `reloaded/` rewrite and the
-remaining work. It is no longer a pre-implementation proposal. The rewrite has a
-working backend CLI, frontend web app, parser, renderer, player pipeline,
-exports, examples, tests, and documentation.
+This document describes the current state of Modern Jianpu Reloaded and the
+remaining work. The project has a working backend CLI, frontend web app, parser,
+renderer, player pipeline, exports, examples, tests, and documentation.
 
 Use this file as the project roadmap. Historical implementation details belong
 in git history and the focused docs under `docs/`.
 
 ## Product Decisions
 
-The rewrite targets two editions built from shared TypeScript source:
+The project targets two editions built from shared TypeScript source:
 
 - Backend CLI edition
 - Frontend browser edition
@@ -47,15 +46,14 @@ adapters. The backend uses Node-capable adapters; the frontend uses browser
 SVG-to-canvas rendering for PNG, `OfflineAudioContext` for WAV/MP3 audio
 rendering, and bundled `lamejs` for browser MP3 encoding.
 
-Serverless deployment is not a target. The backend CLI replaces the old
-serverless/API export path.
+Serverless deployment is not a target.
 
-The parser is hand-written. The old Nearley/Moo grammar and `nearleyc` build
-plugin are not being carried forward.
+The parser is hand-written. Parser generation through Nearley/Moo is not part
+of the architecture.
 
 ## Current Status
 
-Status: usable rewrite with remaining compatibility and quality work.
+Status: usable project with remaining quality work.
 
 Current validation command:
 
@@ -105,13 +103,13 @@ Parser:
   members, malformed compact notation, stray duration suffixes, unmatched chord
   braces, unterminated strings, unterminated chords, tie legality, and
   measure-duration warnings.
-- Legacy accidental-first key spelling coverage such as `#C` and `bB`.
+- Accidental-first key spelling coverage such as `#C` and `bB`.
 
 Renderer:
 
 - Deterministic SVG string renderer.
 - Header, score, layout, metrics, dimensions, styles, XML helpers, and drawing
-  modules are split from the original monolithic renderer path.
+  helpers are separated in the renderer implementation.
 - Header metadata rendering including hidden-header behavior.
 - Notes, rests, drums, accidentals, octave dots, chords, duration dots,
   dashes, underlines, ties, regular bars, and final bars.
@@ -138,11 +136,10 @@ Player and audio:
 - MIDI export with format 1 header, meta track, tempo, time signature,
   melodic program changes, channel 10 drum handling, note on/off events, and
   deterministic bytes.
-- Browser playback uses the legacy `WebAudioTinySynth` adapter.
+- Browser playback uses the `WebAudioTinySynth` adapter.
 - Backend WAV export uses the same `WebAudioTinySynth` adapter with
-  `@descript/web-audio-js` offline rendering, so WAV timbres follow browser
-  Program and drum playback more closely than the earlier simple oscillator
-  path.
+  `@descript/web-audio-js` offline rendering, so WAV timbres align with browser
+  Program and drum playback.
 - Backend MP3 export shares the same offline TinySynth render path and encodes
   the resulting stereo PCM with `lamejs`.
 - Backend WAV output is stereo 16-bit PCM; backend MP3 output is compressed
@@ -175,13 +172,13 @@ Backend CLI:
 Frontend:
 
 - React/Vite browser app.
-- Empty initial editor content and original editor placeholder text.
+- Empty initial editor content and editor placeholder text.
 - Source editor with programming-font ligatures disabled.
 - SVG preview with scrollable width management.
 - Play and Stop controls.
 - Note highlighting during playback.
 - Click rendered notes to start playback from that note.
-- SVG and MIDI downloads using the original `jianpu-score.*` filenames.
+- SVG and MIDI downloads using the `jianpu-score.*` filenames.
 - PNG download using browser SVG-to-canvas rendering and the
   `jianpu-score.png` filename.
 - Theme toggle with saved preference and system dark-mode initialization.
@@ -190,20 +187,19 @@ Frontend:
 - Settings panel with grouped Program selection, volume, audition, and
   initial-rest omission.
 - Program list covers General MIDI and drum-note programs.
-- Volume control uses the original `0..200%` range and `100%` default.
-- Examples panel with migrated legacy examples.
+- Volume control uses the `0..200%` range and `100%` default.
+- Examples panel with curated examples.
 - Loading an example stops active playback and closes the panel.
-- Play and Stop close the examples panel like the old UI.
+- Play and Stop close the examples panel.
 - Grammar button opens `public/grammar.html`, copied into the frontend build.
   That page contains the parser-shaped railroad/EBNF reference and the prose
-  grammar notes that used to be shown in the main app.
+  grammar notes.
 - Frontend production build smoke test confirms SVG/PNG/MIDI/WAV/MP3 controls
   and download filenames are present.
 
 Examples:
 
-- Legacy examples from the original examples panel are available as
-  `examples/*.jp` fixtures.
+- Example scores are available as `examples/*.jp` fixtures.
 - Examples have consistent metadata headers and are expected to parse without
   warnings.
 - Examples are covered by parse, SVG, PNG, MIDI, and WAV test paths. MP3 export
@@ -227,15 +223,14 @@ Packaging and release shape:
 - npm publishing is deferred while the package remains private.
 - Package manager version is pinned in package metadata.
 
-## Deliberately Not Ported
+## Outside Current Scope
 
-The following old-project pieces are intentionally not part of the current
-rewrite target:
+The following pieces are intentionally not part of the current target:
 
 - Serverless and API deployment folders.
-- Old browser WAV sample-rate setting.
+- Browser WAV sample-rate setting.
 - Nearley/Moo parser generation and `plugins/nearleyc.js`.
-- Old generated Nearley `public/grammar.html` railroad diagram.
+- Generated Nearley `public/grammar.html` railroad diagram.
 
 The grammar is maintained in `docs/GRAMMAR.md` and mirrored for users in the
 frontend static `grammar.html` reference. Backend audio sample rate is available
@@ -253,13 +248,13 @@ High priority:
   adding a browser automation dependency and handling installation in this
   environment.
 - Add focused renderer golden snapshots only when behavior changes or an
-  uncovered compatibility edge case is found. The current snapshot set already
+  uncovered behavior edge case is found. The current snapshot set already
   covers the main header, notation, wrapping, and tie cases.
 
 Medium priority:
 
 - Improve parser diagnostics and recovery for additional malformed compact
-  notation and header edge cases discovered during compatibility testing.
+  notation and header edge cases discovered during testing.
 - Validate TinySynth WAV/MP3 output quality and performance on longer example
   scores in both backend and browser exporters. The current examples pass, but
   offline TinySynth rendering is slower than the earlier simple waveform
@@ -268,7 +263,7 @@ Medium priority:
   exists.
 - Finalize distribution polish once browser smoke testing is decided.
 
-Lower priority or post-parity improvements:
+Lower priority improvements:
 
 - Pagination or multi-page output.
 - More sophisticated note-level horizontal re-spacing.
@@ -324,35 +319,35 @@ Rules:
 - Web does not import backend modules.
 - CLI coordinates modules but should keep business logic thin.
 
-## Compatibility Position
+## Behavior Position
 
-The rewrite currently aims for practical compatibility with the old project,
-not byte-for-byte or pixel-for-pixel identity.
+Modern Jianpu Reloaded aims for practical, documented Jianpu behavior rather
+than byte-for-byte or pixel-for-pixel identity with any other implementation.
 
-Preserved or restored behavior:
+Supported behavior:
 
-- Current legacy examples parse and export.
+- Current examples parse and export.
 - Compact notation remains supported.
 - Header defaults and known semantic header fields are supported.
 - Unknown header fields are preserved.
 - Measure-local accidental persistence is implemented.
 - Ties merge playback/export duration.
 - Browser playback uses WebAudioTinySynth.
-- Program and drum controls are restored in the frontend.
-- Initial-rest omission is restored.
-- Frontend source/editor/settings/examples/grammar workflows are restored in
+- Program and drum controls are available in the frontend.
+- Initial-rest omission is available.
+- Frontend source/editor/settings/examples/grammar workflows are available in
   the current UI style.
 
-Intentional differences:
+Intentional choices:
 
-- Parser is stricter in several malformed cases.
+- Parser is strict in several malformed cases.
 - Tie legality is validated before successful parse.
 - Empty measure syntax is rejected.
 - Measure duration mismatch is a warning, not a fatal error.
-- Renderer output is deterministic SVG strings rather than React element output.
+- Renderer output is deterministic SVG strings.
 - Bars are SVG primitives rather than music-font glyphs.
 - PNG, WAV, and MP3 are available in both editions through different adapters.
-- Serverless is removed from the target architecture.
+- Serverless is outside the target architecture.
 
 ## Milestone Status
 
@@ -369,13 +364,13 @@ Milestone 1: core model and parser
 
 Milestone 2: renderer
 
-- Status: substantially complete for current parity target.
+- Status: substantially complete for the current renderer target.
 - Remaining work: edge-case snapshots, pagination, finer spacing, and collision
   avoidance.
 
 Milestone 3: playback and MIDI
 
-- Status: substantially complete for current parity target.
+- Status: substantially complete for the current playback and MIDI target.
 - Notes: browser playback uses TinySynth; MIDI export supports melodic and drum
   programs; note highlighting and click-to-play work.
 - Remaining work: browser-level automation and optional richer musical features.
@@ -405,7 +400,7 @@ Current test layers:
 - player melody/MIDI tests
 - backend PNG/WAV/MP3 tests
 - CLI integration tests
-- examples compatibility test
+- examples test
 - package metadata test
 - frontend production build smoke test
 
@@ -423,7 +418,7 @@ Preferred additions:
 - Browser smoke test that starts the Vite build or preview, opens the app, loads
   an example, verifies rendered SVG, clicks a rendered note, and exercises SVG
   and MIDI export controls.
-- Focused regression tests whenever a compatibility bug is fixed.
+- Focused regression tests whenever a behavior bug is fixed.
 - Additional renderer snapshots only for meaningful visual behavior, not for
   every fixture.
 
@@ -436,21 +431,21 @@ Browser automation dependency:
 
 TinySynth offline rendering performance:
 
-- WAV and MP3 export now match browser timbres more closely, but rendering long
-  examples is slower than the previous deterministic oscillator path.
+- WAV and MP3 export use TinySynth timbres, and rendering long examples can be
+  slow.
 
 Renderer complexity:
 
 - Dense chords, ties, labels, metadata, and wrapping can still overlap in edge
   cases. Current layout is practical but not full engraving.
 
-Parser compatibility:
+Parser behavior:
 
-- The hand-written parser is intentionally stricter in malformed cases. Future
-  compatibility issues should be resolved with explicit tests and documentation.
+- The hand-written parser is intentionally strict in malformed cases. Future
+  behavior issues should be resolved with explicit tests and documentation.
 
 Scope creep:
 
-- Jianpu notation can grow indefinitely. The rewrite should preserve current
-  project behavior first and add new notation features only when they have clear
-  syntax, rendering, playback, and test plans.
+- Jianpu notation can grow indefinitely. The project should preserve current
+  behavior first and add new notation features only when they have clear syntax,
+  rendering, playback, and test plans.

@@ -1,7 +1,6 @@
 # Player Reference
 
-This document describes the current playback and audio export behavior in the
-reloaded implementation.
+This document describes the current playback and audio export behavior.
 
 ## Modules
 
@@ -170,7 +169,7 @@ The CLI rejects programs outside `0..220` before calling the player APIs.
 
 ## Browser Preview Playback
 
-`PreviewAudioPlayer` in `src/web/audio.ts` uses the legacy
+`PreviewAudioPlayer` in `src/web/audio.ts` uses the
 `WebAudioTinySynth` adapter in `src/player/webaudio-tinysynth.js`.
 
 Behavior:
@@ -194,8 +193,8 @@ MIDI programs and drum-note programs. Values `128..220` trigger the drum mapping
 described above.
 
 The frontend also exposes playback volume as a `0..200%` slider with a `100%`
-default, matching the original settings UI. This controls browser preview gain
-only; it does not alter the parsed score, MIDI note velocity, or exported SVG.
+default. This controls browser preview gain only; it does not alter the parsed
+score, MIDI note velocity, or exported SVG.
 
 The Audition button plays a short built-in phrase with the current Program and
 volume. Melodic programs play a scale; drum programs play repeated `X` notes.
@@ -345,5 +344,4 @@ The current player/export layer is functional but not a full synthesizer:
 - no velocity syntax
 - no multi-track arrangement model
 
-These limitations keep the rewrite focused while the core parser, renderer, and
-export surfaces stabilize.
+These limitations keep the core parser, renderer, and export surfaces focused.

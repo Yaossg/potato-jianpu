@@ -354,7 +354,7 @@ export function App() {
       <header className="topbar">
         <div>
           <h1>Modern Jianpu Reloaded</h1>
-          <p>Browser preview for the rewritten parser, SVG renderer, and audio exporters.</p>
+          <p>Browser preview for the parser, SVG renderer, and audio exporters.</p>
         </div>
         <div className="actions">
           <button type="button" onClick={toggleTheme}>

@@ -1,14 +1,11 @@
-# Compatibility Notes
+# Behavior Notes
 
-This document records compatibility expectations and known differences between
-the reloaded implementation and the original project.
+This document records the supported behavior, validation rules, and intentional
+format choices for Modern Jianpu Reloaded.
 
-The rewrite is intended to preserve useful existing behavior while making the
-parser, renderer, player, and export boundaries explicit and testable.
+## Product Goals
 
-## Compatibility Goals
-
-The reloaded implementation should:
+Modern Jianpu Reloaded should:
 
 - parse current example scores
 - render recognizable Jianpu SVG
@@ -16,18 +13,17 @@ The reloaded implementation should:
 - export SVG, PNG, and MIDI
 - provide backend PNG export
 - keep compact notation convenient
-- avoid intentional syntax breakage unless documented here
+- keep notation behavior explicit and documented
 
-The legacy examples from the original frontend examples panel have been moved to
-`examples/*.jp` fixtures. The automated example test parses each file, renders
-SVG/PNG, and exports MIDI/WAV so these scores continue to act as compatibility
-coverage. MP3 export is covered by focused backend and CLI tests.
+The examples in `examples/*.jp` are clean fixtures. The automated example test
+parses each file, renders SVG/PNG, and exports MIDI/WAV. MP3 export is covered
+by focused backend and CLI tests.
 
 ## Supported Syntax
 
 Current supported syntax is documented in `docs/GRAMMAR.md`.
 
-Important preserved features:
+Important supported features:
 
 - optional header before `=`
 - score-only documents
@@ -44,7 +40,7 @@ Important preserved features:
 - leading tie marker `~`
 - optional leading and trailing bars
 
-## Header Compatibility
+## Header Behavior
 
 Supported semantic header fields:
 
@@ -67,11 +63,11 @@ Defaults:
 
 Invalid key, time, or tempo values are parse errors.
 
-## Behavior That Is More Strict
+## Validation Rules
 
 ### Ties
 
-Reloaded validates ties before returning a successful parse.
+The parser validates ties before returning a successful parse.
 
 These are errors:
 
@@ -79,8 +75,6 @@ These are errors:
 - tied note follows a rest
 - tied note target does not match the previous sounding note
 - tied pitch target differs after measure-local accidental persistence
-
-This is stricter than treating ties as a rendering/playback hint only.
 
 ### Empty Measures
 
@@ -95,7 +89,7 @@ Empty measures are parse errors:
 If an `=` appears later in the file, the parser treats earlier lines as header
 lines. Malformed header lines before the separator are errors.
 
-## Behavior That Is More Lenient
+## Non-Fatal Conditions
 
 ### Empty Files
 
@@ -114,10 +108,9 @@ For example, this parses successfully but reports a warning in `4/4`:
 
 The renderer and player still operate on the parsed notes.
 
-## Renderer Differences
+## Renderer Behavior
 
-The reloaded renderer is deterministic SVG string output, not React element
-output.
+The renderer returns deterministic SVG string output.
 
 Notable behavior:
 
@@ -135,12 +128,12 @@ Known limitations:
 - no full collision avoidance
 - no automatic splitting inside a measure
 
-## Player Differences
+## Player Behavior
 
-The reloaded player uses one shared melody compiler for browser playback, MIDI
-export, WAV export, and MP3 export.
+The player uses one shared melody compiler for browser playback, MIDI export,
+WAV export, and MP3 export.
 
-Preserved behavior:
+Supported behavior:
 
 - key signature shifts pitch mapping
 - accidentals persist within the current measure
@@ -156,9 +149,9 @@ Drum behavior:
 - drum mode maps `X` to `program - 128 + 35`
 - MIDI drum mode uses channel 10 and omits program change
 
-Browser playback and backend audio export both use the legacy WebAudioTinySynth
-implementation for lightweight Program and drum timbres. Browser playback uses a
-real `AudioContext`; backend WAV/MP3 export uses an offline
+Browser playback and backend audio export both use the WebAudioTinySynth
+implementation for lightweight Program and drum timbres. Browser playback uses
+a real `AudioContext`; backend WAV/MP3 export uses an offline
 `@descript/web-audio-js` rendering context. WAV writes the rendered samples into
 a WAV container, while MP3 encodes the same rendered samples with `lamejs`.
 
@@ -179,30 +172,28 @@ Frontend currently supports:
 - MIDI download
 - WAV download through browser `OfflineAudioContext`
 - MP3 download through browser `OfflineAudioContext` and bundled `lamejs`
-- original frontend download filename convention: `jianpu-score.svg`,
-  `jianpu-score.png`, `jianpu-score.mid`, `jianpu-score.wav`, and
-  `jianpu-score.mp3`
+- download filenames: `jianpu-score.svg`, `jianpu-score.png`,
+  `jianpu-score.mid`, `jianpu-score.wav`, and `jianpu-score.mp3`
 - light/dark theme toggle for the app and preview/export color presets, with
   saved preference and system dark-mode initialization
 - Settings panel for page width, preview/export colors, Program, volume,
   Program audition, and initial-rest omission
-- volume uses the original `0..200%` frontend range and `100%` default
-- empty initial source editor and placeholder text from the original frontend
-- Examples panel with the migrated legacy examples and focused two-column
-  editor/preview workspace. Loading an example stops active playback and closes
-  the panel. Play and Stop actions also close the examples panel.
+- volume uses a `0..200%` range and `100%` default
+- empty initial source editor with an input placeholder
+- Examples panel with focused two-column editor/preview workspace. Loading an
+  example stops active playback and closes the panel. Play and Stop actions
+  also close the examples panel.
 - grammar reference page at `grammar.html`
 
 Frontend intentionally does not support:
 
-- the old frontend sample-rate setting, because it only applied to browser WAV
-  export. The current frontend audio exporters use `44100` Hz; use backend
-  `export-wav --sample-rate` or `export-mp3 --sample-rate` when a custom sample
-  rate is required.
+- custom browser audio sample rate. The current frontend audio exporters use
+  `44100` Hz; use backend `export-wav --sample-rate` or
+  `export-mp3 --sample-rate` when a custom sample rate is required.
 
-## Dependency And Packaging Differences
+## Dependencies And Packaging
 
-Reloaded uses:
+The project uses:
 
 - pnpm
 - TypeScript
@@ -213,7 +204,7 @@ Reloaded uses:
 
 The parser is hand-written rather than generated through Nearley/Moo.
 
-## Compatibility Test Coverage
+## Test Coverage
 
 The current automated test suite covers:
 
@@ -230,4 +221,4 @@ The current automated test suite covers:
 - all example files through parse, SVG, PNG, MIDI, and WAV paths
 
 Additional golden SVG snapshots and browser-level UI smoke tests would further
-improve compatibility confidence.
+improve confidence.
