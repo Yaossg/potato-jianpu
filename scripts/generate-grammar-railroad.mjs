@@ -45,7 +45,7 @@ function diagramBlockFor(rules, diagrams) {
 }
 
 function replaceHeadingDiagrams(pageHtml, heading, replacement) {
-  const headingMarker = `      <h2>${heading}</h2>`;
+  const headingMarker = `      <h3>${heading}</h3>`;
   const headingIndex = pageHtml.indexOf(headingMarker);
   if (headingIndex < 0) {
     throw new Error(`Could not find grammar heading ${heading}.`);

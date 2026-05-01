@@ -166,53 +166,97 @@
         and tokenizer-level syntax.
       </p>
 
-      <h2>Reference Details</h2>
+      <h2>Reference</h2>
 
-      <h3>Whitespace And Comments</h3>
+      <h3>1. File Structure</h3>
       <p>
-        Spaces and tabs may appear between tokens and are ignored. Line breaks separate header properties and score
-        lines. Comments begin with <code>;</code> and continue until the next line break.
-      </p>
-      <pre class="ebnf">1 2 3 4 ; this comment is ignored
-5 6 7 1'</pre>
-
-      <h3>Header Values</h3>
-      <p>
-        Header values are double-quoted strings. A backslash skips the following character while tokenizing, but the
-        parser currently stores the raw inner text and does not unescape sequences.
+        A source file contains an optional metadata header followed by score lines. Header mode starts when the parser
+        sees an <code>=</code> separator anywhere in the file; all header properties must appear before that separator.
+        Without a separator, the whole file is parsed as score text. Empty files are valid and use default header values.
       </p>
       <pre class="ebnf">title: "Twinkle"
-subtitle: "Traditional"
-composer: "Traditional"
 key: "C"
 time: "4/4"
 tempo: "120"
 =
 1 1 5 5 | 6 6 5 - |</pre>
 
-      <h3>Key, Time, And Tempo</h3>
+      <h3>2. Whitespace, Lines, And Comments</h3>
+      <p>
+        Spaces and tabs may appear between tokens and are ignored. Newlines separate header properties and score lines.
+        Comments begin with <code>;</code> and continue until the next line break; the line break itself still separates
+        the surrounding syntax.
+      </p>
+      <pre class="ebnf">1 2 3 4 ; this comment is ignored
+5 6 7 1'</pre>
+
+      <h3>3. Header Properties</h3>
+      <p>
+        Header properties use <code>name: "value"</code>. Names contain ASCII letters and underscores. Values are
+        double-quoted strings on one line. A backslash skips the following character while tokenizing, but stored header
+        values keep the raw inner text.
+      </p>
+      <p>
+        Built-in fields are <code>title</code>, <code>subtitle</code>, <code>composer</code>, <code>key</code>,
+        <code>time</code>, <code>tempo</code>, and <code>hidden</code>. Unknown fields are preserved in
+        <code>header.raw</code> but have no built-in behavior. Any non-empty <code>hidden</code> value hides rendered
+        header metadata.
+      </p>
+      <pre class="ebnf">title: "Song Title"
+subtitle: "Optional subtitle"
+composer: "Composer"
+hidden: "yes"
+=
+1 2 3 4</pre>
+
+      <h3>4. Key, Time, And Tempo</h3>
       <p>
         Supported keys are <code>C C# Db D D# Eb E F F# Gb G G# Ab A A# Bb B</code>. One space inside the key value is
         ignored. Accidentals may also be written before the key letter, such as <code>#C</code> and <code>bB</code>.
+        Invalid keys are parse errors.
       </p>
       <p>
         Time signatures use <code>beatsPerMeasure/beatsPerWholeNote</code>. Numerators are
         <code>2 3 4 6 9 12</code>; denominators are <code>2 4 8 16</code>. Tempo must be a positive number.
       </p>
+      <pre class="ebnf">key: "D"
+time: "6/8"
+tempo: "96"</pre>
 
-      <h3>Notes, Accidentals, And Octaves</h3>
+      <h3>5. Score Lines And Measures</h3>
+      <p>
+        A score line may start with a label, followed by one or more measures. Labels use the same identifier form as
+        header names and render at the left edge of the score line. Measures are separated by <code>|</code>. One
+        leading bar and one trailing bar are accepted, but empty measures are errors.
+      </p>
+      <pre class="ebnf">verse: | 1 2 3 4 | 5 6 7 1' |
+1 2 || 3 4  ; invalid empty measure</pre>
+
+      <h3>6. Notes, Rests, Drums, And Octaves</h3>
       <p>
         Pitch notes are <code>1</code> through <code>7</code>. Rest is <code>0</code>. Drum note is uppercase
-        <code>X</code>. Accidentals before pitch notes are <code>#</code>, <code>##</code>, <code>b</code>,
-        <code>bb</code>, and <code>%</code>. Octave suffixes after pitch notes use <code>'</code> and <code>,</code>.
+        <code>X</code>; lowercase <code>x</code> is not a drum note. Octave suffixes after pitch notes use
+        <code>'</code> to raise and <code>,</code> to lower. A measure may also begin with a repeated octave prefix,
+        which applies to all pitch notes in that measure.
+      </p>
+      <pre class="ebnf">1 2 3 4 5 6 7
+0 X
+1' 2'' 6, 5,,
+'' 1 2 3 4</pre>
+
+      <h3>7. Accidentals</h3>
+      <p>
+        Accidentals appear before pitch notes: <code>#</code>, <code>##</code>, <code>b</code>, <code>bb</code>, and
+        <code>%</code>. They apply only to pitch notes. During playback/export and tie validation, an accidental affects
+        later notes of the same scale degree in the current measure, then resets at the next bar.
       </p>
       <pre class="ebnf">#4 b7 %4 ##1 bb6
-1' 2'' 6, 5,,</pre>
+#4 4 | 4</pre>
 
-      <h3>Durations</h3>
+      <h3>8. Durations</h3>
       <p>
         The default note duration is a quarter note. Dashes extend duration by quarter-note units. Slashes halve the
-        duration. Dots add dotted rhythm. Dashes cannot be combined with slash/dot suffixes.
+        duration. Dots add dotted rhythm. Dash durations and slash/dot durations cannot be mixed on the same note.
       </p>
       <pre class="ebnf">1     = 1/4 whole note
 1-    = 1/2 whole note
@@ -223,22 +267,39 @@ tempo: "120"
 1.    = 3/8 whole note
 1/.   = 3/16 whole note</pre>
 
-      <h3>Chords And Ties</h3>
+      <h3>9. Chords</h3>
       <p>
-        Chords are enclosed in braces and contain pitch notes only. The duration suffix follows the closing brace and
-        applies to the whole chord. Tie markers appear before the tied note.
+        Chords are enclosed in braces and contain pitch notes only. Rests, drums, empty chords, and duration suffixes
+        inside the braces are invalid. The duration suffix follows the closing brace and applies to the whole chord.
       </p>
       <pre class="ebnf">{1 3 5}
 {#1 3 b5}/
-1 ~1
-3 - ~3/</pre>
+{1' 3' 5'}-</pre>
 
-      <h3>Semantic Checks</h3>
+      <h3>10. Ties</h3>
+      <p>
+        A tie marker <code>~</code> appears before the tied note. The first note cannot be tied. A tied note must follow
+        a sounding note and must match the previous sounding pitch, chord, or drum note after measure-local accidental
+        persistence is applied.
+      </p>
+      <pre class="ebnf">1 ~1
+3 - ~3/
+{1 3 5} ~{1 3 5}</pre>
+
+      <h3>11. Compact Notation</h3>
+      <p>
+        Whitespace between notes is optional when tokens remain unambiguous. Compact score text is useful for dense
+        melodies, but invalid characters and stray duration suffixes are still reported at their source positions.
+      </p>
+      <pre class="ebnf">1155|665-|
+1/2/3/4/</pre>
+
+      <h3>12. Diagnostics And Semantic Checks</h3>
       <ul>
         <li>Header <code>key</code>, <code>time</code>, and <code>tempo</code> values are normalized and validated after raw header parsing.</li>
         <li>Measure durations are compared with the time signature after parsing and reported as warnings.</li>
         <li>Ties are validated after parsing, using measure-local accidental persistence.</li>
-        <li>Accidentals persist within a measure for playback and tie validation, then reset at measure boundaries.</li>
+        <li>Malformed compact notation, unmatched chord braces, empty chords, empty measures, and invalid tie targets are errors.</li>
       </ul>
 
       <h2>Railroad And EBNF</h2>
@@ -250,7 +311,7 @@ tempo: "120"
         <span class="repeat">repeat</span>
       </div>
 
-      <h2>Parser Overview</h2>
+      <h3>Parser Overview</h3>
       <div class="diagram">
         <svg class="railroad-diagram" width="508.5" style="max-height: 79px;" viewBox="0 0 508.5 79"><g transform="translate(.5 .5)"><g><path d="M20 29v20m0 -10h20"></path></g><path d="M40 39h10"></path><g><path d="M50 39h0"></path><path d="M458.5 39h0"></path><g><path d="M50 39h0"></path><path d="M189.5 39h0"></path><path d="M50 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M70 19h99.5"></path></g><path d="M169.5 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M50 39h20"></path><g><path d="M70 39h0"></path><path d="M169.5 39h0"></path><path d="M70 39h10"></path><g class="non-terminal"><path d="M80 39h0"></path><path d="M159.5 39h0"></path><rect x="80" y="28" width="79.5" height="22"></rect><a xlink:href="#NEWLINE"><text x="119.75" y="43">NEWLINE</text></a></g><path d="M159.5 39h10"></path><path d="M80 39a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M80 59h79.5"></path></g><path d="M159.5 59a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M169.5 39h20"></path></g><g><path d="M189.5 39h0"></path><path d="M300.5 39h0"></path><path d="M189.5 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M209.5 19h71"></path></g><path d="M280.5 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M189.5 39h20"></path><g class="non-terminal"><path d="M209.5 39h0"></path><path d="M280.5 39h0"></path><rect x="209.5" y="28" width="71" height="22"></rect><a xlink:href="#header"><text x="245" y="43">header</text></a></g><path d="M280.5 39h20"></path></g><g><path d="M300.5 39h0"></path><path d="M403 39h0"></path><path d="M300.5 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M320.5 19h62.5"></path></g><path d="M383 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M300.5 39h20"></path><g class="non-terminal"><path d="M320.5 39h0"></path><path d="M383 39h0"></path><rect x="320.5" y="28" width="62.5" height="22"></rect><a xlink:href="#score"><text x="351.75" y="43">score</text></a></g><path d="M383 39h20"></path></g><path d="M403 39h10"></path><g class="non-terminal"><path d="M413 39h0"></path><path d="M458.5 39h0"></path><rect x="413" y="28" width="45.5" height="22"></rect><a xlink:href="#EOF"><text x="435.75" y="43">EOF</text></a></g></g><path d="M458.5 39h10"></path><path d="M 468.5 39 h 20 m 0 -10 v 20"></path></g></svg>
       </div>
@@ -260,7 +321,7 @@ tempo: "120"
 
       <pre class="ebnf">file ::= NEWLINE* header? score? EOF</pre>
 
-      <h2>Header</h2>
+      <h3>Header</h3>
       <div class="diagram">
         <svg class="railroad-diagram" width="709" style="max-height: 79px;" viewBox="0 0 709 79"><g transform="translate(.5 .5)"><g><path d="M20 29v20m0 -10h20"></path></g><path d="M40 39h10"></path><g><path d="M50 39h0"></path><path d="M659 39h0"></path><g><path d="M50 39h0"></path><path d="M198 39h0"></path><path d="M50 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M70 19h108"></path></g><path d="M178 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M50 39h20"></path><g><path d="M70 39h0"></path><path d="M178 39h0"></path><path d="M70 39h10"></path><g class="non-terminal"><path d="M80 39h0"></path><path d="M168 39h0"></path><rect x="80" y="28" width="88" height="22"></rect><a xlink:href="#property"><text x="124" y="43">property</text></a></g><path d="M168 39h10"></path><path d="M80 39a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M80 59h88"></path></g><path d="M168 59a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M178 39h20"></path></g><path d="M198 39h10"></path><g class="non-terminal"><path d="M208 39h0"></path><path d="M279 39h0"></path><rect x="208" y="28" width="71" height="22"></rect><a xlink:href="#EQUALS"><text x="243.5" y="43">EQUALS</text></a></g><path d="M279 39h10"></path><g><path d="M289 39h0"></path><path d="M420 39h0"></path><path d="M289 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M309 19h91"></path></g><path d="M400 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M289 39h20"></path><g><path d="M309 39h0"></path><path d="M400 39h0"></path><path d="M309 39h10"></path><g class="non-terminal"><path d="M319 39h0"></path><path d="M390 39h0"></path><rect x="319" y="28" width="71" height="22"></rect><a xlink:href="#EQUALS"><text x="354.5" y="43">EQUALS</text></a></g><path d="M390 39h10"></path><path d="M319 39a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M319 59h71"></path></g><path d="M390 59a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M400 39h20"></path></g><path d="M420 39h10"></path><g class="non-terminal"><path d="M430 39h0"></path><path d="M509.5 39h0"></path><rect x="430" y="28" width="79.5" height="22"></rect><a xlink:href="#NEWLINE"><text x="469.75" y="43">NEWLINE</text></a></g><path d="M509.5 39h10"></path><g><path d="M519.5 39h0"></path><path d="M659 39h0"></path><path d="M519.5 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M539.5 19h99.5"></path></g><path d="M639 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M519.5 39h20"></path><g><path d="M539.5 39h0"></path><path d="M639 39h0"></path><path d="M539.5 39h10"></path><g class="non-terminal"><path d="M549.5 39h0"></path><path d="M629 39h0"></path><rect x="549.5" y="28" width="79.5" height="22"></rect><a xlink:href="#NEWLINE"><text x="589.25" y="43">NEWLINE</text></a></g><path d="M629 39h10"></path><path d="M549.5 39a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M549.5 59h79.5"></path></g><path d="M629 59a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M639 39h20"></path></g></g><path d="M659 39h10"></path><path d="M 669 39 h 20 m 0 -10 v 20"></path></g></svg>
       </div>
@@ -278,13 +339,13 @@ label    ::= IDENTIFIER ":"</pre>
         <code>header.raw</code>.
       </p>
 
-      <h2>Score</h2>
+      <h3>Score</h3>
       <div class="diagram">
         <svg class="railroad-diagram" width="656.5" style="max-height: 95px;" viewBox="0 0 656.5 95"><g transform="translate(.5 .5)"><g><path d="M20 37v20m0 -10h20"></path></g><path d="M40 47h10"></path><g><path d="M50 47h0"></path><path d="M606.5 47h0"></path><g class="non-terminal"><path d="M50 47h0"></path><path d="M104 47h0"></path><rect x="50" y="36" width="54" height="22"></rect><a xlink:href="#line"><text x="77" y="51">line</text></a></g><path d="M104 47h10"></path><g><path d="M114 47h0"></path><path d="M467 47h0"></path><path d="M114 47a10 10 0 0 0 10 -10v-7a10 10 0 0 1 10 -10"></path><g><path d="M134 20h313"></path></g><path d="M447 20a10 10 0 0 1 10 10v7a10 10 0 0 0 10 10"></path><path d="M114 47h20"></path><g><path d="M134 47h0"></path><path d="M447 47h0"></path><path d="M134 47h10"></path><g><path d="M144 47h0"></path><path d="M437 47h0"></path><g class="non-terminal"><path d="M144 47h0"></path><path d="M223.5 47h0"></path><rect x="144" y="36" width="79.5" height="22"></rect><a xlink:href="#NEWLINE"><text x="183.75" y="51">NEWLINE</text></a></g><path d="M223.5 47h10"></path><g><path d="M233.5 47h0"></path><path d="M373 47h0"></path><path d="M233.5 47a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M253.5 27h99.5"></path></g><path d="M353 27a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M233.5 47h20"></path><g><path d="M253.5 47h0"></path><path d="M353 47h0"></path><path d="M253.5 47h10"></path><g class="non-terminal"><path d="M263.5 47h0"></path><path d="M343 47h0"></path><rect x="263.5" y="36" width="79.5" height="22"></rect><a xlink:href="#NEWLINE"><text x="303.25" y="51">NEWLINE</text></a></g><path d="M343 47h10"></path><path d="M263.5 47a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M263.5 67h79.5"></path></g><path d="M343 67a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M353 47h20"></path></g><path d="M373 47h10"></path><g class="non-terminal"><path d="M383 47h0"></path><path d="M437 47h0"></path><rect x="383" y="36" width="54" height="22"></rect><a xlink:href="#line"><text x="410" y="51">line</text></a></g></g><path d="M437 47h10"></path><path d="M144 47a10 10 0 0 0 -10 10v8a10 10 0 0 0 10 10"></path><g><path d="M144 75h293"></path></g><path d="M437 75a10 10 0 0 0 10 -10v-8a10 10 0 0 0 -10 -10"></path></g><path d="M447 47h20"></path></g><g><path d="M467 47h0"></path><path d="M606.5 47h0"></path><path d="M467 47a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M487 27h99.5"></path></g><path d="M586.5 27a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M467 47h20"></path><g><path d="M487 47h0"></path><path d="M586.5 47h0"></path><path d="M487 47h10"></path><g class="non-terminal"><path d="M497 47h0"></path><path d="M576.5 47h0"></path><rect x="497" y="36" width="79.5" height="22"></rect><a xlink:href="#NEWLINE"><text x="536.75" y="51">NEWLINE</text></a></g><path d="M576.5 47h10"></path><path d="M497 47a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M497 67h79.5"></path></g><path d="M576.5 67a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M586.5 47h20"></path></g></g><path d="M606.5 47h10"></path><path d="M 616.5 47 h 20 m 0 -10 v 20"></path></g></svg>
       </div>
       <pre class="ebnf">score ::= line (NEWLINE+ line)* NEWLINE*</pre>
 
-      <h2>Line</h2>
+      <h3>Line</h3>
       <div class="diagram">
         <svg class="railroad-diagram" width="678" style="max-height: 79px;" viewBox="0 0 678 79"><g transform="translate(.5 .5)"><g><path d="M20 29v20m0 -10h20"></path></g><path d="M40 39h10"></path><g><path d="M50 39h0"></path><path d="M628 39h0"></path><g><path d="M50 39h0"></path><path d="M152.5 39h0"></path><path d="M50 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M70 19h62.5"></path></g><path d="M132.5 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M50 39h20"></path><g class="non-terminal"><path d="M70 39h0"></path><path d="M132.5 39h0"></path><rect x="70" y="28" width="62.5" height="22"></rect><a xlink:href="#label"><text x="101.25" y="43">label</text></a></g><path d="M132.5 39h20"></path></g><g><path d="M152.5 39h0"></path><path d="M238 39h0"></path><path d="M152.5 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M172.5 19h45.5"></path></g><path d="M218 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M152.5 39h20"></path><g class="non-terminal"><path d="M172.5 39h0"></path><path d="M218 39h0"></path><rect x="172.5" y="28" width="45.5" height="22"></rect><a xlink:href="#BAR"><text x="195.25" y="43">BAR</text></a></g><path d="M218 39h20"></path></g><path d="M238 39h10"></path><g class="non-terminal"><path d="M248 39h0"></path><path d="M327.5 39h0"></path><rect x="248" y="28" width="79.5" height="22"></rect><a xlink:href="#measure"><text x="287.75" y="43">measure</text></a></g><path d="M327.5 39h10"></path><g><path d="M337.5 39h0"></path><path d="M542.5 39h0"></path><path d="M337.5 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M357.5 19h165"></path></g><path d="M522.5 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M337.5 39h20"></path><g><path d="M357.5 39h0"></path><path d="M522.5 39h0"></path><path d="M357.5 39h10"></path><g><path d="M367.5 39h0"></path><path d="M512.5 39h0"></path><g class="non-terminal"><path d="M367.5 39h0"></path><path d="M413 39h0"></path><rect x="367.5" y="28" width="45.5" height="22"></rect><a xlink:href="#BAR"><text x="390.25" y="43">BAR</text></a></g><path d="M413 39h10"></path><path d="M423 39h10"></path><g class="non-terminal"><path d="M433 39h0"></path><path d="M512.5 39h0"></path><rect x="433" y="28" width="79.5" height="22"></rect><a xlink:href="#measure"><text x="472.75" y="43">measure</text></a></g></g><path d="M512.5 39h10"></path><path d="M367.5 39a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M367.5 59h145"></path></g><path d="M512.5 59a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M522.5 39h20"></path></g><g><path d="M542.5 39h0"></path><path d="M628 39h0"></path><path d="M542.5 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M562.5 19h45.5"></path></g><path d="M608 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M542.5 39h20"></path><g class="non-terminal"><path d="M562.5 39h0"></path><path d="M608 39h0"></path><rect x="562.5" y="28" width="45.5" height="22"></rect><a xlink:href="#BAR"><text x="585.25" y="43">BAR</text></a></g><path d="M608 39h20"></path></g></g><path d="M628 39h10"></path><path d="M 638 39 h 20 m 0 -10 v 20"></path></g></svg>
       </div>
@@ -296,7 +357,7 @@ label ::= IDENTIFIER ":"</pre>
         <code>1 2 || 3 4</code> creates an empty measure between the two bar tokens.
       </p>
 
-      <h2>Measure</h2>
+      <h3>Measure</h3>
       <div class="diagram">
         <svg class="railroad-diagram" width="535" style="max-height: 79px;" viewBox="0 0 535 79"><g transform="translate(.5 .5)"><g><path d="M20 29v20m0 -10h20"></path></g><path d="M40 39h10"></path><g><path d="M50 39h0"></path><path d="M485 39h0"></path><g><path d="M50 39h0"></path><path d="M161 39h0"></path><path d="M50 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M70 19h71"></path></g><path d="M141 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M50 39h20"></path><g class="non-terminal"><path d="M70 39h0"></path><path d="M141 39h0"></path><rect x="70" y="28" width="71" height="22"></rect><a xlink:href="#octave"><text x="105.5" y="43">octave</text></a></g><path d="M141 39h20"></path></g><path d="M161 39h10"></path><g class="non-terminal"><path d="M171 39h0"></path><path d="M293 39h0"></path><rect x="171" y="28" width="122" height="22"></rect><a xlink:href="#durable_note"><text x="232" y="43">durable&#95;note</text></a></g><path d="M293 39h10"></path><g><path d="M303 39h0"></path><path d="M485 39h0"></path><path d="M303 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M323 19h142"></path></g><path d="M465 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M303 39h20"></path><g><path d="M323 39h0"></path><path d="M465 39h0"></path><path d="M323 39h10"></path><g class="non-terminal"><path d="M333 39h0"></path><path d="M455 39h0"></path><rect x="333" y="28" width="122" height="22"></rect><a xlink:href="#durable_note"><text x="394" y="43">durable&#95;note</text></a></g><path d="M455 39h10"></path><path d="M333 39a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M333 59h122"></path></g><path d="M455 59a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M465 39h20"></path></g></g><path d="M485 39h10"></path><path d="M 495 39 h 20 m 0 -10 v 20"></path></g></svg>
       </div>
@@ -308,7 +369,7 @@ octave  ::= LOWER+ | HIGHER+</pre>
         <code>,+</code> or <code>'+</code>. Mixed prefixes are not one prefix.
       </p>
 
-      <h2>Durable Note</h2>
+      <h3>Durable Note</h3>
       <div class="diagram">
         <svg class="railroad-diagram" width="438.5" style="max-height: 70px;" viewBox="0 0 438.5 70"><g transform="translate(.5 .5)"><g><path d="M20 29v20m0 -10h20"></path></g><path d="M40 39h10"></path><g><path d="M50 39h0"></path><path d="M388.5 39h0"></path><g><path d="M50 39h0"></path><path d="M135.5 39h0"></path><path d="M50 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M70 19h45.5"></path></g><path d="M115.5 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M50 39h20"></path><g class="non-terminal"><path d="M70 39h0"></path><path d="M115.5 39h0"></path><rect x="70" y="28" width="45.5" height="22"></rect><a xlink:href="#tie"><text x="92.75" y="43">tie</text></a></g><path d="M115.5 39h20"></path></g><path d="M135.5 39h10"></path><g class="non-terminal"><path d="M145.5 39h0"></path><path d="M267.5 39h0"></path><rect x="145.5" y="28" width="122" height="22"></rect><a xlink:href="#general_note"><text x="206.5" y="43">general&#95;note</text></a></g><path d="M267.5 39h10"></path><g><path d="M277.5 39h0"></path><path d="M388.5 39h0"></path><path d="M277.5 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M297.5 19h71"></path></g><path d="M368.5 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M277.5 39h20"></path><g class="non-terminal"><path d="M297.5 39h0"></path><path d="M368.5 39h0"></path><rect x="297.5" y="28" width="71" height="22"></rect><a xlink:href="#length"><text x="333" y="43">length</text></a></g><path d="M368.5 39h20"></path></g></g><path d="M388.5 39h10"></path><path d="M 398.5 39 h 20 m 0 -10 v 20"></path></g></svg>
       </div>
@@ -320,7 +381,7 @@ tie          ::= TIE</pre>
         later if it is the first note, follows a rest, or does not match the previous sounding note.
       </p>
 
-      <h2>General Note</h2>
+      <h3>General Note</h3>
       <div class="diagram">
         <svg class="railroad-diagram" width="182.5" style="max-height: 122px;" viewBox="0 0 182.5 122"><g transform="translate(.5 .5)"><g><path d="M20 21v20m0 -10h20"></path></g><g><path d="M40 31h0"></path><path d="M142.5 31h0"></path><path d="M40 31h20"></path><g class="non-terminal"><path d="M60 31h0"></path><path d="M122.5 31h0"></path><rect x="60" y="20" width="62.5" height="22"></rect><a xlink:href="#chord"><text x="91.25" y="35">chord</text></a></g><path d="M122.5 31h20"></path><path d="M40 31a10 10 0 0 1 10 10v10a10 10 0 0 0 10 10"></path><g class="non-terminal"><path d="M60 61h4.25"></path><path d="M118.25 61h4.25"></path><rect x="64.25" y="50" width="54" height="22"></rect><a xlink:href="#rest"><text x="91.25" y="65">rest</text></a></g><path d="M122.5 61a10 10 0 0 0 10 -10v-10a10 10 0 0 1 10 -10"></path><path d="M40 31a10 10 0 0 1 10 10v40a10 10 0 0 0 10 10"></path><g class="non-terminal"><path d="M60 91h4.25"></path><path d="M118.25 91h4.25"></path><rect x="64.25" y="80" width="54" height="22"></rect><a xlink:href="#drum"><text x="91.25" y="95">drum</text></a></g><path d="M122.5 91a10 10 0 0 0 10 -10v-40a10 10 0 0 1 10 -10"></path></g><path d="M 142.5 31 h 20 m 0 -10 v 20"></path></g></svg>
       </div>
@@ -328,7 +389,7 @@ tie          ::= TIE</pre>
 rest         ::= REST
 drum         ::= DRUM</pre>
 
-      <h2>Pitch</h2>
+      <h3>Pitch</h3>
       <div class="diagram">
         <svg class="railroad-diagram" width="430" style="max-height: 70px;" viewBox="0 0 430 70"><g transform="translate(.5 .5)"><g><path d="M20 29v20m0 -10h20"></path></g><path d="M40 39h10"></path><g><path d="M50 39h0"></path><path d="M380 39h0"></path><g><path d="M50 39h0"></path><path d="M195 39h0"></path><path d="M50 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M70 19h105"></path></g><path d="M175 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M50 39h20"></path><g class="non-terminal"><path d="M70 39h0"></path><path d="M175 39h0"></path><rect x="70" y="28" width="105" height="22"></rect><a xlink:href="#accidental"><text x="122.5" y="43">accidental</text></a></g><path d="M175 39h20"></path></g><path d="M195 39h10"></path><g class="non-terminal"><path d="M205 39h0"></path><path d="M259 39h0"></path><rect x="205" y="28" width="54" height="22"></rect><a xlink:href="#NOTE"><text x="232" y="43">NOTE</text></a></g><path d="M259 39h10"></path><g><path d="M269 39h0"></path><path d="M380 39h0"></path><path d="M269 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M289 19h71"></path></g><path d="M360 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M269 39h20"></path><g class="non-terminal"><path d="M289 39h0"></path><path d="M360 39h0"></path><rect x="289" y="28" width="71" height="22"></rect><a xlink:href="#octave"><text x="324.5" y="43">octave</text></a></g><path d="M360 39h20"></path></g></g><path d="M380 39h10"></path><path d="M 390 39 h 20 m 0 -10 v 20"></path></g></svg>
       </div>
@@ -336,7 +397,7 @@ drum         ::= DRUM</pre>
 accidental ::= SHARPSHARP | SHARP | FLATFLAT | FLAT | NATURAL
 octave     ::= LOWER+ | HIGHER+</pre>
 
-      <h2>Chord</h2>
+      <h3>Chord</h3>
       <div class="diagram">
         <svg class="railroad-diagram" width="487" style="max-height: 109px;" viewBox="0 0 487 109"><g transform="translate(.5 .5)"><g><path d="M20 21v20m0 -10h20"></path></g><g><path d="M40 31h0"></path><path d="M447 31h0"></path><path d="M40 31h20"></path><g class="non-terminal"><path d="M60 31h131"></path><path d="M296 31h131"></path><rect x="191" y="20" width="105" height="22"></rect><a xlink:href="#pitch_note"><text x="243.5" y="35">pitch&#95;note</text></a></g><path d="M427 31h20"></path><path d="M40 31a10 10 0 0 1 10 10v18a10 10 0 0 0 10 10"></path><g><path d="M60 69h0"></path><path d="M427 69h0"></path><g class="terminal"><path d="M60 69h0"></path><path d="M88.5 69h0"></path><rect x="60" y="58" width="28.5" height="22" rx="10" ry="10"></rect><text x="74.25" y="73">{</text></g><path d="M88.5 69h10"></path><path d="M98.5 69h10"></path><g class="non-terminal"><path d="M108.5 69h0"></path><path d="M213.5 69h0"></path><rect x="108.5" y="58" width="105" height="22"></rect><a xlink:href="#pitch_note"><text x="161" y="73">pitch&#95;note</text></a></g><path d="M213.5 69h10"></path><g><path d="M223.5 69h0"></path><path d="M388.5 69h0"></path><path d="M223.5 69a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M243.5 49h125"></path></g><path d="M368.5 49a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M223.5 69h20"></path><g><path d="M243.5 69h0"></path><path d="M368.5 69h0"></path><path d="M243.5 69h10"></path><g class="non-terminal"><path d="M253.5 69h0"></path><path d="M358.5 69h0"></path><rect x="253.5" y="58" width="105" height="22"></rect><a xlink:href="#pitch_note"><text x="306" y="73">pitch&#95;note</text></a></g><path d="M358.5 69h10"></path><path d="M253.5 69a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M253.5 89h105"></path></g><path d="M358.5 89a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M368.5 69h20"></path></g><path d="M388.5 69h10"></path><g class="terminal"><path d="M398.5 69h0"></path><path d="M427 69h0"></path><rect x="398.5" y="58" width="28.5" height="22" rx="10" ry="10"></rect><text x="412.75" y="73">}</text></g></g><path d="M427 69a10 10 0 0 0 10 -10v-18a10 10 0 0 1 10 -10"></path></g><path d="M 447 31 h 20 m 0 -10 v 20"></path></g></svg>
       </div>
@@ -347,7 +408,7 @@ octave     ::= LOWER+ | HIGHER+</pre>
         invalid.
       </p>
 
-      <h2>Duration</h2>
+      <h3>Duration</h3>
       <div class="diagram">
         <svg class="railroad-diagram" width="368" style="max-height: 155px;" viewBox="0 0 368 155"><g transform="translate(.5 .5)"><g><path d="M20 29v20m0 -10h20"></path></g><g><path d="M40 39h0"></path><path d="M328 39h0"></path><path d="M40 39h20"></path><g><path d="M60 39h35"></path><path d="M273 39h35"></path><g class="non-terminal"><path d="M95 39h0"></path><path d="M149 39h0"></path><rect x="95" y="28" width="54" height="22"></rect><a xlink:href="#DASH"><text x="122" y="43">DASH</text></a></g><path d="M149 39h10"></path><g><path d="M159 39h0"></path><path d="M273 39h0"></path><path d="M159 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M179 19h74"></path></g><path d="M253 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M159 39h20"></path><g><path d="M179 39h0"></path><path d="M253 39h0"></path><path d="M179 39h10"></path><g class="non-terminal"><path d="M189 39h0"></path><path d="M243 39h0"></path><rect x="189" y="28" width="54" height="22"></rect><a xlink:href="#DASH"><text x="216" y="43">DASH</text></a></g><path d="M243 39h10"></path><path d="M189 39a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M189 59h54"></path></g><path d="M243 59a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M253 39h20"></path></g></g><path d="M308 39h20"></path><path d="M40 39a10 10 0 0 1 10 10v27a10 10 0 0 0 10 10"></path><g><path d="M60 86h0"></path><path d="M308 86h0"></path><g><path d="M60 86h0"></path><path d="M154 86h0"></path><path d="M60 86h20"></path><g class="non-terminal"><path d="M80 86h0"></path><path d="M134 86h0"></path><rect x="80" y="75" width="54" height="22"></rect><a xlink:href="#HALF"><text x="107" y="90">HALF</text></a></g><path d="M134 86h20"></path><path d="M60 86a10 10 0 0 1 10 10v10a10 10 0 0 0 10 10"></path><g class="non-terminal"><path d="M80 116h4.25"></path><path d="M129.75 116h4.25"></path><rect x="84.25" y="105" width="45.5" height="22"></rect><a xlink:href="#DOT"><text x="107" y="120">DOT</text></a></g><path d="M134 116a10 10 0 0 0 10 -10v-10a10 10 0 0 1 10 -10"></path></g><g><path d="M154 86h0"></path><path d="M308 86h0"></path><path d="M154 86a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M174 66h114"></path></g><path d="M288 66a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M154 86h20"></path><g><path d="M174 86h0"></path><path d="M288 86h0"></path><path d="M174 86h10"></path><g><path d="M184 86h0"></path><path d="M278 86h0"></path><path d="M184 86h20"></path><g class="non-terminal"><path d="M204 86h0"></path><path d="M258 86h0"></path><rect x="204" y="75" width="54" height="22"></rect><a xlink:href="#HALF"><text x="231" y="90">HALF</text></a></g><path d="M258 86h20"></path><path d="M184 86a10 10 0 0 1 10 10v10a10 10 0 0 0 10 10"></path><g class="non-terminal"><path d="M204 116h4.25"></path><path d="M253.75 116h4.25"></path><rect x="208.25" y="105" width="45.5" height="22"></rect><a xlink:href="#DOT"><text x="231" y="120">DOT</text></a></g><path d="M258 116a10 10 0 0 0 10 -10v-10a10 10 0 0 1 10 -10"></path></g><path d="M278 86h10"></path><path d="M184 86a10 10 0 0 0 -10 10v29a10 10 0 0 0 10 10"></path><g><path d="M184 135h94"></path></g><path d="M278 135a10 10 0 0 0 10 -10v-29a10 10 0 0 0 -10 -10"></path></g><path d="M288 86h20"></path></g></g><path d="M308 86a10 10 0 0 0 10 -10v-27a10 10 0 0 1 10 -10"></path></g><path d="M 328 39 h 20 m 0 -10 v 20"></path></g></svg>
       </div>
@@ -358,7 +419,7 @@ octave     ::= LOWER+ | HIGHER+</pre>
         forms such as <code>1-/</code> and <code>1/-</code>.
       </p>
 
-      <h2>Tokenizer</h2>
+      <h3>Tokenizer</h3>
       <div class="diagram">
         <svg class="railroad-diagram" width="199.5" style="max-height: 92px;" viewBox="0 0 199.5 92"><g transform="translate(.5 .5)"><g><path d="M20 21v20m0 -10h20"></path></g><g><path d="M40 31h0"></path><path d="M159.5 31h0"></path><path d="M40 31h20"></path><g class="non-terminal"><path d="M60 31h21.25"></path><path d="M118.25 31h21.25"></path><rect x="81.25" y="20" width="37" height="22"></rect><a xlink:href="#WS"><text x="99.75" y="35">WS</text></a></g><path d="M139.5 31h20"></path><path d="M40 31a10 10 0 0 1 10 10v10a10 10 0 0 0 10 10"></path><g class="non-terminal"><path d="M60 61h0"></path><path d="M139.5 61h0"></path><rect x="60" y="50" width="79.5" height="22"></rect><a xlink:href="#COMMENT"><text x="99.75" y="65">COMMENT</text></a></g><path d="M139.5 61a10 10 0 0 0 10 -10v-10a10 10 0 0 1 10 -10"></path></g><path d="M 159.5 31 h 20 m 0 -10 v 20"></path></g></svg>
       </div>
