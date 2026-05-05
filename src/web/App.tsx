@@ -40,7 +40,7 @@ const DARK_THEME = {
   scoreColor: "#f8fafc",
   pageBackground: "#111827",
 };
-const THEME_STORAGE_KEY = "modern-jianpu-reloaded-theme";
+const THEME_STORAGE_KEY = "modern-jianpu-markup-theme";
 
 type ThemeName = "light" | "dark";
 
@@ -184,6 +184,7 @@ export function App() {
   const [pageBackground, setPageBackground] = useState(() => themeColors(initialTheme()).pageBackground);
   const [program, setProgram] = useState(0);
   const [volume, setVolume] = useState(100);
+  const [audioSampleRate, setAudioSampleRate] = useState(44100);
   const [omitInitialRests, setOmitInitialRests] = useState(true);
   const [exportingAudio, setExportingAudio] = useState<"wav" | "mp3" | null>(null);
   const [audioExportDetails, setAudioExportDetails] = useState("");
@@ -250,6 +251,7 @@ export function App() {
       await waitForNextFrame();
       const wav = await exportBrowserWavBytes(parsed.value, {
         program,
+        sampleRate: audioSampleRate,
         amplitude: Math.min(1, Math.max(0, volume / 100)),
         omitInitialRests,
       });
@@ -273,6 +275,7 @@ export function App() {
       await waitForNextFrame();
       const mp3 = await exportBrowserMp3Bytes(parsed.value, {
         program,
+        sampleRate: audioSampleRate,
         amplitude: Math.min(1, Math.max(0, volume / 100)),
         omitInitialRests,
       });
@@ -376,7 +379,7 @@ export function App() {
     <main className={`app-shell theme-${theme}`}>
       <header className="topbar">
         <div>
-          <h1>Modern Jianpu Reloaded</h1>
+          <h1>Modern Jianpu Markup</h1>
           <p>Browser preview for the parser, SVG renderer, and audio exporters.</p>
         </div>
         <div className="actions">
@@ -505,6 +508,22 @@ export function App() {
                     onChange={(event) => setVolume(Number(event.target.value))}
                   />
                   <span>{Math.round(volume)}%</span>
+                </label>
+                <label className="number-control">
+                  Audio sample rate
+                  <input
+                    type="number"
+                    min={8000}
+                    max={192000}
+                    step={1000}
+                    value={audioSampleRate}
+                    onChange={(event) => {
+                      const value = Number(event.target.value);
+                      if (Number.isFinite(value) && value > 0) {
+                        setAudioSampleRate(Math.round(value));
+                      }
+                    }}
+                  />
                 </label>
                 <label className="checkbox-control">
                   <input

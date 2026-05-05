@@ -55,12 +55,12 @@ publish workflow.
 
 The package also exports shared library entry points:
 
-- `modern-jianpu-reloaded`
-- `modern-jianpu-reloaded/core`
-- `modern-jianpu-reloaded/parser`
-- `modern-jianpu-reloaded/renderer`
-- `modern-jianpu-reloaded/player`
-- `modern-jianpu-reloaded/backend`
+- `modern-jianpu-markup`
+- `modern-jianpu-markup/core`
+- `modern-jianpu-markup/parser`
+- `modern-jianpu-markup/renderer`
+- `modern-jianpu-markup/player`
+- `modern-jianpu-markup/backend`
 
 The release file allow-list currently includes:
 

@@ -33,7 +33,7 @@ test("frontend production build emits the expected app shell", async () => {
   const appSource = await readFile(new URL("../src/web/App.tsx", import.meta.url), "utf8");
   const audioSource = await readFile(new URL("../src/web/audio.ts", import.meta.url), "utf8");
 
-  assert.match(script, /Modern Jianpu Reloaded/);
+  assert.match(script, /Modern Jianpu Markup/);
   assert.match(script, /Export/);
   assert.doesNotMatch(script, /Export SVG/);
   assert.doesNotMatch(script, /Export PNG/);
@@ -52,7 +52,7 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(script, /Settings/);
   assert.match(script, /Page Settings/);
   assert.match(script, /Sound Settings/);
-  assert.match(script, /modern-jianpu-reloaded-theme/);
+  assert.match(script, /modern-jianpu-markup-theme/);
   assert.match(script, /prefers-color-scheme: dark/);
   assert.match(script, /Grammar/);
   assert.match(script, /grammar\.html/);
@@ -62,6 +62,7 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(script, /General MIDI/);
   assert.match(script, /Volume/);
   assert.match(script, /max:200/);
+  assert.match(script, /Audio sample rate/);
   assert.match(script, /Audition/);
   assert.match(script, /internalcontext/);
   assert.match(script, /Omit initial rests/);
@@ -81,7 +82,7 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(style, /max-width:100%/);
   assert.match(style, /height:auto/);
   assert.match(style, /\.preview-panel/);
-  assert.match(grammar, /Modern Jianpu Reloaded Grammar Reference/);
+  assert.match(grammar, /Modern Jianpu Markup Grammar Reference/);
   assert.match(grammar, /class="railroad-diagram"/);
   assert.match(grammar, /durable_note ::= tie\? general_note length\?/);
   assert.match(grammar, /IDENTIFIER ::=/);

@@ -1,11 +1,11 @@
 # Behavior Notes
 
 This document records the supported behavior, validation rules, and intentional
-format choices for Modern Jianpu Reloaded.
+format choices for Modern Jianpu Markup.
 
 ## Product Goals
 
-Modern Jianpu Reloaded should:
+Modern Jianpu Markup should:
 
 - parse current example scores
 - render recognizable Jianpu SVG
@@ -177,19 +177,13 @@ Frontend currently supports:
 - light/dark theme toggle for the app and preview/export color presets, with
   saved preference and system dark-mode initialization
 - Settings panel for page width, preview/export colors, Program, volume,
-  Program audition, and initial-rest omission
+  browser audio sample rate, Program audition, and initial-rest omission
 - volume uses a `0..200%` range and `100%` default
 - empty initial source editor with an input placeholder
 - Examples panel with focused two-column editor/preview workspace. Loading an
   example stops active playback and closes the panel. Play and Stop actions
   also close the examples panel.
 - grammar reference page at `grammar.html`
-
-Frontend intentionally does not support:
-
-- custom browser audio sample rate. The current frontend audio exporters use
-  `44100` Hz; use backend `export-wav --sample-rate` or
-  `export-mp3 --sample-rate` when a custom sample rate is required.
 
 ## Dependencies And Packaging
 

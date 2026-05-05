@@ -1,6 +1,6 @@
-# Modern Jianpu Reloaded - Current Plan
+# Modern Jianpu Markup - Current Plan
 
-This document describes the current state of Modern Jianpu Reloaded and the
+This document describes the current state of Modern Jianpu Markup and the
 remaining work. The project has a working backend CLI, frontend web app, parser,
 renderer, player pipeline, exports, examples, tests, and documentation.
 
@@ -194,6 +194,7 @@ Frontend:
   initial-rest omission.
 - Program list covers General MIDI and drum-note programs.
 - Volume control uses the `0..200%` range and `100%` default.
+- Browser WAV/MP3 export exposes an audio sample-rate setting.
 - Examples panel with curated examples.
 - Loading an example stops active playback and closes the panel.
 - Play and Stop close the examples panel.
@@ -237,14 +238,14 @@ Packaging and release shape:
 The following pieces are intentionally not part of the current target:
 
 - Serverless and API deployment folders.
-- Browser WAV sample-rate setting.
 - Nearley/Moo parser generation and `plugins/nearleyc.js`.
 - Generated Nearley `public/grammar.html` railroad diagram.
 
 The detailed grammar reference is maintained in `public/grammar.html`, and the
 railroad diagrams in that page are generated from `docs/grammar.ebnf`. Backend
 audio sample rate is available through `export-wav --sample-rate` and
-`export-mp3 --sample-rate`.
+`export-mp3 --sample-rate`; frontend audio sample rate is available in Sound
+Settings.
 
 ## Remaining Work
 
@@ -337,7 +338,7 @@ Rules:
 
 ## Behavior Position
 
-Modern Jianpu Reloaded aims for practical, documented Jianpu behavior rather
+Modern Jianpu Markup aims for practical, documented Jianpu behavior rather
 than byte-for-byte or pixel-for-pixel identity with any other implementation.
 
 Supported behavior:

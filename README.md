@@ -1,6 +1,6 @@
-# Modern Jianpu Reloaded
+# Modern Jianpu Markup
 
-Modern Jianpu Reloaded is a TypeScript toolkit and browser app for parsing,
+Modern Jianpu Markup is a TypeScript toolkit and browser app for parsing,
 rendering, playing, and exporting Jianpu scores.
 
 Current status:
