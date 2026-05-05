@@ -111,6 +111,7 @@
         color: #5c6878;
       }
 
+      .notation-example,
       .ebnf {
         margin: 10px 0 22px;
         padding: 14px 16px;
@@ -190,28 +191,40 @@
 
       <h3>1. File Structure</h3>
       <p>A file has an optional header followed by score text.</p>
-      <pre class="ebnf">title: "Twinkle"
+      <pre class="notation-example">title: "Twinkle"
 key: "C"
 time: "4/4"
 tempo: "120"
 =
 1 1 5 5 | 6 6 5 - |</pre>
       <p>Score-only form is also valid:</p>
-      <pre class="ebnf">1 2 3 4 | 5 6 7 1' |</pre>
+      <pre class="notation-example">1 2 3 4 | 5 6 7 1' |</pre>
       <p>
-        The parser treats a document as a header document if any <code>=</code> token appears ahead in the file. Header
-        fields must appear before the separator. Empty files are valid and parse as a document with default header values
-        and no score lines.
+        If a file uses a header separator, all header fields must appear before it. Without a separator, the whole file
+        is score text. Empty files are valid and use the default key, time, and tempo.
       </p>
 
       <h3>2. Whitespace And Comments</h3>
       <p>
-        Spaces and tabs may appear between tokens and are ignored. Line breaks separate score lines and header
-        properties. Comments begin with <code>;</code> and continue until the next line break. Comments do not create
-        notes or measures; the newline after a comment is still parsed normally.
+        Spaces and tabs may appear between tokens and are ignored and optional when their absence does not cause ambiguity. For example, the following are all equivalent:
       </p>
-      <pre class="ebnf">1 2 3 4 ; this comment is ignored
+      <pre class="notation-example">1 2 3 4
 5 6 7 1'</pre>
+      <pre class="notation-example">1234
+5671'</pre> 
+      <p>
+        Comments begin with <code>;</code> and continue until the next line break. Comments are only for human readers and are ignored by the parser. For example, the following is valid and equivalent to the previous examples:
+      </p>
+      <pre class="notation-example">1 2 3 4 ; this comment is ignored
+5 6 7 1' ; this comment is also ignored</pre>
+      <p>
+        Line breaks that separate score lines and header properties are semantically-aware and not ignored, 
+        but consecutive line breaks are treated as a single one.
+      </p>
+      <pre class="notation-example">1 2 3 4 5 6 7 1' ; this score is rendered in a single line </pre>
+      <pre class="notation-example">1 2 3 4
+         ; consecutive line breaks are treated as one
+5 6 7 1' ; therefore, this score is rendered in two lines, not three</pre>
 
       <h3>3. Header</h3>
       <p>
@@ -233,66 +246,66 @@ tempo: "120"
         </tbody>
       </table>
       <p>
-        Unknown header fields are preserved in <code>header.raw</code> but have no built-in semantic effect. Multiple
-        <code>=</code> characters are accepted as the header separator.
+        Unknown header fields are allowed but have no built-in effect. Multiple <code>=</code> characters are accepted as
+        the header separator.
       </p>
-      <pre class="ebnf">title: "Example"
+      <pre class="notation-example">title: "Example"
 ===
 1 2 3 4</pre>
 
       <h3>4. Strings</h3>
       <p>
         Strings are delimited by <code>"</code>. A backslash skips the following character during tokenization, but the
-        parser stores the raw inner text and does not unescape sequences.
+        backslash is kept as written instead of being interpreted as an escape sequence.
       </p>
-      <pre class="ebnf">title: "A \"quoted\" title"</pre>
+      <pre class="notation-example">title: "A \"quoted\" title"</pre>
       <p>Unterminated strings are invalid:</p>
-      <pre class="ebnf">title: "unterminated
+      <pre class="notation-example">title: "unterminated
 =
 1 2 3 4</pre>
 
       <h3>5. Key</h3>
       <p>Supported keys:</p>
-      <pre class="ebnf">C C# Db D D# Eb E F F# Gb G G# Ab A A# Bb B</pre>
+      <pre class="notation-example">C C# Db D D# Eb E F F# Gb G G# Ab A A# Bb B</pre>
       <p>
-        One space inside the key value is ignored. Accidentals may also be written before the letter because the parser
-        checks the reversed normalized string. Invalid keys produce an error and parsing returns <code>ok: false</code>.
+        One space inside the key value is ignored. Accidentals may also be written before the letter, as in
+        <code>#C</code> and <code>bB</code>. Invalid keys are errors.
       </p>
-      <pre class="ebnf">key: "#C"
+      <pre class="notation-example">key: "#C"
 key: "bB"</pre>
 
       <h3>6. Time</h3>
       <p>
         Time signatures use <code>beatsPerMeasure/beatsPerWholeNote</code>. Allowed numerators are
         <code>2 3 4 6 9 12</code>. Allowed denominators are <code>2 4 8 16</code>. Invalid time signatures produce an
-        error and parsing returns <code>ok: false</code>.
+        error.
       </p>
-      <pre class="ebnf">time: "4/4"
+      <pre class="notation-example">time: "4/4"
 time: "6/8"
 time: "2/16"</pre>
 
       <h3>7. Tempo</h3>
-      <p>Tempo must be a positive number. Invalid tempo values produce an error and parsing returns <code>ok: false</code>.</p>
-      <pre class="ebnf">tempo: "96"
+      <p>Tempo must be a positive number. Invalid tempo values are errors.</p>
+      <pre class="notation-example">tempo: "96"
 tempo: "120"
 tempo: "132.5"</pre>
 
       <h3>8. Score Lines</h3>
       <p>
         A score line may optionally begin with a label. Labels use the same token form as header names: ASCII letters or
-        underscores. The label is preserved on the parsed score line and rendered at the left edge of that score line.
+        underscores. The label is rendered at the left edge of that score line.
       </p>
-      <pre class="ebnf">verse: 1 2 3 4 | 5 6 7 1'</pre>
+      <pre class="notation-example">verse: 1 2 3 4 | 5 6 7 1'</pre>
       <p>
         Measures are separated by <code>|</code>. A leading bar and a trailing bar are accepted. Each parsed measure
         must contain at least one note-like item. Empty measures are errors.
       </p>
-      <pre class="ebnf">| 1 2 3 4 | 5 6 7 1' |
+      <pre class="notation-example">| 1 2 3 4 | 5 6 7 1' |
 1 2 || 3 4</pre>
 
       <h3>9. Notes</h3>
       <p>Pitch notes are digits <code>1</code> through <code>7</code>. Rest is <code>0</code>. Drum note is uppercase <code>X</code>.</p>
-      <pre class="ebnf">1 2 3 4 5 6 7
+      <pre class="notation-example">1 2 3 4 5 6 7
 0
 X</pre>
       <p>Lowercase <code>x</code> is an identifier token, not a drum note.</p>
@@ -310,7 +323,7 @@ X</pre>
           <tr><td><code>%</code></td><td>natural</td></tr>
         </tbody>
       </table>
-      <pre class="ebnf">#4 b7 %4 ##1 bb6</pre>
+      <pre class="notation-example">#4 b7 %4 ##1 bb6</pre>
       <p>
         Accidentals apply only to pitch notes. Accidentals persist within a measure for playback and tie validation.
         They reset at each measure boundary.
@@ -321,13 +334,13 @@ X</pre>
         Octave suffixes appear after a pitch note. Each <code>'</code> raises the note by one octave. Each
         <code>,</code> lowers the note by one octave.
       </p>
-      <pre class="ebnf">1' 2'' 6, 5,,</pre>
+      <pre class="notation-example">1' 2'' 6, 5,,</pre>
       <p>
         A measure may begin with a measure-level octave prefix. The prefix applies to all pitch notes in that measure.
         Per-note suffixes add to the measure prefix. The prefix must appear before any notes. Mixed prefix characters are
-        not accepted as one prefix; the parser consumes only the first repeated prefix character type.
+        not accepted as one prefix.
       </p>
-      <pre class="ebnf">'' 1 2 3 4
+      <pre class="notation-example">'' 1 2 3 4
 ,, 5 6 7 1</pre>
 
       <h3>12. Durations</h3>
@@ -352,10 +365,10 @@ X</pre>
       <p>
         Dashes and slash/dot suffixes are mutually exclusive. Inputs such as <code>1-/</code> or <code>1/-</code> are
         rejected with a specific duration diagnostic. Duration suffixes must follow a note, rest, drum note, or chord.
-        In compact notation, stray suffixes such as <code>/1</code>, <code>.1</code>, or <code>-1</code> are rejected
-        with a specific diagnostic.
+        Stray suffixes such as <code>/1</code>, <code>.1</code>, or <code>-1</code> are rejected with a specific
+        diagnostic.
       </p>
-      <pre class="ebnf">1 2/ 3// 4. 5/. 6- 7--</pre>
+      <pre class="notation-example">1 2/ 3// 4. 5/. 6- 7--</pre>
 
       <h3>13. Chords</h3>
       <p>
@@ -363,23 +376,23 @@ X</pre>
         chord members. Empty chords are invalid. A closing brace without a matching <code>{</code> is invalid; for
         example, <code>1}2</code> reports the stray <code>}</code> as an unmatched chord end.
       </p>
-      <pre class="ebnf">{1 3 5}
+      <pre class="notation-example">{1 3 5}
 {#1 3 b5}/
 {1' 3' 5'}</pre>
       <p>The duration suffix belongs after the closing brace and applies to the whole chord.</p>
-      <pre class="ebnf">{1 3 5}/
+      <pre class="notation-example">{1 3 5}/
 {1 3 5}-</pre>
 
       <h3>14. Ties</h3>
       <p>A tie marker <code>~</code> appears before the tied note. The first note in a document cannot be tied.</p>
-      <pre class="ebnf">1 ~1
+      <pre class="notation-example">1 ~1
 3 - ~3/</pre>
       <p>
         A tied note must follow a sounding note. A tie after a rest is invalid. A tied pitch note must match the
         previous sounding pitch or chord after measure-local accidental persistence is applied. A tied drum note may tie
         to a previous drum note. The player merges tied notes into the previous melody event.
       </p>
-      <pre class="ebnf">Valid:
+      <pre class="notation-example">Valid:
 #4 ~4
 {1 3 5} ~{1 3 5}
 X ~X
@@ -389,31 +402,21 @@ Invalid:
 #4 | ~%4
 X ~1</pre>
 
-      <h3>15. Compact Notation</h3>
-      <p>Whitespace between notes is optional when tokens remain unambiguous.</p>
-      <pre class="ebnf">1155|665-|
-1/2/3/4/</pre>
-      <p>
-        Header syntax still requires line-oriented <code>name: "value"</code> fields before the separator. Only digits
-        <code>1</code> through <code>7</code> are pitch notes. Compact text such as <code>18</code> is not parsed as a
-        valid compact note sequence; <code>8</code> is reported as an unexpected character at its source position.
-      </p>
-
-      <h3>16. Measure Duration Warnings</h3>
-      <p>The parser computes each measure duration and compares it with the active time signature:</p>
-      <pre class="ebnf">expected = beatsPerMeasure / beatsPerWholeNote</pre>
+      <h3>15. Measure Duration Warnings</h3>
+      <p>Each measure duration is compared with the active time signature:</p>
+      <pre class="notation-example">expected = beatsPerMeasure / beatsPerWholeNote</pre>
       <ul>
         <li><code>4/4</code> expects <code>1</code>.</li>
         <li><code>3/4</code> expects <code>0.75</code>.</li>
         <li><code>6/8</code> expects <code>0.75</code>.</li>
       </ul>
-      <p>Mismatches produce warnings, not errors. The parse result remains <code>ok: true</code> if there are no errors.</p>
-      <pre class="ebnf">time: "4/4"
+      <p>Mismatches produce warnings, not errors.</p>
+      <pre class="notation-example">time: "4/4"
 =
 1 2</pre>
 
-      <h3>17. Error Summary</h3>
-      <p>The parser currently reports errors for:</p>
+      <h3>16. Error Summary</h3>
+      <p>Errors are reported for:</p>
       <ul>
         <li>unexpected characters</li>
         <li>unterminated strings</li>
@@ -464,8 +467,8 @@ label    ::= IDENTIFIER ":"</pre>
 
       <p>
         Semantic header fields are <code>title</code>, <code>subtitle</code>, <code>composer</code>, <code>key</code>,
-        <code>time</code>, <code>tempo</code>, and <code>hidden</code>. Unknown fields are preserved in
-        <code>header.raw</code>.
+        <code>time</code>, <code>tempo</code>, and <code>hidden</code>. Unknown fields are accepted but have no built-in
+        effect.
       </p>
 
       <h3>Score</h3>
@@ -544,14 +547,14 @@ octave     ::= LOWER+ | HIGHER+</pre>
       <pre class="ebnf">length ::= DASH+ | (HALF | DOT)+</pre>
 
       <p>
-        Dash duration marks cannot be combined with slash or dot marks. The parser reports a specific duration error for
-        forms such as <code>1-/</code> and <code>1/-</code>.
+        Dash duration marks cannot be combined with slash or dot marks. Forms such as <code>1-/</code> and
+        <code>1/-</code> are invalid.
       </p>
 
       <h3>Token Reference</h3>
       <p>
-        The parser consumes whitespace and comments between grammar tokens, so they are listed separately from tokens
-        that become part of the parsed structure. Reserved token spellings such as <code>bb</code>, <code>b</code>, and
+        Whitespace and comments are allowed between grammar tokens, so they are listed separately from tokens that become
+        part of the written score. Reserved token spellings such as <code>bb</code>, <code>b</code>, and
         <code>X</code> are matched before identifiers.
       </p>
       <pre class="ebnf">Ignored between tokens:

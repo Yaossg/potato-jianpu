@@ -86,6 +86,7 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(grammar, /durable_note ::= tie\? general_note length\?/);
   assert.match(grammar, /IDENTIFIER ::=/);
   assert.match(grammar, /Reference/);
+  assert.match(grammar, /Whitespace And Comments/);
   assert.match(grammar, />5\. Key</);
   assert.match(grammar, />6\. Time</);
   assert.match(grammar, />7\. Tempo</);
