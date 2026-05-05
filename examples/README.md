@@ -22,7 +22,7 @@ pnpm run cli -- export-mp3 examples/twinkle.jp -o twinkle.mp3
 | `scale.jp` | Small scale reference with explicit metadata and octave marks |
 | `twinkle.jp` | Compact notation, dashes, and a traditional melody header |
 | `ode-to-joy.jp` | Key signature, dotted/slashed rhythm, and multi-line score |
-| `compound-6-8.jp` | Compound meter and dotted beat grouping |
+| `6-8-example.jp` | 6/8 example with 16th notes side by side |
 | `drums.jp` | Drum-note syntax and short durations |
 | `jingle-bells.jp` | Song example with dotted/slashed rhythms |
 | `happy-birthday.jp` | 3/4 example with compact rests |

@@ -7,7 +7,7 @@ import { PreviewAudioPlayer } from "./audio.js";
 import scale from "../../examples/scale.jp?raw";
 import twinkle from "../../examples/twinkle.jp?raw";
 import odeToJoy from "../../examples/ode-to-joy.jp?raw";
-import compound from "../../examples/compound-6-8.jp?raw";
+import _68example from "../../examples/6-8-example.jp?raw";
 import drums from "../../examples/drums.jp?raw";
 import jingleBells from "../../examples/jingle-bells.jp?raw";
 import happyBirthday from "../../examples/happy-birthday.jp?raw";
@@ -20,7 +20,7 @@ const examples = [
   { name: "Scale", source: scale },
   { name: "Twinkle", source: twinkle },
   { name: "Ode to Joy", source: odeToJoy },
-  { name: "6/8 Study", source: compound },
+  { name: "6/8 Example", source: _68example },
   { name: "Drums", source: drums },
   { name: "Jingle Bells", source: jingleBells },
   { name: "Happy Birthday", source: happyBirthday },
