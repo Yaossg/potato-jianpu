@@ -42,7 +42,7 @@
     "docs/",
     "examples/",
     "README.md",
-    "PLAN.md",
+    "AGENTS.md",
     "package.json"
   ],
   "scripts": {

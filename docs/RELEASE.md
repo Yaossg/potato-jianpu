@@ -69,7 +69,7 @@ The release file allow-list currently includes:
 - `docs/`
 - `examples/`
 - `README.md`
-- `PLAN.md`
+- `AGENTS.md`
 - `package.json`
 
 ## Frontend Deployment
@@ -94,7 +94,7 @@ Before cutting a release:
 - Run `npm pack --dry-run --json` and inspect the file list. The package should
   include `dist/` backend/library output and `dist-web/` static frontend output,
   but not `dist/web/` browser-source compiler output.
-- Check `git status --short` in `reloaded/`.
+- Check `git status --short`.
 - Confirm `package.json` versioning and release notes.
 - Confirm `pnpm run cli -- --version` prints the intended package version.
 - Smoke test the CLI with at least one example input.

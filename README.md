@@ -45,7 +45,7 @@ core, parser, renderer, player, and backend modules.
 
 `pnpm run web:build` emits the browser application in `dist-web/`.
 
-See `PLAN.md` for the current roadmap. Syntax is documented in
+See `AGENTS.md` for repository handoff notes. Syntax is documented in
 `public/grammar.html`, renderer behavior in
 `docs/RENDERER.md`, player behavior in `docs/PLAYER.md`, and export behavior in
 `docs/EXPORTS.md`. Module boundaries are documented in `docs/ARCHITECTURE.md`,
