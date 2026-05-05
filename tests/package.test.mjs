@@ -25,6 +25,7 @@ test("package metadata points at built backend and library files", async () => {
   await exists(manifest.main);
   await exists(manifest.types);
   await exists(manifest.bin.jianpu);
+  await assert.rejects(access(join(repoDir, "dist/web")));
 
   for (const [name, target] of Object.entries(manifest.exports)) {
     if (typeof target === "string") {

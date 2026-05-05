@@ -15,6 +15,9 @@ The backend build is created with:
 pnpm run build
 ```
 
+The backend build uses `tsconfig.build.json` and intentionally excludes
+`src/web/`. Browser source is bundled only through the frontend build.
+
 The frontend build is created with:
 
 ```sh
@@ -88,6 +91,9 @@ Before cutting a release:
 - Run `pnpm run test`.
 - Run `pnpm run web:build` if not already covered by the test output being
   inspected.
+- Run `npm pack --dry-run --json` and inspect the file list. The package should
+  include `dist/` backend/library output and `dist-web/` static frontend output,
+  but not `dist/web/` browser-source compiler output.
 - Check `git status --short` in `reloaded/`.
 - Confirm `package.json` versioning and release notes.
 - Confirm `pnpm run cli -- --version` prints the intended package version.
