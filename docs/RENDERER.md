@@ -29,6 +29,7 @@ Options:
 ```ts
 interface RenderOptions {
   pageWidth?: number;
+  justifyMode?: "none" | "except-last" | "all";
   activeNoteIndex?: number;
   color?: string;
   background?: string;
@@ -37,6 +38,9 @@ interface RenderOptions {
 
 - `pageWidth` controls the SVG `width`, `viewBox` width, header layout, measure
   wrapping, and maximum visual line width. Default: `1000`.
+- `justifyMode` controls horizontal score justification. `"none"` keeps natural
+  spacing, `"except-last"` justifies every visual line except the final score
+  line, and `"all"` justifies every visual line. Default: `"none"`.
 - `activeNoteIndex` marks one parsed note as active for frontend playback
   highlighting. Default: no active note.
 - `color` sets the root SVG `color` style used by `currentColor` notation
@@ -68,8 +72,9 @@ The renderer follows a measurement-first pipeline:
 3. Build measure layouts.
 4. Wrap measure layouts into visual lines based on `pageWidth`.
 5. Horizontally scale any single visual line that still exceeds `pageWidth`.
-6. Draw bars, ties, notes, and duration marks.
-7. Compute final SVG height from header height and rendered score lines.
+6. Optionally justify line coordinates when `justifyMode` enables it.
+7. Draw bars, ties, notes, and duration marks.
+8. Compute final SVG height from header height and rendered score lines.
 
 The main internal layout records are:
 
@@ -144,6 +149,16 @@ estimate the unwrapped natural score width from the current document. Manual
 mode keeps an explicit numeric width for preview and export. The preview panel
 also uses responsive CSS so a wide exported page scales down visually instead
 of forcing horizontal page overflow.
+
+When score justification is enabled, selected visual lines are stretched to the
+available page width by remapping horizontal coordinates. The `"except-last"`
+mode skips the final score line; `"all"` includes it. The remapping uses beat
+groups: notes inside one beat group, such as a continuous underlined run, keep
+their natural internal spacing and move as one unit. This affects notes, bars,
+ties, dashes, underlines, and duration dots together. It is independent of
+whether the line was created by source line breaks or automatic wrapping.
+Overwide lines still use line-level scaling instead of additional position
+stretching.
 
 ## Header Rendering
 
@@ -303,8 +318,7 @@ The renderer is deterministic but still intentionally simple:
 
 - layout constants are internal, not configurable
 - measure wrapping only occurs between measures
-- horizontal scaling is line-level only; it does not re-space individual notes
-  inside an overwide measure
+- overwide lines use line-level scaling instead of note re-spacing
 - no full collision avoidance for dense chords and ties
 - no pagination
 - no staff or engraving model beyond the current Jianpu notation

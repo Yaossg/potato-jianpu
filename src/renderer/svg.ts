@@ -8,12 +8,13 @@ import { escapeXml } from "./xml.js";
 export function renderSvg(document: Document, options: RenderOptions = {}): string {
   const resolved: Required<RenderOptions> = {
     pageWidth: options.pageWidth ?? DEFAULT_OPTIONS.pageWidth,
+    justifyMode: options.justifyMode ?? DEFAULT_OPTIONS.justifyMode,
     activeNoteIndex: options.activeNoteIndex ?? DEFAULT_OPTIONS.activeNoteIndex,
     color: options.color ?? DEFAULT_OPTIONS.color,
     background: options.background ?? DEFAULT_OPTIONS.background,
   };
   const header = renderHeader(document, resolved.pageWidth);
-  const score = renderScore(document, header.height, resolved.pageWidth, resolved.activeNoteIndex);
+  const score = renderScore(document, header.height, resolved.pageWidth, resolved.activeNoteIndex, resolved.justifyMode);
   const height = Math.max(1, header.height + score.height);
   const rootStyle = resolved.color ? ` style="color: ${escapeXml(resolved.color)}"` : "";
   const background = resolved.background

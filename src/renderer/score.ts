@@ -2,6 +2,7 @@ import { actualNotePerBeat, type Document, type Measure, type Note, type Pitch, 
 import { DIMENSIONS } from "./dimensions.js";
 import { flattenNotes, layoutLine, measureXOffset, type LineLayout } from "./layout.js";
 import { chordHeight, maxAccidentalOffset, noteTieAfter, widthOf } from "./metrics.js";
+import type { JustifyMode } from "./options.js";
 import { escapeXml } from "./xml.js";
 
 const accidentalMap = new Map([
@@ -123,29 +124,55 @@ function measureFullness(measure: Measure, unit: number): boolean[] {
   });
 }
 
-function renderLine(layout: LineLayout, lineY: number, allNotes: Note[], document: Document, activeNoteIndex: number): string {
+function createLineJustifier(layout: LineLayout, targetWidth: number, enabled: boolean): (x: number) => number {
+  if (!enabled || targetWidth <= layout.width) {
+    return (x: number) => x;
+  }
+  const firstNoteX = DIMENSIONS.leftPadding;
+  const naturalEndX = layout.width - DIMENSIONS.leftPadding + 12;
+  const targetEndX = targetWidth - DIMENSIONS.leftPadding / 3;
+  if (naturalEndX <= firstNoteX || targetEndX <= firstNoteX) {
+    return (x: number) => x;
+  }
+  const scale = (targetEndX - firstNoteX) / (naturalEndX - firstNoteX);
+  return (x: number) => firstNoteX + (x - firstNoteX) * scale;
+}
+
+function renderLine(layout: LineLayout, lineY: number, allNotes: Note[], document: Document, activeNoteIndex: number, justifyLine: boolean, visualWidth: number): string {
   const parts: string[] = [];
   const lineEntries: Array<{ note: Note; x: number; y: number; full: boolean }> = [];
   const unit = actualNotePerBeat(document.header.timeSignature);
   const finalMeasure = lastMeasure(document);
   const labelOffset = layout.line.label ? DIMENSIONS.labelWidth : 0;
+  const justifyX = createLineJustifier(layout, visualWidth - labelOffset, justifyLine);
   if (layout.line.label) {
     parts.push(`<text class="line-label" x="8" y="${lineY + layout.maxPaddingUp}" text-anchor="start">${escapeXml(layout.line.label)}</text>`);
   }
   for (const [measureIndex, measureLayout] of layout.measures.entries()) {
-    const xOffset = labelOffset + measureXOffset(layout.measures, measureIndex);
+    const xOffset = measureXOffset(layout.measures, measureIndex);
     const fullness = measureFullness(measureLayout.measure, unit);
+    let groupStartX: number | null = null;
+    let groupDuration = 0;
     for (const [noteIndex, note] of measureLayout.measure.notes.entries()) {
+      const naturalX = xOffset + measureLayout.notePositions[noteIndex]! + DIMENSIONS.leftPadding;
+      groupStartX ??= naturalX;
+      const groupShift = justifyX(groupStartX) - groupStartX;
       lineEntries.push({
         note,
-        x: xOffset + measureLayout.notePositions[noteIndex]! + DIMENSIONS.leftPadding,
+        x: labelOffset + naturalX + groupShift,
         y: lineY + layout.maxPaddingUp,
         full: fullness[noteIndex] ?? false,
       });
+      groupDuration += note.duration.value;
+      if (Math.abs(groupDuration % unit) < 1e-9) {
+        groupStartX = null;
+        groupDuration = 0;
+      }
     }
+    const naturalBarX = xOffset + measureLayout.width - DIMENSIONS.leftPadding + 12;
     parts.push(
       renderBar(
-        xOffset + measureLayout.width - DIMENSIONS.leftPadding + 12,
+        labelOffset + justifyX(naturalBarX),
         lineY + layout.maxPaddingUp + DIMENSIONS.noteBottomPadding,
         measureLayout.measure === finalMeasure,
       ),
@@ -164,7 +191,7 @@ function renderLine(layout: LineLayout, lineY: number, allNotes: Note[], documen
     }
     if (noteTieAfter(entry.note, allNotes) && index === lineEntries.length - 1) {
       const startX = entry.x + (entry.note.kind === "pitch" ? maxAccidentalOffset(entry.note.chord) : 0);
-      const endX = Math.max(startX + DIMENSIONS.baseNoteWidth, layout.width - DIMENSIONS.leftPadding / 2);
+      const endX = Math.max(startX + DIMENSIONS.baseNoteWidth, labelOffset + justifyX(layout.width - DIMENSIONS.leftPadding / 2));
       parts.push(renderTie(startX, endX, lineY + layout.maxPaddingUp - DIMENSIONS.tiePadding, chordHeight(entry.note)));
     }
 
@@ -186,7 +213,7 @@ function lineVisualWidth(layout: LineLayout): number {
   return layout.width + (layout.line.label ? DIMENSIONS.labelWidth : 0);
 }
 
-export function renderScore(document: Document, yStart: number, pageWidth: number, activeNoteIndex: number): { svg: string; height: number; width: number } {
+export function renderScore(document: Document, yStart: number, pageWidth: number, activeNoteIndex: number, justifyMode: JustifyMode): { svg: string; height: number; width: number } {
   const allNotes = flattenNotes(document);
   const layouts = document.score.flatMap((line) => {
     const labelOffset = line.label ? DIMENSIONS.labelWidth : 0;
@@ -194,10 +221,12 @@ export function renderScore(document: Document, yStart: number, pageWidth: numbe
   });
   let y = yStart;
   const parts: string[] = [];
-  for (const layout of layouts) {
+  for (const [index, layout] of layouts.entries()) {
     const width = lineVisualWidth(layout);
     const scaleX = width > pageWidth ? pageWidth / width : 1;
-    const line = renderLine(layout, y, allNotes, document, activeNoteIndex);
+    const visualWidth = scaleX < 1 ? width : pageWidth;
+    const shouldJustify = justifyMode === "all" || (justifyMode === "except-last" && index < layouts.length - 1);
+    const line = renderLine(layout, y, allNotes, document, activeNoteIndex, shouldJustify && scaleX === 1, visualWidth);
     parts.push(scaleX < 1 ? `<g class="score-line scaled" transform="scale(${scaleX},1)">${line}</g>` : line);
     y += layout.height + DIMENSIONS.lineSpacing;
   }

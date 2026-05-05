@@ -95,6 +95,32 @@ test("wraps score measures when page width is narrow", () => {
   assert.ok(narrowHeight > wideHeight);
 });
 
+test("justifies all score lines by stretching note positions", () => {
+  const result = parse("1//2//3//4// 5- 6/ | 7 |\n5 6 7 |");
+  assert.equal(result.ok, true);
+  const natural = renderSvg(result.value, { pageWidth: 320, background: "#ffffff" });
+  assert.match(natural, /<g class="note-item" data-note-index="1"><text class="note" x="42" y="104" text-anchor="middle">2<\/text>/);
+  assert.match(natural, /<g class="note-item" data-note-index="5"><text class="note" x="162" y="104" text-anchor="middle">6<\/text>/);
+  assert.match(natural, /<line class="dash" x1="128" y1="95" x2="144" y2="95"/);
+  assert.match(natural, /<line class="underline" x1="152" y1="109" x2="176" y2="109"/);
+  assert.match(natural, /<g class="note-item" data-note-index="8"><text class="note" x="42" y="158" text-anchor="middle">6<\/text><\/g>/);
+
+  const justified = renderSvg(result.value, { pageWidth: 320, justifyMode: "except-last", background: "#ffffff" });
+  assert.match(justified, /<g class="note-item" data-note-index="1"><text class="note" x="42" y="104" text-anchor="middle">2<\/text>/);
+  assert.match(justified, /<g class="note-item" data-note-index="5"><text class="note" x="[^"]+" y="104" text-anchor="middle">6<\/text>/);
+  assert.doesNotMatch(justified, /<g class="note-item" data-note-index="5"><text class="note" x="162" y="104" text-anchor="middle">6<\/text>/);
+  assert.match(justified, /<line class="dash" x1="[^"]+" y1="95" x2="[^"]+" y2="95"/);
+  assert.doesNotMatch(justified, /<line class="dash" x1="128" y1="95" x2="144" y2="95"/);
+  assert.match(justified, /<line class="underline" x1="[^"]+" y1="109" x2="[^"]+" y2="109"/);
+  assert.doesNotMatch(justified, /<line class="underline" x1="152" y1="109" x2="176" y2="109"/);
+  assert.match(justified, /<g class="note-item" data-note-index="8"><text class="note" x="42" y="158" text-anchor="middle">6<\/text><\/g>/);
+  assert.match(justified, /<line class="bar-thin" x1="314"/);
+
+  const allLines = renderSvg(result.value, { pageWidth: 320, justifyMode: "all", background: "#ffffff" });
+  assert.match(allLines, /<g class="note-item" data-note-index="8"><text class="note" x="[^"]+" y="158" text-anchor="middle">6<\/text><\/g>/);
+  assert.doesNotMatch(allLines, /<g class="note-item" data-note-index="8"><text class="note" x="42" y="158" text-anchor="middle">6<\/text><\/g>/);
+});
+
 test("infers page width from natural score content", () => {
   const short = parse("1 2 |");
   const long = parse("1 2 | 3 4 | 5 6 | 7 1' |");

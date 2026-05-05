@@ -53,6 +53,9 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(script, /Page Settings/);
   assert.match(script, /Width mode/);
   assert.match(script, /Content/);
+  assert.match(script, /Justify/);
+  assert.match(script, /Except last line/);
+  assert.match(script, /All lines/);
   assert.match(script, /ResizeObserver/);
   assert.match(script, /Sound Settings/);
   assert.match(script, /modern-jianpu-markup-theme/);

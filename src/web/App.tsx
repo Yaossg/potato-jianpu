@@ -48,6 +48,7 @@ const PREVIEW_HORIZONTAL_PADDING = 32;
 
 type ThemeName = "light" | "dark";
 type PageWidthMode = "panel" | "content" | "manual";
+type JustifyMode = "none" | "except-last" | "all";
 
 function themeColors(theme: ThemeName) {
   return theme === "light" ? LIGHT_THEME : DARK_THEME;
@@ -79,6 +80,10 @@ function initialTheme(): ThemeName {
 
 function toPageWidthMode(value: string): PageWidthMode {
   return value === "content" || value === "manual" ? value : "panel";
+}
+
+function toJustifyMode(value: string): JustifyMode {
+  return value === "except-last" || value === "all" ? value : "none";
 }
 
 function openGrammarRailroad() {
@@ -190,6 +195,7 @@ export function App() {
   const [pageWidthMode, setPageWidthMode] = useState<PageWidthMode>("panel");
   const [manualPageWidth, setManualPageWidth] = useState(DEFAULT_PAGE_WIDTH);
   const [panelPageWidth, setPanelPageWidth] = useState(DEFAULT_PAGE_WIDTH);
+  const [justifyMode, setJustifyMode] = useState<JustifyMode>("none");
   const [theme, setTheme] = useState<ThemeName>(() => initialTheme());
   const [scoreColor, setScoreColor] = useState(() => themeColors(initialTheme()).scoreColor);
   const [pageBackground, setPageBackground] = useState(() => themeColors(initialTheme()).pageBackground);
@@ -214,12 +220,13 @@ export function App() {
       parsed.ok
         ? renderSvg(parsed.value, {
             pageWidth,
+            justifyMode,
             activeNoteIndex: activeNoteIndex ?? undefined,
             color: scoreColor,
             background: pageBackground,
           })
         : null,
-    [activeNoteIndex, pageBackground, pageWidth, parsed, scoreColor],
+    [activeNoteIndex, justifyMode, pageBackground, pageWidth, parsed, scoreColor],
   );
 
   useEffect(() => {
@@ -508,6 +515,14 @@ export function App() {
                 <label className="color-control">
                   Page
                   <input type="color" value={pageBackground} onChange={(event) => setPageBackground(event.target.value)} />
+                </label>
+                <label className="select-control">
+                  Justify
+                  <select value={justifyMode} onChange={(event) => setJustifyMode(toJustifyMode(event.target.value))}>
+                    <option value="none">None</option>
+                    <option value="except-last">Except last line</option>
+                    <option value="all">All lines</option>
+                  </select>
                 </label>
               </div>
             </section>
