@@ -46,6 +46,8 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(script, /image\/png/);
   assert.match(script, /audio\/wav/);
   assert.match(script, /audio\/mpeg/);
+  assert.match(script, /Rendering locally/);
+  assert.match(script, /event\(s\)/);
   assert.match(script, /Theme:/);
   assert.match(script, /Settings/);
   assert.match(script, /Page Settings/);
@@ -67,6 +69,7 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(style, /\.theme-dark/);
   assert.match(style, /\.export-menu/);
   assert.match(style, /\.export-menu-items/);
+  assert.match(style, /\.export-status/);
   assert.match(style, /\.settings-panel/);
   assert.match(style, /\.settings-section\s*\+\s*\.settings-section/);
   assert.match(style, /\.settings-grid/);

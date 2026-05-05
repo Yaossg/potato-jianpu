@@ -165,6 +165,15 @@ function diagnosticSummary(ok: boolean, diagnostics: Array<{ severity: "error" |
   return "Valid";
 }
 
+function waitForNextFrame(): Promise<void> {
+  return new Promise((resolve) => window.requestAnimationFrame(() => resolve()));
+}
+
+function audioExportSummary(noteCount: number, seconds: number): string {
+  const roundedSeconds = seconds >= 10 ? Math.round(seconds) : Math.round(seconds * 10) / 10;
+  return `${noteCount} event(s), ${roundedSeconds}s`;
+}
+
 export function App() {
   const [source, setSource] = useState("");
   const [isPlaying, setIsPlaying] = useState(false);
@@ -177,6 +186,7 @@ export function App() {
   const [volume, setVolume] = useState(100);
   const [omitInitialRests, setOmitInitialRests] = useState(true);
   const [exportingAudio, setExportingAudio] = useState<"wav" | "mp3" | null>(null);
+  const [audioExportDetails, setAudioExportDetails] = useState("");
   const [showSettings, setShowSettings] = useState(false);
   const [showExamples, setShowExamples] = useState(false);
   const playerRef = useRef<PreviewAudioPlayer | null>(null);
@@ -219,12 +229,25 @@ export function App() {
     }
   }
 
+  function describeAudioExport(): string {
+    if (!parsed.ok) {
+      return "";
+    }
+    const compiled = compileMelody(parsed.value, program);
+    const melody = omitInitialRests ? skipInitialRests(compiled) : compiled;
+    const secondsPerWholeNote = (60 / melody.tempo) * melody.beatsPerWholeNote;
+    const seconds = melody.notes.reduce((sum, note) => sum + note.duration * secondsPerWholeNote, 0);
+    return audioExportSummary(melody.notes.length, seconds);
+  }
+
   async function exportWav() {
     if (!parsed.ok || exportingAudio) {
       return;
     }
     setExportingAudio("wav");
+    setAudioExportDetails(describeAudioExport());
     try {
+      await waitForNextFrame();
       const wav = await exportBrowserWavBytes(parsed.value, {
         program,
         amplitude: Math.min(1, Math.max(0, volume / 100)),
@@ -236,6 +259,7 @@ export function App() {
       window.alert(error instanceof Error ? error.message : "Failed to export WAV.");
     } finally {
       setExportingAudio(null);
+      setAudioExportDetails("");
     }
   }
 
@@ -244,7 +268,9 @@ export function App() {
       return;
     }
     setExportingAudio("mp3");
+    setAudioExportDetails(describeAudioExport());
     try {
+      await waitForNextFrame();
       const mp3 = await exportBrowserMp3Bytes(parsed.value, {
         program,
         amplitude: Math.min(1, Math.max(0, volume / 100)),
@@ -256,6 +282,7 @@ export function App() {
       window.alert(error instanceof Error ? error.message : "Failed to export MP3.");
     } finally {
       setExportingAudio(null);
+      setAudioExportDetails("");
     }
   }
 
@@ -392,6 +419,7 @@ export function App() {
               <button type="button" onClick={() => void exportMp3()} disabled={!parsed.ok || exportingAudio !== null}>
                 {exportingAudio === "mp3" ? "Exporting MP3..." : "MP3"}
               </button>
+              {exportingAudio && <p className="export-status">{audioExportDetails ? `Rendering locally: ${audioExportDetails}` : "Rendering locally..."}</p>}
             </div>
           </details>
         </div>

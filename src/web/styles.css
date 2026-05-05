@@ -168,6 +168,13 @@ button:disabled {
   text-align: left;
 }
 
+.export-status {
+  margin: 2px 4px 0;
+  color: var(--muted-text);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .number-control {
   display: inline-flex;
   align-items: center;
