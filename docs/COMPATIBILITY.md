@@ -176,8 +176,9 @@ Frontend currently supports:
   `jianpu-score.mid`, `jianpu-score.wav`, and `jianpu-score.mp3`
 - light/dark theme toggle for the app and preview/export color presets, with
   saved preference and system dark-mode initialization
-- Settings panel for page width, preview/export colors, Program, volume,
-  browser audio sample rate, Program audition, and initial-rest omission
+- Settings panel for automatic or manual page width, preview/export colors,
+  Program, volume, browser audio sample rate, Program audition, and
+  initial-rest omission
 - volume uses a `0..200%` range and `100%` default
 - empty initial source editor with an input placeholder
 - Examples panel with focused two-column editor/preview workspace. Loading an

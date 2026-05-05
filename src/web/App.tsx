@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent } from "react";
 import { compileMelody, DRUM_PROGRAMS, exportMidiBytes, GM_PROGRAMS, parse, skipInitialRests } from "../index.js";
 import { renderSvg } from "../renderer/index.js";
@@ -41,6 +41,10 @@ const DARK_THEME = {
   pageBackground: "#111827",
 };
 const THEME_STORAGE_KEY = "modern-jianpu-markup-theme";
+const DEFAULT_PAGE_WIDTH = 1000;
+const MIN_PAGE_WIDTH = 240;
+const MAX_PAGE_WIDTH = 2000;
+const PREVIEW_HORIZONTAL_PADDING = 32;
 
 type ThemeName = "light" | "dark";
 
@@ -178,7 +182,9 @@ export function App() {
   const [source, setSource] = useState("");
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeNoteIndex, setActiveNoteIndex] = useState<number | null>(null);
-  const [pageWidth, setPageWidth] = useState(1000);
+  const [pageWidthMode, setPageWidthMode] = useState<"auto" | "manual">("auto");
+  const [manualPageWidth, setManualPageWidth] = useState(DEFAULT_PAGE_WIDTH);
+  const [autoPageWidth, setAutoPageWidth] = useState(DEFAULT_PAGE_WIDTH);
   const [theme, setTheme] = useState<ThemeName>(() => initialTheme());
   const [scoreColor, setScoreColor] = useState(() => themeColors(initialTheme()).scoreColor);
   const [pageBackground, setPageBackground] = useState(() => themeColors(initialTheme()).pageBackground);
@@ -191,7 +197,9 @@ export function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showExamples, setShowExamples] = useState(false);
   const playerRef = useRef<PreviewAudioPlayer | null>(null);
+  const previewPanelRef = useRef<HTMLElement | null>(null);
   const parsed = useMemo(() => parse(source), [source]);
+  const pageWidth = pageWidthMode === "auto" ? autoPageWidth : manualPageWidth;
   const svg = useMemo(
     () =>
       parsed.ok
@@ -204,6 +212,25 @@ export function App() {
         : null,
     [activeNoteIndex, pageBackground, pageWidth, parsed, scoreColor],
   );
+
+  useEffect(() => {
+    const element = previewPanelRef.current;
+    if (!element || typeof ResizeObserver === "undefined") {
+      return;
+    }
+
+    const updateAutoWidth = () => {
+      const width = Math.round(element.getBoundingClientRect().width - PREVIEW_HORIZONTAL_PADDING);
+      if (Number.isFinite(width) && width > 0) {
+        setAutoPageWidth(Math.min(MAX_PAGE_WIDTH, Math.max(MIN_PAGE_WIDTH, width)));
+      }
+    };
+    updateAutoWidth();
+
+    const observer = new ResizeObserver(updateAutoWidth);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
 
   function exportSvg() {
     if (svg) {
@@ -440,18 +467,26 @@ export function App() {
             <section className="settings-section">
               <h3>Page Settings</h3>
               <div className="settings-grid">
+                <label className="select-control">
+                  Width mode
+                  <select value={pageWidthMode} onChange={(event) => setPageWidthMode(event.target.value === "manual" ? "manual" : "auto")}>
+                    <option value="auto">Auto</option>
+                    <option value="manual">Manual</option>
+                  </select>
+                </label>
                 <label className="number-control">
                   Width
                   <input
                     type="number"
-                    min={240}
-                    max={2000}
+                    min={MIN_PAGE_WIDTH}
+                    max={MAX_PAGE_WIDTH}
                     step={20}
-                    value={pageWidth}
+                    value={pageWidthMode === "auto" ? autoPageWidth : manualPageWidth}
+                    disabled={pageWidthMode === "auto"}
                     onChange={(event) => {
                       const value = Number(event.target.value);
                       if (Number.isFinite(value) && value > 0) {
-                        setPageWidth(value);
+                        setManualPageWidth(Math.min(MAX_PAGE_WIDTH, Math.max(MIN_PAGE_WIDTH, Math.round(value))));
                       }
                     }}
                   />
@@ -592,10 +627,10 @@ export function App() {
           )}
         </section>
 
-        <section className="preview-panel">
+        <section className="preview-panel" ref={previewPanelRef}>
           <div className="panel-title">
             <h2>Preview</h2>
-            <span>{parsed.ok ? `${parsed.value.score.length} source line(s), ${pageWidth}px` : "No preview"}</span>
+            <span>{parsed.ok ? `${parsed.value.score.length} source line(s), ${pageWidth}px ${pageWidthMode}` : "No preview"}</span>
           </div>
           <div className="preview-scroll" onClick={playFromPreview}>
             {svg ? <div className="score-svg" dangerouslySetInnerHTML={{ __html: svg }} /> : <p>Fix parse errors to preview.</p>}
