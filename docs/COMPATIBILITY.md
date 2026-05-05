@@ -21,7 +21,7 @@ by focused backend and CLI tests.
 
 ## Supported Syntax
 
-Current supported syntax is documented in `docs/GRAMMAR.md`.
+Current supported syntax is documented in `public/grammar.html`.
 
 Important supported features:
 

@@ -216,7 +216,8 @@ Examples:
 Documentation:
 
 - `README.md`
-- `docs/GRAMMAR.md`
+- `public/grammar.html`
+- `docs/grammar.ebnf`
 - `docs/RENDERER.md`
 - `docs/PLAYER.md`
 - `docs/EXPORTS.md`
@@ -240,9 +241,10 @@ The following pieces are intentionally not part of the current target:
 - Nearley/Moo parser generation and `plugins/nearleyc.js`.
 - Generated Nearley `public/grammar.html` railroad diagram.
 
-The grammar is maintained in `docs/GRAMMAR.md` and mirrored for users in the
-frontend static `grammar.html` reference. Backend audio sample rate is available
-through `export-wav --sample-rate` and `export-mp3 --sample-rate`.
+The detailed grammar reference is maintained in `public/grammar.html`, and the
+railroad diagrams in that page are generated from `docs/grammar.ebnf`. Backend
+audio sample rate is available through `export-wav --sample-rate` and
+`export-mp3 --sample-rate`.
 
 ## Remaining Work
 
@@ -260,8 +262,8 @@ Medium priority:
 
 - Review frontend responsive layout manually in real browsers when UI structure
   changes.
-- Keep `public/grammar.html`, `docs/GRAMMAR.md`, and `docs/grammar.ebnf`
-  aligned when grammar behavior changes.
+- Keep `public/grammar.html` and `docs/grammar.ebnf` aligned when grammar
+  behavior changes.
 - Finalize distribution polish after the current CLI/frontend surfaces settle.
 
 Lower priority improvements:
