@@ -52,6 +52,7 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(script, /Settings/);
   assert.match(script, /Page Settings/);
   assert.match(script, /Width mode/);
+  assert.match(script, /Content/);
   assert.match(script, /ResizeObserver/);
   assert.match(script, /Sound Settings/);
   assert.match(script, /modern-jianpu-markup-theme/);
@@ -97,6 +98,7 @@ test("frontend production build emits the expected app shell", async () => {
   assert.ok(grammar.indexOf("<h2>Reference</h2>") < grammar.indexOf("<h2>Railroad And EBNF</h2>"));
   assert.match(appSource, /function updateSource/);
   assert.match(appSource, /onChange=\{\(event\) => updateSource\(event\.target\.value\)\}/);
+  assert.match(appSource, /inferContentPageWidth/);
   assert.match(audioSource, /SCHEDULE_AHEAD_SECONDS/);
   assert.match(audioSource, /currentTime > context\.currentTime \+ SCHEDULE_AHEAD_SECONDS/);
 });

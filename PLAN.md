@@ -190,7 +190,8 @@ Frontend:
 - Theme toggle with saved preference and system dark-mode initialization.
 - Preview/export color and background controls.
 - Page width control shared by preview and SVG export, with automatic width
-  inference from the preview panel and an explicit manual mode.
+  inference from the preview panel, content-width inference from the score, and
+  an explicit manual mode.
 - Settings panel with grouped Program selection, volume, audition, and
   initial-rest omission.
 - Program list covers General MIDI and drum-note programs.

@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { parse } from "../dist/parser/index.js";
-import { renderSvg } from "../dist/renderer/index.js";
+import { inferContentPageWidth, renderSvg } from "../dist/renderer/index.js";
 
 function readSnapshot(name) {
   return readFileSync(new URL(`./fixtures/snapshots/${name}`, import.meta.url), "utf8").replace(/\r?\n$/, "");
@@ -93,6 +93,16 @@ test("wraps score measures when page width is narrow", () => {
   const wideHeight = Number(wide.match(/height="([^"]+)"/)?.[1]);
   const narrowHeight = Number(narrow.match(/height="([^"]+)"/)?.[1]);
   assert.ok(narrowHeight > wideHeight);
+});
+
+test("infers page width from natural score content", () => {
+  const short = parse("1 2 |");
+  const long = parse("1 2 | 3 4 | 5 6 | 7 1' |");
+  assert.equal(short.ok, true);
+  assert.equal(long.ok, true);
+  assert.ok(inferContentPageWidth(long.value) > inferContentPageWidth(short.value));
+  assert.equal(inferContentPageWidth(long.value, { minWidth: 600, maxWidth: 620 }), 600);
+  assert.equal(inferContentPageWidth(long.value, { minWidth: 1, maxWidth: 120 }), 120);
 });
 
 test("scales a single overwide score line into the page width", () => {

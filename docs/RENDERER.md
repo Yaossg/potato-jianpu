@@ -137,11 +137,13 @@ pnpm run cli -- export-svg input.jp -o output.svg --page-width 800
 pnpm run cli -- export-png input.jp -o output.png --page-width 800
 ```
 
-The frontend exposes this through the Settings panel. Auto width mode measures
+The frontend exposes this through the Settings panel. Panel width mode measures
 the preview panel with `ResizeObserver` and uses the available panel width as
-the render `pageWidth`; manual mode keeps an explicit numeric width for preview
-and export. The preview panel also uses responsive CSS so a wide exported page
-scales down visually instead of forcing horizontal page overflow.
+the render `pageWidth`. Content width mode uses `inferContentPageWidth()` to
+estimate the unwrapped natural score width from the current document. Manual
+mode keeps an explicit numeric width for preview and export. The preview panel
+also uses responsive CSS so a wide exported page scales down visually instead
+of forcing horizontal page overflow.
 
 ## Header Rendering
 

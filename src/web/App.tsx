@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent } from "react";
 import { compileMelody, DRUM_PROGRAMS, exportMidiBytes, GM_PROGRAMS, parse, skipInitialRests } from "../index.js";
-import { renderSvg } from "../renderer/index.js";
+import { inferContentPageWidth, renderSvg } from "../renderer/index.js";
 import { exportBrowserMp3Bytes, exportBrowserWavBytes } from "./audio-export.js";
 import { PreviewAudioPlayer } from "./audio.js";
 import scale from "../../examples/scale.jp?raw";
@@ -47,6 +47,7 @@ const MAX_PAGE_WIDTH = 2000;
 const PREVIEW_HORIZONTAL_PADDING = 32;
 
 type ThemeName = "light" | "dark";
+type PageWidthMode = "panel" | "content" | "manual";
 
 function themeColors(theme: ThemeName) {
   return theme === "light" ? LIGHT_THEME : DARK_THEME;
@@ -74,6 +75,10 @@ function initialTheme(): ThemeName {
     return "light";
   }
   return storedTheme() ?? systemTheme();
+}
+
+function toPageWidthMode(value: string): PageWidthMode {
+  return value === "content" || value === "manual" ? value : "panel";
 }
 
 function openGrammarRailroad() {
@@ -182,9 +187,9 @@ export function App() {
   const [source, setSource] = useState("");
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeNoteIndex, setActiveNoteIndex] = useState<number | null>(null);
-  const [pageWidthMode, setPageWidthMode] = useState<"auto" | "manual">("auto");
+  const [pageWidthMode, setPageWidthMode] = useState<PageWidthMode>("panel");
   const [manualPageWidth, setManualPageWidth] = useState(DEFAULT_PAGE_WIDTH);
-  const [autoPageWidth, setAutoPageWidth] = useState(DEFAULT_PAGE_WIDTH);
+  const [panelPageWidth, setPanelPageWidth] = useState(DEFAULT_PAGE_WIDTH);
   const [theme, setTheme] = useState<ThemeName>(() => initialTheme());
   const [scoreColor, setScoreColor] = useState(() => themeColors(initialTheme()).scoreColor);
   const [pageBackground, setPageBackground] = useState(() => themeColors(initialTheme()).pageBackground);
@@ -199,7 +204,11 @@ export function App() {
   const playerRef = useRef<PreviewAudioPlayer | null>(null);
   const previewPanelRef = useRef<HTMLElement | null>(null);
   const parsed = useMemo(() => parse(source), [source]);
-  const pageWidth = pageWidthMode === "auto" ? autoPageWidth : manualPageWidth;
+  const contentPageWidth = useMemo(
+    () => (parsed.ok ? inferContentPageWidth(parsed.value, { minWidth: MIN_PAGE_WIDTH, maxWidth: MAX_PAGE_WIDTH }) : DEFAULT_PAGE_WIDTH),
+    [parsed],
+  );
+  const pageWidth = pageWidthMode === "panel" ? panelPageWidth : pageWidthMode === "content" ? contentPageWidth : manualPageWidth;
   const svg = useMemo(
     () =>
       parsed.ok
@@ -219,15 +228,15 @@ export function App() {
       return;
     }
 
-    const updateAutoWidth = () => {
+    const updatePanelWidth = () => {
       const width = Math.round(element.getBoundingClientRect().width - PREVIEW_HORIZONTAL_PADDING);
       if (Number.isFinite(width) && width > 0) {
-        setAutoPageWidth(Math.min(MAX_PAGE_WIDTH, Math.max(MIN_PAGE_WIDTH, width)));
+        setPanelPageWidth(Math.min(MAX_PAGE_WIDTH, Math.max(MIN_PAGE_WIDTH, width)));
       }
     };
-    updateAutoWidth();
+    updatePanelWidth();
 
-    const observer = new ResizeObserver(updateAutoWidth);
+    const observer = new ResizeObserver(updatePanelWidth);
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
@@ -469,8 +478,9 @@ export function App() {
               <div className="settings-grid">
                 <label className="select-control">
                   Width mode
-                  <select value={pageWidthMode} onChange={(event) => setPageWidthMode(event.target.value === "manual" ? "manual" : "auto")}>
-                    <option value="auto">Auto</option>
+                  <select value={pageWidthMode} onChange={(event) => setPageWidthMode(toPageWidthMode(event.target.value))}>
+                    <option value="panel">Panel</option>
+                    <option value="content">Content</option>
                     <option value="manual">Manual</option>
                   </select>
                 </label>
@@ -481,8 +491,8 @@ export function App() {
                     min={MIN_PAGE_WIDTH}
                     max={MAX_PAGE_WIDTH}
                     step={20}
-                    value={pageWidthMode === "auto" ? autoPageWidth : manualPageWidth}
-                    disabled={pageWidthMode === "auto"}
+                    value={pageWidthMode === "panel" ? panelPageWidth : pageWidthMode === "content" ? contentPageWidth : manualPageWidth}
+                    disabled={pageWidthMode !== "manual"}
                     onChange={(event) => {
                       const value = Number(event.target.value);
                       if (Number.isFinite(value) && value > 0) {
