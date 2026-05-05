@@ -25,10 +25,10 @@
 <text class="metadata" x="88" y="40">4/4</text>
 <text class="tempo-mark" x="132" y="40">♩ = 120</text>
 <line class="bar-thin" x1="64" y1="102" x2="64" y2="134"/>
-<path class="tie" d="M18,96 Q39.5,80 61,96 Q39.5,83 18,96 Z"/>
+<path class="tie" d="M18,96 Q41,88 64,88 L64,89.5 Q41,89.5 18,96 Z"/>
 <g class="note-item" data-note-index="0"><text class="note" x="18" y="120" text-anchor="middle">1</text><line class="dash" x1="32" y1="111" x2="48" y2="111"/></g>
 <line class="bar-thin" x1="64" y1="162" x2="64" y2="194"/>
-<path class="tie" d="M6,156 Q12,140 18,156 Q12,143 6,156 Z"/>
+<path class="tie" d="M0,148 Q9,148 18,156 Q9,149.5 0,149.5 Z"/>
 <g class="note-item" data-note-index="1"><text class="note" x="18" y="180" text-anchor="middle">1</text><line class="dash" x1="32" y1="171" x2="48" y2="171"/></g>
 <line class="bar-thin" x1="59" y1="206" x2="59" y2="238"/><line class="bar-final" x1="66" y1="206" x2="66" y2="238"/>
 <g class="note-item" data-note-index="2"><text class="note" x="18" y="224" text-anchor="middle">2</text></g>

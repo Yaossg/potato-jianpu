@@ -104,6 +104,39 @@ function renderTie(startX: number, endX: number, y: number, chordHeightValue: nu
   return `<path class="tie" d="M${startX},${tieY} Q${midX},${tieY - DIMENSIONS.tieHeight} ${endX},${tieY} Q${midX},${tieY - DIMENSIONS.tieCurveHeight} ${startX},${tieY} Z"/>`;
 }
 
+function tieYOf(y: number, chordHeightValue: number): number {
+  const yOffset = chordHeightValue > DIMENSIONS.baseNoteHeight ? -(chordHeightValue - DIMENSIONS.baseNoteHeight) - 2 : 0;
+  return y + yOffset;
+}
+
+function renderIncomingTie(edgeX: number, endX: number, y: number, chordHeightValue: number): string {
+  if (endX <= edgeX) {
+    return "";
+  }
+  const tieY = tieYOf(y, chordHeightValue);
+  const topCutX = edgeX;
+  const topCutY = tieY - DIMENSIONS.tieHeight / 2;
+  const bottomCutX = edgeX;
+  const bottomCutY = tieY - DIMENSIONS.tieCurveHeight / 2;
+  const topControlX = (edgeX + endX) / 2;
+  const bottomControlX = topControlX;
+  return `<path class="tie" d="M${topCutX},${topCutY} Q${topControlX},${topCutY} ${endX},${tieY} Q${bottomControlX},${bottomCutY} ${bottomCutX},${bottomCutY} Z"/>`;
+}
+
+function renderOutgoingTie(startX: number, edgeX: number, y: number, chordHeightValue: number): string {
+  if (edgeX <= startX) {
+    return "";
+  }
+  const tieY = tieYOf(y, chordHeightValue);
+  const topCutX = edgeX;
+  const topCutY = tieY - DIMENSIONS.tieHeight / 2;
+  const bottomCutX = edgeX;
+  const bottomCutY = tieY - DIMENSIONS.tieCurveHeight / 2;
+  const topControlX = (startX + edgeX) / 2;
+  const bottomControlX = topControlX;
+  return `<path class="tie" d="M${startX},${tieY} Q${topControlX},${topCutY} ${topCutX},${topCutY} L${bottomCutX},${bottomCutY} Q${bottomControlX},${bottomCutY} ${startX},${tieY} Z"/>`;
+}
+
 function renderBar(x: number, baselineY: number, final: boolean): string {
   const y1 = baselineY - DIMENSIONS.baseNoteHeight - 4;
   const y2 = baselineY + 4;
@@ -145,6 +178,8 @@ function renderLine(layout: LineLayout, lineY: number, allNotes: Note[], documen
   const finalMeasure = lastMeasure(document);
   const labelOffset = layout.line.label ? DIMENSIONS.labelWidth : 0;
   const justifyX = createLineJustifier(layout, visualWidth - labelOffset, justifyLine);
+  const leftTieEdgeX = labelOffset;
+  const rightTieEdgeX = labelOffset + justifyX(layout.width - DIMENSIONS.leftPadding + 12);
   if (layout.line.label) {
     parts.push(`<text class="line-label" x="8" y="${lineY + layout.maxPaddingUp}" text-anchor="start">${escapeXml(layout.line.label)}</text>`);
   }
@@ -187,12 +222,11 @@ function renderLine(layout: LineLayout, lineY: number, allNotes: Note[], documen
       parts.push(renderTie(startX, endX, lineY + layout.maxPaddingUp - DIMENSIONS.tiePadding, Math.max(chordHeight(previous.note), chordHeight(entry.note))));
     } else if (entry.note.tie) {
       const endX = entry.x + (entry.note.kind === "pitch" ? maxAccidentalOffset(entry.note.chord) : 0);
-      parts.push(renderTie(DIMENSIONS.leftPadding - DIMENSIONS.baseNoteWidth / 2, endX, lineY + layout.maxPaddingUp - DIMENSIONS.tiePadding, chordHeight(entry.note)));
+      parts.push(renderIncomingTie(leftTieEdgeX, endX, lineY + layout.maxPaddingUp - DIMENSIONS.tiePadding, chordHeight(entry.note)));
     }
     if (noteTieAfter(entry.note, allNotes) && index === lineEntries.length - 1) {
       const startX = entry.x + (entry.note.kind === "pitch" ? maxAccidentalOffset(entry.note.chord) : 0);
-      const endX = Math.max(startX + DIMENSIONS.baseNoteWidth, labelOffset + justifyX(layout.width - DIMENSIONS.leftPadding / 2));
-      parts.push(renderTie(startX, endX, lineY + layout.maxPaddingUp - DIMENSIONS.tiePadding, chordHeight(entry.note)));
+      parts.push(renderOutgoingTie(startX, rightTieEdgeX, lineY + layout.maxPaddingUp - DIMENSIONS.tiePadding, chordHeight(entry.note)));
     }
 
     const className = entry.note.index === activeNoteIndex ? "note-item active" : "note-item";

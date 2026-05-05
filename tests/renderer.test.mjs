@@ -67,6 +67,14 @@ test("matches the wrapped tie SVG snapshot", () => {
   assert.equal(svg, wrappedTieSnapshot);
 });
 
+test("renders cross-line ties as cut halves after justification", () => {
+  const result = parse("1 2 | 3 - | ~3 4 |");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 160, justifyMode: "all", background: "#ffffff" });
+  assert.match(svg, /<path class="tie" d="M[^"]+ Q[^"]+ [^,]+,88 L[^,]+,89\.5 Q[^"]+ Z"/);
+  assert.match(svg, /<path class="tie" d="M[^,]+,148 Q[^"]+ Q[^"]+ [^,]+,149\.5 Z"/);
+});
+
 test("renders tempo without musical glyph codepoints", () => {
   const result = parse(`tempo: "132"\ntime: "6/8"\n=\n1 2 3`);
   assert.equal(result.ok, true);
