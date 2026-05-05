@@ -11,7 +11,7 @@ import { exportWavBytes, renderPngBytes } from "../dist/backend/index.js";
 const examplesDir = fileURLToPath(new URL("../examples/", import.meta.url));
 
 test("all examples parse, render SVG, and export audio", async () => {
-  const files = (await readdir(examplesDir)).filter((file) => file.endsWith(".jp"));
+  const files = (await readdir(examplesDir)).filter((file) => file.endsWith(".jpu"));
   assert.ok(files.length > 0);
 
   for (const file of files) {

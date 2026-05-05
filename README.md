@@ -22,14 +22,14 @@ pnpm run build
 pnpm run check
 pnpm run test
 pnpm run cli -- --version
-pnpm run cli -- validate path/to/score.jp
-pnpm run cli -- validate path/to/score.jp --json
-pnpm run cli -- parse path/to/score.jp --json
-pnpm run cli -- export-svg examples/twinkle.jp -o twinkle.svg --page-width 1000 --color "#111827" --background "#ffffff"
-pnpm run cli -- export-png examples/twinkle.jp -o twinkle.png --page-width 1000 --color "#111827" --background "#ffffff"
-pnpm run cli -- export-midi examples/twinkle.jp -o twinkle.mid --program 0
-pnpm run cli -- export-wav examples/twinkle.jp -o twinkle.wav --program 0 --sample-rate 44100 --amplitude 1
-pnpm run cli -- export-mp3 examples/twinkle.jp -o twinkle.mp3 --program 0 --sample-rate 44100 --amplitude 1 --bit-rate 128
+pnpm run cli -- validate path/to/score.jpu
+pnpm run cli -- validate path/to/score.jpu --json
+pnpm run cli -- parse path/to/score.jpu --json
+pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --page-width 1000 --color "#111827" --background "#ffffff"
+pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --page-width 1000 --color "#111827" --background "#ffffff"
+pnpm run cli -- export-midi examples/twinkle.jpu -o twinkle.mid --program 0
+pnpm run cli -- export-wav examples/twinkle.jpu -o twinkle.wav --program 0 --sample-rate 44100 --amplitude 1
+pnpm run cli -- export-mp3 examples/twinkle.jpu -o twinkle.mp3 --program 0 --sample-rate 44100 --amplitude 1 --bit-rate 128
 pnpm run dev
 pnpm run web:build
 ```
@@ -49,7 +49,6 @@ See `PLAN.md` for the current roadmap. Syntax is documented in
 `public/grammar.html`, renderer behavior in
 `docs/RENDERER.md`, player behavior in `docs/PLAYER.md`, and export behavior in
 `docs/EXPORTS.md`. Module boundaries are documented in `docs/ARCHITECTURE.md`,
-behavior notes are in `docs/COMPATIBILITY.md`, and release shape is
-documented in `docs/RELEASE.md`. The frontend build also includes
+and release shape is documented in `docs/RELEASE.md`. The frontend build also includes
 `grammar.html`, a detailed grammar reference with railroad diagrams generated
 from `docs/grammar.ebnf`.

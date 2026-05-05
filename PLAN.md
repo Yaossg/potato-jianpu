@@ -63,12 +63,12 @@ pnpm -C reloaded run test
 
 Current known passing state:
 
-- 79 tests pass.
+- 80 tests pass.
 - The test suite builds TypeScript before running Node tests.
 - Coverage includes parser behavior, renderer snapshots, player timing, MIDI,
   backend PNG/WAV/MP3 export, examples, CLI behavior, release metadata, and a
   frontend production build smoke test covering SVG/PNG/MIDI/WAV/MP3 controls.
-- The examples directory currently contains 11 curated `.jp` fixtures.
+- The examples directory currently contains 11 curated `.jpu` fixtures.
 - Browser automation dependencies such as Playwright are intentionally not part
   of the current dependency set.
 
@@ -208,7 +208,7 @@ Frontend:
 
 Examples:
 
-- 11 example scores are available as `examples/*.jp` fixtures.
+- 11 example scores are available as `examples/*.jpu` fixtures.
 - Examples have consistent metadata headers and are expected to parse without
   warnings.
 - The examples panel intentionally omits standalone Accidentals and Chords
@@ -225,7 +225,6 @@ Documentation:
 - `docs/PLAYER.md`
 - `docs/EXPORTS.md`
 - `docs/ARCHITECTURE.md`
-- `docs/COMPATIBILITY.md`
 - `docs/RELEASE.md`
 
 Packaging and release shape:

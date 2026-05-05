@@ -325,7 +325,7 @@ encodes the stereo samples with `lamejs`. The default bit rate is `128` kbps.
 The CLI exposes MP3 export as:
 
 ```sh
-jianpu export-mp3 input.jp -o output.mp3 --program 0 --sample-rate 44100 --amplitude 1 --bit-rate 128
+jianpu export-mp3 input.jpu -o output.mp3 --program 0 --sample-rate 44100 --amplitude 1 --bit-rate 128
 ```
 
 The frontend exposes WAV and MP3 download through `src/web/audio-export.ts`.

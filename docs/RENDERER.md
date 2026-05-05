@@ -133,8 +133,8 @@ Important details:
 The CLI exposes this through:
 
 ```sh
-pnpm run cli -- export-svg input.jp -o output.svg --page-width 800
-pnpm run cli -- export-png input.jp -o output.png --page-width 800
+pnpm run cli -- export-svg input.jpu -o output.svg --page-width 800
+pnpm run cli -- export-png input.jpu -o output.png --page-width 800
 ```
 
 The frontend exposes this through the Settings panel. Panel width mode measures

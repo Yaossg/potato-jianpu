@@ -34,7 +34,7 @@ test("CLI prints usage help", async () => {
 
 test("CLI export-svg accepts page width", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
-  const input = join(dir, "score.jp");
+  const input = join(dir, "score.jpu");
   const output = join(dir, "score.svg");
   await writeFile(input, "1 2 | 3 4 | 5 6 | 7 1' |", "utf8");
 
@@ -48,7 +48,7 @@ test("CLI export-svg accepts page width", async () => {
 
 test("CLI export-svg accepts explicit color and background", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
-  const input = join(dir, "score.jp");
+  const input = join(dir, "score.jpu");
   const output = join(dir, "score.svg");
   await writeFile(input, "1 2 3 4", "utf8");
 
@@ -67,7 +67,7 @@ test("CLI export-svg accepts explicit color and background", async () => {
 
 test("CLI export-svg succeeds with warnings", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
-  const input = join(dir, "score.jp");
+  const input = join(dir, "score.jpu");
   const output = join(dir, "score.svg");
   await writeFile(input, `time: "4/4"\n=\n1 2`, "utf8");
 
@@ -85,7 +85,7 @@ test("CLI export-svg succeeds with warnings", async () => {
 
 test("CLI rejects invalid page width", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
-  const input = join(dir, "score.jp");
+  const input = join(dir, "score.jpu");
   const output = join(dir, "score.svg");
   await writeFile(input, "1 2 3 4", "utf8");
 
@@ -106,7 +106,7 @@ test("CLI rejects invalid page width", async () => {
 
 test("CLI rejects flags with missing values", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
-  const input = join(dir, "score.jp");
+  const input = join(dir, "score.jpu");
   const output = join(dir, "score.svg");
   await writeFile(input, "1 2 3 4", "utf8");
 
@@ -134,7 +134,7 @@ test("CLI rejects flags with missing values", async () => {
 
 test("CLI rejects unknown options", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
-  const input = join(dir, "score.jp");
+  const input = join(dir, "score.jpu");
   const output = join(dir, "score.svg");
   await writeFile(input, "1 2 3 4", "utf8");
 
@@ -155,7 +155,7 @@ test("CLI rejects unknown options", async () => {
 
 test("CLI validates options before reading input files", async () => {
   await assert.rejects(
-    execFileAsync(process.execPath, ["dist/cli/main.js", "export-svg", "missing.jp", "--widht", "1000"], {
+    execFileAsync(process.execPath, ["dist/cli/main.js", "export-svg", "missing.jpu", "--widht", "1000"], {
       cwd: repoDir,
     }),
     /unknown option --widht/,
@@ -166,7 +166,7 @@ test("CLI validates options before reading input files", async () => {
 
 test("CLI validate can emit machine-readable diagnostics", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
-  const input = join(dir, "score.jp");
+  const input = join(dir, "score.jpu");
   await writeFile(input, "~1", "utf8");
 
   await assert.rejects(
@@ -189,7 +189,7 @@ test("CLI validate can emit machine-readable diagnostics", async () => {
 
 test("CLI parse JSON keeps diagnostics machine-readable", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
-  const input = join(dir, "score.jp");
+  const input = join(dir, "score.jpu");
   await writeFile(input, `time: "4/4"\n=\n1 2`, "utf8");
 
   const { stdout, stderr } = await execFileAsync(process.execPath, ["dist/cli/main.js", "parse", input, "--json"], {
@@ -204,7 +204,7 @@ test("CLI parse JSON keeps diagnostics machine-readable", async () => {
 
 test("CLI parse JSON keeps parse errors machine-readable", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
-  const input = join(dir, "score.jp");
+  const input = join(dir, "score.jpu");
   await writeFile(input, `title: "unterminated\n=\n1 2`, "utf8");
 
   await assert.rejects(
@@ -228,7 +228,7 @@ test("CLI parse JSON keeps parse errors machine-readable", async () => {
 
 test("CLI export-wav writes a WAV file", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
-  const input = join(dir, "score.jp");
+  const input = join(dir, "score.jpu");
   const output = join(dir, "score.wav");
   await writeFile(input, `tempo: "120"\n=\n1 2 3 4`, "utf8");
 
@@ -244,7 +244,7 @@ test("CLI export-wav writes a WAV file", async () => {
 
 test("CLI export-mp3 writes an MP3 file", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
-  const input = join(dir, "score.jp");
+  const input = join(dir, "score.jpu");
   const output = join(dir, "score.mp3");
   await writeFile(input, `tempo: "120"\n=\n1 2 3 4`, "utf8");
 
@@ -264,7 +264,7 @@ test("CLI export-mp3 writes an MP3 file", async () => {
 
 test("CLI export-midi and export-wav can omit initial rests", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
-  const input = join(dir, "score.jp");
+  const input = join(dir, "score.jpu");
   const midiWithRests = join(dir, "with-rests.mid");
   const midiWithoutRests = join(dir, "without-rests.mid");
   const wavWithRests = join(dir, "with-rests.wav");
@@ -290,7 +290,7 @@ test("CLI export-midi and export-wav can omit initial rests", async () => {
 
 test("CLI rejects invalid WAV sample rates", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
-  const input = join(dir, "score.jp");
+  const input = join(dir, "score.jpu");
   const output = join(dir, "score.wav");
   await writeFile(input, "1 2 3 4", "utf8");
 
@@ -304,7 +304,7 @@ test("CLI rejects invalid WAV sample rates", async () => {
 
 test("CLI rejects invalid WAV amplitudes", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
-  const input = join(dir, "score.jp");
+  const input = join(dir, "score.jpu");
   const output = join(dir, "score.wav");
   await writeFile(input, "1 2 3 4", "utf8");
 
@@ -318,7 +318,7 @@ test("CLI rejects invalid WAV amplitudes", async () => {
 
 test("CLI rejects invalid MP3 bit rates", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
-  const input = join(dir, "score.jp");
+  const input = join(dir, "score.jpu");
   const output = join(dir, "score.mp3");
   await writeFile(input, "1 2 3 4", "utf8");
 
@@ -332,7 +332,7 @@ test("CLI rejects invalid MP3 bit rates", async () => {
 
 test("CLI rejects out-of-range MIDI programs", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
-  const input = join(dir, "score.jp");
+  const input = join(dir, "score.jpu");
   const output = join(dir, "score.mid");
   await writeFile(input, "X", "utf8");
 

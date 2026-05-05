@@ -21,15 +21,15 @@ use a Node offline Web Audio adapter, while frontend WAV/MP3 use browser
 Run commands through the package script during development:
 
 ```sh
-pnpm run cli -- validate examples/twinkle.jp
+pnpm run cli -- validate examples/twinkle.jpu
 pnpm run cli -- --version
-pnpm run cli -- validate examples/twinkle.jp --json
-pnpm run cli -- parse examples/twinkle.jp --json
-pnpm run cli -- export-svg examples/twinkle.jp -o twinkle.svg --page-width 1000 --color "#111827" --background "#ffffff"
-pnpm run cli -- export-png examples/twinkle.jp -o twinkle.png --page-width 1000 --color "#111827" --background "#ffffff"
-pnpm run cli -- export-midi examples/twinkle.jp -o twinkle.mid --program 0 --omit-initial-rest
-pnpm run cli -- export-wav examples/twinkle.jp -o twinkle.wav --sample-rate 44100 --amplitude 1 --omit-initial-rest
-pnpm run cli -- export-mp3 examples/twinkle.jp -o twinkle.mp3 --sample-rate 44100 --amplitude 1 --bit-rate 128 --omit-initial-rest
+pnpm run cli -- validate examples/twinkle.jpu --json
+pnpm run cli -- parse examples/twinkle.jpu --json
+pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --page-width 1000 --color "#111827" --background "#ffffff"
+pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --page-width 1000 --color "#111827" --background "#ffffff"
+pnpm run cli -- export-midi examples/twinkle.jpu -o twinkle.mid --program 0 --omit-initial-rest
+pnpm run cli -- export-wav examples/twinkle.jpu -o twinkle.wav --sample-rate 44100 --amplitude 1 --omit-initial-rest
+pnpm run cli -- export-mp3 examples/twinkle.jpu -o twinkle.mp3 --sample-rate 44100 --amplitude 1 --bit-rate 128 --omit-initial-rest
 ```
 
 The built package also exposes a `jianpu` binary mapped to
@@ -82,7 +82,7 @@ code `2`.
 SVG export uses the shared renderer:
 
 ```sh
-pnpm run cli -- export-svg input.jp -o output.svg --page-width 1000
+pnpm run cli -- export-svg input.jpu -o output.svg --page-width 1000
 ```
 
 Options:
@@ -102,7 +102,7 @@ own line rather than split internally.
 The backend CLI renders the same SVG output through the backend PNG adapter:
 
 ```sh
-pnpm run cli -- export-png input.jp -o output.png --page-width 1000
+pnpm run cli -- export-png input.jpu -o output.png --page-width 1000
 ```
 
 Options:
@@ -126,7 +126,7 @@ width settings as SVG download.
 MIDI export compiles the parsed document through the shared melody compiler:
 
 ```sh
-pnpm run cli -- export-midi input.jp -o output.mid --program 0
+pnpm run cli -- export-midi input.jpu -o output.mid --program 0
 ```
 
 Options:
@@ -156,7 +156,7 @@ same WebAudioTinySynth timbre engine used by browser preview playback. It
 writes a stereo 16-bit PCM WAV file:
 
 ```sh
-pnpm run cli -- export-wav input.jp -o output.wav --program 0 --sample-rate 44100 --amplitude 1
+pnpm run cli -- export-wav input.jpu -o output.wav --program 0 --sample-rate 44100 --amplitude 1
 ```
 
 Options:
@@ -187,7 +187,7 @@ MP3 export uses the same offline audio render path as WAV export, then encodes
 the stereo PCM samples with `lamejs`:
 
 ```sh
-pnpm run cli -- export-mp3 input.jp -o output.mp3 --program 0 --sample-rate 44100 --amplitude 1 --bit-rate 128
+pnpm run cli -- export-mp3 input.jpu -o output.mp3 --program 0 --sample-rate 44100 --amplitude 1 --bit-rate 128
 ```
 
 Options:

@@ -4,17 +4,17 @@ import { compileMelody, DRUM_PROGRAMS, exportMidiBytes, GM_PROGRAMS, parse, skip
 import { inferContentPageWidth, renderSvg } from "../renderer/index.js";
 import { exportBrowserMp3Bytes, exportBrowserWavBytes } from "./audio-export.js";
 import { PreviewAudioPlayer } from "./audio.js";
-import scale from "../../examples/scale.jp?raw";
-import twinkle from "../../examples/twinkle.jp?raw";
-import odeToJoy from "../../examples/ode-to-joy.jp?raw";
-import _68example from "../../examples/6-8-example.jp?raw";
-import drums from "../../examples/drums.jp?raw";
-import jingleBells from "../../examples/jingle-bells.jp?raw";
-import happyBirthday from "../../examples/happy-birthday.jp?raw";
-import dearLittleWish from "../../examples/dear-little-wish.jp?raw";
-import burningField from "../../examples/burning-field.jp?raw";
-import blockyHeroes from "../../examples/blocky-heroes.jp?raw";
-import shining from "../../examples/shining-from-the-underground.jp?raw";
+import scale from "../../examples/scale.jpu?raw";
+import twinkle from "../../examples/twinkle.jpu?raw";
+import odeToJoy from "../../examples/ode-to-joy.jpu?raw";
+import _68example from "../../examples/6-8-example.jpu?raw";
+import drums from "../../examples/drums.jpu?raw";
+import jingleBells from "../../examples/jingle-bells.jpu?raw";
+import happyBirthday from "../../examples/happy-birthday.jpu?raw";
+import dearLittleWish from "../../examples/dear-little-wish.jpu?raw";
+import burningField from "../../examples/burning-field.jpu?raw";
+import blockyHeroes from "../../examples/blocky-heroes.jpu?raw";
+import shining from "../../examples/shining-from-the-underground.jpu?raw";
 
 const examples = [
   { name: "Scale", source: scale },
