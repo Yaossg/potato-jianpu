@@ -313,6 +313,53 @@ button:disabled {
   padding: 14px;
 }
 
+.score-warning-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(15 23 42 / 42%);
+}
+
+.score-warning-dialog {
+  width: min(520px, 100%);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 18px;
+  background: var(--panel-bg);
+  box-shadow: 0 20px 40px rgb(15 23 42 / 28%);
+}
+
+.score-warning-dialog h2 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.score-warning-dialog p {
+  margin: 0;
+  color: var(--muted-text);
+  line-height: 1.5;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.danger-action {
+  border-color: #b3261e;
+  color: #b3261e;
+}
+
+.danger-action:hover:not(:disabled) {
+  border-color: #8f1d15;
+  background: #fbe9e7;
+}
+
 .panel-title {
   display: flex;
   justify-content: space-between;

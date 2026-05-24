@@ -69,6 +69,10 @@ type TranslationKey =
   | "renderingLocally"
   | "settingsTitle"
   | "close"
+  | "cancel"
+  | "overwriteScoreTitle"
+  | "overwriteScoreMessage"
+  | "overwriteScoreConfirm"
   | "pageSettings"
   | "widthMode"
   | "panel"
@@ -122,6 +126,10 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     renderingLocally: "Rendering locally",
     settingsTitle: "Settings",
     close: "Close",
+    cancel: "Cancel",
+    overwriteScoreTitle: "Replace current score?",
+    overwriteScoreMessage: "Loading an example will replace the score currently in the editor.",
+    overwriteScoreConfirm: "Replace score",
     pageSettings: "Page Settings",
     widthMode: "Width mode",
     panel: "Panel",
@@ -174,6 +182,10 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     renderingLocally: "本地渲染中",
     settingsTitle: "设置",
     close: "关闭",
+    cancel: "取消",
+    overwriteScoreTitle: "覆盖当前乐谱？",
+    overwriteScoreMessage: "加载示例会替换编辑器中当前的乐谱。",
+    overwriteScoreConfirm: "覆盖乐谱",
     pageSettings: "页面设置",
     widthMode: "宽度模式",
     panel: "面板",
@@ -424,6 +436,7 @@ export function App() {
   const [audioExportDetails, setAudioExportDetails] = useState("");
   const [showSettings, setShowSettings] = useState(false);
   const [showExamples, setShowExamples] = useState(false);
+  const [pendingExampleSource, setPendingExampleSource] = useState<string | null>(null);
   const playerRef = useRef<PreviewAudioPlayer | null>(null);
   const previewPanelRef = useRef<HTMLElement | null>(null);
   const t = (key: TranslationKey, values?: Record<string, string | number>) => translate(language, key, values);
@@ -636,6 +649,15 @@ export function App() {
   function loadSource(nextSource: string) {
     stopPlayback();
     setSource(nextSource);
+    setPendingExampleSource(null);
+  }
+
+  function requestExampleSource(nextSource: string) {
+    if (source.trim().length === 0) {
+      loadSource(nextSource);
+      return;
+    }
+    setPendingExampleSource(nextSource);
   }
 
   function updateSource(nextSource: string) {
@@ -855,13 +877,30 @@ export function App() {
               <button
                 key={example.name}
                 type="button"
-                onClick={() => loadSource(example.source)}
+                onClick={() => requestExampleSource(example.source)}
               >
                 {localizedExampleNames[language][example.name] ?? example.name}
               </button>
             ))}
           </div>
         </section>
+      )}
+
+      {pendingExampleSource !== null && (
+        <div className="score-warning-overlay" role="presentation">
+          <section className="score-warning-dialog" role="dialog" aria-modal="true" aria-labelledby="score-warning-title">
+            <h2 id="score-warning-title">{t("overwriteScoreTitle")}</h2>
+            <p>{t("overwriteScoreMessage")}</p>
+            <div className="dialog-actions">
+              <button type="button" onClick={() => setPendingExampleSource(null)}>
+                {t("cancel")}
+              </button>
+              <button type="button" className="danger-action" onClick={() => loadSource(pendingExampleSource)}>
+                {t("overwriteScoreConfirm")}
+              </button>
+            </div>
+          </section>
+        </div>
       )}
 
       <section className="workspace">
