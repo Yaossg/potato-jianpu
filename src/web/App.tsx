@@ -4,6 +4,7 @@ import { compileMelody, DRUM_PROGRAMS, exportMidiBytes, GM_PROGRAMS, parse, skip
 import { inferContentPageWidth, renderSvg } from "../renderer/index.js";
 import { exportBrowserMp3Bytes, exportBrowserWavBytes } from "./audio-export.js";
 import { PreviewAudioPlayer } from "./audio.js";
+import { exportFilename } from "./export-filename.js";
 import { exampleName, examples, exampleTitle } from "./examples.js";
 
 const MELODIC_AUDITION_SOURCE = "1 2 3 4 5 6 7 1'";
@@ -444,7 +445,7 @@ export function App() {
 
   function exportSvg() {
     if (svg) {
-      downloadBytes(svg, "jianpu-score.svg", "image/svg+xml");
+      downloadBytes(svg, exportFilename(parsed.ok ? parsed.value.header.title : "", "svg"), "image/svg+xml");
     }
   }
 
@@ -453,7 +454,7 @@ export function App() {
       return;
     }
     try {
-      downloadBlob(await svgToPngBlob(svg), "jianpu-score.png");
+      downloadBlob(await svgToPngBlob(svg), exportFilename(parsed.ok ? parsed.value.header.title : "", "png"));
     } catch (error) {
       window.alert(error instanceof Error ? error.message : "Failed to export PNG.");
     }
@@ -463,7 +464,7 @@ export function App() {
     if (parsed.ok) {
       const midi = exportMidiBytes(parsed.value, program, { omitInitialRests });
       const buffer = midi.buffer.slice(midi.byteOffset, midi.byteOffset + midi.byteLength) as ArrayBuffer;
-      downloadBytes(buffer, "jianpu-score.mid", "audio/midi");
+      downloadBytes(buffer, exportFilename(parsed.value.header.title, "mid"), "audio/midi");
     }
   }
 
@@ -493,7 +494,7 @@ export function App() {
         omitInitialRests,
       });
       const buffer = wav.buffer.slice(wav.byteOffset, wav.byteOffset + wav.byteLength) as ArrayBuffer;
-      downloadBytes(buffer, "jianpu-score.wav", "audio/wav");
+      downloadBytes(buffer, exportFilename(parsed.value.header.title, "wav"), "audio/wav");
     } catch (error) {
       window.alert(error instanceof Error ? error.message : "Failed to export WAV.");
     } finally {
@@ -517,7 +518,7 @@ export function App() {
         omitInitialRests,
       });
       const buffer = mp3.buffer.slice(mp3.byteOffset, mp3.byteOffset + mp3.byteLength) as ArrayBuffer;
-      downloadBytes(buffer, "jianpu-score.mp3", "audio/mpeg");
+      downloadBytes(buffer, exportFilename(parsed.value.header.title, "mp3"), "audio/mpeg");
     } catch (error) {
       window.alert(error instanceof Error ? error.message : "Failed to export MP3.");
     } finally {

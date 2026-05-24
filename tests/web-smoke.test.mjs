@@ -38,11 +38,9 @@ test("frontend production build emits the expected app shell", async () => {
   assert.doesNotMatch(script, /Export SVG/);
   assert.doesNotMatch(script, /Export PNG/);
   assert.doesNotMatch(script, /Export MIDI/);
-  assert.match(script, /jianpu-score\.svg/);
-  assert.match(script, /jianpu-score\.png/);
-  assert.match(script, /jianpu-score\.mid/);
-  assert.match(script, /jianpu-score\.wav/);
-  assert.match(script, /jianpu-score\.mp3/);
+  assert.match(script, /jianpu-score/);
+  assert.match(script, /header\.title/);
+  assert.match(script, /replace\(\s*\/\[<>\:"/);
   assert.match(script, /image\/png/);
   assert.match(script, /audio\/wav/);
   assert.match(script, /audio\/mpeg/);
