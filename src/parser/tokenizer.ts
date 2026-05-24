@@ -9,6 +9,7 @@ export type TokenType =
   | "bar"
   | "repeatStart"
   | "repeatEnd"
+  | "repeatBoth"
   | "sharpsharp"
   | "sharp"
   | "flatflat"
@@ -152,6 +153,12 @@ export function tokenize(source: string): { tokens: Token[]; diagnostics: Diagno
 
     if (/^[1-7]$/.test(char)) {
       push("note", char, char);
+      continue;
+    }
+
+    const three = rest.slice(0, 3);
+    if (three === ":|:") {
+      push("repeatBoth", three);
       continue;
     }
 

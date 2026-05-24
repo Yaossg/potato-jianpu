@@ -6,6 +6,7 @@ export interface MeasureLayout {
   measure: Measure;
   width: number;
   leftPadding: number;
+  rightPadding: number;
   repeatStartX: number | null;
   notePositions: number[];
   paddingUp: number;
@@ -49,14 +50,21 @@ function paddingDownOf(note: Note): number {
   return height;
 }
 
-function layoutMeasure(measure: Measure, allNotes: Note[], inlineRepeatStart = false): MeasureLayout {
+function layoutMeasure(
+  measure: Measure,
+  allNotes: Note[],
+  inlineRepeatStart = false,
+  repeatStartAfterEnd = false,
+  repeatEndBeforeStart = false,
+): MeasureLayout {
   const notePositions: number[] = [];
   const repeatStartPadding = measure.repeatStart
     ? inlineRepeatStart
       ? DIMENSIONS.repeatInlineLeftPadding
       : DIMENSIONS.repeatLeadingPadding
     : 0;
-  const leftPadding = DIMENSIONS.leftPadding + repeatStartPadding;
+  const leftPadding = DIMENSIONS.leftPadding + repeatStartPadding + (repeatStartAfterEnd ? DIMENSIONS.repeatBothRightPadding : 0);
+  const rightPadding = measure.repeatEnd && !repeatEndBeforeStart ? DIMENSIONS.repeatEndRightPadding : 0;
   let totalWidth = 0;
   let paddingUp = 0;
   let paddingDown = 0;
@@ -70,8 +78,9 @@ function layoutMeasure(measure: Measure, allNotes: Note[], inlineRepeatStart = f
 
   return {
     measure,
-    width: totalWidth + leftPadding + 4 + (measure.repeatEnd ? DIMENSIONS.repeatRightPadding - DIMENSIONS.leftPadding : 0),
+    width: totalWidth + leftPadding + rightPadding + 4 + (measure.repeatEnd ? DIMENSIONS.repeatRightPadding - DIMENSIONS.leftPadding : 0),
     leftPadding,
+    rightPadding,
     repeatStartX: measure.repeatStart ? (inlineRepeatStart ? -6 : 2) : null,
     notePositions,
     paddingUp,
@@ -104,12 +113,20 @@ export function layoutLine(line: ScoreLine, allNotes: Note[], pageWidth: number)
   let current: MeasureLayout[] = [];
   let currentWidth = 0;
 
-  for (const measureNode of line.measures) {
-    let measure = layoutMeasure(measureNode, allNotes, current.length > 0);
+  for (const [measureIndex, measureNode] of line.measures.entries()) {
+    const previousMeasure = current.at(-1)?.measure;
+    const nextMeasure = line.measures[measureIndex + 1];
+    let measure = layoutMeasure(
+      measureNode,
+      allNotes,
+      current.length > 0,
+      Boolean(previousMeasure?.repeatEnd && measureNode.repeatStart),
+      Boolean(measureNode.repeatEnd && nextMeasure?.repeatStart),
+    );
     const nextWidth = current.length === 0 ? measure.width : currentWidth + DIMENSIONS.measureSpacing + measure.width;
     if (current.length > 0 && nextWidth > pageWidth) {
       layouts.push(buildLineLayout(line, current));
-      measure = layoutMeasure(measureNode, allNotes, false);
+      measure = layoutMeasure(measureNode, allNotes, false, false, Boolean(measureNode.repeatEnd && nextMeasure?.repeatStart));
       current = [measure];
       currentWidth = measure.width;
     } else {

@@ -215,6 +215,27 @@ test("renders repeat barlines with dots", () => {
   assert.match(svg, /<line class="bar-thin"/);
 });
 
+test("renders combined repeat end and start barlines", () => {
+  const result = parse("|: 1 :|: 2 :|");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  const dots = [...svg.matchAll(/<circle class="repeat-dot" cx="(\d+)"/g)].map((match) => Number(match[1]));
+  assert.equal(dots.filter((x) => x === 60).length, 2);
+  assert.equal(dots.filter((x) => x === 86).length, 2);
+  assert.match(svg, /<line class="bar-thin" x1="66"/);
+  assert.match(svg, /<line class="bar-final" x1="73"/);
+  assert.match(svg, /<line class="bar-thin" x1="80"/);
+  assert.match(svg, /<text class="note" x="106" y="\d+" text-anchor="middle">2<\/text>/);
+});
+
+test("keeps repeat end spacing before following notes", () => {
+  const result = parse("|: 1 :| 2");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  assert.match(svg, /<line class="bar-final" x1="73"/);
+  assert.match(svg, /<text class="note" x="94" y="\d+" text-anchor="middle">2<\/text>/);
+});
+
 test("keeps repeat start spacing consistent at the beginning of a line", () => {
   const result = parse("|: 1 | 2 :|");
   assert.equal(result.ok, true);

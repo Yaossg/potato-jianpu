@@ -172,6 +172,19 @@ function renderRepeatStart(x: number, baselineY: number): string {
   return [
     `<line class="bar-final" x1="${x}" y1="${y1}" x2="${x}" y2="${y2}"/>`,
     `<line class="bar-thin" x1="${x + 7}" y1="${y1}" x2="${x + 7}" y2="${y2}"/>`,
+    renderRepeatDots(x + 13, baselineY),
+  ].join("");
+}
+
+function renderRepeatBoth(x: number, baselineY: number): string {
+  const yOffset = DIMENSIONS.barVerticalOffset;
+  const y1 = baselineY - DIMENSIONS.baseNoteHeight - 4 + yOffset;
+  const y2 = baselineY + 4 + yOffset;
+  return [
+    renderRepeatDots(x - 8, baselineY),
+    `<line class="bar-thin" x1="${x - 2}" y1="${y1}" x2="${x - 2}" y2="${y2}"/>`,
+    `<line class="bar-final" x1="${x + 5}" y1="${y1}" x2="${x + 5}" y2="${y2}"/>`,
+    `<line class="bar-thin" x1="${x + 12}" y1="${y1}" x2="${x + 12}" y2="${y2}"/>`,
     renderRepeatDots(x + 18, baselineY),
   ].join("");
 }
@@ -213,8 +226,9 @@ function renderLine(layout: LineLayout, lineY: number, allNotes: Note[], documen
   for (const [measureIndex, measureLayout] of layout.measures.entries()) {
     const xOffset = measureXOffset(layout.measures, measureIndex);
     const fullness = measureFullness(measureLayout.measure, unit);
+    const previousMeasure = layout.measures[measureIndex - 1]?.measure;
     const nextMeasure = layout.measures[measureIndex + 1]?.measure;
-    if (measureLayout.measure.repeatStart) {
+    if (measureLayout.measure.repeatStart && !previousMeasure?.repeatEnd) {
       const naturalStartX = xOffset + (measureLayout.repeatStartX ?? 0);
       const startX = labelOffset + justifyX(naturalStartX);
       parts.push(renderRepeatStart(startX, lineY + layout.maxPaddingUp + DIMENSIONS.noteBottomPadding));
@@ -238,9 +252,14 @@ function renderLine(layout: LineLayout, lineY: number, allNotes: Note[], documen
       }
     }
     if (nextMeasure?.repeatStart) {
+      if (measureLayout.measure.repeatEnd) {
+        const naturalBarX = xOffset + measureLayout.width - measureLayout.rightPadding - DIMENSIONS.repeatRightPadding + 12;
+        const barX = naturalBarX + DIMENSIONS.repeatEndLeftGap;
+        parts.push(renderRepeatBoth(labelOffset + justifyX(barX), lineY + layout.maxPaddingUp + DIMENSIONS.noteBottomPadding));
+      }
       continue;
     }
-    const naturalBarX = xOffset + measureLayout.width - DIMENSIONS.repeatRightPadding + 12;
+    const naturalBarX = xOffset + measureLayout.width - measureLayout.rightPadding - DIMENSIONS.repeatRightPadding + 12;
     const barX = naturalBarX + (measureLayout.measure.repeatEnd ? DIMENSIONS.repeatEndLeftGap : 0);
     parts.push(
       renderBar(

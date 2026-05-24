@@ -51,6 +51,14 @@ test("parses repeat start and end barlines", () => {
   assert.equal(result.value.score[0].measures[1].repeatEnd, true);
 });
 
+test("parses combined repeat end and start barlines", () => {
+  const result = parse("|: 1 :|: 2 :|");
+  assert.equal(result.ok, true);
+  assert.equal(result.value.score[0].measures.length, 2);
+  assert.equal(result.value.score[0].measures[0].repeatEnd, true);
+  assert.equal(result.value.score[0].measures[1].repeatStart, true);
+});
+
 test("keeps reporting empty measures between consecutive bars", () => {
   const result = parse("1 2 || 3 4");
   assert.equal(result.ok, false);

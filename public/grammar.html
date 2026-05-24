@@ -303,10 +303,11 @@ tempo: "132.5"</pre>
       <pre class="notation-example">| 1 2 3 4 | 5 6 7 1' |
 1 2 || 3 4</pre>
       <p>
-        Repeat barlines use <code>|:</code> to start and <code>:|</code> to end. They render as repeat barlines in SVG
-        output. Playback, MIDI export, and audio export play the repeated section twice.
+        Repeat barlines use <code>|:</code> to start, <code>:|</code> to end, and <code>:|:</code> to end one repeated
+        section while starting the next. They render as repeat barlines in SVG output. Playback, MIDI export, and audio
+        export play each repeated section twice.
       </p>
-      <pre class="notation-example">|: 1 2 3 4 | 5 6 7 1' :|</pre>
+      <pre class="notation-example">|: 1 2 3 4 :|: 5 6 7 1' :|</pre>
 
       <h3>9. Notes</h3>
       <p>Pitch notes are digits <code>1</code> through <code>7</code>. Rest is <code>0</code>. Drum note is uppercase <code>X</code>.</p>
@@ -488,7 +489,7 @@ label    ::= IDENTIFIER ":"</pre>
       </div>
       <pre class="ebnf">line              ::= label? start_barline? measure (measure_separator measure)* end_barline?
 start_barline     ::= BAR | REPEAT_START
-measure_separator ::= BAR | REPEAT_START
+measure_separator ::= BAR | REPEAT_START | REPEAT_BOTH
 end_barline       ::= BAR | REPEAT_END
 label ::= IDENTIFIER ":"</pre>
 
@@ -578,6 +579,7 @@ DRUM       ::= "X"
 BAR        ::= "|"
 REPEAT_START ::= "|:"
 REPEAT_END   ::= ":|"
+REPEAT_BOTH  ::= ":|:"
 SHARPSHARP ::= "##"
 SHARP      ::= "#"
 FLATFLAT   ::= "bb"

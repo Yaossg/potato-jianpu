@@ -299,10 +299,10 @@ tempo: "132.5"</pre>
       <pre class="notation-example">| 1 2 3 4 | 5 6 7 1' |
 1 2 || 3 4</pre>
       <p>
-        反复小节线使用 <code>|:</code> 表示反复开始，使用 <code>:|</code> 表示反复结束。它们会在 SVG 输出中渲染为反复小节线，
-        播放、MIDI 导出和音频导出会把反复段播放两遍。
+        反复小节线使用 <code>|:</code> 表示反复开始，使用 <code>:|</code> 表示反复结束，使用 <code>:|:</code>
+        表示结束一个反复段并开始下一个反复段。它们会在 SVG 输出中渲染为反复小节线，播放、MIDI 导出和音频导出会把每个反复段播放两遍。
       </p>
-      <pre class="notation-example">|: 1 2 3 4 | 5 6 7 1' :|</pre>
+      <pre class="notation-example">|: 1 2 3 4 :|: 5 6 7 1' :|</pre>
 
       <h3>9. 音符</h3>
       <p>音高音符是数字 <code>1</code> 到 <code>7</code>。休止符是 <code>0</code>。鼓音符是大写 <code>X</code>。</p>
@@ -480,7 +480,7 @@ label    ::= IDENTIFIER ":"</pre>
       </div>
       <pre class="ebnf">line              ::= label? start_barline? measure (measure_separator measure)* end_barline?
 start_barline     ::= BAR | REPEAT_START
-measure_separator ::= BAR | REPEAT_START
+measure_separator ::= BAR | REPEAT_START | REPEAT_BOTH
 end_barline       ::= BAR | REPEAT_END
 label ::= IDENTIFIER ":"</pre>
 
@@ -567,6 +567,7 @@ DRUM       ::= "X"
 BAR        ::= "|"
 REPEAT_START ::= "|:"
 REPEAT_END   ::= ":|"
+REPEAT_BOTH  ::= ":|:"
 SHARPSHARP ::= "##"
 SHARP      ::= "#"
 FLATFLAT   ::= "bb"

@@ -206,6 +206,14 @@ class Parser {
           previous.repeatEnd = true;
         }
       }
+      if (this.match("repeatBoth")) {
+        const previous = measures.at(-1);
+        if (previous) {
+          previous.repeatEnd = true;
+        }
+        measures.push(this.parseMeasure(true));
+        continue;
+      }
       if (this.at("newline") || this.at("eof")) {
         break;
       }
@@ -233,7 +241,14 @@ class Parser {
     const start = this.current().range;
     const octavePrefix = this.parseOptionalMeasureOctave();
     const notes: Note[] = [];
-    while (!this.at("bar") && !this.at("repeatEnd") && !this.at("repeatStart") && !this.at("newline") && !this.at("eof")) {
+    while (
+      !this.at("bar") &&
+      !this.at("repeatEnd") &&
+      !this.at("repeatStart") &&
+      !this.at("repeatBoth") &&
+      !this.at("newline") &&
+      !this.at("eof")
+    ) {
       if (!this.isDurableNoteStart()) {
         this.parseUnexpectedScoreToken();
         continue;

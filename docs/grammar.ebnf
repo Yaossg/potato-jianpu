@@ -10,7 +10,7 @@ score = line, { NEWLINE, { NEWLINE }, line }, { NEWLINE } ;
 line = [ label ], [ start_barline ], measure, { measure_separator, measure }, [ end_barline ] ;
 
 start_barline = BAR | REPEAT_START ;
-measure_separator = BAR | REPEAT_START ;
+measure_separator = BAR | REPEAT_START | REPEAT_BOTH ;
 end_barline = BAR | REPEAT_END ;
 
 measure = [ octave ], durable_note, { durable_note } ;
@@ -40,6 +40,7 @@ DRUM = "X" ;
 BAR = "|" ;
 REPEAT_START = "|:" ;
 REPEAT_END = ":|" ;
+REPEAT_BOTH = ":|:" ;
 SHARPSHARP = "##" ;
 SHARP = "#" ;
 FLATFLAT = "bb" ;
