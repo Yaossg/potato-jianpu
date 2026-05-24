@@ -40,6 +40,16 @@ test("merges tied notes into previous melody note", () => {
   assert.equal(melody.notes[0].duration, 3 / 8);
 });
 
+test("expands repeat barlines for melody playback", () => {
+  const result = parse("|: 1 | 2 :| 3");
+  assert.equal(result.ok, true);
+  const melody = compileMelody(result.value);
+  assert.deepEqual(
+    melody.notes.map((note) => note.chord),
+    [[60], [62], [60], [62], [64]],
+  );
+});
+
 test("exports a standard MIDI header", () => {
   const result = parse(`tempo: "120"\n=\n1 2 3 4`);
   assert.equal(result.ok, true);

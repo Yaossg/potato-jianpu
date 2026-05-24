@@ -69,14 +69,40 @@ function compileMeasure(measure: Measure, baseNoteMap: number[], program: number
   }
 }
 
+function expandRepeatedMeasures(document: Document): Measure[] {
+  const expanded: Measure[] = [];
+  let repeatStartIndex = 0;
+
+  for (const line of document.score) {
+    for (const measure of line.measures) {
+      if (measure.repeatStart) {
+        repeatStartIndex = expanded.length;
+      }
+
+      expanded.push(measure);
+
+      if (measure.repeatEnd) {
+        const repeatedMeasures = expanded.slice(repeatStartIndex);
+        for (const repeatedMeasure of repeatedMeasures) {
+          expanded.push({
+            ...repeatedMeasure,
+            repeatStart: false,
+            repeatEnd: false,
+          });
+        }
+      }
+    }
+  }
+
+  return expanded;
+}
+
 export function compileMelody(document: Document, program = 0): Melody {
   assertProgram(program);
   const baseNoteMap = C_MAJOR_NOTE_MAP.map((note) => note + document.header.keySignature);
   const notes: MelodyNote[] = [];
-  for (const line of document.score) {
-    for (const measure of line.measures) {
-      compileMeasure(measure, baseNoteMap, program, notes);
-    }
+  for (const measure of expandRepeatedMeasures(document)) {
+    compileMeasure(measure, baseNoteMap, program, notes);
   }
 
   return {
