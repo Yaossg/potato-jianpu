@@ -622,17 +622,20 @@ export function App() {
     );
   }
 
-  function stop() {
-    setShowExamples(false);
+  function stopPlayback() {
     playerRef.current?.stop();
     setIsPlaying(false);
     setActiveNoteIndex(null);
   }
 
-  function loadSource(nextSource: string) {
-    stop();
-    setSource(nextSource);
+  function stop() {
     setShowExamples(false);
+    stopPlayback();
+  }
+
+  function loadSource(nextSource: string) {
+    stopPlayback();
+    setSource(nextSource);
   }
 
   function updateSource(nextSource: string) {
