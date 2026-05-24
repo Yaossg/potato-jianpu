@@ -215,6 +215,29 @@ test("renders repeat barlines with dots", () => {
   assert.match(svg, /<line class="bar-thin"/);
 });
 
+test("keeps repeat start spacing consistent at the beginning of a line", () => {
+  const result = parse("|: 1 | 2 :|");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  const repeatStart = svg.match(/<line class="bar-final" x1="(\d+)"/);
+  const firstNote = svg.match(/<text class="note" x="(\d+)" y="\d+" text-anchor="middle">1<\/text>/);
+  assert.ok(repeatStart);
+  assert.ok(firstNote);
+  assert.equal(Number(firstNote[1]) - Number(repeatStart[1]), 34);
+});
+
+test("keeps inline repeat start spacing consistent", () => {
+  const result = parse("1 2 |: 3 4");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  const repeatStart = svg.match(/<line class="bar-final" x1="(\d+)"/);
+  const firstNote = svg.match(/<text class="note" x="(\d+)" y="\d+" text-anchor="middle">3<\/text>/);
+  assert.ok(repeatStart);
+  assert.ok(firstNote);
+  assert.doesNotMatch(svg, new RegExp(`<line class="bar-thin" x1="${repeatStart[1]}"`));
+  assert.equal(Number(firstNote[1]) - Number(repeatStart[1]), 34);
+});
+
 test("marks active notes for preview highlighting", () => {
   const result = parse("1 2");
   assert.equal(result.ok, true);

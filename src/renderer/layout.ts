@@ -5,6 +5,8 @@ import { noteTieAfter, widthOf } from "./metrics.js";
 export interface MeasureLayout {
   measure: Measure;
   width: number;
+  leftPadding: number;
+  repeatStartX: number | null;
   notePositions: number[];
   paddingUp: number;
   paddingDown: number;
@@ -47,8 +49,14 @@ function paddingDownOf(note: Note): number {
   return height;
 }
 
-function layoutMeasure(measure: Measure, allNotes: Note[]): MeasureLayout {
+function layoutMeasure(measure: Measure, allNotes: Note[], inlineRepeatStart = false): MeasureLayout {
   const notePositions: number[] = [];
+  const repeatStartPadding = measure.repeatStart
+    ? inlineRepeatStart
+      ? DIMENSIONS.repeatInlineLeftPadding
+      : DIMENSIONS.repeatLeadingPadding
+    : 0;
+  const leftPadding = DIMENSIONS.leftPadding + repeatStartPadding;
   let totalWidth = 0;
   let paddingUp = 0;
   let paddingDown = 0;
@@ -62,7 +70,9 @@ function layoutMeasure(measure: Measure, allNotes: Note[]): MeasureLayout {
 
   return {
     measure,
-    width: totalWidth + DIMENSIONS.leftPadding + 4,
+    width: totalWidth + leftPadding + 4 + (measure.repeatEnd ? DIMENSIONS.repeatRightPadding - DIMENSIONS.leftPadding : 0),
+    leftPadding,
+    repeatStartX: measure.repeatStart ? (inlineRepeatStart ? -6 : 2) : null,
     notePositions,
     paddingUp,
     paddingDown,
@@ -90,15 +100,16 @@ function buildLineLayout(line: ScoreLine, measures: MeasureLayout[]): LineLayout
 }
 
 export function layoutLine(line: ScoreLine, allNotes: Note[], pageWidth: number): LineLayout[] {
-  const measures = line.measures.map((measure) => layoutMeasure(measure, allNotes));
   const layouts: LineLayout[] = [];
   let current: MeasureLayout[] = [];
   let currentWidth = 0;
 
-  for (const measure of measures) {
+  for (const measureNode of line.measures) {
+    let measure = layoutMeasure(measureNode, allNotes, current.length > 0);
     const nextWidth = current.length === 0 ? measure.width : currentWidth + DIMENSIONS.measureSpacing + measure.width;
     if (current.length > 0 && nextWidth > pageWidth) {
       layouts.push(buildLineLayout(line, current));
+      measure = layoutMeasure(measureNode, allNotes, false);
       current = [measure];
       currentWidth = measure.width;
     } else {
