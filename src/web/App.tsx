@@ -4,31 +4,7 @@ import { compileMelody, DRUM_PROGRAMS, exportMidiBytes, GM_PROGRAMS, parse, skip
 import { inferContentPageWidth, renderSvg } from "../renderer/index.js";
 import { exportBrowserMp3Bytes, exportBrowserWavBytes } from "./audio-export.js";
 import { PreviewAudioPlayer } from "./audio.js";
-import scale from "../../examples/scale.jpu?raw";
-import twinkle from "../../examples/twinkle.jpu?raw";
-import odeToJoy from "../../examples/ode-to-joy.jpu?raw";
-import _68example from "../../examples/6-8-example.jpu?raw";
-import drums from "../../examples/drums.jpu?raw";
-import jingleBells from "../../examples/jingle-bells.jpu?raw";
-import happyBirthday from "../../examples/happy-birthday.jpu?raw";
-import dearLittleWish from "../../examples/dear-little-wish.jpu?raw";
-import burningField from "../../examples/burning-field.jpu?raw";
-import blockyHeroes from "../../examples/blocky-heroes.jpu?raw";
-import shining from "../../examples/shining-from-the-underground.jpu?raw";
-
-const examples = [
-  { name: "Scale", source: scale },
-  { name: "Twinkle", source: twinkle },
-  { name: "Ode to Joy", source: odeToJoy },
-  { name: "6/8 Example", source: _68example },
-  { name: "Drums", source: drums },
-  { name: "Jingle Bells", source: jingleBells },
-  { name: "Happy Birthday", source: happyBirthday },
-  { name: "Dear Little Wish", source: dearLittleWish },
-  { name: "Burning Field", source: burningField },
-  { name: "Blocky Heroes", source: blockyHeroes },
-  { name: "Shining", source: shining },
-];
+import { exampleName, examples, exampleTitle } from "./examples.js";
 
 const MELODIC_AUDITION_SOURCE = "1 2 3 4 5 6 7 1'";
 const DRUM_AUDITION_SOURCE = "X X X X";
@@ -219,23 +195,6 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     validWarnings: "有效，{count} 个警告",
     event: "个事件",
     events: "个事件",
-  },
-};
-
-const localizedExampleNames: Record<Language, Record<string, string>> = {
-  en: {},
-  zh: {
-    Scale: "音阶",
-    Twinkle: "小星星",
-    "Ode to Joy": "欢乐颂",
-    "6/8 Example": "6/8 示例",
-    Drums: "鼓组",
-    "Jingle Bells": "铃儿响叮当",
-    "Happy Birthday": "生日快乐",
-    "Dear Little Wish": "亲爱的小愿望",
-    "Burning Field": "燃烧的原野",
-    "Blocky Heroes": "方块英雄",
-    Shining: "地下闪光",
   },
 };
 
@@ -875,11 +834,11 @@ export function App() {
           <div className="examples-grid">
             {examples.map((example) => (
               <button
-                key={example.name}
+                key={exampleTitle(example) ?? example}
                 type="button"
-                onClick={() => requestExampleSource(example.source)}
+                onClick={() => requestExampleSource(example)}
               >
-                {localizedExampleNames[language][example.name] ?? example.name}
+                {exampleName(example, language)}
               </button>
             ))}
           </div>
