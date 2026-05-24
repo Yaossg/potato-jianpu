@@ -193,12 +193,32 @@ class Parser {
       label = this.current().value ?? this.current().text;
       this.index += 2;
     }
-    this.match("bar");
+    const leadingRepeatStart = Boolean(this.match("repeatStart"));
+    if (!leadingRepeatStart) {
+      this.match("bar");
+    }
     const measures: Measure[] = [];
-    measures.push(this.parseMeasure());
-    while (this.match("bar")) {
+    measures.push(this.parseMeasure(leadingRepeatStart));
+    while (true) {
+      while (this.match("repeatEnd")) {
+        const previous = measures.at(-1);
+        if (previous) {
+          previous.repeatEnd = true;
+        }
+      }
       if (this.at("newline") || this.at("eof")) {
         break;
+      }
+      if (this.match("bar")) {
+        if (this.at("newline") || this.at("eof")) {
+          break;
+        }
+        measures.push(this.parseMeasure());
+        continue;
+      }
+      if (this.match("repeatStart")) {
+        measures.push(this.parseMeasure(true));
+        continue;
       }
       measures.push(this.parseMeasure());
     }
@@ -209,11 +229,11 @@ class Parser {
     };
   }
 
-  private parseMeasure(): Measure {
+  private parseMeasure(repeatStart = false): Measure {
     const start = this.current().range;
     const octavePrefix = this.parseOptionalMeasureOctave();
     const notes: Note[] = [];
-    while (!this.at("bar") && !this.at("newline") && !this.at("eof")) {
+    while (!this.at("bar") && !this.at("repeatEnd") && !this.at("repeatStart") && !this.at("newline") && !this.at("eof")) {
       if (!this.isDurableNoteStart()) {
         this.parseUnexpectedScoreToken();
         continue;
@@ -224,7 +244,7 @@ class Parser {
       this.error("Expected at least one note in measure.", start);
     }
     const end = notes.at(-1)?.range ?? start;
-    return { notes, range: mergeRange(start, end) };
+    return { notes, range: mergeRange(start, end), repeatStart };
   }
 
   private parseOptionalMeasureOctave(): number {

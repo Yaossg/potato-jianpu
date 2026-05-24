@@ -64,6 +64,8 @@ export type Note = PitchNote | RestNote | DrumNote;
 export interface Measure {
   notes: Note[];
   range: SourceRange;
+  repeatStart?: boolean;
+  repeatEnd?: boolean;
 }
 
 export interface ScoreLine {
@@ -116,4 +118,3 @@ export function actualNotePerBeat(time: TimeSignature): number {
       return 3 / time.beatsPerWholeNote;
   }
 }
-

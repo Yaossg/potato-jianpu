@@ -137,9 +137,23 @@ function renderOutgoingTie(startX: number, edgeX: number, y: number, chordHeight
   return `<path class="tie" d="M${startX},${tieY} Q${topControlX},${topCutY} ${topCutX},${topCutY} L${bottomCutX},${bottomCutY} Q${bottomControlX},${bottomCutY} ${startX},${tieY} Z"/>`;
 }
 
-function renderBar(x: number, baselineY: number, final: boolean): string {
+function renderRepeatDots(x: number, baselineY: number): string {
+  return [
+    `<circle class="repeat-dot" cx="${x}" cy="${baselineY - 16}" r="2.5"/>`,
+    `<circle class="repeat-dot" cx="${x}" cy="${baselineY - 6}" r="2.5"/>`,
+  ].join("");
+}
+
+function renderBar(x: number, baselineY: number, final: boolean, repeatEnd = false): string {
   const y1 = baselineY - DIMENSIONS.baseNoteHeight - 4;
   const y2 = baselineY + 4;
+  if (repeatEnd) {
+    return [
+      renderRepeatDots(x - 8, baselineY),
+      `<line class="bar-thin" x1="${x - 2}" y1="${y1}" x2="${x - 2}" y2="${y2}"/>`,
+      `<line class="bar-final" x1="${x + 5}" y1="${y1}" x2="${x + 5}" y2="${y2}"/>`,
+    ].join("");
+  }
   if (final) {
     return [
       `<line class="bar-thin" x1="${x - 5}" y1="${y1}" x2="${x - 5}" y2="${y2}"/>`,
@@ -147,6 +161,16 @@ function renderBar(x: number, baselineY: number, final: boolean): string {
     ].join("");
   }
   return `<line class="bar-thin" x1="${x}" y1="${y1}" x2="${x}" y2="${y2}"/>`;
+}
+
+function renderRepeatStart(x: number, baselineY: number): string {
+  const y1 = baselineY - DIMENSIONS.baseNoteHeight - 4;
+  const y2 = baselineY + 4;
+  return [
+    `<line class="bar-final" x1="${x}" y1="${y1}" x2="${x}" y2="${y2}"/>`,
+    `<line class="bar-thin" x1="${x + 7}" y1="${y1}" x2="${x + 7}" y2="${y2}"/>`,
+    renderRepeatDots(x + 13, baselineY),
+  ].join("");
 }
 
 function measureFullness(measure: Measure, unit: number): boolean[] {
@@ -186,6 +210,10 @@ function renderLine(layout: LineLayout, lineY: number, allNotes: Note[], documen
   for (const [measureIndex, measureLayout] of layout.measures.entries()) {
     const xOffset = measureXOffset(layout.measures, measureIndex);
     const fullness = measureFullness(measureLayout.measure, unit);
+    if (measureLayout.measure.repeatStart) {
+      const startX = labelOffset + justifyX(xOffset + DIMENSIONS.leftPadding - 10);
+      parts.push(renderRepeatStart(startX, lineY + layout.maxPaddingUp + DIMENSIONS.noteBottomPadding));
+    }
     let groupStartX: number | null = null;
     let groupDuration = 0;
     for (const [noteIndex, note] of measureLayout.measure.notes.entries()) {
@@ -210,6 +238,7 @@ function renderLine(layout: LineLayout, lineY: number, allNotes: Note[], documen
         labelOffset + justifyX(naturalBarX),
         lineY + layout.maxPaddingUp + DIMENSIONS.noteBottomPadding,
         measureLayout.measure === finalMeasure,
+        measureLayout.measure.repeatEnd,
       ),
     );
   }

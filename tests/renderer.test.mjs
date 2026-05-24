@@ -206,6 +206,15 @@ test("distinguishes regular and final bars", () => {
   assert.doesNotMatch(svg, /&#119047;|&#119049;/);
 });
 
+test("renders repeat barlines with dots", () => {
+  const result = parse("|: 1 2 | 3 4 :|");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  assert.match(svg, /class="repeat-dot"/);
+  assert.match(svg, /<line class="bar-final"/);
+  assert.match(svg, /<line class="bar-thin"/);
+});
+
 test("marks active notes for preview highlighting", () => {
   const result = parse("1 2");
   assert.equal(result.ok, true);

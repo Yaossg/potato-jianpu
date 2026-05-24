@@ -43,6 +43,20 @@ test("accepts optional leading and trailing bars", () => {
   assert.equal(result.value.score[0].measures[1].notes[1].index, 3);
 });
 
+test("parses repeat start and end barlines", () => {
+  const result = parse("|: 1 2 | 3 4 :|");
+  assert.equal(result.ok, true);
+  assert.equal(result.value.score[0].measures.length, 2);
+  assert.equal(result.value.score[0].measures[0].repeatStart, true);
+  assert.equal(result.value.score[0].measures[1].repeatEnd, true);
+});
+
+test("keeps reporting empty measures between consecutive bars", () => {
+  const result = parse("1 2 || 3 4");
+  assert.equal(result.ok, false);
+  assert.match(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Expected at least one note in measure/);
+});
+
 test("keeps comment boundaries between header and score lines", () => {
   const result = parse(`title: "Comments" ; header comment\n=\n1 2 ; score comment\n; whole-line comment\n3 4`);
   assert.equal(result.ok, true);

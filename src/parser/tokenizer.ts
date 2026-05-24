@@ -7,6 +7,8 @@ export type TokenType =
   | "rest"
   | "drum"
   | "bar"
+  | "repeatStart"
+  | "repeatEnd"
   | "sharpsharp"
   | "sharp"
   | "flatflat"
@@ -154,6 +156,14 @@ export function tokenize(source: string): { tokens: Token[]; diagnostics: Diagno
     }
 
     const two = rest.slice(0, 2);
+    if (two === "|:") {
+      push("repeatStart", two);
+      continue;
+    }
+    if (two === ":|") {
+      push("repeatEnd", two);
+      continue;
+    }
     if (two === "##") {
       push("sharpsharp", two);
       continue;
@@ -218,4 +228,3 @@ export function tokenize(source: string): { tokens: Token[]; diagnostics: Diagno
   tokens.push({ type: "eof", text: "", range: rangeFrom(eof, eof) });
   return { tokens, diagnostics };
 }
-

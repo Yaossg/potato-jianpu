@@ -7,7 +7,11 @@ label = IDENTIFIER, ":" ;
 
 score = line, { NEWLINE, { NEWLINE }, line }, { NEWLINE } ;
 
-line = [ label ], [ BAR ], measure, { BAR, measure }, [ BAR ] ;
+line = [ label ], [ start_barline ], measure, { measure_separator, measure }, [ end_barline ] ;
+
+start_barline = BAR | REPEAT_START ;
+measure_separator = BAR | REPEAT_START ;
+end_barline = BAR | REPEAT_END ;
 
 measure = [ octave ], durable_note, { durable_note } ;
 octave = LOWER, { LOWER } | HIGHER, { HIGHER } ;
@@ -34,6 +38,8 @@ NOTE = "1" | "2" | "3" | "4" | "5" | "6" | "7" ;
 REST = "0" ;
 DRUM = "X" ;
 BAR = "|" ;
+REPEAT_START = "|:" ;
+REPEAT_END = ":|" ;
 SHARPSHARP = "##" ;
 SHARP = "#" ;
 FLATFLAT = "bb" ;

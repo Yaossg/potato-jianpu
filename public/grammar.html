@@ -302,6 +302,11 @@ tempo: "132.5"</pre>
       </p>
       <pre class="notation-example">| 1 2 3 4 | 5 6 7 1' |
 1 2 || 3 4</pre>
+      <p>
+        Repeat barlines use <code>|:</code> to start and <code>:|</code> to end. They render as repeat barlines in SVG
+        output, but playback and audio export do not expand repeats yet.
+      </p>
+      <pre class="notation-example">|: 1 2 3 4 | 5 6 7 1' :|</pre>
 
       <h3>9. Notes</h3>
       <p>Pitch notes are digits <code>1</code> through <code>7</code>. Rest is <code>0</code>. Drum note is uppercase <code>X</code>.</p>
@@ -479,14 +484,17 @@ label    ::= IDENTIFIER ":"</pre>
 
       <h3>Line</h3>
       <div class="diagram">
-        <svg class="railroad-diagram" width="678" style="max-height: 79px;" viewBox="0 0 678 79"><g transform="translate(.5 .5)"><g><path d="M20 29v20m0 -10h20"></path></g><path d="M40 39h10"></path><g><path d="M50 39h0"></path><path d="M628 39h0"></path><g><path d="M50 39h0"></path><path d="M152.5 39h0"></path><path d="M50 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M70 19h62.5"></path></g><path d="M132.5 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M50 39h20"></path><g class="non-terminal"><path d="M70 39h0"></path><path d="M132.5 39h0"></path><rect x="70" y="28" width="62.5" height="22"></rect><a xlink:href="#label"><text x="101.25" y="43">label</text></a></g><path d="M132.5 39h20"></path></g><g><path d="M152.5 39h0"></path><path d="M238 39h0"></path><path d="M152.5 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M172.5 19h45.5"></path></g><path d="M218 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M152.5 39h20"></path><g class="non-terminal"><path d="M172.5 39h0"></path><path d="M218 39h0"></path><rect x="172.5" y="28" width="45.5" height="22"></rect><a xlink:href="#BAR"><text x="195.25" y="43">BAR</text></a></g><path d="M218 39h20"></path></g><path d="M238 39h10"></path><g class="non-terminal"><path d="M248 39h0"></path><path d="M327.5 39h0"></path><rect x="248" y="28" width="79.5" height="22"></rect><a xlink:href="#measure"><text x="287.75" y="43">measure</text></a></g><path d="M327.5 39h10"></path><g><path d="M337.5 39h0"></path><path d="M542.5 39h0"></path><path d="M337.5 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M357.5 19h165"></path></g><path d="M522.5 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M337.5 39h20"></path><g><path d="M357.5 39h0"></path><path d="M522.5 39h0"></path><path d="M357.5 39h10"></path><g><path d="M367.5 39h0"></path><path d="M512.5 39h0"></path><g class="non-terminal"><path d="M367.5 39h0"></path><path d="M413 39h0"></path><rect x="367.5" y="28" width="45.5" height="22"></rect><a xlink:href="#BAR"><text x="390.25" y="43">BAR</text></a></g><path d="M413 39h10"></path><path d="M423 39h10"></path><g class="non-terminal"><path d="M433 39h0"></path><path d="M512.5 39h0"></path><rect x="433" y="28" width="79.5" height="22"></rect><a xlink:href="#measure"><text x="472.75" y="43">measure</text></a></g></g><path d="M512.5 39h10"></path><path d="M367.5 39a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M367.5 59h145"></path></g><path d="M512.5 59a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M522.5 39h20"></path></g><g><path d="M542.5 39h0"></path><path d="M628 39h0"></path><path d="M542.5 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M562.5 19h45.5"></path></g><path d="M608 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M542.5 39h20"></path><g class="non-terminal"><path d="M562.5 39h0"></path><path d="M608 39h0"></path><rect x="562.5" y="28" width="45.5" height="22"></rect><a xlink:href="#BAR"><text x="585.25" y="43">BAR</text></a></g><path d="M608 39h20"></path></g></g><path d="M628 39h10"></path><path d="M 638 39 h 20 m 0 -10 v 20"></path></g></svg>
+        <svg class="railroad-diagram" width="950" style="max-height: 79px;" viewBox="0 0 950 79"><g transform="translate(.5 .5)"><g><path d="M20 29v20m0 -10h20"></path></g><path d="M40 39h10"></path><g><path d="M50 39h0"></path><path d="M900 39h0"></path><g><path d="M50 39h0"></path><path d="M152.5 39h0"></path><path d="M50 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M70 19h62.5"></path></g><path d="M132.5 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M50 39h20"></path><g class="non-terminal"><path d="M70 39h0"></path><path d="M132.5 39h0"></path><rect x="70" y="28" width="62.5" height="22"></rect><a xlink:href="#label"><text x="101.25" y="43">label</text></a></g><path d="M132.5 39h20"></path></g><g><path d="M152.5 39h0"></path><path d="M323 39h0"></path><path d="M152.5 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M172.5 19h130.5"></path></g><path d="M303 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M152.5 39h20"></path><g class="non-terminal"><path d="M172.5 39h0"></path><path d="M303 39h0"></path><rect x="172.5" y="28" width="130.5" height="22"></rect><a xlink:href="#start_barline"><text x="237.75" y="43">start&#95;barline</text></a></g><path d="M303 39h20"></path></g><path d="M323 39h10"></path><g class="non-terminal"><path d="M333 39h0"></path><path d="M412.5 39h0"></path><rect x="333" y="28" width="79.5" height="22"></rect><a xlink:href="#measure"><text x="372.75" y="43">measure</text></a></g><path d="M412.5 39h10"></path><g><path d="M422.5 39h0"></path><path d="M746.5 39h0"></path><path d="M422.5 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M442.5 19h284"></path></g><path d="M726.5 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M422.5 39h20"></path><g><path d="M442.5 39h0"></path><path d="M726.5 39h0"></path><path d="M442.5 39h10"></path><g><path d="M452.5 39h0"></path><path d="M716.5 39h0"></path><g class="non-terminal"><path d="M452.5 39h0"></path><path d="M617 39h0"></path><rect x="452.5" y="28" width="164.5" height="22"></rect><a xlink:href="#measure_separator"><text x="534.75" y="43">measure&#95;separator</text></a></g><path d="M617 39h10"></path><path d="M627 39h10"></path><g class="non-terminal"><path d="M637 39h0"></path><path d="M716.5 39h0"></path><rect x="637" y="28" width="79.5" height="22"></rect><a xlink:href="#measure"><text x="676.75" y="43">measure</text></a></g></g><path d="M716.5 39h10"></path><path d="M452.5 39a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M452.5 59h264"></path></g><path d="M716.5 59a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M726.5 39h20"></path></g><g><path d="M746.5 39h0"></path><path d="M900 39h0"></path><path d="M746.5 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M766.5 19h113.5"></path></g><path d="M880 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M746.5 39h20"></path><g class="non-terminal"><path d="M766.5 39h0"></path><path d="M880 39h0"></path><rect x="766.5" y="28" width="113.5" height="22"></rect><a xlink:href="#end_barline"><text x="823.25" y="43">end&#95;barline</text></a></g><path d="M880 39h20"></path></g></g><path d="M900 39h10"></path><path d="M 910 39 h 20 m 0 -10 v 20"></path></g></svg>
       </div>
-      <pre class="ebnf">line  ::= label? BAR? measure (BAR measure)* BAR?
+      <pre class="ebnf">line              ::= label? start_barline? measure (measure_separator measure)* end_barline?
+start_barline     ::= BAR | REPEAT_START
+measure_separator ::= BAR | REPEAT_START
+end_barline       ::= BAR | REPEAT_END
 label ::= IDENTIFIER ":"</pre>
 
       <p>
-        A single leading bar and a single trailing bar are accepted. Empty measures are still parse errors; for example,
-        <code>1 2 || 3 4</code> creates an empty measure between the two bar tokens.
+        A single leading bar, repeat start, trailing bar, and repeat end are accepted. Empty measures are still parse
+        errors; for example, <code>1 2 || 3 4</code> creates an empty measure between the two bar tokens.
       </p>
 
       <h3>Measure</h3>
@@ -568,6 +576,8 @@ NOTE       ::= "1" | "2" | "3" | "4" | "5" | "6" | "7"
 REST       ::= "0"
 DRUM       ::= "X"
 BAR        ::= "|"
+REPEAT_START ::= "|:"
+REPEAT_END   ::= ":|"
 SHARPSHARP ::= "##"
 SHARP      ::= "#"
 FLATFLAT   ::= "bb"
