@@ -8,6 +8,7 @@ export const DIMENSIONS = {
   repeatLeadingPadding: 18,
   repeatRightPadding: 18,
   repeatEndLeftGap: 6,
+  barVerticalOffset: -6,
   measureSpacing: 0,
   accidentalOffset: 10,
   tieHeight: 16,

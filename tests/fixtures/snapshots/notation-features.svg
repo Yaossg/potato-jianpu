@@ -36,8 +36,8 @@
 <text x="94" y="48" text-anchor="middle" dominant-baseline="central">4</text>
 </g>
 <text class="tempo-mark" x="128" y="40" dominant-baseline="central">♩ = 120</text>
-<line class="bar-thin" x1="110" y1="139" x2="110" y2="171"/>
-<line class="bar-thin" x1="219" y1="139" x2="219" y2="171"/><line class="bar-final" x1="226" y1="139" x2="226" y2="171"/>
+<line class="bar-thin" x1="110" y1="129" x2="110" y2="161"/>
+<line class="bar-thin" x1="219" y1="129" x2="219" y2="161"/><line class="bar-final" x1="226" y1="129" x2="226" y2="161"/>
 <g class="note-item" data-note-index="0"><text class="accidental" x="18" y="96">&#9839;</text><text class="note" x="28" y="104" text-anchor="middle">1</text><text class="note" x="28" y="128" text-anchor="middle">3</text><text class="note" x="28" y="157" text-anchor="middle">5</text><circle class="dot" cx="28" cy="135" r="2"/><line class="underline" x1="8" y1="162" x2="54" y2="162"/><circle class="dot" cx="40" cy="148" r="3"/></g>
 <g class="note-item" data-note-index="1"><text class="note" x="64" y="157" text-anchor="middle">0</text></g>
 <g class="note-item" data-note-index="2"><text class="note" x="88" y="157" text-anchor="middle">X</text><line class="underline" x1="78" y1="162" x2="98" y2="162"/><line class="underline" x1="78" y1="167" x2="98" y2="167"/></g>

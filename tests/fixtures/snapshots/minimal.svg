@@ -37,8 +37,8 @@
 <text x="94" y="88" text-anchor="middle" dominant-baseline="central">4</text>
 </g>
 <text class="tempo-mark" x="128" y="80" dominant-baseline="central">♩ = 120</text>
-<line class="bar-thin" x1="64" y1="126" x2="64" y2="158"/>
-<line class="bar-thin" x1="129" y1="126" x2="129" y2="158"/><line class="bar-final" x1="136" y1="126" x2="136" y2="158"/>
+<line class="bar-thin" x1="64" y1="116" x2="64" y2="148"/>
+<line class="bar-thin" x1="129" y1="116" x2="129" y2="148"/><line class="bar-final" x1="136" y1="116" x2="136" y2="148"/>
 <g class="note-item" data-note-index="0"><text class="note" x="18" y="144" text-anchor="middle">1</text></g>
 <g class="note-item" data-note-index="1"><text class="note" x="42" y="144" text-anchor="middle">2</text></g>
 <g class="note-item" data-note-index="2"><text class="note" x="88" y="144" text-anchor="middle">3</text></g>

@@ -138,15 +138,17 @@ function renderOutgoingTie(startX: number, edgeX: number, y: number, chordHeight
 }
 
 function renderRepeatDots(x: number, baselineY: number): string {
+  const yOffset = DIMENSIONS.barVerticalOffset;
   return [
-    `<circle class="repeat-dot" cx="${x}" cy="${baselineY - 16}" r="2.5"/>`,
-    `<circle class="repeat-dot" cx="${x}" cy="${baselineY - 6}" r="2.5"/>`,
+    `<circle class="repeat-dot" cx="${x}" cy="${baselineY - 16 + yOffset}" r="2.5"/>`,
+    `<circle class="repeat-dot" cx="${x}" cy="${baselineY - 6 + yOffset}" r="2.5"/>`,
   ].join("");
 }
 
 function renderBar(x: number, baselineY: number, final: boolean, repeatEnd = false): string {
-  const y1 = baselineY - DIMENSIONS.baseNoteHeight - 4;
-  const y2 = baselineY + 4;
+  const yOffset = DIMENSIONS.barVerticalOffset;
+  const y1 = baselineY - DIMENSIONS.baseNoteHeight - 4 + yOffset;
+  const y2 = baselineY + 4 + yOffset;
   if (repeatEnd) {
     return [
       renderRepeatDots(x - 8, baselineY),
@@ -164,8 +166,9 @@ function renderBar(x: number, baselineY: number, final: boolean, repeatEnd = fal
 }
 
 function renderRepeatStart(x: number, baselineY: number): string {
-  const y1 = baselineY - DIMENSIONS.baseNoteHeight - 4;
-  const y2 = baselineY + 4;
+  const yOffset = DIMENSIONS.barVerticalOffset;
+  const y1 = baselineY - DIMENSIONS.baseNoteHeight - 4 + yOffset;
+  const y2 = baselineY + 4 + yOffset;
   return [
     `<line class="bar-final" x1="${x}" y1="${y1}" x2="${x}" y2="${y2}"/>`,
     `<line class="bar-thin" x1="${x + 7}" y1="${y1}" x2="${x + 7}" y2="${y2}"/>`,

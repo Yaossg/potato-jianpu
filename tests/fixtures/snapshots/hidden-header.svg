@@ -27,8 +27,8 @@
 </defs>
 <rect class="page-background" x="0" y="0" width="320" height="44" fill="#ffffff"/>
 
-<line class="bar-thin" x1="64" y1="6" x2="64" y2="38"/>
-<line class="bar-thin" x1="129" y1="6" x2="129" y2="38"/><line class="bar-final" x1="136" y1="6" x2="136" y2="38"/>
+<line class="bar-thin" x1="64" y1="-4" x2="64" y2="28"/>
+<line class="bar-thin" x1="129" y1="-4" x2="129" y2="28"/><line class="bar-final" x1="136" y1="-4" x2="136" y2="28"/>
 <g class="note-item" data-note-index="0"><text class="note" x="18" y="24" text-anchor="middle">1</text></g>
 <g class="note-item" data-note-index="1"><text class="note" x="42" y="24" text-anchor="middle">2</text></g>
 <g class="note-item" data-note-index="2"><text class="note" x="88" y="24" text-anchor="middle">3</text></g>
