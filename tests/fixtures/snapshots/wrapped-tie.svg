@@ -5,6 +5,8 @@
 .title { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 32px; font-weight: 700; }
 .subtitle { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 20px; font-weight: 400; }
 .metadata { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 20px; font-weight: 400; }
+.time-signature { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 18px; font-weight: 700; }
+.time-signature line { stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }
 .line-label { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: 700; }
 .note { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 24px; font-weight: 700; }
 .accidental { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-weight: 700; text-anchor: middle; }
@@ -22,7 +24,11 @@
 </defs>
 <rect class="page-background" x="0" y="0" width="70" height="244" fill="#ffffff"/>
 <text class="metadata" x="10" y="40">1=C</text>
-<text class="metadata" x="88" y="40">4/4</text>
+<g class="time-signature">
+<text x="88" y="30" text-anchor="middle" dominant-baseline="central">4</text>
+<line x1="80" y1="40" x2="96" y2="40"/>
+<text x="88" y="50" text-anchor="middle" dominant-baseline="central">4</text>
+</g>
 <text class="tempo-mark" x="132" y="40">♩ = 120</text>
 <line class="bar-thin" x1="64" y1="102" x2="64" y2="134"/>
 <path class="tie" d="M18,96 Q41,88 64,88 L64,89.5 Q41,89.5 18,96 Z"/>

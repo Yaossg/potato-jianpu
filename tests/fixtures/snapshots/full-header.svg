@@ -5,6 +5,8 @@
 .title { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 32px; font-weight: 700; }
 .subtitle { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 20px; font-weight: 400; }
 .metadata { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 20px; font-weight: 400; }
+.time-signature { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 18px; font-weight: 700; }
+.time-signature line { stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }
 .line-label { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: 700; }
 .note { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 24px; font-weight: 700; }
 .accidental { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-weight: 700; text-anchor: middle; }
@@ -24,7 +26,11 @@
 <text class="title" x="250" y="40" text-anchor="middle">Full Header</text>
 <text class="subtitle" x="250" y="72" text-anchor="middle">Snapshot Case</text>
 <text class="metadata" x="10" y="112">1=B&#9837;</text>
-<text class="metadata" x="104" y="112">6/8</text>
+<g class="time-signature">
+<text x="104" y="102" text-anchor="middle" dominant-baseline="central">6</text>
+<line x1="96" y1="112" x2="112" y2="112"/>
+<text x="104" y="122" text-anchor="middle" dominant-baseline="central">8</text>
+</g>
 <text class="tempo-mark" x="148" y="112">♪ = 96</text>
 <text class="metadata" x="450" y="112" text-anchor="end">Composer Name</text>
 

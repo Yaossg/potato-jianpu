@@ -47,8 +47,8 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(script, /audio\/wav/);
   assert.match(script, /audio\/mpeg/);
   assert.match(script, /Rendering locally/);
-  assert.match(script, /event\(s\)/);
-  assert.match(script, /Theme:/);
+  assert.match(script, /events/);
+  assert.match(script, /Theme/);
   assert.match(script, /Settings/);
   assert.match(script, /Page Settings/);
   assert.match(script, /Width mode/);
@@ -60,7 +60,7 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(script, /Sound Settings/);
   assert.match(script, /modern-jianpu-markup-theme/);
   assert.match(script, /prefers-color-scheme: dark/);
-  assert.match(script, /Grammar/);
+  assert.match(script, /Help/);
   assert.match(script, /grammar\.html/);
   assert.match(script, /Examples/);
   assert.match(script, /Enter your Jianpu here/);
@@ -104,4 +104,7 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(appSource, /inferContentPageWidth/);
   assert.match(audioSource, /SCHEDULE_AHEAD_SECONDS/);
   assert.match(audioSource, /currentTime > context\.currentTime \+ SCHEDULE_AHEAD_SECONDS/);
+  assert.match(script, /grammar\.zh\.html/);
+  assert.match(script, /time-signature/);
+  assert.match(script, /帮助/);
 });

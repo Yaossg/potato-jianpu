@@ -27,6 +27,17 @@ test("renders a parse result as an SVG document", () => {
   assert.match(svg, /font-family: Arial, Helvetica, sans-serif/);
 });
 
+test("renders time signatures as stacked digits", () => {
+  const result = parse(`time: "4/4"\n=\n1 2 3 4`);
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 360, color: "#111827", background: "#ffffff" });
+  assert.match(svg, /<g class="time-signature">/);
+  assert.match(svg, /<text x="88" y="30" text-anchor="middle" dominant-baseline="central">4<\/text>/);
+  assert.match(svg, /<line x1="80" y1="40" x2="96" y2="40"\/>/);
+  assert.match(svg, /<text x="88" y="50" text-anchor="middle" dominant-baseline="central">4<\/text>/);
+  assert.doesNotMatch(svg, />4\/4<\/text>/);
+});
+
 test("matches the minimal SVG snapshot", () => {
   const result = parse(`title: "Snapshot"\nkey: "C"\ntime: "4/4"\ntempo: "120"\n=\n1 2 | 3 4 |`);
   assert.equal(result.ok, true);
