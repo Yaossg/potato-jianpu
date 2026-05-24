@@ -16,6 +16,15 @@ function renderTempoMark(beatsPerWholeNote: number, tempo: number, x: number, ba
   return `<text class="tempo-mark" x="${x}" y="${baselineY}">${tempoMarkMap.get(beatsPerWholeNote) ?? "♩"} = ${tempo}</text>`;
 }
 
+function renderKeySignature(key: string, x: number, baselineY: number): string {
+  return [
+    `<g class="key-signature">`,
+    `<text class="note" x="${x}" y="${baselineY}" text-anchor="start">${1}</text>`,
+    `<text class="metadata" x="${x + 18}" y="${baselineY}"> = ${formatKey(escapeXml(key))}</text>`,
+    `</g>`,
+  ].join("\n");
+}
+
 function renderTimeSignature(beatsPerMeasure: number, beatsPerWholeNote: number, x: number, baselineY: number): string {
   return [
     `<g class="time-signature">`,
@@ -43,7 +52,7 @@ export function renderHeader(document: Document, width: number): { svg: string; 
   if (header.subtitle) {
     parts.push(`<text class="subtitle" x="${width / 2}" y="${subtitleY}" text-anchor="middle">${escapeXml(header.subtitle)}</text>`);
   }
-  parts.push(`<text class="metadata" x="10" y="${metadataY}">1=${formatKey(escapeXml(header.keySignatureText))}</text>`);
+  parts.push(renderKeySignature(header.keySignatureText, 10, metadataY));
   parts.push(renderTimeSignature(header.timeSignature.beatsPerMeasure, header.timeSignature.beatsPerWholeNote, 72 + 16 * header.keySignatureText.length, metadataY));
   parts.push(renderTempoMark(header.timeSignature.beatsPerWholeNote, header.tempo, 116 + 16 * header.keySignatureText.length, metadataY));
   if (header.composer) {
