@@ -26,15 +26,15 @@
 </defs>
 <rect class="page-background" x="0" y="0" width="70" height="244" fill="#ffffff"/>
 <g class="key-signature">
-<text class="note" x="10" y="40" text-anchor="start">1</text>
-<text class="metadata" x="28" y="40"> = C</text>
+<text class="note" x="10" y="40" text-anchor="start" dominant-baseline="central">1</text>
+<text class="metadata" x="28" y="40" dominant-baseline="central"> = C</text>
 </g>
 <g class="time-signature">
-<text x="88" y="30" text-anchor="middle" dominant-baseline="central">4</text>
-<line x1="80" y1="40" x2="96" y2="40"/>
-<text x="88" y="50" text-anchor="middle" dominant-baseline="central">4</text>
+<text x="94" y="32" text-anchor="middle" dominant-baseline="central">4</text>
+<line x1="86" y1="40" x2="102" y2="40"/>
+<text x="94" y="48" text-anchor="middle" dominant-baseline="central">4</text>
 </g>
-<text class="tempo-mark" x="132" y="40">♩ = 120</text>
+<text class="tempo-mark" x="128" y="40" dominant-baseline="central">♩ = 120</text>
 <line class="bar-thin" x1="64" y1="102" x2="64" y2="134"/>
 <path class="tie" d="M18,96 Q41,88 64,88 L64,89.5 Q41,89.5 18,96 Z"/>
 <g class="note-item" data-note-index="0"><text class="note" x="18" y="120" text-anchor="middle">1</text><line class="dash" x1="32" y1="111" x2="48" y2="111"/></g>

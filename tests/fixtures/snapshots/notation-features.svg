@@ -26,15 +26,15 @@
 </defs>
 <rect class="page-background" x="0" y="0" width="420" height="187" fill="#ffffff"/>
 <g class="key-signature">
-<text class="note" x="10" y="40" text-anchor="start">1</text>
-<text class="metadata" x="28" y="40"> = C</text>
+<text class="note" x="10" y="40" text-anchor="start" dominant-baseline="central">1</text>
+<text class="metadata" x="28" y="40" dominant-baseline="central"> = C</text>
 </g>
 <g class="time-signature">
-<text x="88" y="30" text-anchor="middle" dominant-baseline="central">4</text>
-<line x1="80" y1="40" x2="96" y2="40"/>
-<text x="88" y="50" text-anchor="middle" dominant-baseline="central">4</text>
+<text x="94" y="32" text-anchor="middle" dominant-baseline="central">4</text>
+<line x1="86" y1="40" x2="102" y2="40"/>
+<text x="94" y="48" text-anchor="middle" dominant-baseline="central">4</text>
 </g>
-<text class="tempo-mark" x="132" y="40">♩ = 120</text>
+<text class="tempo-mark" x="128" y="40" dominant-baseline="central">♩ = 120</text>
 <line class="bar-thin" x1="110" y1="139" x2="110" y2="171"/>
 <line class="bar-thin" x1="219" y1="139" x2="219" y2="171"/><line class="bar-final" x1="226" y1="139" x2="226" y2="171"/>
 <g class="note-item" data-note-index="0"><text class="accidental" x="18" y="96">&#9839;</text><text class="note" x="28" y="104" text-anchor="middle">1</text><text class="note" x="28" y="128" text-anchor="middle">3</text><text class="note" x="28" y="157" text-anchor="middle">5</text><circle class="dot" cx="28" cy="135" r="2"/><line class="underline" x1="8" y1="162" x2="54" y2="162"/><circle class="dot" cx="40" cy="148" r="3"/></g>

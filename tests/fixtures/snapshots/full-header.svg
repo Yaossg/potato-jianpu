@@ -28,15 +28,15 @@
 <text class="title" x="250" y="40" text-anchor="middle">Full Header</text>
 <text class="subtitle" x="250" y="72" text-anchor="middle">Snapshot Case</text>
 <g class="key-signature">
-<text class="note" x="10" y="112" text-anchor="start">1</text>
-<text class="metadata" x="28" y="112"> = B&#9837;</text>
+<text class="note" x="10" y="112" text-anchor="start" dominant-baseline="central">1</text>
+<text class="metadata" x="28" y="112" dominant-baseline="central"> = B&#9837;</text>
 </g>
 <g class="time-signature">
-<text x="104" y="102" text-anchor="middle" dominant-baseline="central">6</text>
+<text x="104" y="104" text-anchor="middle" dominant-baseline="central">6</text>
 <line x1="96" y1="112" x2="112" y2="112"/>
-<text x="104" y="122" text-anchor="middle" dominant-baseline="central">8</text>
+<text x="104" y="120" text-anchor="middle" dominant-baseline="central">8</text>
 </g>
-<text class="tempo-mark" x="148" y="112">♪ = 96</text>
+<text class="tempo-mark" x="138" y="112" dominant-baseline="central">♪ = 96</text>
 <text class="metadata" x="450" y="112" text-anchor="end">Composer Name</text>
 
 </svg>
