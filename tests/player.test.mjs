@@ -50,6 +50,16 @@ test("expands repeat barlines for melody playback", () => {
   );
 });
 
+test("expands implicit repeat starts from the line beginning", () => {
+  const result = parse("1 | 2 :| 3");
+  assert.equal(result.ok, true);
+  const melody = compileMelody(result.value);
+  assert.deepEqual(
+    melody.notes.map((note) => note.chord),
+    [[60], [62], [60], [62], [64]],
+  );
+});
+
 test("expands combined repeat end and start barlines for melody playback", () => {
   const result = parse("|: 1 :|: 2 :|");
   assert.equal(result.ok, true);
@@ -57,6 +67,46 @@ test("expands combined repeat end and start barlines for melody playback", () =>
   assert.deepEqual(
     melody.notes.map((note) => note.chord),
     [[60], [60], [62], [62]],
+  );
+});
+
+test("plays repeated endings on the matching pass", () => {
+  const result = parse("|: 1 | [1] 2 :| [2] 3 |");
+  assert.equal(result.ok, true);
+  const melody = compileMelody(result.value);
+  assert.deepEqual(
+    melody.notes.map((note) => note.chord),
+    [[60], [62], [60], [64]],
+  );
+});
+
+test("plays repeated endings beyond the second pass", () => {
+  const result = parse("|: 1 | [1] 2 :| [2] 3 :| [3] 4 |");
+  assert.equal(result.ok, true);
+  const melody = compileMelody(result.value);
+  assert.deepEqual(
+    melody.notes.map((note) => note.chord),
+    [[60], [62], [60], [64], [60], [65]],
+  );
+});
+
+test("plays repeated endings across source lines", () => {
+  const result = parse("|: 1 | [1] 2\n3 :| [2] 4 |");
+  assert.equal(result.ok, true);
+  const melody = compileMelody(result.value);
+  assert.deepEqual(
+    melody.notes.map((note) => note.chord),
+    [[60], [62], [64], [60], [65]],
+  );
+});
+
+test("plays repeated endings in multiple repeat sections", () => {
+  const result = parse("|: 1 | [1] 2 :| [2] 3 | 4 |: 5 | [1] 6 :| [2] 7 |");
+  assert.equal(result.ok, true);
+  const melody = compileMelody(result.value);
+  assert.deepEqual(
+    melody.notes.map((note) => note.chord),
+    [[60], [62], [60], [64], [65], [67], [69], [67], [71]],
   );
 });
 

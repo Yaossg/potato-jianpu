@@ -23,6 +23,8 @@ type ResolvedTieTarget =
   | { kind: "pitch"; pitches: string[] }
   | { kind: "drum" };
 
+type EndingBlock = { ending: number; startIndex: number; endIndex: number };
+
 function mergeRange(start: SourceRange, end: SourceRange): SourceRange {
   return { start: start.start, end: end.end };
 }
@@ -41,6 +43,7 @@ class Parser {
   private index = 0;
   private diagnostics: Diagnostic[];
   private noteIndex = 0;
+  private activeEnding: number | undefined;
 
   constructor(
     private readonly tokens: Token[],
@@ -56,7 +59,9 @@ class Parser {
     this.diagnostics.push(...diagnostics);
     this.skipNewlines();
     const score = this.at("eof") ? [] : this.parseScore();
+    this.normalizeFinalEnding(score);
     this.validateTies(score);
+    this.validateRepeatedEndings(score);
     this.validateMeasureDurations(score, header.timeSignature.beatsPerMeasure / header.timeSignature.beatsPerWholeNote);
 
     if (this.diagnostics.some((diagnostic) => diagnostic.severity === "error")) {
@@ -198,7 +203,8 @@ class Parser {
       this.match("bar");
     }
     const measures: Measure[] = [];
-    measures.push(this.parseMeasure(leadingRepeatStart));
+    let currentEnding = this.parseOptionalEnding() ?? this.activeEnding;
+    measures.push(this.parseMeasure(leadingRepeatStart, currentEnding));
     while (true) {
       while (this.match("repeatEnd")) {
         const previous = measures.at(-1);
@@ -211,7 +217,9 @@ class Parser {
         if (previous) {
           previous.repeatEnd = true;
         }
-        measures.push(this.parseMeasure(true));
+        currentEnding = this.parseOptionalEnding();
+        this.activeEnding = currentEnding;
+        measures.push(this.parseMeasure(true, currentEnding));
         continue;
       }
       if (this.at("newline") || this.at("eof")) {
@@ -221,15 +229,22 @@ class Parser {
         if (this.at("newline") || this.at("eof")) {
           break;
         }
-        measures.push(this.parseMeasure());
+        currentEnding = this.parseOptionalEnding() ?? currentEnding;
+        this.activeEnding = currentEnding;
+        measures.push(this.parseMeasure(false, currentEnding));
         continue;
       }
       if (this.match("repeatStart")) {
-        measures.push(this.parseMeasure(true));
+        currentEnding = this.parseOptionalEnding() ?? currentEnding;
+        this.activeEnding = currentEnding;
+        measures.push(this.parseMeasure(true, currentEnding));
         continue;
       }
-      measures.push(this.parseMeasure());
+      currentEnding = this.parseOptionalEnding() ?? currentEnding;
+      this.activeEnding = currentEnding;
+      measures.push(this.parseMeasure(false, currentEnding));
     }
+    this.activeEnding = currentEnding;
     return {
       label,
       measures,
@@ -237,7 +252,7 @@ class Parser {
     };
   }
 
-  private parseMeasure(repeatStart = false): Measure {
+  private parseMeasure(repeatStart = false, ending?: number): Measure {
     const start = this.current().range;
     const octavePrefix = this.parseOptionalMeasureOctave();
     const notes: Note[] = [];
@@ -246,6 +261,7 @@ class Parser {
       !this.at("repeatEnd") &&
       !this.at("repeatStart") &&
       !this.at("repeatBoth") &&
+      !this.at("lbracket") &&
       !this.at("newline") &&
       !this.at("eof")
     ) {
@@ -259,7 +275,19 @@ class Parser {
       this.error("Expected at least one note in measure.", start);
     }
     const end = notes.at(-1)?.range ?? start;
-    return { notes, range: mergeRange(start, end), repeatStart };
+    return { notes, range: mergeRange(start, end), repeatStart, ending };
+  }
+
+  private parseOptionalEnding(): number | undefined {
+    if (!this.match("lbracket")) {
+      return undefined;
+    }
+    const number = this.consume("note", "Expected ending number after '['.");
+    this.consume("rbracket", "Expected ']' after ending number.");
+    if (!number) {
+      return undefined;
+    }
+    return Number(number.value ?? number.text);
   }
 
   private parseOptionalMeasureOctave(): number {
@@ -437,6 +465,11 @@ class Parser {
       this.index += 1;
       return;
     }
+    if (this.at("lbracket") || this.at("rbracket")) {
+      this.error("Ending markers such as [1] must appear before a measure.");
+      this.index += 1;
+      return;
+    }
     if (this.at("half") || this.at("dot") || this.at("dash")) {
       this.error("Duration mark must follow a note, rest, drum note, or chord.");
       while (this.at("half") || this.at("dot") || this.at("dash")) {
@@ -518,6 +551,111 @@ class Parser {
             measure.range,
           );
         }
+      }
+    }
+  }
+
+  private validateRepeatedEndings(lines: ScoreLine[]) {
+    const measures = lines.flatMap((line) => line.measures);
+    const endingGroups = this.groupEndingBlocks(measures);
+    for (const endingBlocks of endingGroups) {
+      if (endingBlocks.length === 1) {
+        const block = endingBlocks[0]!;
+        const measure = measures[block.startIndex]!;
+        this.error(`Repeated endings need at least [1] and [2].`, measure.range);
+      }
+
+      for (let blockIndex = 0; blockIndex < endingBlocks.length - 1; blockIndex += 1) {
+        const block = endingBlocks[blockIndex]!;
+        const endingMeasure = measures[block.endIndex]!;
+        const internalRepeatEnd = measures.slice(block.startIndex, block.endIndex).find((measure) => measure.repeatEnd);
+        if (internalRepeatEnd) {
+          this.error(`Ending [${block.ending}] has ':|' before its last measure; move ':|' to the end of the ending.`, internalRepeatEnd.range);
+        } else if (!endingMeasure.repeatEnd) {
+          const nextBlock = endingBlocks[blockIndex + 1]!;
+          this.error(`Ending [${block.ending}] should end with ':|' before ending [${nextBlock.ending}].`, endingMeasure.range);
+        }
+      }
+
+      const duplicateBlock = endingBlocks.find((block, index) => endingBlocks.findIndex((candidate) => candidate.ending === block.ending) !== index);
+      if (duplicateBlock) {
+        const measure = measures[duplicateBlock.startIndex]!;
+        this.error(`Ending [${duplicateBlock.ending}] appears more than once. Use each ending number only once.`, measure.range);
+        continue;
+      }
+
+      const endingNumbers = endingBlocks.map((block) => block.ending);
+      const firstOutOfSequenceIndex = endingNumbers.findIndex((ending, index) => ending !== index + 1);
+      if (firstOutOfSequenceIndex >= 0) {
+        const expectedEnding = firstOutOfSequenceIndex + 1;
+        const block = endingBlocks[firstOutOfSequenceIndex]!;
+        const measure = measures[block.startIndex]!;
+        if (endingNumbers.slice(firstOutOfSequenceIndex + 1).includes(expectedEnding)) {
+          this.error(`Ending [${block.ending}] is out of order; write ending [${expectedEnding}] before it.`, measure.range);
+        } else {
+          this.error(`Ending [${expectedEnding}] is missing before ending [${block.ending}].`, measure.range);
+        }
+      }
+    }
+  }
+
+  private collectEndingBlocks(measures: Measure[]): EndingBlock[] {
+    const endingBlocks: EndingBlock[] = [];
+    let measureIndex = 0;
+    while (measureIndex < measures.length) {
+      const measure = measures[measureIndex]!;
+      if (measure.ending === undefined) {
+        measureIndex += 1;
+        continue;
+      }
+      let endingEndIndex = measureIndex;
+      while (measures[endingEndIndex + 1]?.ending === measure.ending) {
+        endingEndIndex += 1;
+      }
+      endingBlocks.push({ ending: measure.ending, startIndex: measureIndex, endIndex: endingEndIndex });
+      measureIndex = endingEndIndex + 1;
+    }
+    return endingBlocks;
+  }
+
+  private groupEndingBlocks(measures: Measure[]): EndingBlock[][] {
+    const endingBlocks = this.collectEndingBlocks(measures);
+    const endingGroups: EndingBlock[][] = [];
+    let currentGroup: EndingBlock[] = [];
+    for (const block of endingBlocks) {
+      const previousBlock = currentGroup.at(-1);
+      if (previousBlock && block.ending === 1 && this.hasRepeatStartBetween(measures, previousBlock.endIndex + 1, block.startIndex)) {
+        endingGroups.push(currentGroup);
+        currentGroup = [];
+      }
+      currentGroup.push(block);
+    }
+    if (currentGroup.length > 0) {
+      endingGroups.push(currentGroup);
+    }
+    return endingGroups;
+  }
+
+  private hasRepeatStartBetween(measures: Measure[], startIndex: number, endIndex: number): boolean {
+    for (let index = startIndex; index <= endIndex; index += 1) {
+      if (measures[index]?.repeatStart) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private normalizeFinalEnding(lines: ScoreLine[]) {
+    const measures = lines.flatMap((line) => line.measures);
+    const endingBlocks = this.collectEndingBlocks(measures);
+    for (let blockIndex = 0; blockIndex < endingBlocks.length; blockIndex += 1) {
+      const block = endingBlocks[blockIndex]!;
+      const nextBlock = endingBlocks[blockIndex + 1];
+      if (nextBlock && nextBlock.ending > block.ending) {
+        continue;
+      }
+      for (let index = block.startIndex + 1; measures[index]?.ending === block.ending; index += 1) {
+        measures[index]!.ending = undefined;
       }
     }
   }

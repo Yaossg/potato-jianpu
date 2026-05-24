@@ -25,7 +25,7 @@ export function flattenNotes(document: Document): Note[] {
   return document.score.flatMap((line) => line.measures).flatMap((measure) => measure.notes);
 }
 
-function paddingUpOf(note: Note, tieAfter: boolean): number {
+function paddingUpOf(note: Note, tieAfter: boolean, hasEnding: boolean): number {
   let height = DIMENSIONS.baseNoteHeight;
   if (note.kind === "pitch") {
     const base = note.chord.at(-1);
@@ -36,6 +36,7 @@ function paddingUpOf(note: Note, tieAfter: boolean): number {
     }
   }
   height += note.tie || tieAfter ? DIMENSIONS.tieHeight : 0;
+  height += hasEnding ? DIMENSIONS.endingHeight : 0;
   return height;
 }
 
@@ -72,7 +73,7 @@ function layoutMeasure(
   for (const note of measure.notes) {
     notePositions.push(totalWidth);
     totalWidth += widthOf(note);
-    paddingUp = Math.max(paddingUp, paddingUpOf(note, noteTieAfter(note, allNotes)));
+    paddingUp = Math.max(paddingUp, paddingUpOf(note, noteTieAfter(note, allNotes), note === measure.notes[0] && measure.ending !== undefined));
     paddingDown = Math.max(paddingDown, paddingDownOf(note));
   }
 

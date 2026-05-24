@@ -66,6 +66,7 @@ export interface Measure {
   range: SourceRange;
   repeatStart?: boolean;
   repeatEnd?: boolean;
+  ending?: number;
 }
 
 export interface ScoreLine {

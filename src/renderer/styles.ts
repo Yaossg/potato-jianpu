@@ -12,6 +12,8 @@ export const SVG_STYLE = `.title { fill: currentColor; font-family: Arial, Helve
 .bar-thin { stroke: currentColor; stroke-width: 2.5; stroke-linecap: butt; }
 .bar-final { stroke: currentColor; stroke-width: 5; stroke-linecap: butt; }
 .repeat-dot { fill: currentColor; }
+.ending-line { stroke: currentColor; stroke-width: 2; fill: none; }
+.ending-label { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-weight: 700; }
 .tempo-mark { fill: currentColor; font-family: "Segoe UI Symbol", "Noto Music", "Noto Sans Symbols 2", Arial, Helvetica, sans-serif; font-size: 22px; font-weight: 400; }
 .underline { stroke: currentColor; stroke-width: 2.5; }
 .dash { stroke: currentColor; stroke-width: 3; }

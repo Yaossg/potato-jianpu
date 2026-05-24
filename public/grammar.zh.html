@@ -303,6 +303,12 @@ tempo: "132.5"</pre>
         表示结束一个反复段并开始下一个反复段。它们会在 SVG 输出中渲染为反复小节线，播放、MIDI 导出和音频导出会把每个反复段播放两遍。
       </p>
       <pre class="notation-example">|: 1 2 3 4 :|: 5 6 7 1' :|</pre>
+      <p>
+        房子使用 <code>[1]</code>、<code>[2]</code>、<code>[3]</code> 这类标记写在对应房子的第一个小节前。
+        标记会持续到下一个房子标记。播放和导出会播放与当前遍数匹配的房子。非最后一个房子应该在下一个房子前用
+        <code>:|</code> 结束。最后一个房子不需要 <code>:|</code>；如果它后面还有其他小节，只有第一个小节会作为这个房子处理。
+      </p>
+      <pre class="notation-example">|: 1 2 | [1] 3 4 :| [2] 5 6 :| [3] 7 1' |</pre>
 
       <h3>9. 音符</h3>
       <p>音高音符是数字 <code>1</code> 到 <code>7</code>。休止符是 <code>0</code>。鼓音符是大写 <code>X</code>。</p>
@@ -478,10 +484,11 @@ label    ::= IDENTIFIER ":"</pre>
       <div class="diagram">
         <svg class="railroad-diagram" width="678" style="max-height: 79px;" viewBox="0 0 678 79"><g transform="translate(.5 .5)"><g><path d="M20 29v20m0 -10h20"></path></g><path d="M40 39h10"></path><g><path d="M50 39h0"></path><path d="M628 39h0"></path><g><path d="M50 39h0"></path><path d="M152.5 39h0"></path><path d="M50 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M70 19h62.5"></path></g><path d="M132.5 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M50 39h20"></path><g class="non-terminal"><path d="M70 39h0"></path><path d="M132.5 39h0"></path><rect x="70" y="28" width="62.5" height="22"></rect><a xlink:href="#label"><text x="101.25" y="43">label</text></a></g><path d="M132.5 39h20"></path></g><g><path d="M152.5 39h0"></path><path d="M238 39h0"></path><path d="M152.5 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M172.5 19h45.5"></path></g><path d="M218 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M152.5 39h20"></path><g class="non-terminal"><path d="M172.5 39h0"></path><path d="M218 39h0"></path><rect x="172.5" y="28" width="45.5" height="22"></rect><a xlink:href="#BAR"><text x="195.25" y="43">BAR</text></a></g><path d="M218 39h20"></path></g><path d="M238 39h10"></path><g class="non-terminal"><path d="M248 39h0"></path><path d="M327.5 39h0"></path><rect x="248" y="28" width="79.5" height="22"></rect><a xlink:href="#measure"><text x="287.75" y="43">measure</text></a></g><path d="M327.5 39h10"></path><g><path d="M337.5 39h0"></path><path d="M542.5 39h0"></path><path d="M337.5 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M357.5 19h165"></path></g><path d="M522.5 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M337.5 39h20"></path><g><path d="M357.5 39h0"></path><path d="M522.5 39h0"></path><path d="M357.5 39h10"></path><g><path d="M367.5 39h0"></path><path d="M512.5 39h0"></path><g class="non-terminal"><path d="M367.5 39h0"></path><path d="M413 39h0"></path><rect x="367.5" y="28" width="45.5" height="22"></rect><a xlink:href="#BAR"><text x="390.25" y="43">BAR</text></a></g><path d="M413 39h10"></path><path d="M423 39h10"></path><g class="non-terminal"><path d="M433 39h0"></path><path d="M512.5 39h0"></path><rect x="433" y="28" width="79.5" height="22"></rect><a xlink:href="#measure"><text x="472.75" y="43">measure</text></a></g></g><path d="M512.5 39h10"></path><path d="M367.5 39a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M367.5 59h145"></path></g><path d="M512.5 59a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M522.5 39h20"></path></g><g><path d="M542.5 39h0"></path><path d="M628 39h0"></path><path d="M542.5 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M562.5 19h45.5"></path></g><path d="M608 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M542.5 39h20"></path><g class="non-terminal"><path d="M562.5 39h0"></path><path d="M608 39h0"></path><rect x="562.5" y="28" width="45.5" height="22"></rect><a xlink:href="#BAR"><text x="585.25" y="43">BAR</text></a></g><path d="M608 39h20"></path></g></g><path d="M628 39h10"></path><path d="M 638 39 h 20 m 0 -10 v 20"></path></g></svg>
       </div>
-      <pre class="ebnf">line              ::= label? start_barline? measure (measure_separator measure)* end_barline?
+      <pre class="ebnf">line              ::= label? start_barline? ending? measure (measure_separator ending? measure)* end_barline?
 start_barline     ::= BAR | REPEAT_START
 measure_separator ::= BAR | REPEAT_START | REPEAT_BOTH
 end_barline       ::= BAR | REPEAT_END
+ending            ::= "[" NOTE "]"
 label ::= IDENTIFIER ":"</pre>
 
       <p>
@@ -568,6 +575,8 @@ BAR        ::= "|"
 REPEAT_START ::= "|:"
 REPEAT_END   ::= ":|"
 REPEAT_BOTH  ::= ":|:"
+LBRACKET   ::= "["
+RBRACKET   ::= "]"
 SHARPSHARP ::= "##"
 SHARP      ::= "#"
 FLATFLAT   ::= "bb"

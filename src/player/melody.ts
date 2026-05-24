@@ -71,27 +71,45 @@ function compileMeasure(measure: Measure, baseNoteMap: number[], program: number
 
 function expandRepeatedMeasures(document: Document): Measure[] {
   const expanded: Measure[] = [];
-  let repeatStartIndex = 0;
+  const measures = document.score.flatMap((line) => line.measures);
 
-  for (const line of document.score) {
-    for (const measure of line.measures) {
-      if (measure.repeatStart) {
-        repeatStartIndex = expanded.length;
-      }
+  function shouldPlayOnPass(measure: Measure, pass: number): boolean {
+    return measure.ending === undefined || measure.ending === pass;
+  }
 
-      expanded.push(measure);
+  function clearRepeatFlags(measure: Measure): Measure {
+    return { ...measure, repeatStart: false, repeatEnd: false };
+  }
 
-      if (measure.repeatEnd) {
-        const repeatedMeasures = expanded.slice(repeatStartIndex);
-        for (const repeatedMeasure of repeatedMeasures) {
-          expanded.push({
-            ...repeatedMeasure,
-            repeatStart: false,
-            repeatEnd: false,
-          });
-        }
-      }
+  let measureIndex = 0;
+  while (measureIndex < measures.length) {
+    const nextRepeatEndIndex = measures.findIndex((measure, index) => index >= measureIndex && measure.repeatEnd);
+    const nextRepeatStartIndex = measures.findIndex((measure, index) => index >= measureIndex && measure.repeatStart);
+    if (nextRepeatEndIndex < 0) {
+      expanded.push(...measures.slice(measureIndex));
+      break;
     }
+    if (nextRepeatStartIndex > measureIndex && nextRepeatStartIndex < nextRepeatEndIndex) {
+      expanded.push(...measures.slice(measureIndex, nextRepeatStartIndex));
+      measureIndex = nextRepeatStartIndex;
+      continue;
+    }
+
+    const repeatedMeasures = measures.slice(measureIndex, nextRepeatEndIndex + 1);
+    let endingBlockEndIndex = nextRepeatEndIndex;
+    while (measures[endingBlockEndIndex + 1]?.ending !== undefined) {
+      endingBlockEndIndex += 1;
+    }
+    const endingBlockMeasures = measures.slice(nextRepeatEndIndex + 1, endingBlockEndIndex + 1);
+    const maxEnding = Math.max(2, ...repeatedMeasures.map((repeatedMeasure) => repeatedMeasure.ending ?? 1), ...endingBlockMeasures.map((endingMeasure) => endingMeasure.ending ?? 1));
+    for (let pass = 1; pass <= maxEnding; pass += 1) {
+      const passMeasures = [
+        ...repeatedMeasures.filter((repeatedMeasure) => shouldPlayOnPass(repeatedMeasure, pass)),
+        ...endingBlockMeasures.filter((endingMeasure) => shouldPlayOnPass(endingMeasure, pass)),
+      ];
+      expanded.push(...(pass === 1 ? passMeasures : passMeasures.map(clearRepeatFlags)));
+    }
+    measureIndex = endingBlockEndIndex + 1;
   }
 
   return expanded;

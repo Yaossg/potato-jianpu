@@ -59,6 +59,103 @@ test("parses combined repeat end and start barlines", () => {
   assert.equal(result.value.score[0].measures[1].repeatStart, true);
 });
 
+test("parses repeated endings", () => {
+  const result = parse("|: 1 | [1] 2 :| [2] 3 |");
+  assert.equal(result.ok, true);
+  assert.equal(result.value.score[0].measures.length, 3);
+  assert.equal(result.value.score[0].measures[1].ending, 1);
+  assert.equal(result.value.score[0].measures[2].ending, 2);
+});
+
+test("rejects a non-final ending that does not end with repeat end", () => {
+  const result = parse("|: 1 | [1] 2 | [2] 3 |");
+  assert.equal(result.ok, false);
+  assert.match(
+    result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"),
+    /Ending \[1\] should end with ':|' before ending \[2\]/,
+  );
+  assert.equal(result.diagnostics.find((diagnostic) => diagnostic.message.includes("Ending [1]"))?.severity, "error");
+});
+
+test("rejects a cross-line non-final ending that does not end with repeat end", () => {
+  const result = parse("|: 1 | [1] 2\n3 | [2] 4 |");
+  assert.equal(result.ok, false);
+  assert.match(
+    result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"),
+    /Ending \[1\] should end with ':|' before ending \[2\]/,
+  );
+});
+
+test("rejects a repeated ending that has repeat end before its final measure", () => {
+  const result = parse("|: 1 | [1] 2 :| 3 | [2] 4 |");
+  assert.equal(result.ok, false);
+  assert.match(
+    result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"),
+    /Ending \[1\] has ':|' before its last measure; move ':|' to the end of the ending/,
+  );
+  assert.equal(result.diagnostics.some((diagnostic) => diagnostic.message.startsWith("Ending [1] should end with ':|'")), false);
+  assert.equal(result.diagnostics.find((diagnostic) => diagnostic.message.includes("move ':|'"))?.severity, "error");
+});
+
+test("rejects a single repeated ending", () => {
+  const result = parse("|: 1 | [1] 2 :|");
+  assert.equal(result.ok, false);
+  assert.match(
+    result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"),
+    /Repeated endings need at least \[1\] and \[2\]/,
+  );
+  assert.equal(result.diagnostics.find((diagnostic) => diagnostic.message.includes("at least [1] and [2]"))?.severity, "error");
+});
+
+test("rejects skipped repeated ending numbers", () => {
+  const result = parse("|: 1 | [1] 2 :| [3] 3 |");
+  assert.equal(result.ok, false);
+  assert.match(
+    result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"),
+    /Ending \[2\] is missing before ending \[3\]/,
+  );
+  assert.equal(result.diagnostics.find((diagnostic) => diagnostic.message.includes("missing before"))?.severity, "error");
+});
+
+test("rejects repeated ending numbers that are out of order", () => {
+  const result = parse("|: 1 | [2] 2 :| [1] 3 |");
+  assert.equal(result.ok, false);
+  assert.match(
+    result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"),
+    /Ending \[2\] is out of order; write ending \[1\] before it/,
+  );
+  assert.equal(result.diagnostics.find((diagnostic) => diagnostic.message.includes("out of order"))?.severity, "error");
+});
+
+test("rejects repeated ending numbers that are reused", () => {
+  const result = parse("|: 1 | [1] 2 :| [2] 3 | [1] 4 |");
+  assert.equal(result.ok, false);
+  assert.match(
+    result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"),
+    /Ending \[1\] appears more than once/,
+  );
+  assert.equal(result.diagnostics.find((diagnostic) => diagnostic.message.includes("more than once"))?.severity, "error");
+});
+
+test("keeps only the first measure in the final ending", () => {
+  const result = parse("|: 1 | [1] 2 :| [2] 3 | 4 |");
+  assert.equal(result.ok, true);
+  assert.equal(result.value.score[0].measures[2].ending, 2);
+  assert.equal(result.value.score[0].measures[3].ending, undefined);
+  assert.doesNotMatch(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Ending \[2\]/);
+});
+
+test("validates repeated endings independently for multiple repeat sections", () => {
+  const result = parse("|: 1 | [1] 2 :| [2] 3 | 4 |: 5 | [1] 6 :| [2] 7 |");
+  assert.equal(result.ok, true);
+  assert.equal(result.value.score[0].measures[2].ending, 2);
+  assert.equal(result.value.score[0].measures[3].ending, undefined);
+  assert.equal(result.value.score[0].measures[4].ending, undefined);
+  assert.equal(result.value.score[0].measures[5].ending, 1);
+  assert.equal(result.value.score[0].measures[6].ending, 2);
+  assert.doesNotMatch(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /appears more than once|out of order|should end with/);
+});
+
 test("keeps reporting empty measures between consecutive bars", () => {
   const result = parse("1 2 || 3 4");
   assert.equal(result.ok, false);

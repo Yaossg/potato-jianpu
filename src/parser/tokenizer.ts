@@ -25,6 +25,8 @@ export type TokenType =
   | "colon"
   | "lbrace"
   | "rbrace"
+  | "lbracket"
+  | "rbracket"
   | "newline"
   | "eof";
 
@@ -218,6 +220,12 @@ export function tokenize(source: string): { tokens: Token[]; diagnostics: Diagno
         break;
       case "}":
         push("rbrace", char);
+        break;
+      case "[":
+        push("lbracket", char);
+        break;
+      case "]":
+        push("rbracket", char);
         break;
       default: {
         const start = clonePosition(pos);

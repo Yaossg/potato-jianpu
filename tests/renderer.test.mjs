@@ -236,6 +236,51 @@ test("keeps repeat end spacing before following notes", () => {
   assert.match(svg, /<text class="note" x="94" y="\d+" text-anchor="middle">2<\/text>/);
 });
 
+test("renders repeated ending brackets", () => {
+  const result = parse("|: 1 | [1] 2 :| [2] 3 |");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  assert.match(svg, /<path class="ending-line"/);
+  assert.match(svg, /<text class="ending-label" x="\d+" y="\d+" text-anchor="start">1\.<\/text>/);
+  assert.match(svg, /<text class="ending-label" x="\d+" y="\d+" text-anchor="start">2\.<\/text>/);
+});
+
+test("renders ending brackets open at wrapped line ends", () => {
+  const result = parse("|: 1 | [1] 2 | 3 | 4 :| [2] 5 |");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 80 });
+  const openEnding = svg.match(/<path class="ending-line" d="M\d+,\d+ V\d+ H(?<x>\d+)"\/>/);
+  assert.ok(openEnding?.groups);
+  assert.ok(Number(openEnding.groups.x) < 70);
+});
+
+test("renders ending brackets open across source line breaks", () => {
+  const result = parse("|: 1 | [1] 2\n3 :| [2] 4 |");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  assert.match(svg, /<path class="ending-line" d="M\d+,\d+ V\d+ H\d+"\/>/);
+});
+
+test("renders the final ending as one open measure", () => {
+  const result = parse("|: 1 | [1] 2 :| [2] 3 | 4 |");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  const openEndings = [...svg.matchAll(/<path class="ending-line" d="M\d+,\d+ V\d+ H(?<x>\d+)"\/>/g)];
+  const followingNote = svg.match(/<text class="note" x="(?<x>\d+)" y="\d+" text-anchor="middle">4<\/text>/);
+  assert.equal(openEndings.length, 1);
+  assert.ok(openEndings[0]?.groups);
+  assert.ok(followingNote?.groups);
+  assert.ok(Number(openEndings[0].groups.x) < Number(followingNote.groups.x));
+});
+
+test("renders final endings open in multiple repeat sections", () => {
+  const result = parse("|: 1 | [1] 2 :| [2] 3 | 4 |: 5 | [1] 6 :| [2] 7 |");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  const openEndings = [...svg.matchAll(/<path class="ending-line" d="M\d+,\d+ V\d+ H\d+"\/>/g)];
+  assert.equal(openEndings.length, 2);
+});
+
 test("keeps repeat start spacing consistent at the beginning of a line", () => {
   const result = parse("|: 1 | 2 :|");
   assert.equal(result.ok, true);

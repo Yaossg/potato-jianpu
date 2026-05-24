@@ -189,6 +189,16 @@ function renderRepeatBoth(x: number, baselineY: number): string {
   ].join("");
 }
 
+function renderEnding(ending: number, startX: number, endX: number, noteY: number, openEnd = false): string {
+  const y = noteY - DIMENSIONS.baseNoteHeight - DIMENSIONS.endingTopOffset;
+  const labelX = startX + 4;
+  const path = openEnd ? `M${startX},${y + 8} V${y} H${endX}` : `M${startX},${y + 8} V${y} H${endX} V${y + 8}`;
+  return [
+    `<path class="ending-line" d="${path}"/>`,
+    `<text class="ending-label" x="${labelX}" y="${y - 4}" text-anchor="start">${ending}.</text>`,
+  ].join("");
+}
+
 function measureFullness(measure: Measure, unit: number): boolean[] {
   let duration = 0;
   return measure.notes.map((note) => {
@@ -211,6 +221,29 @@ function createLineJustifier(layout: LineLayout, targetWidth: number, enabled: b
   return (x: number) => firstNoteX + (x - firstNoteX) * scale;
 }
 
+function nextMeasureInDocument(document: Document, measure: Measure): Measure | undefined {
+  const measures = document.score.flatMap((line) => line.measures);
+  const index = measures.indexOf(measure);
+  return index < 0 ? undefined : measures[index + 1];
+}
+
+function hasLaterDifferentEnding(document: Document, measure: Measure): boolean {
+  const measures = document.score.flatMap((line) => line.measures);
+  const index = measures.indexOf(measure);
+  if (index < 0 || measure.ending === undefined) {
+    return false;
+  }
+  for (const candidate of measures.slice(index + 1)) {
+    if (candidate.repeatStart) {
+      return false;
+    }
+    if (candidate.ending !== undefined && candidate.ending !== measure.ending) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function renderLine(layout: LineLayout, lineY: number, allNotes: Note[], document: Document, activeNoteIndex: number, justifyLine: boolean, visualWidth: number): string {
   const parts: string[] = [];
   const lineEntries: Array<{ note: Note; x: number; y: number; full: boolean }> = [];
@@ -228,6 +261,28 @@ function renderLine(layout: LineLayout, lineY: number, allNotes: Note[], documen
     const fullness = measureFullness(measureLayout.measure, unit);
     const previousMeasure = layout.measures[measureIndex - 1]?.measure;
     const nextMeasure = layout.measures[measureIndex + 1]?.measure;
+    const naturalBarX = xOffset + measureLayout.width - measureLayout.rightPadding - DIMENSIONS.repeatRightPadding + 12;
+    if (measureLayout.measure.ending !== undefined && previousMeasure?.ending !== measureLayout.measure.ending) {
+      let endingEndMeasureIndex = measureIndex;
+      while (layout.measures[endingEndMeasureIndex + 1]?.measure.ending === measureLayout.measure.ending) {
+        endingEndMeasureIndex += 1;
+      }
+      const endingEndLayout = layout.measures[endingEndMeasureIndex]!;
+      const endingEndXOffset = measureXOffset(layout.measures, endingEndMeasureIndex);
+      const endingNaturalBarX = endingEndXOffset + endingEndLayout.width - endingEndLayout.rightPadding - DIMENSIONS.repeatRightPadding + 12;
+      const endingStartX = xOffset + measureLayout.leftPadding - DIMENSIONS.leftPadding / 2 - DIMENSIONS.endingLeftOverhang;
+      const endingEndX = endingNaturalBarX + (endingEndLayout.measure.repeatEnd ? DIMENSIONS.repeatEndLeftGap : 0);
+      const openEnd = nextMeasureInDocument(document, endingEndLayout.measure)?.ending === measureLayout.measure.ending || !hasLaterDifferentEnding(document, measureLayout.measure);
+      parts.push(
+        renderEnding(
+          measureLayout.measure.ending,
+          labelOffset + justifyX(endingStartX),
+          labelOffset + justifyX(endingEndX),
+          lineY + layout.maxPaddingUp,
+          openEnd,
+        ),
+      );
+    }
     if (measureLayout.measure.repeatStart && !previousMeasure?.repeatEnd) {
       const naturalStartX = xOffset + (measureLayout.repeatStartX ?? 0);
       const startX = labelOffset + justifyX(naturalStartX);
@@ -253,13 +308,11 @@ function renderLine(layout: LineLayout, lineY: number, allNotes: Note[], documen
     }
     if (nextMeasure?.repeatStart) {
       if (measureLayout.measure.repeatEnd) {
-        const naturalBarX = xOffset + measureLayout.width - measureLayout.rightPadding - DIMENSIONS.repeatRightPadding + 12;
         const barX = naturalBarX + DIMENSIONS.repeatEndLeftGap;
         parts.push(renderRepeatBoth(labelOffset + justifyX(barX), lineY + layout.maxPaddingUp + DIMENSIONS.noteBottomPadding));
       }
       continue;
     }
-    const naturalBarX = xOffset + measureLayout.width - measureLayout.rightPadding - DIMENSIONS.repeatRightPadding + 12;
     const barX = naturalBarX + (measureLayout.measure.repeatEnd ? DIMENSIONS.repeatEndLeftGap : 0);
     parts.push(
       renderBar(
