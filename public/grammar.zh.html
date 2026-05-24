@@ -1,0 +1,577 @@
+<!doctype html>
+<html lang="zh-Hans">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Modern Jianpu Markup 语法参考</title>
+    <style>
+      :root {
+        color: #202124;
+        background: #f6f7f8;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      body {
+        margin: 0;
+      }
+
+      main {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 28px 20px 56px;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 28px;
+      }
+
+      h2 {
+        margin: 30px 0 10px;
+        font-size: 18px;
+      }
+
+      h3 {
+        margin: 18px 0 8px;
+        font-size: 15px;
+      }
+
+      p,
+      li {
+        color: #5c6878;
+        line-height: 1.55;
+      }
+
+      code {
+        font-family: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+        background: #eef1f5;
+        border-radius: 4px;
+        padding: 1px 5px;
+      }
+
+      .diagram {
+        overflow-x: auto;
+        margin: 10px 0 22px;
+        padding: 16px;
+        border: 1px solid #d7dce3;
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      svg.railroad-diagram {
+        display: block;
+        min-width: max-content;
+        background: #fff;
+      }
+
+      svg.railroad-diagram path {
+        stroke: #596577;
+        stroke-width: 2;
+        fill: none;
+      }
+
+      svg.railroad-diagram text {
+        fill: #202124;
+        font-family: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+        font-size: 13px;
+        text-anchor: middle;
+      }
+
+      svg.railroad-diagram text.comment {
+        fill: #5c6878;
+        font-size: 12px;
+        font-style: italic;
+      }
+
+      svg.railroad-diagram rect {
+        fill: #f8fafc;
+        stroke: #50627a;
+        stroke-width: 1.5;
+      }
+
+      svg.railroad-diagram g.terminal rect {
+        fill: #fff7ed;
+        stroke: #b45309;
+      }
+
+      svg.railroad-diagram g.non-terminal rect {
+        fill: #f8fafc;
+        stroke: #50627a;
+      }
+
+      svg.railroad-diagram rect.group-box {
+        fill: transparent;
+        stroke: #b8c0cc;
+        stroke-dasharray: 5 4;
+      }
+
+      .caption {
+        margin: -12px 0 22px;
+        font-size: 13px;
+        color: #5c6878;
+      }
+
+      .notation-example,
+      .ebnf {
+        margin: 10px 0 22px;
+        padding: 14px 16px;
+        overflow-x: auto;
+        border: 1px solid #d7dce3;
+        border-radius: 8px;
+        background: #111827;
+        color: #f8fafc;
+        font-family: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+        font-size: 13px;
+        line-height: 1.55;
+      }
+
+      table {
+        width: 100%;
+        margin: 10px 0 22px;
+        border-collapse: collapse;
+        background: #fff;
+      }
+
+      th,
+      td {
+        border: 1px solid #d7dce3;
+        padding: 8px 10px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        color: #202124;
+        background: #eef1f5;
+      }
+
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin: 14px 0 20px;
+      }
+
+      .legend span {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        border-radius: 6px;
+        padding: 3px 8px;
+        font-family: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+        font-size: 12px;
+      }
+
+      .legend .rule {
+        border: 1.5px solid #50627a;
+        background: #f8fafc;
+      }
+
+      .legend .token {
+        border: 1.5px solid #b45309;
+        background: #fff7ed;
+      }
+
+      .legend .optional,
+      .legend .repeat {
+        border: 1.5px dashed #50627a;
+        background: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Modern Jianpu Markup 语法参考</h1>
+      <p>
+        这是一份 Modern Jianpu Markup 源文件的简明参考，覆盖标题区、音符、时值、和弦、连音线以及词法层面的语法。
+      </p>
+
+      <h2>参考</h2>
+
+      <h3>1. 文件结构</h3>
+      <p>文件可以先写可选的标题区，然后写谱面文本。</p>
+      <pre class="notation-example">title: "Twinkle"
+key: "C"
+time: "4/4"
+tempo: "120"
+=
+1 1 5 5 | 6 6 5 - |</pre>
+      <p>也可以只写谱面：</p>
+      <pre class="notation-example">1 2 3 4 | 5 6 7 1' |</pre>
+      <p>
+        如果文件使用标题分隔符，所有标题字段都必须写在分隔符之前。没有分隔符时，整个文件都会被当作谱面文本。
+        空文件也是有效的，会使用默认调号、拍号和速度。
+      </p>
+
+      <h3>2. 空白和注释</h3>
+      <p>
+        空格和制表符可以出现在 token 之间，解析时会被忽略；只要不会造成歧义，也可以省略。下面几种写法是等价的：
+      </p>
+      <pre class="notation-example">1 2 3 4
+5 6 7 1'</pre>
+      <pre class="notation-example">1234
+5671'</pre> 
+      <p>
+        注释以 <code>;</code> 开始，一直到下一个换行结束。注释只给人阅读，解析器会忽略它们。下面的写法也是有效的，并且等价于前面的例子：
+      </p>
+      <pre class="notation-example">1 2 3 4 ; this comment is ignored
+5 6 7 1' ; this comment is also ignored</pre>
+      <p>
+        用来分隔谱面行和标题属性的换行有语义，不会被简单忽略，但连续换行会被当作一个换行处理。
+      </p>
+      <pre class="notation-example">1 2 3 4 5 6 7 1' ; this score is rendered in a single line </pre>
+      <pre class="notation-example">1 2 3 4
+         ; consecutive line breaks are treated as one
+5 6 7 1' ; therefore, this score is rendered in two lines, not three</pre>
+
+      <h3>3. 标题区</h3>
+      <p>
+        标题字段使用 <code>name: "value"</code> 形式。属性名只能包含 ASCII 字母或下划线。
+        值必须是同一行内的双引号字符串。
+      </p>
+      <table>
+        <thead>
+          <tr><th>字段</th><th>默认值</th><th>含义</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>title</code></td><td>空</td><td>渲染出的标题</td></tr>
+          <tr><td><code>subtitle</code></td><td>空</td><td>渲染出的副标题</td></tr>
+          <tr><td><code>composer</code></td><td>空</td><td>渲染出的作曲者</td></tr>
+          <tr><td><code>key</code></td><td><code>C</code></td><td>用于播放并显示在元数据中的调号</td></tr>
+          <tr><td><code>time</code></td><td><code>4/4</code></td><td>拍号</td></tr>
+          <tr><td><code>tempo</code></td><td><code>120</code></td><td>每分钟拍数</td></tr>
+          <tr><td><code>hidden</code></td><td>空</td><td>任意非空值都会隐藏渲染出的标题元数据</td></tr>
+        </tbody>
+      </table>
+      <p>
+        未知标题字段是允许的，但没有内置效果。多个 <code>=</code> 字符也可以作为标题分隔符。
+      </p>
+      <pre class="notation-example">title: "Example"
+===
+1 2 3 4</pre>
+
+      <h3>4. 字符串</h3>
+      <p>
+        字符串用 <code>"</code> 包围。反斜杠会在分词时跳过后面的一个字符，但反斜杠本身会按原样保留，
+        不会被解释成转义序列。
+      </p>
+      <pre class="notation-example">title: "A \"quoted\" title"</pre>
+      <p>未结束的字符串是无效的：</p>
+      <pre class="notation-example">title: "unterminated
+=
+1 2 3 4</pre>
+
+      <h3>5. 调号</h3>
+      <p>支持的调号：</p>
+      <pre class="notation-example">C C# Db D D# Eb E F F# Gb G G# Ab A A# Bb B</pre>
+      <p>
+        调号值里的一个空格会被忽略。变音记号也可以写在字母前面，例如 <code>#C</code> 和 <code>bB</code>。
+        无效调号会报错。
+      </p>
+      <pre class="notation-example">key: "#C"
+key: "bB"</pre>
+
+      <h3>6. 拍号</h3>
+      <p>
+        拍号使用 <code>beatsPerMeasure/beatsPerWholeNote</code> 形式。允许的分子是
+        <code>2 3 4 6 9 12</code>，允许的分母是 <code>2 4 8 16</code>。无效拍号会报错。
+      </p>
+      <pre class="notation-example">time: "4/4"
+time: "6/8"
+time: "2/16"</pre>
+
+      <h3>7. 速度</h3>
+      <p>速度必须是正数。无效速度值会报错。</p>
+      <pre class="notation-example">tempo: "96"
+tempo: "120"
+tempo: "132.5"</pre>
+
+      <h3>8. 谱面行</h3>
+      <p>
+        谱面行可以选择以标签开头。标签和标题名使用同一种 token 形式：ASCII 字母或下划线。
+        标签会渲染在该谱面行左侧。
+      </p>
+      <pre class="notation-example">verse: 1 2 3 4 | 5 6 7 1'</pre>
+      <p>
+        小节用 <code>|</code> 分隔。开头小节线和结尾小节线都是允许的。每个解析出的小节必须至少包含一个类似音符的项目。
+        空小节会报错。
+      </p>
+      <pre class="notation-example">| 1 2 3 4 | 5 6 7 1' |
+1 2 || 3 4</pre>
+
+      <h3>9. 音符</h3>
+      <p>音高音符是数字 <code>1</code> 到 <code>7</code>。休止符是 <code>0</code>。鼓音符是大写 <code>X</code>。</p>
+      <pre class="notation-example">1 2 3 4 5 6 7
+0
+X</pre>
+      <p>小写 <code>x</code> 是标识符 token，不是鼓音符。</p>
+
+      <h3>10. 变音记号</h3>
+      <table>
+        <thead>
+          <tr><th>语法</th><th>含义</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>#</code></td><td>升号</td></tr>
+          <tr><td><code>##</code></td><td>重升号</td></tr>
+          <tr><td><code>b</code></td><td>降号</td></tr>
+          <tr><td><code>bb</code></td><td>重降号</td></tr>
+          <tr><td><code>%</code></td><td>还原号</td></tr>
+        </tbody>
+      </table>
+      <pre class="notation-example">#4 b7 %4 ##1 bb6</pre>
+      <p>
+        变音记号只作用于音高音符。为了播放和连音线校验，变音记号会在同一小节内持续生效，
+        并在每个小节边界重置。
+      </p>
+
+      <h3>11. 八度</h3>
+      <p>
+        八度后缀写在音高音符后面。每个 <code>'</code> 会升高一个八度，每个 <code>,</code> 会降低一个八度。
+      </p>
+      <pre class="notation-example">1' 2'' 6, 5,,</pre>
+      <p>
+        小节可以以小节级八度前缀开头。该前缀作用于该小节内所有音高音符。
+        单个音符上的后缀会叠加到小节前缀上。前缀必须出现在所有音符之前。混用不同前缀字符不会被接受为一个前缀。
+      </p>
+      <pre class="notation-example">'' 1 2 3 4
+,, 5 6 7 1</pre>
+
+      <h3>12. 时值</h3>
+      <p>默认音符时值是四分音符。</p>
+      <table>
+        <thead>
+          <tr><th>语法</th><th>时值</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>1</code></td><td><code>1/4</code> 全音符</td></tr>
+          <tr><td><code>1-</code></td><td><code>1/2</code> 全音符</td></tr>
+          <tr><td><code>1--</code></td><td><code>3/4</code> 全音符</td></tr>
+          <tr><td><code>1---</code></td><td><code>1</code> 全音符</td></tr>
+          <tr><td><code>1/</code></td><td><code>1/8</code> 全音符</td></tr>
+          <tr><td><code>1//</code></td><td><code>1/16</code> 全音符</td></tr>
+          <tr><td><code>1///</code></td><td><code>1/32</code> 全音符</td></tr>
+          <tr><td><code>1.</code></td><td><code>3/8</code> 全音符</td></tr>
+          <tr><td><code>1..</code></td><td><code>7/16</code> 全音符</td></tr>
+          <tr><td><code>1/.</code></td><td><code>3/16</code> 全音符</td></tr>
+        </tbody>
+      </table>
+      <p>
+        横线时值和斜线/附点后缀互斥。像 <code>1-/</code> 或 <code>1/-</code> 这样的输入会被专门的时值诊断拒绝。
+        时值后缀必须跟在音符、休止符、鼓音符或和弦之后。像 <code>/1</code>、<code>.1</code> 或 <code>-1</code>
+        这样的游离后缀也会被专门的诊断拒绝。
+      </p>
+      <pre class="notation-example">1 2/ 3// 4. 5/. 6- 7--</pre>
+
+      <h3>13. 和弦</h3>
+      <p>
+        和弦写在大括号中。和弦内部只能包含音高音符，休止符和鼓音符不能作为和弦成员。
+        空和弦无效。没有匹配 <code>{</code> 的右大括号也是无效的；例如 <code>1}2</code>
+        会把游离的 <code>}</code> 报告为未匹配的和弦结束符。
+      </p>
+      <pre class="notation-example">{1 3 5}
+{#1 3 b5}/
+{1' 3' 5'}</pre>
+      <p>时值后缀应写在右大括号之后，并作用于整个和弦。</p>
+      <pre class="notation-example">{1 3 5}/
+{1 3 5}-</pre>
+
+      <h3>14. 连音线</h3>
+      <p>连音标记 <code>~</code> 写在被连音的音符前。文档中的第一个音符不能带连音。</p>
+      <pre class="notation-example">1 ~1
+3 - ~3/</pre>
+      <p>
+        带连音的音符必须跟在一个发声音符之后。休止符后的连音无效。
+        带连音的音高音符必须在应用小节内变音持续规则后，与前一个发声音高或和弦匹配。
+        带连音的鼓音符可以连到前一个鼓音符。播放器会把被连音的音符合并进前一个旋律事件。
+      </p>
+      <pre class="notation-example">有效:
+#4 ~4
+{1 3 5} ~{1 3 5}
+X ~X
+
+无效:
+1 ~2
+#4 | ~%4
+X ~1</pre>
+
+      <h3>15. 小节时值警告</h3>
+      <p>每个小节的时值都会和当前拍号比较：</p>
+      <pre class="notation-example">expected = beatsPerMeasure / beatsPerWholeNote</pre>
+      <ul>
+        <li><code>4/4</code> 期望 <code>1</code>。</li>
+        <li><code>3/4</code> 期望 <code>0.75</code>。</li>
+        <li><code>6/8</code> 期望 <code>0.75</code>。</li>
+      </ul>
+      <p>不匹配会产生警告，不会产生错误。</p>
+      <pre class="notation-example">time: "4/4"
+=
+1 2</pre>
+
+      <h3>16. 错误摘要</h3>
+      <p>以下情况会报告错误：</p>
+      <ul>
+        <li>意外字符</li>
+        <li>未结束的字符串</li>
+        <li>格式错误的标题字段</li>
+        <li>检测到标题模式但缺少标题分隔符</li>
+        <li>无效调号、拍号或速度</li>
+        <li>空小节</li>
+        <li>无效音符、和弦或连音语法</li>
+        <li>混用横线和斜线/附点时值后缀</li>
+        <li>游离的时值后缀</li>
+        <li>未匹配的和弦右大括号</li>
+        <li>第一个音符带连音</li>
+        <li>休止符后带连音</li>
+        <li>连音目标不匹配</li>
+      </ul>
+      <p>警告目前用于报告小节时值不匹配。</p>
+
+      <h2>铁路图和 EBNF</h2>
+
+      <div class="legend">
+        <span class="rule">规则</span>
+        <span class="token">字面量或 token</span>
+        <span class="optional">可选</span>
+        <span class="repeat">重复</span>
+      </div>
+
+      <h3>解析器概览</h3>
+      <div class="diagram">
+        <svg class="railroad-diagram" width="508.5" style="max-height: 79px;" viewBox="0 0 508.5 79"><g transform="translate(.5 .5)"><g><path d="M20 29v20m0 -10h20"></path></g><path d="M40 39h10"></path><g><path d="M50 39h0"></path><path d="M458.5 39h0"></path><g><path d="M50 39h0"></path><path d="M189.5 39h0"></path><path d="M50 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M70 19h99.5"></path></g><path d="M169.5 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M50 39h20"></path><g><path d="M70 39h0"></path><path d="M169.5 39h0"></path><path d="M70 39h10"></path><g class="non-terminal"><path d="M80 39h0"></path><path d="M159.5 39h0"></path><rect x="80" y="28" width="79.5" height="22"></rect><a xlink:href="#NEWLINE"><text x="119.75" y="43">NEWLINE</text></a></g><path d="M159.5 39h10"></path><path d="M80 39a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M80 59h79.5"></path></g><path d="M159.5 59a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M169.5 39h20"></path></g><g><path d="M189.5 39h0"></path><path d="M300.5 39h0"></path><path d="M189.5 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M209.5 19h71"></path></g><path d="M280.5 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M189.5 39h20"></path><g class="non-terminal"><path d="M209.5 39h0"></path><path d="M280.5 39h0"></path><rect x="209.5" y="28" width="71" height="22"></rect><a xlink:href="#header"><text x="245" y="43">header</text></a></g><path d="M280.5 39h20"></path></g><g><path d="M300.5 39h0"></path><path d="M403 39h0"></path><path d="M300.5 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M320.5 19h62.5"></path></g><path d="M383 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M300.5 39h20"></path><g class="non-terminal"><path d="M320.5 39h0"></path><path d="M383 39h0"></path><rect x="320.5" y="28" width="62.5" height="22"></rect><a xlink:href="#score"><text x="351.75" y="43">score</text></a></g><path d="M383 39h20"></path></g><path d="M403 39h10"></path><g class="non-terminal"><path d="M413 39h0"></path><path d="M458.5 39h0"></path><rect x="413" y="28" width="45.5" height="22"></rect><a xlink:href="#EOF"><text x="435.75" y="43">EOF</text></a></g></g><path d="M458.5 39h10"></path><path d="M 468.5 39 h 20 m 0 -10 v 20"></path></g></svg>
+      </div>
+      <p class="caption">
+        开头的换行会被忽略，然后在文件结束前解析可选标题区和可选谱面。
+      </p>
+
+      <pre class="ebnf">file ::= NEWLINE* header? score? EOF</pre>
+
+      <h3>标题区</h3>
+      <div class="diagram">
+        <svg class="railroad-diagram" width="709" style="max-height: 79px;" viewBox="0 0 709 79"><g transform="translate(.5 .5)"><g><path d="M20 29v20m0 -10h20"></path></g><path d="M40 39h10"></path><g><path d="M50 39h0"></path><path d="M659 39h0"></path><g><path d="M50 39h0"></path><path d="M198 39h0"></path><path d="M50 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M70 19h108"></path></g><path d="M178 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M50 39h20"></path><g><path d="M70 39h0"></path><path d="M178 39h0"></path><path d="M70 39h10"></path><g class="non-terminal"><path d="M80 39h0"></path><path d="M168 39h0"></path><rect x="80" y="28" width="88" height="22"></rect><a xlink:href="#property"><text x="124" y="43">property</text></a></g><path d="M168 39h10"></path><path d="M80 39a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M80 59h88"></path></g><path d="M168 59a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M178 39h20"></path></g><path d="M198 39h10"></path><g class="non-terminal"><path d="M208 39h0"></path><path d="M279 39h0"></path><rect x="208" y="28" width="71" height="22"></rect><a xlink:href="#EQUALS"><text x="243.5" y="43">EQUALS</text></a></g><path d="M279 39h10"></path><g><path d="M289 39h0"></path><path d="M420 39h0"></path><path d="M289 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M309 19h91"></path></g><path d="M400 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M289 39h20"></path><g><path d="M309 39h0"></path><path d="M400 39h0"></path><path d="M309 39h10"></path><g class="non-terminal"><path d="M319 39h0"></path><path d="M390 39h0"></path><rect x="319" y="28" width="71" height="22"></rect><a xlink:href="#EQUALS"><text x="354.5" y="43">EQUALS</text></a></g><path d="M390 39h10"></path><path d="M319 39a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M319 59h71"></path></g><path d="M390 59a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M400 39h20"></path></g><path d="M420 39h10"></path><g class="non-terminal"><path d="M430 39h0"></path><path d="M509.5 39h0"></path><rect x="430" y="28" width="79.5" height="22"></rect><a xlink:href="#NEWLINE"><text x="469.75" y="43">NEWLINE</text></a></g><path d="M509.5 39h10"></path><g><path d="M519.5 39h0"></path><path d="M659 39h0"></path><path d="M519.5 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M539.5 19h99.5"></path></g><path d="M639 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M519.5 39h20"></path><g><path d="M539.5 39h0"></path><path d="M639 39h0"></path><path d="M539.5 39h10"></path><g class="non-terminal"><path d="M549.5 39h0"></path><path d="M629 39h0"></path><rect x="549.5" y="28" width="79.5" height="22"></rect><a xlink:href="#NEWLINE"><text x="589.25" y="43">NEWLINE</text></a></g><path d="M629 39h10"></path><path d="M549.5 39a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M549.5 59h79.5"></path></g><path d="M629 59a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M639 39h20"></path></g></g><path d="M659 39h10"></path><path d="M 669 39 h 20 m 0 -10 v 20"></path></g></svg>
+      </div>
+
+      <div class="diagram">
+        <svg class="railroad-diagram" width="502.5" style="max-height: 79px;" viewBox="0 0 502.5 79"><g transform="translate(.5 .5)"><g><path d="M20 29v20m0 -10h20"></path></g><path d="M40 39h10"></path><g><path d="M50 39h0"></path><path d="M452.5 39h0"></path><g class="non-terminal"><path d="M50 39h0"></path><path d="M112.5 39h0"></path><rect x="50" y="28" width="62.5" height="22"></rect><a xlink:href="#label"><text x="81.25" y="43">label</text></a></g><path d="M112.5 39h10"></path><path d="M122.5 39h10"></path><g class="non-terminal"><path d="M132.5 39h0"></path><path d="M203.5 39h0"></path><rect x="132.5" y="28" width="71" height="22"></rect><a xlink:href="#STRING"><text x="168" y="43">STRING</text></a></g><path d="M203.5 39h10"></path><path d="M213.5 39h10"></path><g class="non-terminal"><path d="M223.5 39h0"></path><path d="M303 39h0"></path><rect x="223.5" y="28" width="79.5" height="22"></rect><a xlink:href="#NEWLINE"><text x="263.25" y="43">NEWLINE</text></a></g><path d="M303 39h10"></path><g><path d="M313 39h0"></path><path d="M452.5 39h0"></path><path d="M313 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M333 19h99.5"></path></g><path d="M432.5 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M313 39h20"></path><g><path d="M333 39h0"></path><path d="M432.5 39h0"></path><path d="M333 39h10"></path><g class="non-terminal"><path d="M343 39h0"></path><path d="M422.5 39h0"></path><rect x="343" y="28" width="79.5" height="22"></rect><a xlink:href="#NEWLINE"><text x="382.75" y="43">NEWLINE</text></a></g><path d="M422.5 39h10"></path><path d="M343 39a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M343 59h79.5"></path></g><path d="M422.5 59a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M432.5 39h20"></path></g></g><path d="M452.5 39h10"></path><path d="M 462.5 39 h 20 m 0 -10 v 20"></path></g></svg>
+      </div>
+      <pre class="ebnf">header   ::= property* EQUALS+ NEWLINE+
+property ::= label STRING NEWLINE+
+label    ::= IDENTIFIER ":"</pre>
+
+      <p>
+        具有语义的标题字段包括 <code>title</code>、<code>subtitle</code>、<code>composer</code>、<code>key</code>、
+        <code>time</code>、<code>tempo</code> 和 <code>hidden</code>。未知字段会被接受，但没有内置效果。
+      </p>
+
+      <h3>谱面</h3>
+      <div class="diagram">
+        <svg class="railroad-diagram" width="656.5" style="max-height: 95px;" viewBox="0 0 656.5 95"><g transform="translate(.5 .5)"><g><path d="M20 37v20m0 -10h20"></path></g><path d="M40 47h10"></path><g><path d="M50 47h0"></path><path d="M606.5 47h0"></path><g class="non-terminal"><path d="M50 47h0"></path><path d="M104 47h0"></path><rect x="50" y="36" width="54" height="22"></rect><a xlink:href="#line"><text x="77" y="51">line</text></a></g><path d="M104 47h10"></path><g><path d="M114 47h0"></path><path d="M467 47h0"></path><path d="M114 47a10 10 0 0 0 10 -10v-7a10 10 0 0 1 10 -10"></path><g><path d="M134 20h313"></path></g><path d="M447 20a10 10 0 0 1 10 10v7a10 10 0 0 0 10 10"></path><path d="M114 47h20"></path><g><path d="M134 47h0"></path><path d="M447 47h0"></path><path d="M134 47h10"></path><g><path d="M144 47h0"></path><path d="M437 47h0"></path><g class="non-terminal"><path d="M144 47h0"></path><path d="M223.5 47h0"></path><rect x="144" y="36" width="79.5" height="22"></rect><a xlink:href="#NEWLINE"><text x="183.75" y="51">NEWLINE</text></a></g><path d="M223.5 47h10"></path><g><path d="M233.5 47h0"></path><path d="M373 47h0"></path><path d="M233.5 47a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M253.5 27h99.5"></path></g><path d="M353 27a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M233.5 47h20"></path><g><path d="M253.5 47h0"></path><path d="M353 47h0"></path><path d="M253.5 47h10"></path><g class="non-terminal"><path d="M263.5 47h0"></path><path d="M343 47h0"></path><rect x="263.5" y="36" width="79.5" height="22"></rect><a xlink:href="#NEWLINE"><text x="303.25" y="51">NEWLINE</text></a></g><path d="M343 47h10"></path><path d="M263.5 47a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M263.5 67h79.5"></path></g><path d="M343 67a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M353 47h20"></path></g><path d="M373 47h10"></path><g class="non-terminal"><path d="M383 47h0"></path><path d="M437 47h0"></path><rect x="383" y="36" width="54" height="22"></rect><a xlink:href="#line"><text x="410" y="51">line</text></a></g></g><path d="M437 47h10"></path><path d="M144 47a10 10 0 0 0 -10 10v8a10 10 0 0 0 10 10"></path><g><path d="M144 75h293"></path></g><path d="M437 75a10 10 0 0 0 10 -10v-8a10 10 0 0 0 -10 -10"></path></g><path d="M447 47h20"></path></g><g><path d="M467 47h0"></path><path d="M606.5 47h0"></path><path d="M467 47a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M487 27h99.5"></path></g><path d="M586.5 27a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M467 47h20"></path><g><path d="M487 47h0"></path><path d="M586.5 47h0"></path><path d="M487 47h10"></path><g class="non-terminal"><path d="M497 47h0"></path><path d="M576.5 47h0"></path><rect x="497" y="36" width="79.5" height="22"></rect><a xlink:href="#NEWLINE"><text x="536.75" y="51">NEWLINE</text></a></g><path d="M576.5 47h10"></path><path d="M497 47a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M497 67h79.5"></path></g><path d="M576.5 67a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M586.5 47h20"></path></g></g><path d="M606.5 47h10"></path><path d="M 616.5 47 h 20 m 0 -10 v 20"></path></g></svg>
+      </div>
+      <pre class="ebnf">score ::= line (NEWLINE+ line)* NEWLINE*</pre>
+
+      <h3>行</h3>
+      <div class="diagram">
+        <svg class="railroad-diagram" width="678" style="max-height: 79px;" viewBox="0 0 678 79"><g transform="translate(.5 .5)"><g><path d="M20 29v20m0 -10h20"></path></g><path d="M40 39h10"></path><g><path d="M50 39h0"></path><path d="M628 39h0"></path><g><path d="M50 39h0"></path><path d="M152.5 39h0"></path><path d="M50 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M70 19h62.5"></path></g><path d="M132.5 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M50 39h20"></path><g class="non-terminal"><path d="M70 39h0"></path><path d="M132.5 39h0"></path><rect x="70" y="28" width="62.5" height="22"></rect><a xlink:href="#label"><text x="101.25" y="43">label</text></a></g><path d="M132.5 39h20"></path></g><g><path d="M152.5 39h0"></path><path d="M238 39h0"></path><path d="M152.5 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M172.5 19h45.5"></path></g><path d="M218 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M152.5 39h20"></path><g class="non-terminal"><path d="M172.5 39h0"></path><path d="M218 39h0"></path><rect x="172.5" y="28" width="45.5" height="22"></rect><a xlink:href="#BAR"><text x="195.25" y="43">BAR</text></a></g><path d="M218 39h20"></path></g><path d="M238 39h10"></path><g class="non-terminal"><path d="M248 39h0"></path><path d="M327.5 39h0"></path><rect x="248" y="28" width="79.5" height="22"></rect><a xlink:href="#measure"><text x="287.75" y="43">measure</text></a></g><path d="M327.5 39h10"></path><g><path d="M337.5 39h0"></path><path d="M542.5 39h0"></path><path d="M337.5 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M357.5 19h165"></path></g><path d="M522.5 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M337.5 39h20"></path><g><path d="M357.5 39h0"></path><path d="M522.5 39h0"></path><path d="M357.5 39h10"></path><g><path d="M367.5 39h0"></path><path d="M512.5 39h0"></path><g class="non-terminal"><path d="M367.5 39h0"></path><path d="M413 39h0"></path><rect x="367.5" y="28" width="45.5" height="22"></rect><a xlink:href="#BAR"><text x="390.25" y="43">BAR</text></a></g><path d="M413 39h10"></path><path d="M423 39h10"></path><g class="non-terminal"><path d="M433 39h0"></path><path d="M512.5 39h0"></path><rect x="433" y="28" width="79.5" height="22"></rect><a xlink:href="#measure"><text x="472.75" y="43">measure</text></a></g></g><path d="M512.5 39h10"></path><path d="M367.5 39a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M367.5 59h145"></path></g><path d="M512.5 59a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M522.5 39h20"></path></g><g><path d="M542.5 39h0"></path><path d="M628 39h0"></path><path d="M542.5 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M562.5 19h45.5"></path></g><path d="M608 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M542.5 39h20"></path><g class="non-terminal"><path d="M562.5 39h0"></path><path d="M608 39h0"></path><rect x="562.5" y="28" width="45.5" height="22"></rect><a xlink:href="#BAR"><text x="585.25" y="43">BAR</text></a></g><path d="M608 39h20"></path></g></g><path d="M628 39h10"></path><path d="M 638 39 h 20 m 0 -10 v 20"></path></g></svg>
+      </div>
+      <pre class="ebnf">line  ::= label? BAR? measure (BAR measure)* BAR?
+label ::= IDENTIFIER ":"</pre>
+
+      <p>
+        单个开头小节线和单个结尾小节线都是允许的。空小节仍然是解析错误；例如
+        <code>1 2 || 3 4</code> 会在两个小节线 token 之间产生一个空小节。
+      </p>
+
+      <h3>小节</h3>
+      <div class="diagram">
+        <svg class="railroad-diagram" width="535" style="max-height: 79px;" viewBox="0 0 535 79"><g transform="translate(.5 .5)"><g><path d="M20 29v20m0 -10h20"></path></g><path d="M40 39h10"></path><g><path d="M50 39h0"></path><path d="M485 39h0"></path><g><path d="M50 39h0"></path><path d="M161 39h0"></path><path d="M50 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M70 19h71"></path></g><path d="M141 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M50 39h20"></path><g class="non-terminal"><path d="M70 39h0"></path><path d="M141 39h0"></path><rect x="70" y="28" width="71" height="22"></rect><a xlink:href="#octave"><text x="105.5" y="43">octave</text></a></g><path d="M141 39h20"></path></g><path d="M161 39h10"></path><g class="non-terminal"><path d="M171 39h0"></path><path d="M293 39h0"></path><rect x="171" y="28" width="122" height="22"></rect><a xlink:href="#durable_note"><text x="232" y="43">durable&#95;note</text></a></g><path d="M293 39h10"></path><g><path d="M303 39h0"></path><path d="M485 39h0"></path><path d="M303 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M323 19h142"></path></g><path d="M465 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M303 39h20"></path><g><path d="M323 39h0"></path><path d="M465 39h0"></path><path d="M323 39h10"></path><g class="non-terminal"><path d="M333 39h0"></path><path d="M455 39h0"></path><rect x="333" y="28" width="122" height="22"></rect><a xlink:href="#durable_note"><text x="394" y="43">durable&#95;note</text></a></g><path d="M455 39h10"></path><path d="M333 39a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M333 59h122"></path></g><path d="M455 59a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M465 39h20"></path></g></g><path d="M485 39h10"></path><path d="M 495 39 h 20 m 0 -10 v 20"></path></g></svg>
+      </div>
+      <pre class="ebnf">measure ::= octave? durable_note+
+octave  ::= LOWER+ | HIGHER+</pre>
+
+      <p>
+        小节八度前缀只会在小节开头被消费。它必须是同一种 token 的重复：
+        <code>,+</code> 或 <code>'+</code>。混用前缀不算一个前缀。
+      </p>
+
+      <h3>带时值音符</h3>
+      <div class="diagram">
+        <svg class="railroad-diagram" width="438.5" style="max-height: 70px;" viewBox="0 0 438.5 70"><g transform="translate(.5 .5)"><g><path d="M20 29v20m0 -10h20"></path></g><path d="M40 39h10"></path><g><path d="M50 39h0"></path><path d="M388.5 39h0"></path><g><path d="M50 39h0"></path><path d="M135.5 39h0"></path><path d="M50 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M70 19h45.5"></path></g><path d="M115.5 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M50 39h20"></path><g class="non-terminal"><path d="M70 39h0"></path><path d="M115.5 39h0"></path><rect x="70" y="28" width="45.5" height="22"></rect><a xlink:href="#tie"><text x="92.75" y="43">tie</text></a></g><path d="M115.5 39h20"></path></g><path d="M135.5 39h10"></path><g class="non-terminal"><path d="M145.5 39h0"></path><path d="M267.5 39h0"></path><rect x="145.5" y="28" width="122" height="22"></rect><a xlink:href="#general_note"><text x="206.5" y="43">general&#95;note</text></a></g><path d="M267.5 39h10"></path><g><path d="M277.5 39h0"></path><path d="M388.5 39h0"></path><path d="M277.5 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M297.5 19h71"></path></g><path d="M368.5 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M277.5 39h20"></path><g class="non-terminal"><path d="M297.5 39h0"></path><path d="M368.5 39h0"></path><rect x="297.5" y="28" width="71" height="22"></rect><a xlink:href="#length"><text x="333" y="43">length</text></a></g><path d="M368.5 39h20"></path></g></g><path d="M388.5 39h10"></path><path d="M 398.5 39 h 20 m 0 -10 v 20"></path></g></svg>
+      </div>
+      <pre class="ebnf">durable_note ::= tie? general_note length?
+tie          ::= TIE</pre>
+
+      <p>
+        连音合法性会在解析后校验。这里语法上接受前置 <code>~</code>，之后如果它是第一个音符、
+        跟在休止符之后，或与前一个发声音符不匹配，就会被拒绝。
+      </p>
+
+      <h3>通用音符</h3>
+      <div class="diagram">
+        <svg class="railroad-diagram" width="182.5" style="max-height: 122px;" viewBox="0 0 182.5 122"><g transform="translate(.5 .5)"><g><path d="M20 21v20m0 -10h20"></path></g><g><path d="M40 31h0"></path><path d="M142.5 31h0"></path><path d="M40 31h20"></path><g class="non-terminal"><path d="M60 31h0"></path><path d="M122.5 31h0"></path><rect x="60" y="20" width="62.5" height="22"></rect><a xlink:href="#chord"><text x="91.25" y="35">chord</text></a></g><path d="M122.5 31h20"></path><path d="M40 31a10 10 0 0 1 10 10v10a10 10 0 0 0 10 10"></path><g class="non-terminal"><path d="M60 61h4.25"></path><path d="M118.25 61h4.25"></path><rect x="64.25" y="50" width="54" height="22"></rect><a xlink:href="#rest"><text x="91.25" y="65">rest</text></a></g><path d="M122.5 61a10 10 0 0 0 10 -10v-10a10 10 0 0 1 10 -10"></path><path d="M40 31a10 10 0 0 1 10 10v40a10 10 0 0 0 10 10"></path><g class="non-terminal"><path d="M60 91h4.25"></path><path d="M118.25 91h4.25"></path><rect x="64.25" y="80" width="54" height="22"></rect><a xlink:href="#drum"><text x="91.25" y="95">drum</text></a></g><path d="M122.5 91a10 10 0 0 0 10 -10v-40a10 10 0 0 1 10 -10"></path></g><path d="M 142.5 31 h 20 m 0 -10 v 20"></path></g></svg>
+      </div>
+      <pre class="ebnf">general_note ::= chord | rest | drum
+rest         ::= REST
+drum         ::= DRUM</pre>
+
+      <h3>音高</h3>
+      <div class="diagram">
+        <svg class="railroad-diagram" width="430" style="max-height: 70px;" viewBox="0 0 430 70"><g transform="translate(.5 .5)"><g><path d="M20 29v20m0 -10h20"></path></g><path d="M40 39h10"></path><g><path d="M50 39h0"></path><path d="M380 39h0"></path><g><path d="M50 39h0"></path><path d="M195 39h0"></path><path d="M50 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M70 19h105"></path></g><path d="M175 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M50 39h20"></path><g class="non-terminal"><path d="M70 39h0"></path><path d="M175 39h0"></path><rect x="70" y="28" width="105" height="22"></rect><a xlink:href="#accidental"><text x="122.5" y="43">accidental</text></a></g><path d="M175 39h20"></path></g><path d="M195 39h10"></path><g class="non-terminal"><path d="M205 39h0"></path><path d="M259 39h0"></path><rect x="205" y="28" width="54" height="22"></rect><a xlink:href="#NOTE"><text x="232" y="43">NOTE</text></a></g><path d="M259 39h10"></path><g><path d="M269 39h0"></path><path d="M380 39h0"></path><path d="M269 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M289 19h71"></path></g><path d="M360 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M269 39h20"></path><g class="non-terminal"><path d="M289 39h0"></path><path d="M360 39h0"></path><rect x="289" y="28" width="71" height="22"></rect><a xlink:href="#octave"><text x="324.5" y="43">octave</text></a></g><path d="M360 39h20"></path></g></g><path d="M380 39h10"></path><path d="M 390 39 h 20 m 0 -10 v 20"></path></g></svg>
+      </div>
+      <pre class="ebnf">pitch_note ::= accidental? NOTE octave?
+accidental ::= SHARPSHARP | SHARP | FLATFLAT | FLAT | NATURAL
+octave     ::= LOWER+ | HIGHER+</pre>
+
+      <h3>和弦</h3>
+      <div class="diagram">
+        <svg class="railroad-diagram" width="487" style="max-height: 109px;" viewBox="0 0 487 109"><g transform="translate(.5 .5)"><g><path d="M20 21v20m0 -10h20"></path></g><g><path d="M40 31h0"></path><path d="M447 31h0"></path><path d="M40 31h20"></path><g class="non-terminal"><path d="M60 31h131"></path><path d="M296 31h131"></path><rect x="191" y="20" width="105" height="22"></rect><a xlink:href="#pitch_note"><text x="243.5" y="35">pitch&#95;note</text></a></g><path d="M427 31h20"></path><path d="M40 31a10 10 0 0 1 10 10v18a10 10 0 0 0 10 10"></path><g><path d="M60 69h0"></path><path d="M427 69h0"></path><g class="terminal"><path d="M60 69h0"></path><path d="M88.5 69h0"></path><rect x="60" y="58" width="28.5" height="22" rx="10" ry="10"></rect><text x="74.25" y="73">{</text></g><path d="M88.5 69h10"></path><path d="M98.5 69h10"></path><g class="non-terminal"><path d="M108.5 69h0"></path><path d="M213.5 69h0"></path><rect x="108.5" y="58" width="105" height="22"></rect><a xlink:href="#pitch_note"><text x="161" y="73">pitch&#95;note</text></a></g><path d="M213.5 69h10"></path><g><path d="M223.5 69h0"></path><path d="M388.5 69h0"></path><path d="M223.5 69a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M243.5 49h125"></path></g><path d="M368.5 49a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M223.5 69h20"></path><g><path d="M243.5 69h0"></path><path d="M368.5 69h0"></path><path d="M243.5 69h10"></path><g class="non-terminal"><path d="M253.5 69h0"></path><path d="M358.5 69h0"></path><rect x="253.5" y="58" width="105" height="22"></rect><a xlink:href="#pitch_note"><text x="306" y="73">pitch&#95;note</text></a></g><path d="M358.5 69h10"></path><path d="M253.5 69a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M253.5 89h105"></path></g><path d="M358.5 89a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M368.5 69h20"></path></g><path d="M388.5 69h10"></path><g class="terminal"><path d="M398.5 69h0"></path><path d="M427 69h0"></path><rect x="398.5" y="58" width="28.5" height="22" rx="10" ry="10"></rect><text x="412.75" y="73">}</text></g></g><path d="M427 69a10 10 0 0 0 10 -10v-18a10 10 0 0 1 10 -10"></path></g><path d="M 447 31 h 20 m 0 -10 v 20"></path></g></svg>
+      </div>
+      <pre class="ebnf">chord ::= pitch_note | "{" pitch_note+ "}"</pre>
+
+      <p>
+        和弦只能包含音高音符。休止符、鼓音符、写在 <code>}</code> 之前的时值后缀，以及空和弦都是无效的。
+      </p>
+
+      <h3>时值</h3>
+      <div class="diagram">
+        <svg class="railroad-diagram" width="368" style="max-height: 155px;" viewBox="0 0 368 155"><g transform="translate(.5 .5)"><g><path d="M20 29v20m0 -10h20"></path></g><g><path d="M40 39h0"></path><path d="M328 39h0"></path><path d="M40 39h20"></path><g><path d="M60 39h35"></path><path d="M273 39h35"></path><g class="non-terminal"><path d="M95 39h0"></path><path d="M149 39h0"></path><rect x="95" y="28" width="54" height="22"></rect><a xlink:href="#DASH"><text x="122" y="43">DASH</text></a></g><path d="M149 39h10"></path><g><path d="M159 39h0"></path><path d="M273 39h0"></path><path d="M159 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M179 19h74"></path></g><path d="M253 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M159 39h20"></path><g><path d="M179 39h0"></path><path d="M253 39h0"></path><path d="M179 39h10"></path><g class="non-terminal"><path d="M189 39h0"></path><path d="M243 39h0"></path><rect x="189" y="28" width="54" height="22"></rect><a xlink:href="#DASH"><text x="216" y="43">DASH</text></a></g><path d="M243 39h10"></path><path d="M189 39a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M189 59h54"></path></g><path d="M243 59a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M253 39h20"></path></g></g><path d="M308 39h20"></path><path d="M40 39a10 10 0 0 1 10 10v27a10 10 0 0 0 10 10"></path><g><path d="M60 86h0"></path><path d="M308 86h0"></path><g><path d="M60 86h0"></path><path d="M154 86h0"></path><path d="M60 86h20"></path><g class="non-terminal"><path d="M80 86h0"></path><path d="M134 86h0"></path><rect x="80" y="75" width="54" height="22"></rect><a xlink:href="#HALF"><text x="107" y="90">HALF</text></a></g><path d="M134 86h20"></path><path d="M60 86a10 10 0 0 1 10 10v10a10 10 0 0 0 10 10"></path><g class="non-terminal"><path d="M80 116h4.25"></path><path d="M129.75 116h4.25"></path><rect x="84.25" y="105" width="45.5" height="22"></rect><a xlink:href="#DOT"><text x="107" y="120">DOT</text></a></g><path d="M134 116a10 10 0 0 0 10 -10v-10a10 10 0 0 1 10 -10"></path></g><g><path d="M154 86h0"></path><path d="M308 86h0"></path><path d="M154 86a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M174 66h114"></path></g><path d="M288 66a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M154 86h20"></path><g><path d="M174 86h0"></path><path d="M288 86h0"></path><path d="M174 86h10"></path><g><path d="M184 86h0"></path><path d="M278 86h0"></path><path d="M184 86h20"></path><g class="non-terminal"><path d="M204 86h0"></path><path d="M258 86h0"></path><rect x="204" y="75" width="54" height="22"></rect><a xlink:href="#HALF"><text x="231" y="90">HALF</text></a></g><path d="M258 86h20"></path><path d="M184 86a10 10 0 0 1 10 10v10a10 10 0 0 0 10 10"></path><g class="non-terminal"><path d="M204 116h4.25"></path><path d="M253.75 116h4.25"></path><rect x="208.25" y="105" width="45.5" height="22"></rect><a xlink:href="#DOT"><text x="231" y="120">DOT</text></a></g><path d="M258 116a10 10 0 0 0 10 -10v-10a10 10 0 0 1 10 -10"></path></g><path d="M278 86h10"></path><path d="M184 86a10 10 0 0 0 -10 10v29a10 10 0 0 0 10 10"></path><g><path d="M184 135h94"></path></g><path d="M278 135a10 10 0 0 0 10 -10v-29a10 10 0 0 0 -10 -10"></path></g><path d="M288 86h20"></path></g></g><path d="M308 86a10 10 0 0 0 10 -10v-27a10 10 0 0 1 10 -10"></path></g><path d="M 328 39 h 20 m 0 -10 v 20"></path></g></svg>
+      </div>
+      <pre class="ebnf">length ::= DASH+ | (HALF | DOT)+</pre>
+
+      <p>
+        横线时值标记不能和斜线或附点标记组合。像 <code>1-/</code> 和 <code>1/-</code> 这样的形式是无效的。
+      </p>
+
+      <h3>Token 参考</h3>
+      <p>
+        空白和注释允许出现在语法 token 之间，因此单独列出，不和会成为谱面文本一部分的 token 混在一起。
+        像 <code>bb</code>、<code>b</code> 和 <code>X</code> 这样的保留 token 拼写会先于标识符匹配。
+      </p>
+      <pre class="ebnf">在 token 之间忽略:
+WS         ::= " " | "\t"
+COMMENT    ::= ";" 直到换行前的字符
+
+结构 token:
+IDENTIFIER ::= /[A-Za-z_]+/ except bb, b, X
+STRING     ::= '"' (escaped-char | non-newline-non-quote)* '"'
+NOTE       ::= "1" | "2" | "3" | "4" | "5" | "6" | "7"
+REST       ::= "0"
+DRUM       ::= "X"
+BAR        ::= "|"
+SHARPSHARP ::= "##"
+SHARP      ::= "#"
+FLATFLAT   ::= "bb"
+FLAT       ::= "b"
+NATURAL    ::= "%"
+HALF       ::= "/"
+DOT        ::= "."
+DASH       ::= "-"
+LOWER      ::= ","
+HIGHER     ::= "'"
+TIE        ::= "~"
+EQUALS     ::= "="
+NEWLINE    ::= "\n" | "\r\n" | "\r"
+EOF        ::= end-of-file</pre>
+
+    </main>
+  </body>
+</html>

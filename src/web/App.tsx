@@ -41,14 +41,201 @@ const DARK_THEME = {
   pageBackground: "#111827",
 };
 const THEME_STORAGE_KEY = "modern-jianpu-markup-theme";
+const LANGUAGE_STORAGE_KEY = "modern-jianpu-markup-language";
 const DEFAULT_PAGE_WIDTH = 1000;
 const MIN_PAGE_WIDTH = 240;
 const MAX_PAGE_WIDTH = 2000;
 const PREVIEW_HORIZONTAL_PADDING = 32;
 
 type ThemeName = "light" | "dark";
+type Language = "en" | "zh";
 type PageWidthMode = "panel" | "content" | "manual";
 type JustifyMode = "none" | "except-last" | "all";
+type TranslationKey =
+  | "tagline"
+  | "language"
+  | "english"
+  | "chinese"
+  | "theme"
+  | "light"
+  | "dark"
+  | "help"
+  | "settings"
+  | "examples"
+  | "stop"
+  | "play"
+  | "export"
+  | "exporting"
+  | "renderingLocally"
+  | "settingsTitle"
+  | "close"
+  | "pageSettings"
+  | "widthMode"
+  | "panel"
+  | "content"
+  | "manual"
+  | "width"
+  | "color"
+  | "page"
+  | "justify"
+  | "none"
+  | "exceptLastLine"
+  | "allLines"
+  | "soundSettings"
+  | "program"
+  | "generalMidi"
+  | "drums"
+  | "volume"
+  | "audioSampleRate"
+  | "omitInitialRests"
+  | "audition"
+  | "source"
+  | "sourcePlaceholder"
+  | "preview"
+  | "noPreview"
+  | "previewSummary"
+  | "fixParseErrors"
+  | "valid"
+  | "error"
+  | "errors"
+  | "validWarning"
+  | "validWarnings"
+  | "event"
+  | "events";
+
+const translations: Record<Language, Record<TranslationKey, string>> = {
+  en: {
+    tagline: "Browser preview for the parser, SVG renderer, and audio exporters.",
+    language: "Language",
+    english: "English",
+    chinese: "中文",
+    theme: "Theme",
+    light: "Light",
+    dark: "Dark",
+    help: "Help",
+    settings: "Settings",
+    examples: "Examples",
+    stop: "Stop",
+    play: "Play",
+    export: "Export",
+    exporting: "Exporting",
+    renderingLocally: "Rendering locally",
+    settingsTitle: "Settings",
+    close: "Close",
+    pageSettings: "Page Settings",
+    widthMode: "Width mode",
+    panel: "Panel",
+    content: "Content",
+    manual: "Manual",
+    width: "Width",
+    color: "Color",
+    page: "Page",
+    justify: "Justify",
+    none: "None",
+    exceptLastLine: "Except last line",
+    allLines: "All lines",
+    soundSettings: "Sound Settings",
+    program: "Program",
+    generalMidi: "General MIDI",
+    drums: "Drums",
+    volume: "Volume",
+    audioSampleRate: "Audio sample rate",
+    omitInitialRests: "Omit initial rests",
+    audition: "Audition",
+    source: "Source",
+    sourcePlaceholder: "Enter your Jianpu here...",
+    preview: "Preview",
+    noPreview: "No preview",
+    previewSummary: "{lines} source line(s), {width}px {mode}",
+    fixParseErrors: "Fix parse errors to preview.",
+    valid: "Valid",
+    error: "error",
+    errors: "errors",
+    validWarning: "Valid, 1 warning",
+    validWarnings: "Valid, {count} warnings",
+    event: "event",
+    events: "events",
+  },
+  zh: {
+    tagline: "用于解析器、SVG 渲染器和音频导出的浏览器预览。",
+    language: "语言",
+    english: "English",
+    chinese: "中文",
+    theme: "主题",
+    light: "浅色",
+    dark: "深色",
+    help: "帮助",
+    settings: "设置",
+    examples: "示例",
+    stop: "停止",
+    play: "播放",
+    export: "导出",
+    exporting: "正在导出",
+    renderingLocally: "本地渲染中",
+    settingsTitle: "设置",
+    close: "关闭",
+    pageSettings: "页面设置",
+    widthMode: "宽度模式",
+    panel: "面板",
+    content: "内容",
+    manual: "手动",
+    width: "宽度",
+    color: "谱面颜色",
+    page: "页面",
+    justify: "对齐",
+    none: "无",
+    exceptLastLine: "除最后一行",
+    allLines: "所有行",
+    soundSettings: "声音设置",
+    program: "音色",
+    generalMidi: "通用 MIDI",
+    drums: "鼓组",
+    volume: "音量",
+    audioSampleRate: "音频采样率",
+    omitInitialRests: "忽略开头休止符",
+    audition: "试听",
+    source: "源码",
+    sourcePlaceholder: "在这里输入简谱...",
+    preview: "预览",
+    noPreview: "无预览",
+    previewSummary: "{lines} 行源码，{width}px，{mode}",
+    fixParseErrors: "修复解析错误后显示预览。",
+    valid: "有效",
+    error: "个错误",
+    errors: "个错误",
+    validWarning: "有效，1 个警告",
+    validWarnings: "有效，{count} 个警告",
+    event: "个事件",
+    events: "个事件",
+  },
+};
+
+const localizedExampleNames: Record<Language, Record<string, string>> = {
+  en: {},
+  zh: {
+    Scale: "音阶",
+    Twinkle: "小星星",
+    "Ode to Joy": "欢乐颂",
+    "6/8 Example": "6/8 示例",
+    Drums: "鼓组",
+    "Jingle Bells": "铃儿响叮当",
+    "Happy Birthday": "生日快乐",
+    "Dear Little Wish": "亲爱的小愿望",
+    "Burning Field": "燃烧的原野",
+    "Blocky Heroes": "方块英雄",
+    Shining: "地下闪光",
+  },
+};
+
+const pageWidthModeLabels: Record<PageWidthMode, TranslationKey> = {
+  panel: "panel",
+  content: "content",
+  manual: "manual",
+};
+
+function translate(language: Language, key: TranslationKey, values: Record<string, string | number> = {}): string {
+  return Object.entries(values).reduce((text, [name, value]) => text.replace(`{${name}}`, String(value)), translations[language][key]);
+}
 
 function themeColors(theme: ThemeName) {
   return theme === "light" ? LIGHT_THEME : DARK_THEME;
@@ -56,6 +243,10 @@ function themeColors(theme: ThemeName) {
 
 function isThemeName(value: string | null): value is ThemeName {
   return value === "light" || value === "dark";
+}
+
+function isLanguage(value: string | null): value is Language {
+  return value === "en" || value === "zh";
 }
 
 function storedTheme(): ThemeName | null {
@@ -71,11 +262,31 @@ function systemTheme(): ThemeName {
   return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
+function storedLanguage(): Language | null {
+  try {
+    const value = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    return isLanguage(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function systemLanguage(): Language {
+  return navigator.language.toLowerCase().startsWith("zh") ? "zh" : "en";
+}
+
 function initialTheme(): ThemeName {
   if (typeof window === "undefined") {
     return "light";
   }
   return storedTheme() ?? systemTheme();
+}
+
+function initialLanguage(): Language {
+  if (typeof window === "undefined") {
+    return "en";
+  }
+  return storedLanguage() ?? systemLanguage();
 }
 
 function toPageWidthMode(value: string): PageWidthMode {
@@ -86,8 +297,8 @@ function toJustifyMode(value: string): JustifyMode {
   return value === "except-last" || value === "all" ? value : "none";
 }
 
-function openGrammarRailroad() {
-  window.open("grammar.html", "_blank", "noopener,noreferrer");
+function openGrammarRailroad(language: Language) {
+  window.open(language === "zh" ? "grammar.zh.html" : "grammar.html", "_blank", "noopener,noreferrer");
 }
 
 function downloadBytes(data: BlobPart, filename: string, type: string) {
@@ -167,29 +378,35 @@ async function svgToPngBlob(svgText: string): Promise<Blob> {
   }
 }
 
-function diagnosticSummary(ok: boolean, diagnostics: Array<{ severity: "error" | "warning" }>): string {
+function diagnosticSummary(language: Language, ok: boolean, diagnostics: Array<{ severity: "error" | "warning" }>): string {
   const errors = diagnostics.filter((diagnostic) => diagnostic.severity === "error").length;
   const warnings = diagnostics.filter((diagnostic) => diagnostic.severity === "warning").length;
   if (!ok) {
-    return errors === 1 ? "1 error" : `${errors} errors`;
+    return language === "zh"
+      ? `${errors}${translate(language, errors === 1 ? "error" : "errors")}`
+      : `${errors} ${translate(language, errors === 1 ? "error" : "errors")}`;
   }
   if (warnings > 0) {
-    return warnings === 1 ? "Valid, 1 warning" : `Valid, ${warnings} warnings`;
+    return warnings === 1 ? translate(language, "validWarning") : translate(language, "validWarnings", { count: warnings });
   }
-  return "Valid";
+  return translate(language, "valid");
 }
 
 function waitForNextFrame(): Promise<void> {
   return new Promise((resolve) => window.requestAnimationFrame(() => resolve()));
 }
 
-function audioExportSummary(noteCount: number, seconds: number): string {
+function audioExportSummary(language: Language, noteCount: number, seconds: number): string {
   const roundedSeconds = seconds >= 10 ? Math.round(seconds) : Math.round(seconds * 10) / 10;
-  return `${noteCount} event(s), ${roundedSeconds}s`;
+  if (language === "zh") {
+    return `${noteCount}${translate(language, noteCount === 1 ? "event" : "events")}，${roundedSeconds}s`;
+  }
+  return `${noteCount} ${translate(language, noteCount === 1 ? "event" : "events")}, ${roundedSeconds}s`;
 }
 
 export function App() {
   const [source, setSource] = useState("");
+  const [language, setLanguage] = useState<Language>(() => initialLanguage());
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeNoteIndex, setActiveNoteIndex] = useState<number | null>(null);
   const [pageWidthMode, setPageWidthMode] = useState<PageWidthMode>("panel");
@@ -209,6 +426,7 @@ export function App() {
   const [showExamples, setShowExamples] = useState(false);
   const playerRef = useRef<PreviewAudioPlayer | null>(null);
   const previewPanelRef = useRef<HTMLElement | null>(null);
+  const t = (key: TranslationKey, values?: Record<string, string | number>) => translate(language, key, values);
   const parsed = useMemo(() => parse(source), [source]);
   const contentPageWidth = useMemo(
     () => (parsed.ok ? inferContentPageWidth(parsed.value, { minWidth: MIN_PAGE_WIDTH, maxWidth: MAX_PAGE_WIDTH }) : DEFAULT_PAGE_WIDTH),
@@ -228,6 +446,10 @@ export function App() {
         : null,
     [activeNoteIndex, justifyMode, pageBackground, pageWidth, parsed, scoreColor],
   );
+
+  useEffect(() => {
+    document.documentElement.lang = language === "zh" ? "zh-Hans" : "en";
+  }, [language]);
 
   useEffect(() => {
     const element = previewPanelRef.current;
@@ -281,7 +503,7 @@ export function App() {
     const melody = omitInitialRests ? skipInitialRests(compiled) : compiled;
     const secondsPerWholeNote = (60 / melody.tempo) * melody.beatsPerWholeNote;
     const seconds = melody.notes.reduce((sum, note) => sum + note.duration * secondsPerWholeNote, 0);
-    return audioExportSummary(melody.notes.length, seconds);
+    return audioExportSummary(language, melody.notes.length, seconds);
   }
 
   async function exportWav() {
@@ -342,6 +564,16 @@ export function App() {
       window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
     } catch {
       // Theme persistence is optional.
+    }
+  }
+
+  function toggleLanguage() {
+    const nextLanguage = language === "en" ? "zh" : "en";
+    setLanguage(nextLanguage);
+    try {
+      window.localStorage.setItem(LANGUAGE_STORAGE_KEY, nextLanguage);
+    } catch {
+      // Language persistence is optional.
     }
   }
 
@@ -423,32 +655,35 @@ export function App() {
       <header className="topbar">
         <div>
           <h1>Modern Jianpu Markup</h1>
-          <p>Browser preview for the parser, SVG renderer, and audio exporters.</p>
+          <p>{t("tagline")}</p>
         </div>
         <div className="actions">
-          <button type="button" onClick={toggleTheme}>
-            Theme: {theme === "light" ? "Light" : "Dark"}
+          <button type="button" onClick={toggleLanguage}>
+            {t("language")}: {language === "en" ? t("english") : t("chinese")}
           </button>
-          <button type="button" onClick={openGrammarRailroad}>
-            Grammar
+          <button type="button" onClick={toggleTheme}>
+            {t("theme")}: {theme === "light" ? t("light") : t("dark")}
+          </button>
+          <button type="button" onClick={() => openGrammarRailroad(language)}>
+            {t("help")}
           </button>
           <button type="button" onClick={() => setShowSettings((visible) => !visible)}>
-            Settings
+            {t("settings")}
           </button>
           <button type="button" onClick={() => setShowExamples((visible) => !visible)}>
-            Examples
+            {t("examples")}
           </button>
           {isPlaying ? (
             <button type="button" onClick={stop}>
-              Stop
+              {t("stop")}
             </button>
           ) : (
             <button type="button" onClick={() => void play()} disabled={!parsed.ok}>
-              Play
+              {t("play")}
             </button>
           )}
           <details className="export-menu">
-            <summary>Export</summary>
+            <summary>{t("export")}</summary>
             <div className="export-menu-items">
               <button type="button" onClick={exportSvg} disabled={!svg}>
                 SVG
@@ -460,12 +695,14 @@ export function App() {
                 MIDI
               </button>
               <button type="button" onClick={() => void exportWav()} disabled={!parsed.ok || exportingAudio !== null}>
-                {exportingAudio === "wav" ? "Exporting WAV..." : "WAV"}
+                {exportingAudio === "wav" ? `${t("exporting")} WAV...` : "WAV"}
               </button>
               <button type="button" onClick={() => void exportMp3()} disabled={!parsed.ok || exportingAudio !== null}>
-                {exportingAudio === "mp3" ? "Exporting MP3..." : "MP3"}
+                {exportingAudio === "mp3" ? `${t("exporting")} MP3...` : "MP3"}
               </button>
-              {exportingAudio && <p className="export-status">{audioExportDetails ? `Rendering locally: ${audioExportDetails}` : "Rendering locally..."}</p>}
+              {exportingAudio && (
+                <p className="export-status">{audioExportDetails ? `${t("renderingLocally")}: ${audioExportDetails}` : `${t("renderingLocally")}...`}</p>
+              )}
             </div>
           </details>
         </div>
@@ -474,25 +711,25 @@ export function App() {
       {showSettings && (
         <section className="settings-panel">
           <div className="panel-title">
-            <h2>Settings</h2>
+            <h2>{t("settingsTitle")}</h2>
             <button type="button" onClick={() => setShowSettings(false)}>
-              Close
+              {t("close")}
             </button>
           </div>
           <div className="settings-sections">
             <section className="settings-section">
-              <h3>Page Settings</h3>
+              <h3>{t("pageSettings")}</h3>
               <div className="settings-grid">
                 <label className="select-control">
-                  Width mode
+                  {t("widthMode")}
                   <select value={pageWidthMode} onChange={(event) => setPageWidthMode(toPageWidthMode(event.target.value))}>
-                    <option value="panel">Panel</option>
-                    <option value="content">Content</option>
-                    <option value="manual">Manual</option>
+                    <option value="panel">{t("panel")}</option>
+                    <option value="content">{t("content")}</option>
+                    <option value="manual">{t("manual")}</option>
                   </select>
                 </label>
                 <label className="number-control">
-                  Width
+                  {t("width")}
                   <input
                     type="number"
                     min={MIN_PAGE_WIDTH}
@@ -509,29 +746,29 @@ export function App() {
                   />
                 </label>
                 <label className="color-control">
-                  Color
+                  {t("color")}
                   <input type="color" value={scoreColor} onChange={(event) => setScoreColor(event.target.value)} />
                 </label>
                 <label className="color-control">
-                  Page
+                  {t("page")}
                   <input type="color" value={pageBackground} onChange={(event) => setPageBackground(event.target.value)} />
                 </label>
                 <label className="select-control">
-                  Justify
+                  {t("justify")}
                   <select value={justifyMode} onChange={(event) => setJustifyMode(toJustifyMode(event.target.value))}>
-                    <option value="none">None</option>
-                    <option value="except-last">Except last line</option>
-                    <option value="all">All lines</option>
+                    <option value="none">{t("none")}</option>
+                    <option value="except-last">{t("exceptLastLine")}</option>
+                    <option value="all">{t("allLines")}</option>
                   </select>
                 </label>
               </div>
             </section>
 
             <section className="settings-section">
-              <h3>Sound Settings</h3>
+              <h3>{t("soundSettings")}</h3>
               <div className="settings-grid">
                 <label className="select-control">
-                  Program
+                  {t("program")}
                   <select
                     value={program}
                     onChange={(event) => {
@@ -541,14 +778,14 @@ export function App() {
                       }
                     }}
                   >
-                    <optgroup label="General MIDI">
+                    <optgroup label={t("generalMidi")}>
                       {GM_PROGRAMS.map((option) => (
                         <option key={option.value} value={option.value}>
                           {option.label}
                         </option>
                       ))}
                     </optgroup>
-                    <optgroup label="Drums">
+                    <optgroup label={t("drums")}>
                       {DRUM_PROGRAMS.map((option) => (
                         <option key={option.value} value={option.value}>
                           {option.label}
@@ -558,7 +795,7 @@ export function App() {
                   </select>
                 </label>
                 <label className="range-control">
-                  Volume
+                  {t("volume")}
                   <input
                     type="range"
                     min={0}
@@ -570,7 +807,7 @@ export function App() {
                   <span>{Math.round(volume)}%</span>
                 </label>
                 <label className="number-control">
-                  Audio sample rate
+                  {t("audioSampleRate")}
                   <input
                     type="number"
                     min={8000}
@@ -591,10 +828,10 @@ export function App() {
                     checked={omitInitialRests}
                     onChange={(event) => setOmitInitialRests(event.target.checked)}
                   />
-                  Omit initial rests
+                  {t("omitInitialRests")}
                 </label>
                 <button type="button" onClick={() => void auditionProgram()}>
-                  Audition
+                  {t("audition")}
                 </button>
               </div>
             </section>
@@ -605,9 +842,9 @@ export function App() {
       {showExamples && (
         <section className="examples-panel">
           <div className="panel-title">
-            <h2>Examples</h2>
+            <h2>{t("examples")}</h2>
             <button type="button" onClick={() => setShowExamples(false)}>
-              Close
+              {t("close")}
             </button>
           </div>
           <div className="examples-grid">
@@ -617,7 +854,7 @@ export function App() {
                 type="button"
                 onClick={() => loadSource(example.source)}
               >
-                {example.name}
+                {localizedExampleNames[language][example.name] ?? example.name}
               </button>
             ))}
           </div>
@@ -627,16 +864,16 @@ export function App() {
       <section className="workspace">
         <section className="editor-panel">
           <div className="panel-title">
-            <h2>Source</h2>
+            <h2>{t("source")}</h2>
             <span className={parsed.ok ? (parsed.diagnostics.length > 0 ? "status-warning" : "status-ok") : "status-error"}>
-              {diagnosticSummary(parsed.ok, parsed.diagnostics)}
+              {diagnosticSummary(language, parsed.ok, parsed.diagnostics)}
             </span>
           </div>
           <textarea
             value={source}
             onChange={(event) => updateSource(event.target.value)}
             onFocus={() => setShowExamples(false)}
-            placeholder="Enter your Jianpu here..."
+            placeholder={t("sourcePlaceholder")}
             spellCheck={false}
           />
           {parsed.diagnostics.length > 0 && (
@@ -654,11 +891,19 @@ export function App() {
 
         <section className="preview-panel" ref={previewPanelRef}>
           <div className="panel-title">
-            <h2>Preview</h2>
-            <span>{parsed.ok ? `${parsed.value.score.length} source line(s), ${pageWidth}px ${pageWidthMode}` : "No preview"}</span>
+            <h2>{t("preview")}</h2>
+            <span>
+              {parsed.ok
+                ? t("previewSummary", {
+                    lines: parsed.value.score.length,
+                    width: pageWidth,
+                    mode: t(pageWidthModeLabels[pageWidthMode]),
+                  })
+                : t("noPreview")}
+            </span>
           </div>
           <div className="preview-scroll" onClick={playFromPreview}>
-            {svg ? <div className="score-svg" dangerouslySetInnerHTML={{ __html: svg }} /> : <p>Fix parse errors to preview.</p>}
+            {svg ? <div className="score-svg" dangerouslySetInnerHTML={{ __html: svg }} /> : <p>{t("fixParseErrors")}</p>}
           </div>
         </section>
       </section>
