@@ -139,9 +139,9 @@ export function tokenize(source: string): { tokens: Token[]; diagnostics: Diagno
       continue;
     }
 
-    const trackLabel = /^T\d+(?=:)/.exec(rest)?.[0];
-    if (trackLabel) {
-      push("identifier", trackLabel, trackLabel);
+    const numberedLabel = /^[TL]\d+(?=:)/.exec(rest)?.[0];
+    if (numberedLabel) {
+      push("identifier", numberedLabel, numberedLabel);
       continue;
     }
 

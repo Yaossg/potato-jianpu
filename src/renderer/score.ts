@@ -1,6 +1,6 @@
-import { actualNotePerBeat, type Document, type Measure, type Note, type Pitch, type PitchNote, type ScoreLine } from "../core/index.js";
+import { actualNotePerBeat, type Document, type LyricLine, type Measure, type Note, type Pitch, type PitchNote, type ScoreLine } from "../core/index.js";
 import { DIMENSIONS } from "./dimensions.js";
-import { scoreLineDisplayLabel } from "./labels.js";
+import { lyricLineDisplayLabel, scoreLineDisplayLabel } from "./labels.js";
 import { flattenNotes, layoutLine, measureXOffset, type LineLayout } from "./layout.js";
 import { chordHeight, maxAccidentalOffset, noteTieAfter, widthOf } from "./metrics.js";
 import type { JustifyMode } from "./options.js";
@@ -13,6 +13,7 @@ const accidentalMap = new Map([
   [-1, "&#9837;"],
   [-2, "&#119083;"],
 ]);
+const LYRIC_CHARACTER_WIDTH = 9;
 
 function renderOctaveDots(pitch: Pitch, x: number, y: number, isBase: boolean, halves: number): string {
   const parts: string[] = [];
@@ -363,6 +364,7 @@ function renderLine(
 
 interface ScoreLineGroup {
   lines: ScoreLine[];
+  lyrics: LyricLine[];
   bracketed: boolean;
   labelOffset: number;
   bracketOffset: number;
@@ -373,12 +375,17 @@ interface RenderLineLayout {
   groupIndex: number;
   labelOffset: number;
   bracketOffset: number;
+  groupVisualWidth: number;
 }
 
 function scoreLineGroups(document: Document): ScoreLineGroup[] {
   const hasLabels = document.score.some((line) => line.label !== undefined);
   if (!hasLabels) {
-    return document.score.map((line) => ({ lines: [line], bracketed: false, labelOffset: 0, bracketOffset: 0 }));
+    return document.score.map((line) => {
+      const lyrics = line.lyrics ?? [];
+      const hasDisplayLabel = lyrics.some((lyric) => lyricLineDisplayLabel(document, lyric));
+      return { lines: [line], lyrics, bracketed: false, labelOffset: hasDisplayLabel ? DIMENSIONS.labelWidth : 0, bracketOffset: 0 };
+    });
   }
 
   const groups: ScoreLine[][] = [];
@@ -395,10 +402,12 @@ function scoreLineGroups(document: Document): ScoreLineGroup[] {
   }
 
   return groups.map((lines) => {
-    const hasDisplayLabel = lines.some((line) => scoreLineDisplayLabel(document, line));
+    const lyrics = lines.flatMap((line) => line.lyrics ?? []);
+    const hasDisplayLabel = lines.some((line) => scoreLineDisplayLabel(document, line)) || lyrics.some((lyric) => lyricLineDisplayLabel(document, lyric));
     const bracketed = lines.length > 1;
     return {
       lines,
+      lyrics,
       bracketed,
       labelOffset: hasDisplayLabel ? DIMENSIONS.labelWidth : 0,
       bracketOffset: bracketed ? DIMENSIONS.voiceBracketWidth : 0,
@@ -425,6 +434,22 @@ function lineVisualWidth(layout: RenderLineLayout): number {
   return layout.layout.width + layout.labelOffset + layout.bracketOffset * 2;
 }
 
+function lyricNaturalWidth(group: ScoreLineGroup): number {
+  const maxTextWidth = Math.max(0, ...group.lyrics.map((lyric) => lyric.text.length * LYRIC_CHARACTER_WIDTH));
+  if (maxTextWidth === 0) {
+    return 0;
+  }
+  return group.labelOffset + group.bracketOffset + DIMENSIONS.leftPadding + maxTextWidth + group.bracketOffset;
+}
+
+function shouldJustifyGroup(justifyMode: JustifyMode, groupIndex: number, groupCount: number): boolean {
+  return justifyMode === "all" || (justifyMode === "except-last" && groupIndex < groupCount - 1);
+}
+
+function renderedLineRightEdge(width: number, pageWidth: number, justified: boolean, scaled: boolean): number {
+  return justified || scaled ? pageWidth : Math.min(pageWidth, width);
+}
+
 function renderVoiceBracket(x: number, y1: number, y2: number, side: "left" | "right"): string {
   const hook = 9;
   const bevel = 7;
@@ -432,55 +457,86 @@ function renderVoiceBracket(x: number, y1: number, y2: number, side: "left" | "r
   return `<path class="voice-bracket" d="M${innerX},${y1} L${x},${y1 + bevel} V${y2 - bevel} L${innerX},${y2}"/>`;
 }
 
+function renderLyrics(document: Document, lyrics: LyricLine[], contentX: number, y: number, targetTextWidth: number | undefined): string {
+  return lyrics
+    .map((lyric, index) => {
+      const lineY = y + index * DIMENSIONS.lyricLineHeight;
+      const displayLabel = lyricLineDisplayLabel(document, lyric);
+      const label = displayLabel ? `<text class="line-label" x="8" y="${lineY}" text-anchor="start">${escapeXml(displayLabel)}</text>` : "";
+      const naturalTextWidth = lyric.text.length * LYRIC_CHARACTER_WIDTH;
+      const justifyAttributes =
+        targetTextWidth !== undefined && targetTextWidth > naturalTextWidth
+          ? ` textLength="${targetTextWidth}" lengthAdjust="spacing"`
+          : "";
+      return `${label}<text class="lyric-line" x="${contentX}" y="${lineY}" text-anchor="start"${justifyAttributes}>${escapeXml(lyric.text)}</text>`;
+    })
+    .join("\n");
+}
+
 export function renderScore(document: Document, yStart: number, pageWidth: number, activeNoteIndices: number[], justifyMode: JustifyMode): { svg: string; height: number; width: number } {
   const allNotes = flattenNotes(document);
   const activeNoteIndexSet = new Set(activeNoteIndices);
   const groups = scoreLineGroups(document);
   const finalMeasures = finalBarMeasures(groups);
-  const layouts = groups.flatMap((group, groupIndex) =>
-    group.lines.flatMap((line) =>
-      layoutLine(line, allNotes, Math.max(1, pageWidth - group.labelOffset - group.bracketOffset * 2)).map((layout) => ({
-        layout,
-        groupIndex,
-        labelOffset: group.labelOffset,
-        bracketOffset: group.bracketOffset,
-      })),
-    ),
-  );
+  const layouts = groups.flatMap((group, groupIndex) => {
+    const groupLayouts = group.lines.flatMap((line) => layoutLine(line, allNotes, Math.max(1, pageWidth - group.labelOffset - group.bracketOffset * 2)));
+    const groupVisualWidth = Math.max(0, lyricNaturalWidth(group), ...groupLayouts.map((layout) => layout.width + group.labelOffset + group.bracketOffset * 2));
+    return groupLayouts.map((layout) => ({
+      layout,
+      groupIndex,
+      labelOffset: group.labelOffset,
+      bracketOffset: group.bracketOffset,
+      groupVisualWidth,
+    }));
+  });
   let y = yStart;
   const parts: string[] = [];
   const groupBounds = new Map<number, { y1: number; y2: number; x2: number }>();
   for (const [index, item] of layouts.entries()) {
-    const width = lineVisualWidth(item);
-    const scaleX = width > pageWidth ? pageWidth / width : 1;
-    const visualWidth = scaleX < 1 ? width : pageWidth;
-    const shouldJustify = justifyMode === "all" || (justifyMode === "except-last" && index < layouts.length - 1);
+    const lineWidth = lineVisualWidth(item);
+    const scaleX = lineWidth > pageWidth ? pageWidth / lineWidth : 1;
+    const scaled = scaleX < 1;
+    const visualWidth = scaleX < 1 ? lineWidth : pageWidth;
+    const groupScaled = item.groupVisualWidth > pageWidth;
+    const shouldJustify = shouldJustifyGroup(justifyMode, item.groupIndex, groups.length);
     const line = renderLine(
       item.layout,
       y,
       allNotes,
       document,
       activeNoteIndexSet,
-      shouldJustify && scaleX === 1,
+      shouldJustify && !scaled,
       visualWidth,
       item.labelOffset,
       item.bracketOffset,
       finalMeasures,
     );
-    parts.push(scaleX < 1 ? `<g class="score-line scaled" transform="scale(${scaleX},1)">${line}</g>` : line);
+    parts.push(scaled ? `<g class="score-line scaled" transform="scale(${scaleX},1)">${line}</g>` : line);
 
     if (groups[item.groupIndex]?.bracketed) {
       const y1 = y + Math.max(0, item.layout.maxPaddingUp - DIMENSIONS.baseNoteHeight - 4);
       const y2 = y + item.layout.height;
+      const rightEdge = renderedLineRightEdge(item.groupVisualWidth, pageWidth, shouldJustify, groupScaled);
       const current = groupBounds.get(item.groupIndex);
       groupBounds.set(item.groupIndex, {
         y1: Math.min(current?.y1 ?? y1, y1),
         y2: Math.max(current?.y2 ?? y2, y2),
-        x2: Math.max(current?.x2 ?? 0, Math.min(pageWidth, width) - item.bracketOffset / 2),
+        x2: Math.max(current?.x2 ?? 0, rightEdge - item.bracketOffset / 2),
       });
     }
 
     y += item.layout.height + DIMENSIONS.lineSpacing;
+    const next = layouts[index + 1];
+    if (!next || next.groupIndex !== item.groupIndex) {
+      const group = groups[item.groupIndex]!;
+      if (group.lyrics.length > 0) {
+        const contentX = group.labelOffset + group.bracketOffset + DIMENSIONS.leftPadding;
+        const lyricRightEdge = renderedLineRightEdge(item.groupVisualWidth, pageWidth, shouldJustify, groupScaled);
+        const targetTextWidth = shouldJustify && !groupScaled ? Math.max(0, lyricRightEdge - contentX - group.bracketOffset) : undefined;
+        parts.push(renderLyrics(document, group.lyrics, contentX, y + DIMENSIONS.lyricTopPadding, targetTextWidth));
+        y += DIMENSIONS.lyricTopPadding + group.lyrics.length * DIMENSIONS.lyricLineHeight;
+      }
+    }
   }
 
   for (const [groupIndex, bounds] of groupBounds) {
@@ -493,7 +549,7 @@ export function renderScore(document: Document, yStart: number, pageWidth: numbe
 
   return {
     svg: parts.join("\n"),
-    width: Math.min(pageWidth, Math.max(0, ...layouts.map(lineVisualWidth))),
-    height: layouts.reduce((sum, item) => sum + item.layout.height + DIMENSIONS.lineSpacing, 0),
+    width: Math.min(pageWidth, Math.max(0, ...layouts.map((layout) => layout.groupVisualWidth))),
+    height: Math.max(0, y - yStart),
   };
 }

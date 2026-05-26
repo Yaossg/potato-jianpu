@@ -313,6 +313,18 @@ T2: 5, 5, 1 1</pre>
         the header, nothing is rendered before that line.
       </p>
       <p>
+        Lyrics can be written after a score line or voice group with <code>L1: "text"</code>. A quoted lyric line without
+        an <code>L</code> label is treated as <code>L1</code>. The lyric label itself is not rendered. To render a name
+        at the left edge of matching lyric lines, define the same label in the header with a quoted string. Lyrics are
+        rendered below the preceding score group and do not affect playback or export timing.
+      </p>
+      <pre class="notation-example">L1: "Verse"
+=
+T1: 1 2 3 4
+T2: 5, 5, 1 1
+L1: "Twinkle, twinkle, little star"
+"How I wonder what you are"</pre>
+      <p>
         Measures are separated by <code>|</code>. A leading bar and a trailing bar are accepted. Each parsed measure
         must contain at least one note-like item. Empty measures are errors.
       </p>
@@ -503,9 +515,10 @@ property_label ::= IDENTIFIER ":"</pre>
 
       <h3>Score</h3>
       <div class="diagram">
-        <svg class="railroad-diagram" width="656.5" style="max-height: 95px;" viewBox="0 0 656.5 95"><g transform="translate(.5 .5)"><g><path d="M20 37v20m0 -10h20"></path></g><path d="M40 47h10"></path><g><path d="M50 47h0"></path><path d="M606.5 47h0"></path><g class="non-terminal"><path d="M50 47h0"></path><path d="M104 47h0"></path><rect x="50" y="36" width="54" height="22"></rect><a xlink:href="#line"><text x="77" y="51">line</text></a></g><path d="M104 47h10"></path><g><path d="M114 47h0"></path><path d="M467 47h0"></path><path d="M114 47a10 10 0 0 0 10 -10v-7a10 10 0 0 1 10 -10"></path><g><path d="M134 20h313"></path></g><path d="M447 20a10 10 0 0 1 10 10v7a10 10 0 0 0 10 10"></path><path d="M114 47h20"></path><g><path d="M134 47h0"></path><path d="M447 47h0"></path><path d="M134 47h10"></path><g><path d="M144 47h0"></path><path d="M437 47h0"></path><g class="non-terminal"><path d="M144 47h0"></path><path d="M223.5 47h0"></path><rect x="144" y="36" width="79.5" height="22"></rect><a xlink:href="#NEWLINE"><text x="183.75" y="51">NEWLINE</text></a></g><path d="M223.5 47h10"></path><g><path d="M233.5 47h0"></path><path d="M373 47h0"></path><path d="M233.5 47a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M253.5 27h99.5"></path></g><path d="M353 27a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M233.5 47h20"></path><g><path d="M253.5 47h0"></path><path d="M353 47h0"></path><path d="M253.5 47h10"></path><g class="non-terminal"><path d="M263.5 47h0"></path><path d="M343 47h0"></path><rect x="263.5" y="36" width="79.5" height="22"></rect><a xlink:href="#NEWLINE"><text x="303.25" y="51">NEWLINE</text></a></g><path d="M343 47h10"></path><path d="M263.5 47a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M263.5 67h79.5"></path></g><path d="M343 67a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M353 47h20"></path></g><path d="M373 47h10"></path><g class="non-terminal"><path d="M383 47h0"></path><path d="M437 47h0"></path><rect x="383" y="36" width="54" height="22"></rect><a xlink:href="#line"><text x="410" y="51">line</text></a></g></g><path d="M437 47h10"></path><path d="M144 47a10 10 0 0 0 -10 10v8a10 10 0 0 0 10 10"></path><g><path d="M144 75h293"></path></g><path d="M437 75a10 10 0 0 0 10 -10v-8a10 10 0 0 0 -10 -10"></path></g><path d="M447 47h20"></path></g><g><path d="M467 47h0"></path><path d="M606.5 47h0"></path><path d="M467 47a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M487 27h99.5"></path></g><path d="M586.5 27a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M467 47h20"></path><g><path d="M487 47h0"></path><path d="M586.5 47h0"></path><path d="M487 47h10"></path><g class="non-terminal"><path d="M497 47h0"></path><path d="M576.5 47h0"></path><rect x="497" y="36" width="79.5" height="22"></rect><a xlink:href="#NEWLINE"><text x="536.75" y="51">NEWLINE</text></a></g><path d="M576.5 47h10"></path><path d="M497 47a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M497 67h79.5"></path></g><path d="M576.5 67a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M586.5 47h20"></path></g></g><path d="M606.5 47h10"></path><path d="M 616.5 47 h 20 m 0 -10 v 20"></path></g></svg>
+        <svg class="railroad-diagram" width="758.5" style="max-height: 95px;" viewBox="0 0 758.5 95"><g transform="translate(.5 .5)"><g><path d="M20 37v20m0 -10h20"></path></g><path d="M40 47h10"></path><g><path d="M50 47h0"></path><path d="M708.5 47h0"></path><g class="non-terminal"><path d="M50 47h0"></path><path d="M155 47h0"></path><rect x="50" y="36" width="105" height="22"></rect><a xlink:href="#score_item"><text x="102.5" y="51">score&#95;item</text></a></g><path d="M155 47h10"></path><g><path d="M165 47h0"></path><path d="M569 47h0"></path><path d="M165 47a10 10 0 0 0 10 -10v-7a10 10 0 0 1 10 -10"></path><g><path d="M185 20h364"></path></g><path d="M549 20a10 10 0 0 1 10 10v7a10 10 0 0 0 10 10"></path><path d="M165 47h20"></path><g><path d="M185 47h0"></path><path d="M549 47h0"></path><path d="M185 47h10"></path><g><path d="M195 47h0"></path><path d="M539 47h0"></path><g class="non-terminal"><path d="M195 47h0"></path><path d="M274.5 47h0"></path><rect x="195" y="36" width="79.5" height="22"></rect><a xlink:href="#NEWLINE"><text x="234.75" y="51">NEWLINE</text></a></g><path d="M274.5 47h10"></path><g><path d="M284.5 47h0"></path><path d="M424 47h0"></path><path d="M284.5 47a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M304.5 27h99.5"></path></g><path d="M404 27a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M284.5 47h20"></path><g><path d="M304.5 47h0"></path><path d="M404 47h0"></path><path d="M304.5 47h10"></path><g class="non-terminal"><path d="M314.5 47h0"></path><path d="M394 47h0"></path><rect x="314.5" y="36" width="79.5" height="22"></rect><a xlink:href="#NEWLINE"><text x="354.25" y="51">NEWLINE</text></a></g><path d="M394 47h10"></path><path d="M314.5 47a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M314.5 67h79.5"></path></g><path d="M394 67a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M404 47h20"></path></g><path d="M424 47h10"></path><g class="non-terminal"><path d="M434 47h0"></path><path d="M539 47h0"></path><rect x="434" y="36" width="105" height="22"></rect><a xlink:href="#score_item"><text x="486.5" y="51">score&#95;item</text></a></g></g><path d="M539 47h10"></path><path d="M195 47a10 10 0 0 0 -10 10v8a10 10 0 0 0 10 10"></path><g><path d="M195 75h344"></path></g><path d="M539 75a10 10 0 0 0 10 -10v-8a10 10 0 0 0 -10 -10"></path></g><path d="M549 47h20"></path></g><g><path d="M569 47h0"></path><path d="M708.5 47h0"></path><path d="M569 47a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M589 27h99.5"></path></g><path d="M688.5 27a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M569 47h20"></path><g><path d="M589 47h0"></path><path d="M688.5 47h0"></path><path d="M589 47h10"></path><g class="non-terminal"><path d="M599 47h0"></path><path d="M678.5 47h0"></path><rect x="599" y="36" width="79.5" height="22"></rect><a xlink:href="#NEWLINE"><text x="638.75" y="51">NEWLINE</text></a></g><path d="M678.5 47h10"></path><path d="M599 47a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M599 67h79.5"></path></g><path d="M678.5 67a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M688.5 47h20"></path></g></g><path d="M708.5 47h10"></path><path d="M 718.5 47 h 20 m 0 -10 v 20"></path></g></svg>
       </div>
-      <pre class="ebnf">score ::= line (NEWLINE+ line)* NEWLINE*</pre>
+      <pre class="ebnf">score      ::= score_item (NEWLINE+ score_item)* NEWLINE*
+score_item ::= line | lyric_line</pre>
 
       <h3>Line</h3>
       <div class="diagram">
@@ -516,7 +529,9 @@ start_barline     ::= BAR | REPEAT_START
 measure_separator ::= BAR | REPEAT_START | REPEAT_BOTH
 end_barline       ::= BAR | REPEAT_END
 ending            ::= "[" NOTE "]"
-track_label       ::= TRACK_LABEL ":"</pre>
+track_label       ::= TRACK_LABEL ":"
+lyric_line        ::= lyric_label? STRING
+lyric_label       ::= LYRIC_LABEL ":"</pre>
 
       <p>
         A single leading bar, repeat start, trailing bar, and repeat end are accepted. Empty measures are still parse
@@ -597,9 +612,11 @@ WS         ::= " " | "\t"
 COMMENT    ::= ";" characters-until-newline
 
 Structural tokens:
-IDENTIFIER ::= /[A-Za-z_]+/ or /T[0-9]+/ before ":"
+IDENTIFIER ::= /[A-Za-z_]+/ or /[TL][0-9]+/ before ":"
 TRACK_LABEL ::= "T1" | ... | "T9" | "T11" | ... | "T16"
+LYRIC_LABEL ::= "L" DIGIT+
 STRING     ::= '"' (escaped-char | non-newline-non-quote)* '"'
+DIGIT      ::= "0" | "1" | ... | "9"
 NOTE       ::= "1" | "2" | "3" | "4" | "5" | "6" | "7"
 REST       ::= "0"
 DRUM       ::= "X"

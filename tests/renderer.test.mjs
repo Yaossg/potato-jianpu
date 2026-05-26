@@ -348,6 +348,15 @@ test("renders voice brackets around simultaneous track groups", () => {
   assert.match(svg, /<g class="note-item" data-note-index="0"><text class="note" x="88"/);
 });
 
+test("aligns voice brackets with group-level justification", () => {
+  const result = parse("T1: 1 2\nT2: 5, 6,\nT1: 3 4\nT2: 1, 2,");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 320, justifyMode: "except-last" });
+  assert.match(svg, /<path class="voice-bracket" d="M303,[^"]+ L312,[^"]+ V[^"]+ L303,[^"]+"\/>/);
+  assert.match(svg, /<path class="voice-bracket" d="M\d+,[^"]+ L\d+,[^"]+ V[^"]+ L\d+,[^"]+"\/>/);
+  assert.equal(svg.match(/L312,/g)?.length ?? 0, 1);
+});
+
 test("does not render voice brackets for single-voice groups", () => {
   const result = parse("T1: 1\nT1: 2");
   assert.equal(result.ok, true);
@@ -360,6 +369,32 @@ test("renders final bars on every line of the final voice group", () => {
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value);
   assert.equal(svg.match(/class="bar-final"/g)?.length ?? 0, 2);
+});
+
+test("renders lyrics below the preceding voice group", () => {
+  const result = parse('T1: "High"\nT2: "Low"\n=\nT1: 1 2\nT2: 5, 6,\nL1: "hello & goodbye"\n"second line"\nT1: 3 4');
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 240 });
+  assert.match(svg, /<text class="lyric-line" x="\d+" y="\d+" text-anchor="start">hello &amp; goodbye<\/text>/);
+  assert.match(svg, /<text class="lyric-line" x="\d+" y="\d+" text-anchor="start">second line<\/text>/);
+  assert.ok(svg.indexOf("hello &amp; goodbye") < svg.indexOf('data-note-index="4"'));
+});
+
+test("renders header-defined lyric labels with reserved horizontal space", () => {
+  const result = parse('L1: "Verse"\n=\n1 2\nL1: "hello"\n"again"');
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 180 });
+  assert.match(svg, /<text class="line-label" x="8" y="\d+" text-anchor="start">Verse<\/text><text class="lyric-line" x="72" y="\d+" text-anchor="start">hello<\/text>/);
+  assert.match(svg, /<text class="lyric-line" x="72" y="\d+" text-anchor="start">again<\/text>/);
+  assert.match(svg, /<g class="note-item" data-note-index="0"><text class="note" x="72"/);
+});
+
+test("justifies lyric text with its score group", () => {
+  const result = parse('1 2\n"hello"\n3 4\n"tail"');
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 240, justifyMode: "except-last" });
+  assert.match(svg, /<text class="lyric-line" x="18" y="\d+" text-anchor="start" textLength="222" lengthAdjust="spacing">hello<\/text>/);
+  assert.match(svg, /<text class="lyric-line" x="18" y="\d+" text-anchor="start">tail<\/text>/);
 });
 
 test("renders explicit export color and background", () => {

@@ -5,10 +5,14 @@ property = property_label, STRING, NEWLINE, { NEWLINE } ;
 
 property_label = IDENTIFIER, ":" ;
 track_label = TRACK_LABEL, ":" ;
+lyric_label = LYRIC_LABEL, ":" ;
 
-score = line, { NEWLINE, { NEWLINE }, line }, { NEWLINE } ;
+score = score_item, { NEWLINE, { NEWLINE }, score_item }, { NEWLINE } ;
+
+score_item = line | lyric_line ;
 
 line = [ track_label ], [ start_barline ], [ ending ], measure, { measure_separator, [ ending ], measure }, [ end_barline ] ;
+lyric_line = [ lyric_label ], STRING ;
 
 start_barline = BAR | REPEAT_START ;
 measure_separator = BAR | REPEAT_START | REPEAT_BOTH ;
@@ -35,9 +39,11 @@ length = DASH, { DASH } | ( HALF | DOT ), { HALF | DOT } ;
 
 skipped = WS | COMMENT ;
 
-IDENTIFIER = "[A-Za-z_]+, or T followed by digits when followed by ':'" ;
+IDENTIFIER = "[A-Za-z_]+, or T/L followed by digits when followed by ':'" ;
 TRACK_LABEL = "T1" | "T2" | "T3" | "T4" | "T5" | "T6" | "T7" | "T8" | "T9" | "T11" | "T12" | "T13" | "T14" | "T15" | "T16" ;
+LYRIC_LABEL = "L", DIGIT, { DIGIT } ;
 STRING = "quoted string" ;
+DIGIT = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
 NOTE = "1" | "2" | "3" | "4" | "5" | "6" | "7" ;
 REST = "0" ;
 DRUM = "X" ;

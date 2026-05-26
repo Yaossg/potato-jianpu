@@ -376,6 +376,25 @@ test("treats unlabeled score lines as T1 when any score line has a track label",
   );
 });
 
+test("parses lyric lines after score groups", () => {
+  const result = parse('T1: 1 2\nT2: 5, 6,\nL1: "hello world"\n"fallback lyric"\nT1: 3 4');
+  assert.equal(result.ok, true);
+  assert.deepEqual(
+    result.value.score[1].lyrics?.map((lyric) => [lyric.label, lyric.text]),
+    [
+      ["L1", "hello world"],
+      ["L1", "fallback lyric"],
+    ],
+  );
+  assert.equal(result.value.score[2].lyrics, undefined);
+});
+
+test("rejects lyric lines before any score line", () => {
+  const result = parse('"too early"\n1 2');
+  assert.equal(result.ok, false);
+  assert.match(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Lyrics must follow a score line/);
+});
+
 test("requires track label groups to start at T1 and increase", () => {
   const valid = parse("T1: 1\nT2: 5,\nT3: 1,\nT1: 2\nT2: 6,");
   assert.equal(valid.ok, true);

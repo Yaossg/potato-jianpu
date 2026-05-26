@@ -77,7 +77,7 @@ The renderer follows a measurement-first pipeline:
 4. Wrap measure layouts into visual lines based on `pageWidth`.
 5. Horizontally scale any single visual line that still exceeds `pageWidth`.
 6. Optionally justify line coordinates when `justifyMode` enables it.
-7. Draw bars, ties, notes, and duration marks.
+7. Draw bars, ties, notes, duration marks, and attached lyric lines.
 8. Compute final SVG height from header height and rendered score lines.
 
 The main internal layout records are:
@@ -113,6 +113,8 @@ Renderer dimensions are centralized in the `DIMENSIONS` object:
 | `baseNoteHeight` | `24` | Base rendered note height |
 | `leftPadding` | `18` | Measure left padding before first note |
 | `measureSpacing` | `0` | Extra spacing between measures |
+| `lyricTopPadding` | `12` | Vertical gap before lyrics below a score group |
+| `lyricLineHeight` | `20` | Vertical advance for stacked lyric lines |
 | `accidentalOffset` | `10` | Horizontal space reserved for accidentals |
 | `tieHeight` | `16` | Tie arc height |
 | `tieCurveHeight` | `13` | Inner tie curve height |

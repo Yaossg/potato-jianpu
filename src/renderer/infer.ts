@@ -1,6 +1,6 @@
 import type { Document, ScoreLine } from "../core/index.js";
 import { DIMENSIONS } from "./dimensions.js";
-import { scoreLineDisplayLabel } from "./labels.js";
+import { lyricLineDisplayLabel, scoreLineDisplayLabel } from "./labels.js";
 import { flattenNotes, layoutLine } from "./layout.js";
 import { DEFAULT_OPTIONS } from "./options.js";
 
@@ -10,6 +10,7 @@ export interface InferPageWidthOptions {
 }
 
 const HEADER_METADATA_MIN_WIDTH = 240;
+const LYRIC_CHARACTER_WIDTH = 9;
 
 function clampWidth(width: number, minWidth: number, maxWidth: number): number {
   return Math.min(maxWidth, Math.max(minWidth, Math.ceil(width)));
@@ -51,9 +52,14 @@ export function inferContentPageWidth(document: Document, options: InferPageWidt
   const scoreWidth = Math.max(
     0,
     ...scoreLineGroups(document).flatMap((group) => {
-      const labelOffset = group.some((line) => scoreLineDisplayLabel(document, line)) ? DIMENSIONS.labelWidth : 0;
+      const lyrics = group.flatMap((line) => line.lyrics ?? []);
+      const labelOffset =
+        group.some((line) => scoreLineDisplayLabel(document, line)) || lyrics.some((lyric) => lyricLineDisplayLabel(document, lyric)) ? DIMENSIONS.labelWidth : 0;
       const bracketOffset = group.length > 1 ? DIMENSIONS.voiceBracketWidth * 2 : 0;
-      return group.flatMap((line) => layoutLine(line, allNotes, Number.POSITIVE_INFINITY).map((layout) => layout.width + labelOffset + bracketOffset));
+      const lyricTextWidth = Math.max(0, ...lyrics.map((lyric) => lyric.text.length * LYRIC_CHARACTER_WIDTH));
+      const lyricWidth = lyricTextWidth > 0 ? lyricTextWidth + labelOffset + bracketOffset + DIMENSIONS.leftPadding : 0;
+      const notationWidths = group.flatMap((line) => layoutLine(line, allNotes, Number.POSITIVE_INFINITY).map((layout) => layout.width + labelOffset + bracketOffset));
+      return [...notationWidths, lyricWidth];
     }),
   );
   return clampWidth(Math.max(headerNaturalWidth(document), scoreWidth), minWidth, maxWidth);

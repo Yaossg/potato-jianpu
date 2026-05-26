@@ -69,9 +69,16 @@ export interface Measure {
   ending?: number;
 }
 
+export interface LyricLine {
+  label: string;
+  text: string;
+  range: SourceRange;
+}
+
 export interface ScoreLine {
   label?: string;
   measures: Measure[];
+  lyrics?: LyricLine[];
   range: SourceRange;
 }
 

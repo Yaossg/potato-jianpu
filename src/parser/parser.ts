@@ -8,6 +8,7 @@ import type {
   Pitch,
   PitchNote,
   Result,
+  LyricLine,
   ScoreLine,
   SourceRange,
 } from "../core/index.js";
@@ -183,7 +184,11 @@ class Parser {
         this.skipNewlines();
         continue;
       }
-      lines.push(this.parseLine());
+      if (this.isLyricLineStart()) {
+        this.attachLyricLine(lines, this.parseLyricLine());
+      } else {
+        lines.push(this.parseLine());
+      }
       if (this.at("newline")) {
         this.skipNewlines();
       } else if (!this.at("eof")) {
@@ -192,6 +197,38 @@ class Parser {
       }
     }
     return lines;
+  }
+
+  private isLyricLineStart(): boolean {
+    if (this.at("string")) {
+      return true;
+    }
+    const label = this.current().value ?? this.current().text;
+    return this.at("identifier") && this.tokens[this.index + 1]?.type === "colon" && /^L\d+$/.test(label);
+  }
+
+  private parseLyricLine(): LyricLine {
+    const start = this.current().range;
+    let label = "L1";
+    if (this.at("identifier") && this.tokens[this.index + 1]?.type === "colon") {
+      label = this.current().value ?? this.current().text;
+      this.index += 2;
+    }
+    const text = this.consume("string", "Expected quoted lyric text.");
+    return {
+      label,
+      text: text?.value ?? "",
+      range: mergeRange(start, (text ?? this.previous()).range),
+    };
+  }
+
+  private attachLyricLine(lines: ScoreLine[], lyric: LyricLine) {
+    const target = lines.at(-1);
+    if (!target) {
+      this.error("Lyrics must follow a score line.", lyric.range);
+      return;
+    }
+    target.lyrics = [...(target.lyrics ?? []), lyric];
   }
 
   private parseLine(): ScoreLine {
