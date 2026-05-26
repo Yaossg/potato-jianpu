@@ -376,7 +376,7 @@ test("renders lyrics below the preceding voice group", () => {
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 240 });
   assert.match(svg, /<text class="lyric-line" x="\d+" y="\d+" text-anchor="start">hello &amp; goodbye<\/text>/);
-  assert.match(svg, /<text class="lyric-line" x="\d+" y="\d+" text-anchor="start">second line<\/text>/);
+  assert.match(svg, /<text class="lyric-syllable" x="\d+" y="\d+" text-anchor="middle">second<\/text><text class="lyric-syllable" x="\d+" y="\d+" text-anchor="middle">line<\/text>/);
   assert.ok(svg.indexOf("hello &amp; goodbye") < svg.indexOf('data-note-index="4"'));
 });
 
@@ -395,6 +395,23 @@ test("justifies lyric text with its score group", () => {
   const svg = renderSvg(result.value, { pageWidth: 240, justifyMode: "except-last" });
   assert.match(svg, /<text class="lyric-line" x="18" y="\d+" text-anchor="start" textLength="222" lengthAdjust="spacing">hello<\/text>/);
   assert.match(svg, /<text class="lyric-line" x="18" y="\d+" text-anchor="start">tail<\/text>/);
+});
+
+test("aligns lyric syllables under main voice notes", () => {
+  const result = parse('T1: 1 2 3\nT2: 5, 6, 7,\n"one two three"');
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 240, justifyMode: "all" });
+  assert.match(svg, /<text class="lyric-syllable" x="34" y="\d+" text-anchor="middle">one<\/text>/);
+  assert.match(svg, /<text class="lyric-syllable" x="97\.08571428571429" y="\d+" text-anchor="middle">two<\/text>/);
+  assert.match(svg, /<text class="lyric-syllable" x="160\.17142857142858" y="\d+" text-anchor="middle">three<\/text>/);
+});
+
+test("keeps multi-line lyric syllables as a normal lyric line", () => {
+  const result = parse('1 2 | 3 4 |\n"one two three four"');
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 90 });
+  assert.match(svg, /<text class="lyric-line" x="18" y="\d+" text-anchor="start">one two three four<\/text>/);
+  assert.doesNotMatch(svg, /<text class="lyric-syllable"/);
 });
 
 test("renders explicit export color and background", () => {

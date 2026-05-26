@@ -77,7 +77,7 @@ The renderer follows a measurement-first pipeline:
 4. Wrap measure layouts into visual lines based on `pageWidth`.
 5. Horizontally scale any single visual line that still exceeds `pageWidth`.
 6. Optionally justify line coordinates when `justifyMode` enables it.
-7. Draw bars, ties, notes, duration marks, and attached lyric lines.
+7. Draw bars, ties, notes, duration marks, and attached lyric lines or syllables.
 8. Compute final SVG height from header height and rendered score lines.
 
 The main internal layout records are:
@@ -102,6 +102,13 @@ interface LineLayout {
 
 `notePositions` are x offsets within a measure before the measure-level left
 padding is applied.
+
+Lyric lines render below the preceding score group. A lyric string with
+multiple whitespace-separated syllables is rendered as centered syllables under
+the main voice note anchors when the syllable count matches the main voice note
+count and the main voice occupies one rendered visual line. Otherwise it remains
+a normal left-aligned lyric line. In multi-voice groups, the renderer uses `T1`
+as the main voice; unlabeled lines in labeled scores also count as `T1`.
 
 ## Dimensions
 

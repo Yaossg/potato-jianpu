@@ -72,6 +72,7 @@ export interface Measure {
 export interface LyricLine {
   label: string;
   text: string;
+  syllables: string[];
   range: SourceRange;
 }
 

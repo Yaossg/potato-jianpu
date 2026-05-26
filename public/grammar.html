@@ -318,12 +318,20 @@ T2: 5, 5, 1 1</pre>
         at the left edge of matching lyric lines, define the same label in the header with a quoted string. Lyrics are
         rendered below the preceding score group and do not affect playback or export timing.
       </p>
+      <p>
+        If a lyric line contains multiple whitespace-separated syllables, those syllables are centered below the main
+        voice notes when the main voice fits on one rendered line. Rests are skipped. In a multi-voice group, the main
+        voice is <code>T1</code>; unlabeled lines in labeled scores also count as <code>T1</code>. If the syllable count
+        does not match the main voice note count, the lyric is rendered as a normal line and a warning is reported.
+      </p>
       <pre class="notation-example">L1: "Verse"
 =
 T1: 1 2 3 4
 T2: 5, 5, 1 1
 L1: "Twinkle, twinkle, little star"
 "How I wonder what you are"</pre>
+      <pre class="notation-example">1 2 3 4
+"Twin-kle twin-kle lit-tle star"</pre>
       <p>
         Measures are separated by <code>|</code>. A leading bar and a trailing bar are accepted. Each parsed measure
         must contain at least one note-like item. Empty measures are errors.

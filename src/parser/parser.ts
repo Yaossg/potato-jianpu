@@ -63,6 +63,7 @@ class Parser {
     this.labeledScoreMode = this.scoreHasTrackLabelsAhead();
     const score = this.at("eof") ? [] : this.parseScore();
     this.validateTrackLabelOrder(score);
+    this.validateLyrics(score);
     this.normalizeFinalEnding(score);
     this.validateTies(score);
     this.validateRepeatedEndings(score);
@@ -215,9 +216,11 @@ class Parser {
       this.index += 2;
     }
     const text = this.consume("string", "Expected quoted lyric text.");
+    const lyricText = text?.value ?? "";
     return {
       label,
-      text: text?.value ?? "",
+      text: lyricText,
+      syllables: this.lyricSyllables(lyricText),
       range: mergeRange(start, (text ?? this.previous()).range),
     };
   }
@@ -229,6 +232,10 @@ class Parser {
       return;
     }
     target.lyrics = [...(target.lyrics ?? []), lyric];
+  }
+
+  private lyricSyllables(text: string): string[] {
+    return text.trim().split(/\s+/).filter(Boolean);
   }
 
   private parseLine(): ScoreLine {
@@ -578,6 +585,45 @@ class Parser {
         return;
       }
       expected = this.nextTrackLabel(label);
+    }
+  }
+
+  private scoreLineGroups(lines: ScoreLine[]): ScoreLine[][] {
+    if (!lines.some((line) => line.label !== undefined)) {
+      return lines.map((line) => [line]);
+    }
+    const groups: ScoreLine[][] = [];
+    let current: ScoreLine[] = [];
+    for (const line of lines) {
+      if (line.label === "T1" && current.length > 0) {
+        groups.push(current);
+        current = [];
+      }
+      current.push(line);
+    }
+    if (current.length > 0) {
+      groups.push(current);
+    }
+    return groups;
+  }
+
+  private validateLyrics(lines: ScoreLine[]) {
+    const hasLabels = lines.some((line) => line.label !== undefined);
+    for (const group of this.scoreLineGroups(lines)) {
+      const lyrics = group.flatMap((line) => line.lyrics ?? []);
+      if (lyrics.length === 0) {
+        continue;
+      }
+      const primaryLines = hasLabels ? group.filter((line) => line.label === undefined || line.label === "T1") : group;
+      const soundingNoteCount = primaryLines
+        .flatMap((line) => line.measures)
+        .flatMap((measure) => measure.notes)
+        .filter((note) => note.kind !== "rest").length;
+      for (const lyric of lyrics) {
+        if (lyric.syllables.length > 1 && lyric.syllables.length !== soundingNoteCount) {
+          this.warning(`Lyric has ${lyric.syllables.length} syllables but the main voice has ${soundingNoteCount} notes.`, lyric.range);
+        }
+      }
     }
   }
 

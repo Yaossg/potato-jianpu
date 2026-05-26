@@ -15,6 +15,11 @@ const accidentalMap = new Map([
 ]);
 const LYRIC_CHARACTER_WIDTH = 9;
 
+interface RenderedLine {
+  svg: string;
+  lyricAnchors: number[];
+}
+
 function renderOctaveDots(pitch: Pitch, x: number, y: number, isBase: boolean, halves: number): string {
   const parts: string[] = [];
   if (pitch.octave > 0) {
@@ -253,7 +258,7 @@ function renderLine(
   labelOffset: number,
   bracketOffset: number,
   finalBarMeasures: Set<Measure>,
-): string {
+): RenderedLine {
   const parts: string[] = [];
   const lineEntries: Array<{ note: Note; x: number; y: number; full: boolean }> = [];
   const unit = actualNotePerBeat(document.header.timeSignature);
@@ -359,7 +364,10 @@ function renderLine(
     parts.push(`<g class="${className}" data-note-index="${entry.note.index}">${noteParts.join("")}</g>`);
   }
 
-  return parts.join("\n");
+  return {
+    svg: parts.join("\n"),
+    lyricAnchors: lineEntries.filter((entry) => entry.note.kind !== "rest").map((entry) => entry.x),
+  };
 }
 
 interface ScoreLineGroup {
@@ -473,10 +481,32 @@ function renderLyrics(document: Document, lyrics: LyricLine[], contentX: number,
     .join("\n");
 }
 
+function renderAlignedLyrics(document: Document, lyrics: LyricLine[], contentX: number, y: number, targetTextWidth: number | undefined, anchors: number[]): string {
+  return lyrics
+    .map((lyric, index) => {
+      if (lyric.syllables.length <= 1 || lyric.syllables.length !== anchors.length) {
+        return renderLyrics(document, [lyric], contentX, y + index * DIMENSIONS.lyricLineHeight, targetTextWidth);
+      }
+      const lineY = y + index * DIMENSIONS.lyricLineHeight;
+      const displayLabel = lyricLineDisplayLabel(document, lyric);
+      const label = displayLabel ? `<text class="line-label" x="8" y="${lineY}" text-anchor="start">${escapeXml(displayLabel)}</text>` : "";
+      const syllables = lyric.syllables
+        .map((syllable, syllableIndex) => `<text class="lyric-syllable" x="${anchors[syllableIndex]}" y="${lineY}" text-anchor="middle">${escapeXml(syllable)}</text>`)
+        .join("");
+      return `${label}${syllables}`;
+    })
+    .join("\n");
+}
+
+function isPrimaryLyricLine(line: ScoreLine, hasLabels: boolean): boolean {
+  return !hasLabels || line.label === undefined || line.label === "T1";
+}
+
 export function renderScore(document: Document, yStart: number, pageWidth: number, activeNoteIndices: number[], justifyMode: JustifyMode): { svg: string; height: number; width: number } {
   const allNotes = flattenNotes(document);
   const activeNoteIndexSet = new Set(activeNoteIndices);
   const groups = scoreLineGroups(document);
+  const hasLabels = document.score.some((line) => line.label !== undefined);
   const finalMeasures = finalBarMeasures(groups);
   const layouts = groups.flatMap((group, groupIndex) => {
     const groupLayouts = group.lines.flatMap((line) => layoutLine(line, allNotes, Math.max(1, pageWidth - group.labelOffset - group.bracketOffset * 2)));
@@ -492,6 +522,7 @@ export function renderScore(document: Document, yStart: number, pageWidth: numbe
   let y = yStart;
   const parts: string[] = [];
   const groupBounds = new Map<number, { y1: number; y2: number; x2: number }>();
+  const lyricAnchorLinesByGroup = new Map<number, number[][]>();
   for (const [index, item] of layouts.entries()) {
     const lineWidth = lineVisualWidth(item);
     const scaleX = lineWidth > pageWidth ? pageWidth / lineWidth : 1;
@@ -499,7 +530,7 @@ export function renderScore(document: Document, yStart: number, pageWidth: numbe
     const visualWidth = scaleX < 1 ? lineWidth : pageWidth;
     const groupScaled = item.groupVisualWidth > pageWidth;
     const shouldJustify = shouldJustifyGroup(justifyMode, item.groupIndex, groups.length);
-    const line = renderLine(
+    const renderedLine = renderLine(
       item.layout,
       y,
       allNotes,
@@ -511,7 +542,11 @@ export function renderScore(document: Document, yStart: number, pageWidth: numbe
       item.bracketOffset,
       finalMeasures,
     );
-    parts.push(scaled ? `<g class="score-line scaled" transform="scale(${scaleX},1)">${line}</g>` : line);
+    parts.push(scaled ? `<g class="score-line scaled" transform="scale(${scaleX},1)">${renderedLine.svg}</g>` : renderedLine.svg);
+    if (isPrimaryLyricLine(item.layout.line, hasLabels)) {
+      const lyricAnchors = scaled ? renderedLine.lyricAnchors.map((anchor) => anchor * scaleX) : renderedLine.lyricAnchors;
+      lyricAnchorLinesByGroup.set(item.groupIndex, [...(lyricAnchorLinesByGroup.get(item.groupIndex) ?? []), lyricAnchors]);
+    }
 
     if (groups[item.groupIndex]?.bracketed) {
       const y1 = y + Math.max(0, item.layout.maxPaddingUp - DIMENSIONS.baseNoteHeight - 4);
@@ -533,7 +568,9 @@ export function renderScore(document: Document, yStart: number, pageWidth: numbe
         const contentX = group.labelOffset + group.bracketOffset + DIMENSIONS.leftPadding;
         const lyricRightEdge = renderedLineRightEdge(item.groupVisualWidth, pageWidth, shouldJustify, groupScaled);
         const targetTextWidth = shouldJustify && !groupScaled ? Math.max(0, lyricRightEdge - contentX - group.bracketOffset) : undefined;
-        parts.push(renderLyrics(document, group.lyrics, contentX, y + DIMENSIONS.lyricTopPadding, targetTextWidth));
+        const anchorLines = lyricAnchorLinesByGroup.get(item.groupIndex) ?? [];
+        const lyricAnchors = anchorLines.length === 1 ? anchorLines[0]! : [];
+        parts.push(renderAlignedLyrics(document, group.lyrics, contentX, y + DIMENSIONS.lyricTopPadding, targetTextWidth, lyricAnchors));
         y += DIMENSIONS.lyricTopPadding + group.lyrics.length * DIMENSIONS.lyricLineHeight;
       }
     }

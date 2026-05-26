@@ -386,7 +386,17 @@ test("parses lyric lines after score groups", () => {
       ["L1", "fallback lyric"],
     ],
   );
+  assert.deepEqual(result.value.score[1].lyrics?.[0]?.syllables, ["hello", "world"]);
   assert.equal(result.value.score[2].lyrics, undefined);
+});
+
+test("warns when aligned lyric syllables do not match main voice notes", () => {
+  const result = parse('1 2 3 4\n"one two"');
+  assert.equal(result.ok, true);
+  assert.deepEqual(
+    result.diagnostics.map((diagnostic) => diagnostic.message),
+    ["Lyric has 2 syllables but the main voice has 4 notes."],
+  );
 });
 
 test("rejects lyric lines before any score line", () => {
