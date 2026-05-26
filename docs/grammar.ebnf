@@ -1,13 +1,14 @@
 file = { NEWLINE }, [ header ], [ score ], EOF ;
 
 header = { property }, EQUALS, { EQUALS }, NEWLINE, { NEWLINE } ;
-property = label, STRING, NEWLINE, { NEWLINE } ;
+property = property_label, STRING, NEWLINE, { NEWLINE } ;
 
-label = IDENTIFIER, ":" ;
+property_label = IDENTIFIER, ":" ;
+track_label = TRACK_LABEL, ":" ;
 
 score = line, { NEWLINE, { NEWLINE }, line }, { NEWLINE } ;
 
-line = [ label ], [ start_barline ], [ ending ], measure, { measure_separator, [ ending ], measure }, [ end_barline ] ;
+line = [ track_label ], [ start_barline ], [ ending ], measure, { measure_separator, [ ending ], measure }, [ end_barline ] ;
 
 start_barline = BAR | REPEAT_START ;
 measure_separator = BAR | REPEAT_START | REPEAT_BOTH ;
@@ -34,7 +35,8 @@ length = DASH, { DASH } | ( HALF | DOT ), { HALF | DOT } ;
 
 skipped = WS | COMMENT ;
 
-IDENTIFIER = "[A-Za-z_]+ except bb, b, X" ;
+IDENTIFIER = "[A-Za-z_]+, or T followed by digits when followed by ':'" ;
+TRACK_LABEL = "T1" | "T2" | "T3" | "T4" | "T5" | "T6" | "T7" | "T8" | "T9" | "T11" | "T12" | "T13" | "T14" | "T15" | "T16" ;
 STRING = "quoted string" ;
 NOTE = "1" | "2" | "3" | "4" | "5" | "6" | "7" ;
 REST = "0" ;

@@ -1,6 +1,6 @@
 import type { Document } from "../core/index.js";
 import { actualNotePerBeat } from "../core/index.js";
-import { compileMelody, skipInitialRests, type Melody } from "./melody.js";
+import { compileArrangement, skipInitialArrangementRests, type Arrangement, type Melody } from "./melody.js";
 
 export interface MidiExportOptions {
   omitInitialRests?: boolean;
@@ -22,6 +22,8 @@ const META_TIMESIG_BB = 0x08;
 const TICKS_PER_QUARTER_NOTE = 96;
 const TICKS_PER_NOTE = TICKS_PER_QUARTER_NOTE * 4;
 const DEFAULT_VELOCITY = 64;
+const DRUM_CHANNEL = 9;
+const MELODIC_CHANNELS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15] as const;
 
 function toBytes(number: number, byteCount: number): number[] {
   const bytes: number[] = [];
@@ -112,17 +114,17 @@ class MIDITrack {
   }
 }
 
-function buildMetaTrack(melody: Melody): number[] {
+function buildMetaTrack(source: Pick<Melody, "tempo" | "beatsPerMeasure" | "beatsPerWholeNote">): number[] {
   const track = new MIDITrack(-1, 0);
-  const tempoBytes = toBytes(Math.round((60000000 / melody.tempo) * (melody.beatsPerWholeNote / 4)), 3);
+  const tempoBytes = toBytes(Math.round((60000000 / source.tempo) * (source.beatsPerWholeNote / 4)), 3);
   track.addEvent(new MIDIMetaEvent(META_EVENT_TEMPO, tempoBytes));
   const timeSignature = {
-    beatsPerMeasure: melody.beatsPerMeasure as 2 | 3 | 4 | 6 | 9 | 12,
-    beatsPerWholeNote: melody.beatsPerWholeNote as 2 | 4 | 8 | 16,
+    beatsPerMeasure: source.beatsPerMeasure as 2 | 3 | 4 | 6 | 9 | 12,
+    beatsPerWholeNote: source.beatsPerWholeNote as 2 | 4 | 8 | 16,
   };
   const timeSigBytes = [
-    melody.beatsPerMeasure,
-    Math.log2(melody.beatsPerWholeNote),
+    source.beatsPerMeasure,
+    Math.log2(source.beatsPerWholeNote),
     META_TIMESIG_CC * actualNotePerBeat(timeSignature) * 4,
     META_TIMESIG_BB,
   ];
@@ -130,9 +132,9 @@ function buildMetaTrack(melody: Melody): number[] {
   return track.toBytes();
 }
 
-function buildMusicTrack(melody: Melody, program: number): number[] {
+function buildMusicTrack(melody: Melody, program: number, channel: number): number[] {
   const drum = program >= 128;
-  const track = new MIDITrack(drum ? 9 : 0, drum ? null : program);
+  const track = new MIDITrack(drum ? DRUM_CHANNEL : channel, drum ? null : program);
   let delta = 0;
   for (const note of melody.notes) {
     if (note.chord === "rest") {
@@ -152,10 +154,40 @@ function buildMusicTrack(melody: Melody, program: number): number[] {
   return track.toBytes();
 }
 
+function labelChannel(trackName: string): number | null {
+  return /^T(?:[1-9]|1[1-6])$/.test(trackName) ? Number(trackName.slice(1)) - 1 : null;
+}
+
+function musicChannelForTrack(trackName: string, usedChannels: Set<number>, program: number): number {
+  if (program >= 128) {
+    return DRUM_CHANNEL;
+  }
+  const labeledChannel = labelChannel(trackName);
+  if (labeledChannel !== null) {
+    usedChannels.add(labeledChannel);
+    return labeledChannel;
+  }
+  const channel = MELODIC_CHANNELS.find((candidate) => !usedChannels.has(candidate));
+  if (channel === undefined) {
+    throw new Error(`MIDI export supports at most ${MELODIC_CHANNELS.length} melodic tracks.`);
+  }
+  usedChannels.add(channel);
+  return channel;
+}
+
+function buildArrangementTracks(arrangement: Arrangement): number[][] {
+  const usedChannels = new Set(
+    arrangement.tracks
+      .map((track) => labelChannel(track.name))
+      .filter((channel): channel is number => channel !== null),
+  );
+  return arrangement.tracks.map((track) => buildMusicTrack(track, track.program, musicChannelForTrack(track.name, usedChannels, track.program)));
+}
+
 export function exportMidiBytes(document: Document, program = 0, options: MidiExportOptions = {}): Uint8Array {
-  const compiled = compileMelody(document, program);
-  const melody = options.omitInitialRests ? skipInitialRests(compiled) : compiled;
-  const tracks = [buildMetaTrack(melody), buildMusicTrack(melody, program)];
+  const compiled = compileArrangement(document, program);
+  const arrangement = options.omitInitialRests ? skipInitialArrangementRests(compiled) : compiled;
+  const tracks = [buildMetaTrack(arrangement), ...buildArrangementTracks(arrangement)];
   const bytes = [
     ...HEADER_CHUNK_TYPE,
     ...HEADER_CHUNK_LENGTH,

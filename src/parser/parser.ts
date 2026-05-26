@@ -43,7 +43,8 @@ class Parser {
   private index = 0;
   private diagnostics: Diagnostic[];
   private noteIndex = 0;
-  private activeEnding: number | undefined;
+  private activeEndings = new Map<string, number | undefined>();
+  private labeledScoreMode = false;
 
   constructor(
     private readonly tokens: Token[],
@@ -58,7 +59,9 @@ class Parser {
     const { header, diagnostics } = normalizeHeader(rawHeader);
     this.diagnostics.push(...diagnostics);
     this.skipNewlines();
+    this.labeledScoreMode = this.scoreHasTrackLabelsAhead();
     const score = this.at("eof") ? [] : this.parseScore();
+    this.validateTrackLabelOrder(score);
     this.normalizeFinalEnding(score);
     this.validateTies(score);
     this.validateRepeatedEndings(score);
@@ -196,14 +199,20 @@ class Parser {
     let label: string | undefined;
     if (this.at("identifier") && this.tokens[this.index + 1]?.type === "colon") {
       label = this.current().value ?? this.current().text;
+      if (!/^T(?:[1-9]|1[1-6])$/.test(label)) {
+        this.error("Score line labels must be T1-T9 or T11-T16.", this.current().range);
+      }
       this.index += 2;
+    } else if (this.labeledScoreMode) {
+      label = "T1";
     }
+    const trackKey = label ?? "";
     const leadingRepeatStart = Boolean(this.match("repeatStart"));
     if (!leadingRepeatStart) {
       this.match("bar");
     }
     const measures: Measure[] = [];
-    let currentEnding = this.parseOptionalEnding() ?? this.activeEnding;
+    let currentEnding = this.parseOptionalEnding() ?? this.activeEndings.get(trackKey);
     measures.push(this.parseMeasure(leadingRepeatStart, currentEnding));
     while (true) {
       while (this.match("repeatEnd")) {
@@ -218,7 +227,7 @@ class Parser {
           previous.repeatEnd = true;
         }
         currentEnding = this.parseOptionalEnding();
-        this.activeEnding = currentEnding;
+        this.activeEndings.set(trackKey, currentEnding);
         measures.push(this.parseMeasure(true, currentEnding));
         continue;
       }
@@ -230,21 +239,21 @@ class Parser {
           break;
         }
         currentEnding = this.parseOptionalEnding() ?? currentEnding;
-        this.activeEnding = currentEnding;
+        this.activeEndings.set(trackKey, currentEnding);
         measures.push(this.parseMeasure(false, currentEnding));
         continue;
       }
       if (this.match("repeatStart")) {
         currentEnding = this.parseOptionalEnding() ?? currentEnding;
-        this.activeEnding = currentEnding;
+        this.activeEndings.set(trackKey, currentEnding);
         measures.push(this.parseMeasure(true, currentEnding));
         continue;
       }
       currentEnding = this.parseOptionalEnding() ?? currentEnding;
-      this.activeEnding = currentEnding;
+      this.activeEndings.set(trackKey, currentEnding);
       measures.push(this.parseMeasure(false, currentEnding));
     }
-    this.activeEnding = currentEnding;
+    this.activeEndings.set(trackKey, currentEnding);
     return {
       label,
       measures,
@@ -481,7 +490,72 @@ class Parser {
     this.index += 1;
   }
 
+  private trackLineGroups(lines: ScoreLine[]): ScoreLine[][] {
+    const hasLabels = lines.some((line) => line.label !== undefined);
+    if (!hasLabels) {
+      return [lines];
+    }
+    const groups = new Map<string, ScoreLine[]>();
+    for (const line of lines) {
+      const key = line.label ?? "";
+      const group = groups.get(key) ?? [];
+      group.push(line);
+      groups.set(key, group);
+    }
+    return [...groups.values()];
+  }
+
+  private scoreHasTrackLabelsAhead(): boolean {
+    for (let index = this.index; index < this.tokens.length - 1; index += 1) {
+      const token = this.tokens[index]!;
+      const next = this.tokens[index + 1]!;
+      const label = token.value ?? token.text;
+      if (token.type === "identifier" && next.type === "colon" && /^T(?:[1-9]|1[1-6])$/.test(label)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private validateTrackLabelOrder(lines: ScoreLine[]) {
+    if (!lines.some((line) => line.label !== undefined)) {
+      return;
+    }
+
+    let expected = "T1";
+    let sawDefaultInGroup = false;
+    for (const line of lines) {
+      const label = line.label ?? "";
+      if (label === "") {
+        sawDefaultInGroup = true;
+        continue;
+      }
+      if (label === "T1") {
+        expected = "T2";
+        sawDefaultInGroup = false;
+        continue;
+      }
+      if (sawDefaultInGroup || label !== expected) {
+        const expectedText = expected === "T1" ? "T1" : `${expected} or T1`;
+        this.error(`Track labels must start at T1 and increase within each group. Expected ${expectedText}.`, line.range);
+        return;
+      }
+      expected = this.nextTrackLabel(label);
+    }
+  }
+
+  private nextTrackLabel(label: string): string {
+    const number = Number(label.slice(1));
+    return number === 9 ? "T11" : `T${number + 1}`;
+  }
+
   private validateTies(lines: ScoreLine[]) {
+    for (const trackLines of this.trackLineGroups(lines)) {
+      this.validateTrackTies(trackLines);
+    }
+  }
+
+  private validateTrackTies(lines: ScoreLine[]) {
     let previous: ResolvedTieTarget | undefined;
     let hasPreviousNote = false;
 
@@ -556,6 +630,12 @@ class Parser {
   }
 
   private validateRepeatedEndings(lines: ScoreLine[]) {
+    for (const trackLines of this.trackLineGroups(lines)) {
+      this.validateTrackRepeatedEndings(trackLines);
+    }
+  }
+
+  private validateTrackRepeatedEndings(lines: ScoreLine[]) {
     const measures = lines.flatMap((line) => line.measures);
     const endingGroups = this.groupEndingBlocks(measures);
     for (const endingBlocks of endingGroups) {
@@ -646,6 +726,12 @@ class Parser {
   }
 
   private normalizeFinalEnding(lines: ScoreLine[]) {
+    for (const trackLines of this.trackLineGroups(lines)) {
+      this.normalizeTrackFinalEnding(trackLines);
+    }
+  }
+
+  private normalizeTrackFinalEnding(lines: ScoreLine[]) {
     const measures = lines.flatMap((line) => line.measures);
     const endingBlocks = this.collectEndingBlocks(measures);
     for (let blockIndex = 0; blockIndex < endingBlocks.length; blockIndex += 1) {

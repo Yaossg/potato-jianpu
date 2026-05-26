@@ -1,5 +1,6 @@
-import { actualNotePerBeat, type Document, type Measure, type Note, type Pitch, type PitchNote } from "../core/index.js";
+import { actualNotePerBeat, type Document, type Measure, type Note, type Pitch, type PitchNote, type ScoreLine } from "../core/index.js";
 import { DIMENSIONS } from "./dimensions.js";
+import { scoreLineDisplayLabel } from "./labels.js";
 import { flattenNotes, layoutLine, measureXOffset, type LineLayout } from "./layout.js";
 import { chordHeight, maxAccidentalOffset, noteTieAfter, widthOf } from "./metrics.js";
 import type { JustifyMode } from "./options.js";
@@ -12,10 +13,6 @@ const accidentalMap = new Map([
   [-1, "&#9837;"],
   [-2, "&#119083;"],
 ]);
-
-function lastMeasure(document: Document): Measure | undefined {
-  return document.score.at(-1)?.measures.at(-1);
-}
 
 function renderOctaveDots(pitch: Pitch, x: number, y: number, isBase: boolean, halves: number): string {
   const parts: string[] = [];
@@ -244,17 +241,28 @@ function hasLaterDifferentEnding(document: Document, measure: Measure): boolean 
   return false;
 }
 
-function renderLine(layout: LineLayout, lineY: number, allNotes: Note[], document: Document, activeNoteIndex: number, justifyLine: boolean, visualWidth: number): string {
+function renderLine(
+  layout: LineLayout,
+  lineY: number,
+  allNotes: Note[],
+  document: Document,
+  activeNoteIndices: Set<number>,
+  justifyLine: boolean,
+  visualWidth: number,
+  labelOffset: number,
+  bracketOffset: number,
+  finalBarMeasures: Set<Measure>,
+): string {
   const parts: string[] = [];
   const lineEntries: Array<{ note: Note; x: number; y: number; full: boolean }> = [];
   const unit = actualNotePerBeat(document.header.timeSignature);
-  const finalMeasure = lastMeasure(document);
-  const labelOffset = layout.line.label ? DIMENSIONS.labelWidth : 0;
-  const justifyX = createLineJustifier(layout, visualWidth - labelOffset, justifyLine);
-  const leftTieEdgeX = labelOffset;
-  const rightTieEdgeX = labelOffset + justifyX(layout.width - DIMENSIONS.leftPadding + 12);
-  if (layout.line.label) {
-    parts.push(`<text class="line-label" x="8" y="${lineY + layout.maxPaddingUp}" text-anchor="start">${escapeXml(layout.line.label)}</text>`);
+  const displayLabel = scoreLineDisplayLabel(document, layout.line);
+  const contentOffset = labelOffset + bracketOffset;
+  const justifyX = createLineJustifier(layout, visualWidth - contentOffset - bracketOffset, justifyLine);
+  const leftTieEdgeX = contentOffset;
+  const rightTieEdgeX = contentOffset + justifyX(layout.width - DIMENSIONS.leftPadding + 12);
+  if (displayLabel) {
+    parts.push(`<text class="line-label" x="8" y="${lineY + layout.maxPaddingUp}" text-anchor="start">${escapeXml(displayLabel)}</text>`);
   }
   for (const [measureIndex, measureLayout] of layout.measures.entries()) {
     const xOffset = measureXOffset(layout.measures, measureIndex);
@@ -276,8 +284,8 @@ function renderLine(layout: LineLayout, lineY: number, allNotes: Note[], documen
       parts.push(
         renderEnding(
           measureLayout.measure.ending,
-          labelOffset + justifyX(endingStartX),
-          labelOffset + justifyX(endingEndX),
+          contentOffset + justifyX(endingStartX),
+          contentOffset + justifyX(endingEndX),
           lineY + layout.maxPaddingUp,
           openEnd,
         ),
@@ -285,7 +293,7 @@ function renderLine(layout: LineLayout, lineY: number, allNotes: Note[], documen
     }
     if (measureLayout.measure.repeatStart && !previousMeasure?.repeatEnd) {
       const naturalStartX = xOffset + (measureLayout.repeatStartX ?? 0);
-      const startX = labelOffset + justifyX(naturalStartX);
+      const startX = contentOffset + justifyX(naturalStartX);
       parts.push(renderRepeatStart(startX, lineY + layout.maxPaddingUp + DIMENSIONS.noteBottomPadding));
     }
     let groupStartX: number | null = null;
@@ -296,7 +304,7 @@ function renderLine(layout: LineLayout, lineY: number, allNotes: Note[], documen
       const groupShift = justifyX(groupStartX) - groupStartX;
       lineEntries.push({
         note,
-        x: labelOffset + naturalX + groupShift,
+        x: contentOffset + naturalX + groupShift,
         y: lineY + layout.maxPaddingUp,
         full: fullness[noteIndex] ?? false,
       });
@@ -309,16 +317,16 @@ function renderLine(layout: LineLayout, lineY: number, allNotes: Note[], documen
     if (nextMeasure?.repeatStart) {
       if (measureLayout.measure.repeatEnd) {
         const barX = naturalBarX + DIMENSIONS.repeatEndLeftGap;
-        parts.push(renderRepeatBoth(labelOffset + justifyX(barX), lineY + layout.maxPaddingUp + DIMENSIONS.noteBottomPadding));
+        parts.push(renderRepeatBoth(contentOffset + justifyX(barX), lineY + layout.maxPaddingUp + DIMENSIONS.noteBottomPadding));
       }
       continue;
     }
     const barX = naturalBarX + (measureLayout.measure.repeatEnd ? DIMENSIONS.repeatEndLeftGap : 0);
     parts.push(
       renderBar(
-        labelOffset + justifyX(barX),
+        contentOffset + justifyX(barX),
         lineY + layout.maxPaddingUp + DIMENSIONS.noteBottomPadding,
-        measureLayout.measure === finalMeasure,
+        finalBarMeasures.has(measureLayout.measure),
         measureLayout.measure.repeatEnd,
       ),
     );
@@ -339,7 +347,7 @@ function renderLine(layout: LineLayout, lineY: number, allNotes: Note[], documen
       parts.push(renderOutgoingTie(startX, rightTieEdgeX, lineY + layout.maxPaddingUp - DIMENSIONS.tiePadding, chordHeight(entry.note)));
     }
 
-    const className = entry.note.index === activeNoteIndex ? "note-item active" : "note-item";
+    const className = activeNoteIndices.has(entry.note.index) ? "note-item active" : "note-item";
     const noteParts: string[] = [];
     if (entry.note.kind === "pitch") {
       noteParts.push(renderPitchNote(entry.note, entry.x, entry.y));
@@ -353,30 +361,139 @@ function renderLine(layout: LineLayout, lineY: number, allNotes: Note[], documen
   return parts.join("\n");
 }
 
-function lineVisualWidth(layout: LineLayout): number {
-  return layout.width + (layout.line.label ? DIMENSIONS.labelWidth : 0);
+interface ScoreLineGroup {
+  lines: ScoreLine[];
+  bracketed: boolean;
+  labelOffset: number;
+  bracketOffset: number;
 }
 
-export function renderScore(document: Document, yStart: number, pageWidth: number, activeNoteIndex: number, justifyMode: JustifyMode): { svg: string; height: number; width: number } {
-  const allNotes = flattenNotes(document);
-  const layouts = document.score.flatMap((line) => {
-    const labelOffset = line.label ? DIMENSIONS.labelWidth : 0;
-    return layoutLine(line, allNotes, Math.max(1, pageWidth - labelOffset));
+interface RenderLineLayout {
+  layout: LineLayout;
+  groupIndex: number;
+  labelOffset: number;
+  bracketOffset: number;
+}
+
+function scoreLineGroups(document: Document): ScoreLineGroup[] {
+  const hasLabels = document.score.some((line) => line.label !== undefined);
+  if (!hasLabels) {
+    return document.score.map((line) => ({ lines: [line], bracketed: false, labelOffset: 0, bracketOffset: 0 }));
+  }
+
+  const groups: ScoreLine[][] = [];
+  let current: ScoreLine[] = [];
+  for (const line of document.score) {
+    if (line.label === "T1" && current.length > 0) {
+      groups.push(current);
+      current = [];
+    }
+    current.push(line);
+  }
+  if (current.length > 0) {
+    groups.push(current);
+  }
+
+  return groups.map((lines) => {
+    const hasDisplayLabel = lines.some((line) => scoreLineDisplayLabel(document, line));
+    const bracketed = lines.length > 1;
+    return {
+      lines,
+      bracketed,
+      labelOffset: hasDisplayLabel ? DIMENSIONS.labelWidth : 0,
+      bracketOffset: bracketed ? DIMENSIONS.voiceBracketWidth : 0,
+    };
   });
+}
+
+function finalBarMeasures(groups: ScoreLineGroup[]): Set<Measure> {
+  const finalMeasures = new Set<Measure>();
+  const finalGroup = groups.at(-1);
+  if (!finalGroup) {
+    return finalMeasures;
+  }
+  for (const line of finalGroup.lines) {
+    const measure = line.measures.at(-1);
+    if (measure) {
+      finalMeasures.add(measure);
+    }
+  }
+  return finalMeasures;
+}
+
+function lineVisualWidth(layout: RenderLineLayout): number {
+  return layout.layout.width + layout.labelOffset + layout.bracketOffset * 2;
+}
+
+function renderVoiceBracket(x: number, y1: number, y2: number, side: "left" | "right"): string {
+  const hook = 9;
+  const bevel = 7;
+  const innerX = side === "left" ? x + hook : x - hook;
+  return `<path class="voice-bracket" d="M${innerX},${y1} L${x},${y1 + bevel} V${y2 - bevel} L${innerX},${y2}"/>`;
+}
+
+export function renderScore(document: Document, yStart: number, pageWidth: number, activeNoteIndices: number[], justifyMode: JustifyMode): { svg: string; height: number; width: number } {
+  const allNotes = flattenNotes(document);
+  const activeNoteIndexSet = new Set(activeNoteIndices);
+  const groups = scoreLineGroups(document);
+  const finalMeasures = finalBarMeasures(groups);
+  const layouts = groups.flatMap((group, groupIndex) =>
+    group.lines.flatMap((line) =>
+      layoutLine(line, allNotes, Math.max(1, pageWidth - group.labelOffset - group.bracketOffset * 2)).map((layout) => ({
+        layout,
+        groupIndex,
+        labelOffset: group.labelOffset,
+        bracketOffset: group.bracketOffset,
+      })),
+    ),
+  );
   let y = yStart;
   const parts: string[] = [];
-  for (const [index, layout] of layouts.entries()) {
-    const width = lineVisualWidth(layout);
+  const groupBounds = new Map<number, { y1: number; y2: number; x2: number }>();
+  for (const [index, item] of layouts.entries()) {
+    const width = lineVisualWidth(item);
     const scaleX = width > pageWidth ? pageWidth / width : 1;
     const visualWidth = scaleX < 1 ? width : pageWidth;
     const shouldJustify = justifyMode === "all" || (justifyMode === "except-last" && index < layouts.length - 1);
-    const line = renderLine(layout, y, allNotes, document, activeNoteIndex, shouldJustify && scaleX === 1, visualWidth);
+    const line = renderLine(
+      item.layout,
+      y,
+      allNotes,
+      document,
+      activeNoteIndexSet,
+      shouldJustify && scaleX === 1,
+      visualWidth,
+      item.labelOffset,
+      item.bracketOffset,
+      finalMeasures,
+    );
     parts.push(scaleX < 1 ? `<g class="score-line scaled" transform="scale(${scaleX},1)">${line}</g>` : line);
-    y += layout.height + DIMENSIONS.lineSpacing;
+
+    if (groups[item.groupIndex]?.bracketed) {
+      const y1 = y + Math.max(0, item.layout.maxPaddingUp - DIMENSIONS.baseNoteHeight - 4);
+      const y2 = y + item.layout.height;
+      const current = groupBounds.get(item.groupIndex);
+      groupBounds.set(item.groupIndex, {
+        y1: Math.min(current?.y1 ?? y1, y1),
+        y2: Math.max(current?.y2 ?? y2, y2),
+        x2: Math.max(current?.x2 ?? 0, Math.min(pageWidth, width) - item.bracketOffset / 2),
+      });
+    }
+
+    y += item.layout.height + DIMENSIONS.lineSpacing;
   }
+
+  for (const [groupIndex, bounds] of groupBounds) {
+    const group = groups[groupIndex]!;
+    const leftX = group.labelOffset + group.bracketOffset / 2;
+    const yShift = -4;
+    parts.push(renderVoiceBracket(leftX, bounds.y1 + yShift, bounds.y2 + yShift, "left"));
+    parts.push(renderVoiceBracket(bounds.x2, bounds.y1 + yShift, bounds.y2 + yShift, "right"));
+  }
+
   return {
     svg: parts.join("\n"),
     width: Math.min(pageWidth, Math.max(0, ...layouts.map(lineVisualWidth))),
-    height: layouts.reduce((sum, layout) => sum + layout.height + DIMENSIONS.lineSpacing, 0),
+    height: layouts.reduce((sum, item) => sum + item.layout.height + DIMENSIONS.lineSpacing, 0),
   };
 }

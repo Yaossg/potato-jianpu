@@ -1,6 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent } from "react";
-import { compileMelody, DRUM_PROGRAMS, exportMidiBytes, GM_PROGRAMS, parse, skipInitialRests } from "../index.js";
+import {
+  arrangementDuration,
+  arrangementNoteCount,
+  compileArrangement,
+  DRUM_PROGRAMS,
+  exportMidiBytes,
+  GM_PROGRAMS,
+  parse,
+  skipInitialArrangementRests,
+  trimArrangementAtNote,
+} from "../index.js";
 import { inferContentPageWidth, renderSvg } from "../renderer/index.js";
 import { exportBrowserMp3Bytes, exportBrowserWavBytes } from "./audio-export.js";
 import { PreviewAudioPlayer } from "./audio.js";
@@ -408,7 +418,7 @@ export function App() {
   const [source, setSource] = useState(() => initialSource());
   const [language, setLanguage] = useState<Language>(() => initialLanguage());
   const [isPlaying, setIsPlaying] = useState(false);
-  const [activeNoteIndex, setActiveNoteIndex] = useState<number | null>(null);
+  const [activeNoteIndices, setActiveNoteIndices] = useState<number[]>([]);
   const [pageWidthMode, setPageWidthMode] = useState<PageWidthMode>("panel");
   const [manualPageWidth, setManualPageWidth] = useState(DEFAULT_PAGE_WIDTH);
   const [panelPageWidth, setPanelPageWidth] = useState(DEFAULT_PAGE_WIDTH);
@@ -441,12 +451,12 @@ export function App() {
         ? renderSvg(parsed.value, {
             pageWidth,
             justifyMode,
-            activeNoteIndex: activeNoteIndex ?? undefined,
+            activeNoteIndices,
             color: scoreColor,
             background: pageBackground,
           })
         : null,
-    [activeNoteIndex, justifyMode, pageBackground, pageWidth, parsed, scoreColor],
+    [activeNoteIndices, justifyMode, pageBackground, pageWidth, parsed, scoreColor],
   );
 
   useEffect(() => {
@@ -509,11 +519,11 @@ export function App() {
     if (!parsed.ok) {
       return "";
     }
-    const compiled = compileMelody(parsed.value, program);
-    const melody = omitInitialRests ? skipInitialRests(compiled) : compiled;
-    const secondsPerWholeNote = (60 / melody.tempo) * melody.beatsPerWholeNote;
-    const seconds = melody.notes.reduce((sum, note) => sum + note.duration * secondsPerWholeNote, 0);
-    return audioExportSummary(language, melody.notes.length, seconds);
+    const compiled = compileArrangement(parsed.value, program);
+    const arrangement = omitInitialRests ? skipInitialArrangementRests(compiled) : compiled;
+    const secondsPerWholeNote = (60 / arrangement.tempo) * arrangement.beatsPerWholeNote;
+    const seconds = arrangementDuration(arrangement) * secondsPerWholeNote;
+    return audioExportSummary(language, arrangementNoteCount(arrangement), seconds);
   }
 
   async function exportWav() {
@@ -594,17 +604,17 @@ export function App() {
     setShowExamples(false);
     const player = playerRef.current ?? new PreviewAudioPlayer();
     playerRef.current = player;
-    const compiled = compileMelody(parsed.value, program);
-    const melody = startNoteIndex === 0 && omitInitialRests ? skipInitialRests(compiled) : compiled;
+    const compiled = compileArrangement(parsed.value, program);
+    const arrangement = startNoteIndex === 0 && omitInitialRests ? skipInitialArrangementRests(compiled) : compiled;
+    const playbackArrangement = startNoteIndex === 0 ? arrangement : trimArrangementAtNote(arrangement, startNoteIndex);
     setIsPlaying(true);
     await player.play(
-      melody,
+      playbackArrangement,
       () => {
         setIsPlaying(false);
-        setActiveNoteIndex(null);
+        setActiveNoteIndices([]);
       },
-      setActiveNoteIndex,
-      startNoteIndex,
+      setActiveNoteIndices,
       volume / 100,
       program,
     );
@@ -617,16 +627,15 @@ export function App() {
     }
     const player = playerRef.current ?? new PreviewAudioPlayer();
     playerRef.current = player;
-    setActiveNoteIndex(null);
+    setActiveNoteIndices([]);
     setIsPlaying(true);
     await player.play(
-      compileMelody(result.value, program),
+      compileArrangement(result.value, program),
       () => {
         setIsPlaying(false);
-        setActiveNoteIndex(null);
+        setActiveNoteIndices([]);
       },
       undefined,
-      0,
       volume / 100,
       program,
     );
@@ -635,7 +644,7 @@ export function App() {
   function stopPlayback() {
     playerRef.current?.stop();
     setIsPlaying(false);
-    setActiveNoteIndex(null);
+    setActiveNoteIndices([]);
   }
 
   function stop() {
@@ -660,7 +669,7 @@ export function App() {
   function updateSource(nextSource: string) {
     playerRef.current?.stop();
     setIsPlaying(false);
-    setActiveNoteIndex(null);
+    setActiveNoteIndices([]);
     setSource(nextSource);
   }
 

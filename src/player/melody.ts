@@ -1,4 +1,4 @@
-import type { Document, Measure, Note, Pitch } from "../core/index.js";
+import type { Document, Measure, Note, Pitch, ScoreLine } from "../core/index.js";
 
 export interface MelodyNote {
   chord: number[] | "rest";
@@ -8,6 +8,18 @@ export interface MelodyNote {
 
 export interface Melody {
   notes: MelodyNote[];
+  tempo: number;
+  beatsPerMeasure: number;
+  beatsPerWholeNote: number;
+}
+
+export interface ArrangementTrack extends Melody {
+  name: string;
+  program: number;
+}
+
+export interface Arrangement {
+  tracks: ArrangementTrack[];
   tempo: number;
   beatsPerMeasure: number;
   beatsPerWholeNote: number;
@@ -69,9 +81,16 @@ function compileMeasure(measure: Measure, baseNoteMap: number[], program: number
   }
 }
 
-function expandRepeatedMeasures(document: Document): Measure[] {
+function melodyBase(document: Document) {
+  return {
+    tempo: document.header.tempo,
+    beatsPerMeasure: document.header.timeSignature.beatsPerMeasure,
+    beatsPerWholeNote: document.header.timeSignature.beatsPerWholeNote,
+  };
+}
+
+function expandRepeatedMeasures(measures: Measure[]): Measure[] {
   const expanded: Measure[] = [];
-  const measures = document.score.flatMap((line) => line.measures);
 
   function shouldPlayOnPass(measure: Measure, pass: number): boolean {
     return measure.ending === undefined || measure.ending === pass;
@@ -115,19 +134,163 @@ function expandRepeatedMeasures(document: Document): Measure[] {
   return expanded;
 }
 
-export function compileMelody(document: Document, program = 0): Melody {
-  assertProgram(program);
+function compileMeasures(document: Document, measures: Measure[], program: number): Melody {
   const baseNoteMap = C_MAJOR_NOTE_MAP.map((note) => note + document.header.keySignature);
   const notes: MelodyNote[] = [];
-  for (const measure of expandRepeatedMeasures(document)) {
+  for (const measure of expandRepeatedMeasures(measures)) {
     compileMeasure(measure, baseNoteMap, program, notes);
   }
 
   return {
     notes,
-    tempo: document.header.tempo,
-    beatsPerMeasure: document.header.timeSignature.beatsPerMeasure,
-    beatsPerWholeNote: document.header.timeSignature.beatsPerWholeNote,
+    ...melodyBase(document),
+  };
+}
+
+export function compileMelody(document: Document, program = 0): Melody {
+  assertProgram(program);
+  return compileMeasures(
+    document,
+    document.score.flatMap((line) => line.measures),
+    program,
+  );
+}
+
+function noteDuration(notes: MelodyNote[]): number {
+  return notes.reduce((sum, note) => sum + note.duration, 0);
+}
+
+function rest(duration: number): MelodyNote[] {
+  return duration > 0 ? [{ chord: "rest", duration, index: -1 }] : [];
+}
+
+function arrangementLineGroups(lines: ScoreLine[]): ScoreLine[][] {
+  const groups: ScoreLine[][] = [];
+  let current: ScoreLine[] = [];
+  for (const line of lines) {
+    if (line.label === "T1" && current.length > 0) {
+      groups.push(current);
+      current = [];
+    }
+    current.push(line);
+  }
+  if (current.length > 0) {
+    groups.push(current);
+  }
+  return groups;
+}
+
+export function compileArrangement(document: Document, program = 0): Arrangement {
+  assertProgram(program);
+  const base = melodyBase(document);
+  const hasLabels = document.score.some((line) => line.label !== undefined);
+  if (!hasLabels) {
+    return {
+      tracks: [{ name: "", program, ...compileMelody(document, program) }],
+      ...base,
+    };
+  }
+
+  const trackNotes = new Map<string, MelodyNote[]>();
+  let groupStart = 0;
+  for (const group of arrangementLineGroups(document.score)) {
+    const compiledLines = group.map((line) => ({
+      name: line.label ?? "",
+      notes: compileMeasures(document, line.measures, program).notes,
+    }));
+    const groupDuration = Math.max(0, ...compiledLines.map((line) => noteDuration(line.notes)));
+    for (const line of compiledLines) {
+      const notes = trackNotes.get(line.name) ?? [];
+      notes.push(...rest(groupStart - noteDuration(notes)), ...line.notes);
+      trackNotes.set(line.name, notes);
+    }
+    groupStart += groupDuration;
+  }
+
+  return {
+    tracks: [...trackNotes].map(([name, notes]) => ({
+      name,
+      program,
+      notes,
+      ...base,
+    })),
+    ...base,
+  };
+}
+
+function leadingRestDuration(notes: MelodyNote[]): number | null {
+  let duration = 0;
+  for (const note of notes) {
+    if (note.chord !== "rest") {
+      return duration;
+    }
+    duration += note.duration;
+  }
+  return null;
+}
+
+function trimNotesAt(notes: MelodyNote[], offset: number): MelodyNote[] {
+  if (offset <= 0) {
+    return notes;
+  }
+  const trimmed: MelodyNote[] = [];
+  let elapsed = 0;
+  for (const note of notes) {
+    const end = elapsed + note.duration;
+    if (end <= offset) {
+      elapsed = end;
+      continue;
+    }
+    trimmed.push(elapsed < offset ? { ...note, duration: end - offset } : note);
+    elapsed = end;
+  }
+  return trimmed;
+}
+
+export function arrangementDuration(arrangement: Arrangement): number {
+  return Math.max(0, ...arrangement.tracks.map((track) => noteDuration(track.notes)));
+}
+
+export function arrangementNoteCount(arrangement: Arrangement): number {
+  return arrangement.tracks.reduce((sum, track) => sum + track.notes.length, 0);
+}
+
+export function skipInitialArrangementRests(arrangement: Arrangement): Arrangement {
+  const soundingOffsets = arrangement.tracks.map((track) => leadingRestDuration(track.notes)).filter((duration): duration is number => duration !== null);
+  if (soundingOffsets.length === 0) {
+    return {
+      ...arrangement,
+      tracks: arrangement.tracks.map((track) => ({ ...track, notes: [] })),
+    };
+  }
+  const offset = Math.min(...soundingOffsets);
+  return {
+    ...arrangement,
+    tracks: arrangement.tracks.map((track) => ({ ...track, notes: trimNotesAt(track.notes, offset) })),
+  };
+}
+
+export function trimArrangementAtNote(arrangement: Arrangement, noteIndex: number): Arrangement {
+  let startOffset: number | null = null;
+  for (const track of arrangement.tracks) {
+    let elapsed = 0;
+    for (const note of track.notes) {
+      if (note.index === noteIndex) {
+        startOffset = elapsed;
+        break;
+      }
+      elapsed += note.duration;
+    }
+    if (startOffset !== null) {
+      break;
+    }
+  }
+  if (startOffset === null || startOffset <= 0) {
+    return arrangement;
+  }
+  return {
+    ...arrangement,
+    tracks: arrangement.tracks.map((track) => ({ ...track, notes: trimNotesAt(track.notes, startOffset) })),
   };
 }
 

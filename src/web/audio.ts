@@ -1,4 +1,4 @@
-import type { Melody, MelodyNote } from "../player/index.js";
+import type { Arrangement, MelodyNote } from "../player/index.js";
 import WebAudioTinySynth from "../player/webaudio-tinysynth.js";
 
 const DEFAULT_VELOCITY = 64;
@@ -43,17 +43,14 @@ export class PreviewAudioPlayer {
   private displayDelay = new CancellableDelay();
 
   async play(
-    melody: Melody,
+    arrangement: Arrangement,
     onEnded: () => void,
-    onNoteStart?: (noteIndex: number) => void,
-    startNoteIndex = 0,
+    onNoteStart?: (noteIndices: number[]) => void,
     volume = 1,
     program = 0,
   ) {
     this.stop();
     const generation = this.playGeneration;
-    const startIndex = melody.notes.findIndex((note) => note.index >= startNoteIndex);
-    const notes = startIndex >= 0 ? melody.notes.slice(startIndex) : [];
     const synth = await this.getSynth(volume, program);
     if (generation !== this.playGeneration) {
       return;
@@ -64,11 +61,11 @@ export class PreviewAudioPlayer {
       return;
     }
 
-    const secondsPerWholeNote = (60 / melody.tempo) * melody.beatsPerWholeNote;
+    const secondsPerWholeNote = (60 / arrangement.tempo) * arrangement.beatsPerWholeNote;
     const channel = program >= 128 ? DRUM_CHANNEL : MELODIC_CHANNEL;
 
-    void this.displayNotes(notes, secondsPerWholeNote, onNoteStart, generation);
-    await this.scheduleSound(notes, secondsPerWholeNote, channel, synth, context, generation);
+    void this.displayNotes(arrangement, secondsPerWholeNote, onNoteStart, generation);
+    await this.scheduleSound(arrangement, secondsPerWholeNote, channel, synth, context, generation);
     if (generation === this.playGeneration) {
       onEnded();
     }
@@ -82,9 +79,9 @@ export class PreviewAudioPlayer {
   }
 
   private async displayNotes(
-    notes: MelodyNote[],
+    arrangement: Arrangement,
     secondsPerWholeNote: number,
-    onNoteStart: ((noteIndex: number) => void) | undefined,
+    onNoteStart: ((noteIndices: number[]) => void) | undefined,
     generation: number,
   ) {
     if (!onNoteStart) {
@@ -95,50 +92,81 @@ export class PreviewAudioPlayer {
       return;
     }
     const context = synth.getAudioContext();
-    let currentTime = context.currentTime;
-    const displaySchedule = notes.map((note) => {
-      currentTime += note.duration * secondsPerWholeNote;
-      return { noteIndex: note.index, until: currentTime };
-    });
+    const startTime = context.currentTime;
+    const displaySchedule = this.noteStartGroups(arrangement);
 
     for (const item of displaySchedule) {
       if (generation !== this.playGeneration) {
         return;
       }
-      onNoteStart(item.noteIndex);
-      await this.displayDelay.delay(item.until - context.currentTime);
+      await this.displayDelay.delay(startTime + item.offset * secondsPerWholeNote - context.currentTime);
+      if (generation !== this.playGeneration) {
+        return;
+      }
+      onNoteStart(item.noteIndices);
     }
   }
 
   private async scheduleSound(
-    notes: MelodyNote[],
+    arrangement: Arrangement,
     secondsPerWholeNote: number,
     channel: number,
     synth: WebAudioTinySynth,
     context: AudioContext,
     generation: number,
   ) {
-    let currentTime = context.currentTime;
-    for (const note of notes) {
+    const startTime = context.currentTime;
+    let latestEndTime = startTime;
+    for (const item of this.noteSchedule(arrangement)) {
       if (generation !== this.playGeneration) {
         return;
       }
-      const duration = note.duration * secondsPerWholeNote;
-      if (note.chord !== "rest") {
-        for (const midiNote of note.chord) {
-          synth.noteOn(channel, midiNote, DEFAULT_VELOCITY, currentTime);
-          synth.noteOff(channel, midiNote, currentTime + duration);
+      const noteStartTime = startTime + item.offset * secondsPerWholeNote;
+      const currentTime = noteStartTime;
+      const duration = item.note.duration * secondsPerWholeNote;
+      if (item.note.chord !== "rest") {
+        for (const midiNote of item.note.chord) {
+          synth.noteOn(channel, midiNote, DEFAULT_VELOCITY, noteStartTime);
+          synth.noteOff(channel, midiNote, noteStartTime + duration);
         }
       }
-      currentTime += duration;
+      latestEndTime = Math.max(latestEndTime, noteStartTime + duration);
 
       if (currentTime > context.currentTime + SCHEDULE_AHEAD_SECONDS) {
         await this.scheduleDelay.delay(SCHEDULE_PAUSE_SECONDS);
       }
     }
     if (generation === this.playGeneration) {
-      await this.scheduleDelay.delay(currentTime - context.currentTime + END_GRACE_SECONDS);
+      await this.scheduleDelay.delay(latestEndTime - context.currentTime + END_GRACE_SECONDS);
     }
+  }
+
+  private noteSchedule(arrangement: Arrangement): Array<{ note: MelodyNote; offset: number }> {
+    const schedule: Array<{ note: MelodyNote; offset: number }> = [];
+    for (const track of arrangement.tracks) {
+      let offset = 0;
+      for (const note of track.notes) {
+        schedule.push({ note, offset });
+        offset += note.duration;
+      }
+    }
+    return schedule.sort((left, right) => left.offset - right.offset || left.note.index - right.note.index);
+  }
+
+  private noteStartGroups(arrangement: Arrangement): Array<{ noteIndices: number[]; offset: number }> {
+    const groups: Array<{ noteIndices: number[]; offset: number }> = [];
+    for (const item of this.noteSchedule(arrangement)) {
+      if (item.note.index < 0) {
+        continue;
+      }
+      const current = groups.at(-1);
+      if (current && Math.abs(current.offset - item.offset) < 1e-9) {
+        current.noteIndices.push(item.note.index);
+      } else {
+        groups.push({ noteIndices: [item.note.index], offset: item.offset });
+      }
+    }
+    return groups;
   }
 
   private async getSynth(volume: number, program: number): Promise<WebAudioTinySynth> {

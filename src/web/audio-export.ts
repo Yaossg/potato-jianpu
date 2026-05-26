@@ -1,5 +1,5 @@
 import type { Document } from "../core/index.js";
-import { compileMelody, skipInitialRests, type Melody } from "../player/index.js";
+import { arrangementDuration, compileArrangement, skipInitialArrangementRests, type Arrangement, type MelodyNote } from "../player/index.js";
 import WebAudioTinySynth from "../player/webaudio-tinysynth.js";
 import * as lamejs from "lamejs";
 import BitStream from "lamejs/src/js/BitStream.js";
@@ -41,13 +41,12 @@ lameGlobals.MPEGMode = MPEGMode;
 lameGlobals.Lame = Lame;
 lameGlobals.BitStream = BitStream;
 
-function secondsPerWholeNote(melody: Melody): number {
-  return (60 / melody.tempo) * melody.beatsPerWholeNote;
+function secondsPerWholeNote(arrangement: Arrangement): number {
+  return (60 / arrangement.tempo) * arrangement.beatsPerWholeNote;
 }
 
-function totalSeconds(melody: Melody): number {
-  const secondsPerWhole = secondsPerWholeNote(melody);
-  return melody.notes.reduce((sum, note) => sum + note.duration * secondsPerWhole, 0);
+function totalSeconds(arrangement: Arrangement): number {
+  return arrangementDuration(arrangement) * secondsPerWholeNote(arrangement);
 }
 
 function normalizeAudioOptions(options: BrowserAudioExportOptions, label: string) {
@@ -76,13 +75,11 @@ function normalizeBitRate(bitRate: number | undefined): number {
   return normalized;
 }
 
-function scheduleTinySynth(synth: WebAudioTinySynth, melody: Melody, program: number) {
-  const secondsPerWhole = secondsPerWholeNote(melody);
-  const channel = program >= 128 ? DRUM_CHANNEL : MELODIC_CHANNEL;
+function scheduleTrack(synth: WebAudioTinySynth, notes: MelodyNote[], secondsPerWhole: number, channel: number) {
   const context = synth.getAudioContext();
   let currentTime = context.currentTime;
 
-  for (const note of melody.notes) {
+  for (const note of notes) {
     const duration = note.duration * secondsPerWhole;
     if (note.chord !== "rest") {
       for (const midiNote of note.chord) {
@@ -94,15 +91,23 @@ function scheduleTinySynth(synth: WebAudioTinySynth, melody: Melody, program: nu
   }
 }
 
+function scheduleTinySynth(synth: WebAudioTinySynth, arrangement: Arrangement, program: number) {
+  const secondsPerWhole = secondsPerWholeNote(arrangement);
+  const channel = program >= 128 ? DRUM_CHANNEL : MELODIC_CHANNEL;
+  for (const track of arrangement.tracks) {
+    scheduleTrack(synth, track.notes, secondsPerWhole, channel);
+  }
+}
+
 async function renderDocumentPcm(document: Document, options: BrowserAudioExportOptions, label: string): Promise<RenderedAudio> {
   const { sampleRate, amplitude, program } = normalizeAudioOptions(options, label);
-  const compiled = compileMelody(document, program);
-  const melody = options.omitInitialRests ? skipInitialRests(compiled) : compiled;
-  const durationSeconds = Math.max(0.01, totalSeconds(melody) + RENDER_TAIL_SECONDS);
+  const compiled = compileArrangement(document, program);
+  const arrangement = options.omitInitialRests ? skipInitialArrangementRests(compiled) : compiled;
+  const durationSeconds = Math.max(0.01, totalSeconds(arrangement) + RENDER_TAIL_SECONDS);
   const frameCount = Math.max(1, Math.ceil(durationSeconds * sampleRate));
   const context = new OfflineAudioContext(CHANNEL_COUNT, frameCount, sampleRate);
   const synth = new WebAudioTinySynth({
-    voices: Math.max(64, melody.notes.length),
+    voices: Math.max(64, arrangement.tracks.reduce((sum, track) => sum + track.notes.length, 0)),
     internalcontext: false,
   });
 
@@ -113,7 +118,7 @@ async function renderDocumentPcm(document: Document, options: BrowserAudioExport
   if (program < 128) {
     synth.setProgram(MELODIC_CHANNEL, program);
   }
-  scheduleTinySynth(synth, melody, program);
+  scheduleTinySynth(synth, arrangement, program);
 
   const buffer = await context.startRendering();
   const pcm = new Int16Array(buffer.length * buffer.numberOfChannels);

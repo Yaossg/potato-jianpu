@@ -156,6 +156,14 @@ test("validates repeated endings independently for multiple repeat sections", ()
   assert.doesNotMatch(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /appears more than once|out of order|should end with/);
 });
 
+test("validates repeated endings independently for labeled tracks", () => {
+  const result = parse("T1: |: 1 | [1] 2 :| [2] 3 |\nT2: |: 5, | [1] 6, :| [2] 7, |");
+  assert.equal(result.ok, true);
+  assert.equal(result.value.score[0].measures[2].ending, 2);
+  assert.equal(result.value.score[1].measures[2].ending, 2);
+  assert.doesNotMatch(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /appears more than once|out of order|should end with/);
+});
+
 test("keeps reporting empty measures between consecutive bars", () => {
   const result = parse("1 2 || 3 4");
   assert.equal(result.ok, false);
@@ -326,6 +334,70 @@ test("validates tied note targets", () => {
   const afterRest = parse("1 0 ~1");
   assert.equal(afterRest.ok, false);
   assert.match(afterRest.diagnostics.map((d) => d.message).join("\n"), /Tied note must follow/);
+});
+
+test("validates ties independently for labeled tracks", () => {
+  const result = parse("T1: 1\nT2: ~1");
+  assert.equal(result.ok, false);
+  assert.match(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /First note cannot be tied/);
+
+  const sameTrack = parse("T1: 1\nT2: 5,\nT1: ~1\nT2: 6,");
+  assert.equal(sameTrack.ok, true);
+});
+
+test("rejects score line labels outside the supported MIDI track label range", () => {
+  const result = parse("melody: 1 2");
+  assert.equal(result.ok, false);
+  assert.match(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Score line labels must be T1-T9 or T11-T16/);
+
+  const reservedChannel = parse("T10: 1 2");
+  assert.equal(reservedChannel.ok, false);
+  assert.match(reservedChannel.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Score line labels must be T1-T9 or T11-T16/);
+});
+
+test("accepts T-prefixed header and score line labels", () => {
+  const result = parse(`T1: "Drums"\n=\nT1: X X`);
+  assert.equal(result.ok, true);
+  assert.equal(result.value.header.raw.T1, "Drums");
+  assert.equal(result.value.score[0].label, "T1");
+  assert.equal(result.value.score[0].measures[0].notes[0].kind, "drum");
+
+  const highTrack = parse("T1: 1\nT2: 1\nT3: 1\nT4: 1\nT5: 1\nT6: 1\nT7: 1\nT8: 1\nT9: 1\nT11: 1");
+  assert.equal(highTrack.ok, true);
+  assert.equal(highTrack.value.score.at(-1).label, "T11");
+});
+
+test("treats unlabeled score lines as T1 when any score line has a track label", () => {
+  const result = parse("1 2\nT2: 5, 6,\n3 4");
+  assert.equal(result.ok, true);
+  assert.deepEqual(
+    result.value.score.map((line) => line.label),
+    ["T1", "T2", "T1"],
+  );
+});
+
+test("requires track label groups to start at T1 and increase", () => {
+  const valid = parse("T1: 1\nT2: 5,\nT3: 1,\nT1: 2\nT2: 6,");
+  assert.equal(valid.ok, true);
+
+  const swapped = parse("T1: 1\nT2: 5,\nT2: 6,\nT1: 2");
+  assert.equal(swapped.ok, false);
+  assert.match(swapped.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Track labels must start at T1 and increase within each group/);
+
+  const lateVoice = parse("T1: 1\nT1: 2\nT2: 5,");
+  assert.equal(lateVoice.ok, true);
+
+  const duplicateAtEnd = parse("T1: 1\nT2: 5,\nT2: 6,");
+  assert.equal(duplicateAtEnd.ok, false);
+  assert.match(duplicateAtEnd.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Track labels must start at T1 and increase within each group/);
+
+  const skipped = parse("T1: 1\nT3: 5,");
+  assert.equal(skipped.ok, false);
+  assert.match(skipped.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Expected T2 or T1/);
+
+  const missingStart = parse("T2: 1");
+  assert.equal(missingStart.ok, false);
+  assert.match(missingStart.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Expected T1/);
 });
 
 test("warns when measure duration does not match the time signature", () => {

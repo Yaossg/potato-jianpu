@@ -123,7 +123,8 @@ width settings as SVG download.
 
 ## MIDI Export
 
-MIDI export compiles the parsed document through the shared melody compiler:
+MIDI export compiles the parsed document through the shared arrangement
+compiler:
 
 ```sh
 pnpm run cli -- export-midi input.jpu -o output.mid --program 0
@@ -136,7 +137,7 @@ Options:
 
 Program behavior:
 
-- `0` to `127`: normal melodic MIDI program on channel 1.
+- `0` to `127`: normal melodic MIDI program.
 - `128` to `220`: drum mode on MIDI channel 10. Drum note `X` maps to
   percussion note `program - 128 + 35`, so `128` maps to bass drum note `35`.
 
@@ -144,15 +145,28 @@ The MIDI writer emits:
 
 - format 1 header
 - meta track with tempo and time signature events
-- music track with note on/off events
+- one music track with note on/off events for unlabeled scores
+- one music track per arrangement track for labeled scores
 
-Rests advance delta time without emitting note events. Tied notes are merged by
-the melody compiler before MIDI writing.
+If any score line has a track label, that `Tn` label becomes the arrangement
+track name. Score lines are divided into voice groups: every group starts at
+`T1`, increases by track number, and may stop early. Lines in the same group
+start together; each later group starts after the previous group finishes.
+Unlabeled lines in a labeled score are treated as `T1`.
+Header entries such as `T1: "Melody"` only control rendered line names; they do
+not change MIDI track timing. Labeled melodic arrangement tracks use the MIDI
+channel named by their label, so `T1` uses MIDI channel 1 and `T16` uses MIDI
+channel 16. `T10` is reserved for drums and is not accepted as a melodic track
+label. Unlabeled melodic tracks use the next available non-drum MIDI channel by
+export order. Drum mode uses channel 10 for every arrangement track.
+
+Rests advance delta time within their track without emitting note events. Tied
+notes are merged by the arrangement compiler before MIDI writing.
 
 ## WAV Export
 
-WAV export uses the same melody compiler as MIDI export and renders through the
-same WebAudioTinySynth timbre engine used by browser preview playback. It
+WAV export uses the same arrangement compiler as MIDI export and renders through
+the same WebAudioTinySynth timbre engine used by browser preview playback. It
 writes a stereo 16-bit PCM WAV file:
 
 ```sh
@@ -170,11 +184,15 @@ Options:
 The WAV renderer:
 
 - uses `WebAudioTinySynth` with an offline `RenderingAudioContext`
+- schedules all arrangement tracks against the same offline audio clock
 - uses the same Program and drum-channel behavior as browser preview playback
 - uses fixed MIDI velocity `64`
 - treats `--amplitude` as TinySynth master volume
 - rests render as silence
 - writes stereo 16-bit PCM output
+
+Arrangement tracks may have different total durations. WAV rendering runs until
+the longest track finishes, plus a short render tail.
 
 The frontend also exposes WAV download. Browser WAV export uses
 `OfflineAudioContext` with the same TinySynth adapter as preview playback, then
@@ -203,6 +221,7 @@ The MP3 renderer:
 
 - shares TinySynth scheduling, Program behavior, drum behavior, velocity, and
   rest handling with WAV export
+- schedules all arrangement tracks against the same offline audio clock
 - renders stereo PCM through the backend offline Web Audio context
 - encodes the resulting samples as MP3 frames through `lamejs`
 

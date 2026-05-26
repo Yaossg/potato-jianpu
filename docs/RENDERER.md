@@ -31,6 +31,7 @@ interface RenderOptions {
   pageWidth?: number;
   justifyMode?: "none" | "except-last" | "all";
   activeNoteIndex?: number;
+  activeNoteIndices?: number[];
   color?: string;
   background?: string;
 }
@@ -43,6 +44,9 @@ interface RenderOptions {
   line, and `"all"` justifies every visual line. Default: `"none"`.
 - `activeNoteIndex` marks one parsed note as active for frontend playback
   highlighting. Default: no active note.
+- `activeNoteIndices` marks multiple parsed notes as active for simultaneous
+  playback highlighting. When non-empty, it takes precedence over
+  `activeNoteIndex`. Default: no active notes.
 - `color` sets the root SVG `color` style used by `currentColor` notation
   elements. Default: `currentColor`.
 - `background` draws a full-page background rectangle when non-empty. Default:
@@ -282,7 +286,8 @@ Each rendered note is wrapped in:
 <g class="note-item" data-note-index="...">...</g>
 ```
 
-If `activeNoteIndex` matches the parsed note index, the wrapper becomes:
+If `activeNoteIndex` matches the parsed note index, or `activeNoteIndices`
+contains it, the wrapper becomes:
 
 ```svg
 <g class="note-item active" data-note-index="...">...</g>

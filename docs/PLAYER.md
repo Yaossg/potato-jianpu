@@ -56,6 +56,51 @@ Durations are represented in whole-note units:
 `index` is the parsed note index from the core document. The frontend uses this
 for playback highlighting.
 
+`compileMelody(document, program?)` keeps the legacy single-melody behavior and
+flattens score lines in source order.
+
+## Arrangement Model
+
+`compileArrangement(document, program?)` returns simultaneous playback tracks:
+
+```ts
+interface ArrangementTrack extends Melody {
+  name: string;
+  program: number;
+}
+
+interface Arrangement {
+  tracks: ArrangementTrack[];
+  tempo: number;
+  beatsPerMeasure: number;
+  beatsPerWholeNote: number;
+}
+```
+
+If no score line has a track label, the arrangement contains one unnamed track
+and matches `compileMelody()` timing. Track labels are `T1:` through `T9:` and
+`T11:` through `T16:`. `T10:` is reserved for MIDI drums and is not accepted as
+a melodic track label. If any score line has a track label, score lines are
+divided into voice groups:
+
+- every group starts at `T1` and increases by track number
+- a group may stop early, so `T1 T2 T3 T1 T2` is valid
+- lines in the same group start together
+- each later group starts after the previous group finishes
+- repeated labels concatenate into the same arrangement track with rests inserted
+  when that voice is absent from an earlier group
+- unlabeled lines in a labeled score are treated as `T1`
+- tracks may have different total durations; playback and export use the
+  longest track duration
+
+Orders such as `T1 T2 T2 T1`, `T1 T2 T2`, and `T1 T3` are errors.
+
+The track label itself is not rendered in SVG. To render a visible line label,
+define the same label in the header, for example `T1: "Melody"`.
+
+Repeat barlines and repeated endings are expanded independently inside each
+arrangement track.
+
 ## Pitch Mapping
 
 The base scale is C major:
@@ -120,10 +165,15 @@ MIDI export advances delta time without writing note events.
 
 Browser playback, WAV export, and MP3 export render the duration as silence.
 
-`skipInitialRests(melody)` removes leading rest events while preserving tempo,
-time-signature metadata, and note indexes for the remaining events. The frontend
-uses this for from-start playback when "Omit initial rests" is enabled. MIDI,
-WAV, and MP3 export can also opt into the same behavior.
+`skipInitialRests(melody)` removes leading rest events from a single melody
+while preserving tempo, time-signature metadata, and note indexes for the
+remaining events.
+
+`skipInitialArrangementRests(arrangement)` removes the shared initial silence
+before the first sounding track. Other tracks keep any remaining leading rests
+after that shared trim. The frontend uses this for from-start playback when
+"Omit initial rests" is enabled. MIDI, WAV, and MP3 export can also opt into the
+same behavior.
 
 ## Chords
 
@@ -185,6 +235,7 @@ Behavior:
 - skips sound generation for rests
 - schedules note-start timers for frontend highlighting
 - supports starting from a parsed note index
+- schedules all arrangement tracks against the same audio clock
 
 The frontend exposes a Settings panel with Program, volume, audition, and
 initial-rest controls. Browser playback and MIDI download use the selected
@@ -199,8 +250,8 @@ score, MIDI note velocity, or exported SVG.
 The Audition button plays a short built-in phrase with the current Program and
 volume. Melodic programs play a scale; drum programs play repeated `X` notes.
 
-The frontend passes the active note index back into `renderSvg()` so the SVG can
-highlight the currently playing note.
+The frontend passes active note indexes back into `renderSvg()` so the SVG can
+highlight simultaneous notes across arrangement tracks.
 
 Clicking a rendered note starts playback from that note index.
 
@@ -230,10 +281,13 @@ MIDI writer constants:
 - ticks per quarter note: `96`
 - default velocity: `64`
 
-The writer creates two tracks:
+For an unlabeled score, the writer creates two tracks:
 
 1. Meta track
 2. Music track
+
+For labeled arrangements, the writer creates one music track per arrangement
+track after the meta track.
 
 The meta track contains:
 
@@ -247,6 +301,10 @@ The music track contains:
 - note-on events
 - note-off events
 - end-of-track event
+
+Melodic arrangement tracks are assigned MIDI channels in order, skipping MIDI
+channel 10. MIDI export rejects arrangements with more than 15 melodic tracks.
+Drum mode uses MIDI channel 10 for every arrangement track.
 
 Tempo bytes are computed from document tempo and denominator:
 
@@ -342,6 +400,7 @@ The current player/export layer is functional but not a full synthesizer:
 - WAV and MP3 export use the same WebAudioTinySynth timbres through an offline
   context
 - no velocity syntax
-- no multi-track arrangement model
+- one global Program for all arrangement tracks
+- no per-track volume, velocity, pan, or tempo syntax
 
 These limitations keep the core parser, renderer, and export surfaces focused.

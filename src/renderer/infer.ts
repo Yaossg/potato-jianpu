@@ -1,5 +1,6 @@
-import type { Document } from "../core/index.js";
+import type { Document, ScoreLine } from "../core/index.js";
 import { DIMENSIONS } from "./dimensions.js";
+import { scoreLineDisplayLabel } from "./labels.js";
 import { flattenNotes, layoutLine } from "./layout.js";
 import { DEFAULT_OPTIONS } from "./options.js";
 
@@ -24,15 +25,36 @@ function headerNaturalWidth(document: Document): number {
   return Math.max(HEADER_METADATA_MIN_WIDTH, titleWidth, metadataWidth);
 }
 
+function scoreLineGroups(document: Document): ScoreLine[][] {
+  if (!document.score.some((line) => line.label !== undefined)) {
+    return document.score.map((line) => [line]);
+  }
+  const groups: ScoreLine[][] = [];
+  let current: ScoreLine[] = [];
+  for (const line of document.score) {
+    if (line.label === "T1" && current.length > 0) {
+      groups.push(current);
+      current = [];
+    }
+    current.push(line);
+  }
+  if (current.length > 0) {
+    groups.push(current);
+  }
+  return groups;
+}
+
 export function inferContentPageWidth(document: Document, options: InferPageWidthOptions = {}): number {
   const minWidth = options.minWidth ?? 1;
   const maxWidth = options.maxWidth ?? DEFAULT_OPTIONS.pageWidth;
   const allNotes = flattenNotes(document);
   const scoreWidth = Math.max(
     0,
-    ...document.score.flatMap((line) =>
-      layoutLine(line, allNotes, Number.POSITIVE_INFINITY).map((layout) => layout.width + (line.label ? DIMENSIONS.labelWidth : 0)),
-    ),
+    ...scoreLineGroups(document).flatMap((group) => {
+      const labelOffset = group.some((line) => scoreLineDisplayLabel(document, line)) ? DIMENSIONS.labelWidth : 0;
+      const bracketOffset = group.length > 1 ? DIMENSIONS.voiceBracketWidth * 2 : 0;
+      return group.flatMap((line) => layoutLine(line, allNotes, Number.POSITIVE_INFINITY).map((layout) => layout.width + labelOffset + bracketOffset));
+    }),
   );
   return clampWidth(Math.max(headerNaturalWidth(document), scoreWidth), minWidth, maxWidth);
 }

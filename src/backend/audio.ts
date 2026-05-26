@@ -1,6 +1,6 @@
 import { RenderingAudioContext } from "@descript/web-audio-js";
 import type { Document } from "../core/index.js";
-import { compileMelody, skipInitialRests, type Melody } from "../player/index.js";
+import { arrangementDuration, compileArrangement, skipInitialArrangementRests, type Arrangement, type MelodyNote } from "../player/index.js";
 import WebAudioTinySynth from "../player/webaudio-tinysynth.js";
 
 export interface AudioRenderOptions {
@@ -27,22 +27,19 @@ const DRUM_CHANNEL = 9;
 const MELODIC_CHANNEL = 0;
 const RENDER_TAIL_SECONDS = 0.25;
 
-function secondsPerWholeNote(melody: Melody): number {
-  return (60 / melody.tempo) * melody.beatsPerWholeNote;
+function secondsPerWholeNote(arrangement: Arrangement): number {
+  return (60 / arrangement.tempo) * arrangement.beatsPerWholeNote;
 }
 
-function totalSeconds(melody: Melody): number {
-  const secondsPerWhole = secondsPerWholeNote(melody);
-  return melody.notes.reduce((sum, note) => sum + note.duration * secondsPerWhole, 0);
+function totalSeconds(arrangement: Arrangement): number {
+  return arrangementDuration(arrangement) * secondsPerWholeNote(arrangement);
 }
 
-function scheduleTinySynth(synth: WebAudioTinySynth, melody: Melody, program: number) {
-  const secondsPerWhole = secondsPerWholeNote(melody);
-  const channel = program >= 128 ? DRUM_CHANNEL : MELODIC_CHANNEL;
+function scheduleTrack(synth: WebAudioTinySynth, notes: MelodyNote[], secondsPerWhole: number, channel: number) {
   const context = synth.getAudioContext();
   let currentTime = context.currentTime;
 
-  for (const note of melody.notes) {
+  for (const note of notes) {
     const duration = note.duration * secondsPerWhole;
     if (note.chord !== "rest") {
       for (const midiNote of note.chord) {
@@ -51,6 +48,14 @@ function scheduleTinySynth(synth: WebAudioTinySynth, melody: Melody, program: nu
       }
     }
     currentTime += duration;
+  }
+}
+
+function scheduleTinySynth(synth: WebAudioTinySynth, arrangement: Arrangement, program: number) {
+  const secondsPerWhole = secondsPerWholeNote(arrangement);
+  const channel = program >= 128 ? DRUM_CHANNEL : MELODIC_CHANNEL;
+  for (const track of arrangement.tracks) {
+    scheduleTrack(synth, track.notes, secondsPerWhole, channel);
   }
 }
 
@@ -74,10 +79,10 @@ export function normalizeAudioOptions(options: AudioRenderOptions, label: string
 
 export function renderDocumentPcm(document: Document, options: AudioRenderOptions, label: string): RenderedPcm {
   const { sampleRate, amplitude, program } = normalizeAudioOptions(options, label);
-  const compiled = compileMelody(document, program);
-  const melody = options.omitInitialRests ? skipInitialRests(compiled) : compiled;
+  const compiled = compileArrangement(document, program);
+  const arrangement = options.omitInitialRests ? skipInitialArrangementRests(compiled) : compiled;
   const synth = new WebAudioTinySynth({
-    voices: Math.max(64, melody.notes.length),
+    voices: Math.max(64, arrangement.tracks.reduce((sum, track) => sum + track.notes.length, 0)),
     internalcontext: false,
   });
   const context = new RenderingAudioContext({
@@ -93,9 +98,9 @@ export function renderDocumentPcm(document: Document, options: AudioRenderOption
   if (program < 128) {
     synth.setProgram(MELODIC_CHANNEL, program);
   }
-  scheduleTinySynth(synth, melody, program);
+  scheduleTinySynth(synth, arrangement, program);
 
-  context.processTo(Math.max(0.01, totalSeconds(melody) + RENDER_TAIL_SECONDS));
+  context.processTo(Math.max(0.01, totalSeconds(arrangement) + RENDER_TAIL_SECONDS));
   const audioData = context.exportAsAudioData() as {
     channelData: Float32Array[];
     length: number;

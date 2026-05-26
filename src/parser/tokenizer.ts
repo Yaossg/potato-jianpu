@@ -139,6 +139,12 @@ export function tokenize(source: string): { tokens: Token[]; diagnostics: Diagno
       continue;
     }
 
+    const trackLabel = /^T\d+(?=:)/.exec(rest)?.[0];
+    if (trackLabel) {
+      push("identifier", trackLabel, trackLabel);
+      continue;
+    }
+
     const word = /^[A-Za-z_]+/.exec(rest)?.[0];
     if (word) {
       if (word === "bb") {

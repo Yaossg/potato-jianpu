@@ -2,6 +2,7 @@ export const DIMENSIONS = {
   baseNoteWidth: 24,
   baseNoteHeight: 24,
   labelWidth: 54,
+  voiceBracketWidth: 16,
   leftPadding: 18,
   repeatLeftPadding: 10,
   repeatInlineLeftPadding: 10,

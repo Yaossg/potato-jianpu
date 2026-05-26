@@ -1,5 +1,13 @@
-export { compileMelody, skipInitialRests } from "./melody.js";
-export type { Melody, MelodyNote } from "./melody.js";
+export {
+  arrangementDuration,
+  arrangementNoteCount,
+  compileArrangement,
+  compileMelody,
+  skipInitialArrangementRests,
+  skipInitialRests,
+  trimArrangementAtNote,
+} from "./melody.js";
+export type { Arrangement, ArrangementTrack, Melody, MelodyNote } from "./melody.js";
 export { exportMidiBytes } from "./midi.js";
 export type { MidiExportOptions } from "./midi.js";
 export { DRUM_PROGRAMS, GM_PROGRAMS } from "./programs.js";

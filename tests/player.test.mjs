@@ -2,10 +2,13 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { parse } from "../dist/parser/index.js";
 import {
+  arrangementDuration,
+  compileArrangement,
   compileMelody,
   exportMidiBytes,
   midiToFrequency,
   sampleWave,
+  skipInitialArrangementRests,
   skipInitialRests,
   SYNTH_WAVEFORM,
   triangleWave,
@@ -110,6 +113,93 @@ test("plays repeated endings in multiple repeat sections", () => {
   );
 });
 
+test("keeps unlabeled scores as one sequential arrangement track", () => {
+  const result = parse("1 2\n3 4");
+  assert.equal(result.ok, true);
+  const arrangement = compileArrangement(result.value);
+  assert.equal(arrangement.tracks.length, 1);
+  assert.equal(arrangement.tracks[0].name, "");
+  assert.deepEqual(
+    arrangement.tracks[0].notes.map((note) => note.chord),
+    [[60], [62], [64], [65]],
+  );
+});
+
+test("groups labeled score lines into simultaneous arrangement tracks", () => {
+  const result = parse("T1: 1 2\nT2: 5, 6,");
+  assert.equal(result.ok, true);
+  const arrangement = compileArrangement(result.value);
+  assert.deepEqual(
+    arrangement.tracks.map((track) => track.name),
+    ["T1", "T2"],
+  );
+  assert.deepEqual(
+    arrangement.tracks.map((track) => track.notes.map((note) => note.chord)),
+    [
+      [[60], [62]],
+      [[55], [57]],
+    ],
+  );
+  assert.equal(arrangementDuration(arrangement), 1 / 2);
+});
+
+test("concatenates repeated labels and treats unlabeled lines as T1 in labeled scores", () => {
+  const result = parse("T1: 1\nT2: 5,\n3\nT1: 2\nT2: 6,\n4");
+  assert.equal(result.ok, true);
+  const arrangement = compileArrangement(result.value);
+  assert.deepEqual(
+    arrangement.tracks.map((track) => track.name),
+    ["T1", "T2"],
+  );
+  assert.deepEqual(
+    arrangement.tracks.map((track) => track.notes.map((note) => note.chord)),
+    [
+      [[60], [64], [62], [65]],
+      [[55], "rest", [57]],
+    ],
+  );
+});
+
+test("schedules incomplete track groups sequentially instead of overlapping later voices", () => {
+  const result = parse("T1: 1\nT1: 2\nT2: 5,");
+  assert.equal(result.ok, true);
+  const arrangement = compileArrangement(result.value);
+  assert.deepEqual(
+    arrangement.tracks.map((track) => track.name),
+    ["T1", "T2"],
+  );
+  assert.deepEqual(
+    arrangement.tracks.map((track) => track.notes.map((note) => note.chord)),
+    [
+      [[60], [62]],
+      ["rest", [55]],
+    ],
+  );
+});
+
+test("expands repeats independently inside each arrangement track", () => {
+  const result = parse("T1: |: 1 :| 2\nT2: |: 5, :| 6,");
+  assert.equal(result.ok, true);
+  const arrangement = compileArrangement(result.value);
+  assert.deepEqual(
+    arrangement.tracks.map((track) => track.notes.map((note) => note.chord)),
+    [
+      [[60], [60], [62]],
+      [[55], [55], [57]],
+    ],
+  );
+});
+
+test("omits shared initial arrangement rests only up to the first sounding track", () => {
+  const result = parse("T1: 0 1\nT2: 0 0 5,");
+  assert.equal(result.ok, true);
+  const arrangement = skipInitialArrangementRests(compileArrangement(result.value));
+  assert.deepEqual(
+    arrangement.tracks.map((track) => track.notes.map((note) => note.chord)),
+    [[[60]], ["rest", [55]]],
+  );
+});
+
 test("exports a standard MIDI header", () => {
   const result = parse(`tempo: "120"\n=\n1 2 3 4`);
   assert.equal(result.ok, true);
@@ -118,6 +208,33 @@ test("exports a standard MIDI header", () => {
   assert.equal(String.fromCharCode(...bytes.slice(14, 18)), "MTrk");
   assert.equal(bytes[8], 0);
   assert.equal(bytes[9], 1);
+});
+
+test("exports labeled arrangement tracks as separate MIDI tracks", () => {
+  const result = parse("T1: 1\nT2: 5,\nT3: 3");
+  assert.equal(result.ok, true);
+  const bytes = [...exportMidiBytes(result.value)];
+  assert.equal(bytes[10] * 256 + bytes[11], 4);
+  assert.notEqual(bytes.findIndex((byte, index) => byte === 0xc0 && bytes[index + 1] === 0), -1);
+  assert.notEqual(bytes.findIndex((byte, index) => byte === 0xc1 && bytes[index + 1] === 0), -1);
+  assert.notEqual(bytes.findIndex((byte, index) => byte === 0xc2 && bytes[index + 1] === 0), -1);
+});
+
+test("reserves labeled MIDI channels before assigning unlabeled arrangement tracks", () => {
+  const result = parse("T1: 5,\n1");
+  assert.equal(result.ok, true);
+  result.value.score[0].label = "T2";
+  result.value.score[1].label = undefined;
+  const bytes = [...exportMidiBytes(result.value)];
+  assert.notEqual(bytes.findIndex((byte, index) => byte === 0xc1 && bytes[index + 1] === 0), -1);
+  assert.notEqual(bytes.findIndex((byte, index) => byte === 0xc0 && bytes[index + 1] === 0), -1);
+});
+
+test("rejects MIDI exports with too many melodic arrangement tracks", () => {
+  const result = parse("T1: 1\nT2: 1\nT3: 1\nT4: 1\nT5: 1\nT6: 1\nT7: 1\nT8: 1\nT9: 1\nT11: 1\nT12: 1\nT13: 1\nT14: 1\nT15: 1\nT16: 1");
+  assert.equal(result.ok, true);
+  result.value.score.push({ ...result.value.score[0], label: undefined });
+  assert.throws(() => exportMidiBytes(result.value), /at most 15 melodic tracks/);
 });
 
 test("can omit initial rests from compiled melody and MIDI export", () => {

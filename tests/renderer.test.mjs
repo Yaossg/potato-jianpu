@@ -312,12 +312,54 @@ test("marks active notes for preview highlighting", () => {
   assert.match(svg, /<g class="note-item active" data-note-index="1">/);
 });
 
-test("renders score line labels with reserved horizontal space", () => {
-  const result = parse("verse: 1 2 | 3 4 |");
+test("marks multiple active notes for arrangement preview highlighting", () => {
+  const result = parse("T1: 1 2\nT2: 5, 6,");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { activeNoteIndices: [0, 2] });
+  assert.match(svg, /<g class="note-item active" data-note-index="0">/);
+  assert.match(svg, /<g class="note-item" data-note-index="1">/);
+  assert.match(svg, /<g class="note-item active" data-note-index="2">/);
+});
+
+test("renders header-defined track labels with reserved horizontal space", () => {
+  const result = parse(`T1: "Verse"\n=\nT1: 1 2 | 3 4 |`);
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 160 });
-  assert.match(svg, /<text class="line-label" x="8" y="[^"]+" text-anchor="start">verse<\/text>/);
+  assert.match(svg, /<text class="line-label" x="8" y="[^"]+" text-anchor="start">Verse<\/text>/);
   assert.match(svg, /<g class="note-item" data-note-index="0"><text class="note" x="72"/);
+});
+
+test("does not render bare track labels without header-defined names", () => {
+  const result = parse("T1: 1 2 | 3 4 |");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 160 });
+  assert.doesNotMatch(svg, /class="line-label"/);
+  assert.match(svg, /<g class="note-item" data-note-index="0"><text class="note" x="18"/);
+});
+
+test("renders voice brackets around simultaneous track groups", () => {
+  const result = parse(`T1: "High"\nT2: "Low"\n=\nT1: 1 2\nT2: 5, 6,\nT1: 3`);
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 220 });
+  const bracketCount = svg.match(/class="voice-bracket"/g)?.length ?? 0;
+  assert.equal(bracketCount, 2);
+  assert.match(svg, /<text class="line-label" x="8" y="[^"]+" text-anchor="start">High<\/text>/);
+  assert.match(svg, /<path class="voice-bracket" d="M71,[^"]+ L62,[^"]+ V[^"]+ L71,[^"]+"\/>/);
+  assert.match(svg, /<g class="note-item" data-note-index="0"><text class="note" x="88"/);
+});
+
+test("does not render voice brackets for single-voice groups", () => {
+  const result = parse("T1: 1\nT1: 2");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  assert.doesNotMatch(svg, /class="voice-bracket"/);
+});
+
+test("renders final bars on every line of the final voice group", () => {
+  const result = parse("T1: 1\nT2: 5,\nT1: 2\nT2: 6,");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  assert.equal(svg.match(/class="bar-final"/g)?.length ?? 0, 2);
 });
 
 test("renders explicit export color and background", () => {
