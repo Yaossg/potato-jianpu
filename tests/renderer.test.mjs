@@ -14,6 +14,12 @@ const hiddenHeaderSnapshot = readSnapshot("hidden-header.svg");
 const notationFeaturesSnapshot = readSnapshot("notation-features.svg");
 const wrappedTieSnapshot = readSnapshot("wrapped-tie.svg");
 
+function noteX(svg, noteIndex) {
+  const match = svg.match(new RegExp(`<g class="note-item(?: active)?" data-note-index="${noteIndex}"><text class="note" x="([^"]+)"`));
+  assert.ok(match, `note ${noteIndex} should render`);
+  return Number(match[1]);
+}
+
 test("renders a parse result as an SVG document", () => {
   const result = parse(`title: "Render Test"\nkey: "F#"\n=\n1 #4/ 5-|`);
   assert.equal(result.ok, true);
@@ -355,6 +361,15 @@ test("aligns voice brackets with group-level justification", () => {
   assert.match(svg, /<path class="voice-bracket" d="M303,[^"]+ L312,[^"]+ V[^"]+ L303,[^"]+"\/>/);
   assert.match(svg, /<path class="voice-bracket" d="M\d+,[^"]+ L\d+,[^"]+ V[^"]+ L\d+,[^"]+"\/>/);
   assert.equal(svg.match(/L312,/g)?.length ?? 0, 1);
+});
+
+test("aligns notes across simultaneous tracks by rhythmic position", () => {
+  const result = parse("T1: 1 2 3 4\nT2: 5, - 6, -");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 260 });
+
+  assert.equal(noteX(svg, 4), noteX(svg, 0));
+  assert.equal(noteX(svg, 5), noteX(svg, 2));
 });
 
 test("does not render voice brackets for single-voice groups", () => {

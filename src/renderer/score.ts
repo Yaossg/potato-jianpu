@@ -1,7 +1,7 @@
 import { actualNotePerBeat, type Document, type LyricLine, type Measure, type Note, type Pitch, type PitchNote, type ScoreLine } from "../core/index.js";
 import { DIMENSIONS } from "./dimensions.js";
 import { lyricLineDisplayLabel, scoreLineDisplayLabel } from "./labels.js";
-import { flattenNotes, layoutLine, measureXOffset, type LineLayout } from "./layout.js";
+import { flattenNotes, layoutLine, lineWidth, measureXOffset, type LineLayout, type MeasureLayout } from "./layout.js";
 import { chordHeight, maxAccidentalOffset, noteTieAfter, widthOf } from "./metrics.js";
 import type { JustifyMode } from "./options.js";
 import { escapeXml } from "./xml.js";
@@ -386,6 +386,92 @@ interface RenderLineLayout {
   groupVisualWidth: number;
 }
 
+function timelineKey(value: number): string {
+  return value.toFixed(9);
+}
+
+function noteStartPositions(measure: Measure): number[] {
+  let start = 0;
+  return measure.notes.map((note) => {
+    const position = start;
+    start += note.duration.value;
+    return position;
+  });
+}
+
+function alignMeasureLayouts(measureLayouts: MeasureLayout[]): MeasureLayout[] {
+  const startsByMeasure = measureLayouts.map((layout) => noteStartPositions(layout.measure));
+  const widthsByStart = new Map<string, { start: number; width: number }>();
+
+  for (const [layoutIndex, layout] of measureLayouts.entries()) {
+    const starts = startsByMeasure[layoutIndex]!;
+    for (const [noteIndex, note] of layout.measure.notes.entries()) {
+      const start = starts[noteIndex]!;
+      const key = timelineKey(start);
+      const current = widthsByStart.get(key);
+      widthsByStart.set(key, { start, width: Math.max(current?.width ?? 0, widthOf(note)) });
+    }
+  }
+
+  const timeline = [...widthsByStart.values()].sort((a, b) => a.start - b.start);
+  const positionsByStart = new Map<string, number>();
+  let position = 0;
+  for (const entry of timeline) {
+    positionsByStart.set(timelineKey(entry.start), position);
+    position += entry.width;
+  }
+
+  const leftPadding = Math.max(...measureLayouts.map((layout) => layout.leftPadding));
+  const rightPadding = Math.max(...measureLayouts.map((layout) => layout.rightPadding));
+  return measureLayouts.map((layout, layoutIndex) => {
+    const starts = startsByMeasure[layoutIndex]!;
+    return {
+      ...layout,
+      width: position + leftPadding + rightPadding + 4 + (layout.measure.repeatEnd ? DIMENSIONS.repeatRightPadding - DIMENSIONS.leftPadding : 0),
+      leftPadding,
+      rightPadding,
+      notePositions: starts.map((start) => positionsByStart.get(timelineKey(start)) ?? 0),
+    };
+  });
+}
+
+function alignLineLayouts(layouts: LineLayout[]): LineLayout[] {
+  const aligned = [...layouts];
+  const layoutsBySpan = new Map<string, Array<{ index: number; layout: LineLayout }>>();
+
+  for (const [index, layout] of layouts.entries()) {
+    const key = `${layout.measureStartIndex}:${layout.measures.length}`;
+    layoutsBySpan.set(key, [...(layoutsBySpan.get(key) ?? []), { index, layout }]);
+  }
+
+  for (const entries of layoutsBySpan.values()) {
+    if (entries.length <= 1) {
+      continue;
+    }
+    const measureCount = entries[0]!.layout.measures.length;
+    const alignedMeasures = entries.map((entry) => [...entry.layout.measures]);
+
+    for (let measureIndex = 0; measureIndex < measureCount; measureIndex += 1) {
+      const measureLayouts = entries.map((entry) => entry.layout.measures[measureIndex]!);
+      const alignedMeasureLayouts = alignMeasureLayouts(measureLayouts);
+      for (const [entryIndex, measureLayout] of alignedMeasureLayouts.entries()) {
+        alignedMeasures[entryIndex]![measureIndex] = measureLayout;
+      }
+    }
+
+    for (const [entryIndex, entry] of entries.entries()) {
+      const measures = alignedMeasures[entryIndex]!;
+      aligned[entry.index] = {
+        ...entry.layout,
+        measures,
+        width: lineWidth(measures),
+      };
+    }
+  }
+
+  return aligned;
+}
+
 function scoreLineGroups(document: Document): ScoreLineGroup[] {
   const hasLabels = document.score.some((line) => line.label !== undefined);
   if (!hasLabels) {
@@ -509,7 +595,9 @@ export function renderScore(document: Document, yStart: number, pageWidth: numbe
   const hasLabels = document.score.some((line) => line.label !== undefined);
   const finalMeasures = finalBarMeasures(groups);
   const layouts = groups.flatMap((group, groupIndex) => {
-    const groupLayouts = group.lines.flatMap((line) => layoutLine(line, allNotes, Math.max(1, pageWidth - group.labelOffset - group.bracketOffset * 2)));
+    const groupLayouts = alignLineLayouts(
+      group.lines.flatMap((line) => layoutLine(line, allNotes, Math.max(1, pageWidth - group.labelOffset - group.bracketOffset * 2))),
+    );
     const groupVisualWidth = Math.max(0, lyricNaturalWidth(group), ...groupLayouts.map((layout) => layout.width + group.labelOffset + group.bracketOffset * 2));
     return groupLayouts.map((layout) => ({
       layout,

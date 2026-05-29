@@ -16,6 +16,7 @@ export interface MeasureLayout {
 export interface LineLayout {
   line: ScoreLine;
   measures: MeasureLayout[];
+  measureStartIndex: number;
   width: number;
   height: number;
   maxPaddingUp: number;
@@ -89,20 +90,21 @@ function layoutMeasure(
   };
 }
 
-function lineWidth(measures: MeasureLayout[]): number {
+export function lineWidth(measures: MeasureLayout[]): number {
   return Math.max(
     0,
     measures.reduce((sum, measure) => sum + measure.width + DIMENSIONS.measureSpacing, 0) - DIMENSIONS.measureSpacing,
   );
 }
 
-function buildLineLayout(line: ScoreLine, measures: MeasureLayout[]): LineLayout {
+function buildLineLayout(line: ScoreLine, measures: MeasureLayout[], measureStartIndex: number): LineLayout {
   const width = lineWidth(measures);
   const maxPaddingUp = Math.max(0, ...measures.map((measure) => measure.paddingUp));
   const maxPaddingDown = Math.max(0, ...measures.map((measure) => measure.paddingDown));
   return {
     line,
     measures,
+    measureStartIndex,
     width,
     height: maxPaddingUp + maxPaddingDown + DIMENSIONS.noteBottomPadding,
     maxPaddingUp,
@@ -113,6 +115,7 @@ export function layoutLine(line: ScoreLine, allNotes: Note[], pageWidth: number)
   const layouts: LineLayout[] = [];
   let current: MeasureLayout[] = [];
   let currentWidth = 0;
+  let currentStartIndex = 0;
 
   for (const [measureIndex, measureNode] of line.measures.entries()) {
     const previousMeasure = current.at(-1)?.measure;
@@ -126,10 +129,11 @@ export function layoutLine(line: ScoreLine, allNotes: Note[], pageWidth: number)
     );
     const nextWidth = current.length === 0 ? measure.width : currentWidth + DIMENSIONS.measureSpacing + measure.width;
     if (current.length > 0 && nextWidth > pageWidth) {
-      layouts.push(buildLineLayout(line, current));
+      layouts.push(buildLineLayout(line, current, currentStartIndex));
       measure = layoutMeasure(measureNode, allNotes, false, false, Boolean(measureNode.repeatEnd && nextMeasure?.repeatStart));
       current = [measure];
       currentWidth = measure.width;
+      currentStartIndex = measureIndex;
     } else {
       current.push(measure);
       currentWidth = nextWidth;
@@ -137,7 +141,7 @@ export function layoutLine(line: ScoreLine, allNotes: Note[], pageWidth: number)
   }
 
   if (current.length > 0) {
-    layouts.push(buildLineLayout(line, current));
+    layouts.push(buildLineLayout(line, current, currentStartIndex));
   }
 
   return layouts;
