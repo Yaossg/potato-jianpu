@@ -141,6 +141,8 @@ Parser:
 - Notes `1..7`, rest `0`, and drum note `X`.
 - Accidentals `#`, `##`, `b`, `bb`, and `%`.
 - Per-note octave suffixes and measure-level octave prefixes.
+- Track labels `T1:` through `T16:` for multi-track arrangements, with `T10`
+  reserved for drums.
 - Chords with `{ ... }`.
 - Duration suffixes with dashes, slashes, and dots.
 - Leading tie marker `~`.
@@ -181,8 +183,8 @@ Player and export:
 - Drum programs `128..220`, mapping `X` to percussion note
   `program - 128 + 35`.
 - MIDI export with format 1 header, meta track, tempo, time signature, melodic
-  program changes, channel 10 drum handling, note on/off events, and
-  deterministic bytes.
+  program changes, channel 10 drum handling, one music track per labeled
+  arrangement track, note on/off events, and deterministic bytes.
 - Browser playback uses the `WebAudioTinySynth` adapter.
 - Browser playback schedules TinySynth events incrementally.
 - Browser playback stops when the source editor changes.
@@ -371,7 +373,7 @@ Renderer risks:
 Optional future features:
 
 - Velocity syntax.
-- Multi-track arrangements.
+- Per-track program, volume, pan, or tempo controls.
 - Richer drum controls.
 - Optional npm publication after package policy is decided.
 - Optional favicon/static asset polish.
@@ -385,5 +387,5 @@ Optional future features:
 - Keep docs written as normal project documentation, focused on current behavior.
 - Avoid unrelated refactors.
 - If files contain user changes, preserve them and work with them.
-- Commit inside this repository when a coherent unit of work is complete and
-  the user has asked for ongoing implementation work.
+- After each conversation turn, if you made any repository changes, commit
+  them inside this repository before finishing the turn.
