@@ -20,6 +20,23 @@ function noteX(svg, noteIndex) {
   return Number(match[1]);
 }
 
+function dashCenterX(svg, noteIndex) {
+  const match = svg.match(new RegExp(`<g class="note-item(?: active)?" data-note-index="${noteIndex}">[\\s\\S]*?<line class="dash" x1="([^"]+)" y1="[^"]+" x2="([^"]+)"`));
+  assert.ok(match, `note ${noteIndex} should render a dash`);
+  return (Number(match[1]) + Number(match[2])) / 2 + 2;
+}
+
+function rightVoiceBracketX(svg) {
+  const matches = [...svg.matchAll(/<path class="voice-bracket" d="M([^,]+),[^"]+ L([^,]+),[^"]+ V[^"]+ L\1,[^"]+"\/>/g)];
+  const right = matches.flatMap((match) => {
+    const innerX = Number(match[1]);
+    const outerX = Number(match[2]);
+    return outerX > innerX ? [outerX] : [];
+  });
+  assert.equal(right.length, 1, "one right voice bracket should render");
+  return right[0];
+}
+
 test("renders a parse result as an SVG document", () => {
   const result = parse(`title: "Render Test"\nkey: "F#"\n=\n1 #4/ 5-|`);
   assert.equal(result.ok, true);
@@ -363,15 +380,27 @@ test("aligns voice brackets with group-level justification", () => {
   assert.equal(svg.match(/L312,/g)?.length ?? 0, 1);
 });
 
+test("keeps right voice brackets on the rendered score width", () => {
+  const result = parse('T1: 1\nT2: 5,\n"a very very very very long lyric line"');
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 360 });
+
+  assert.equal(rightVoiceBracketX(svg), 70);
+});
+
 test("aligns notes across simultaneous tracks by rhythmic position", () => {
   const result = parse("T1: 1 2 3 4 | 5 6 7 1'\nT2: 5, - 6, - | 1, - 2, -");
   assert.equal(result.ok, true);
-  const svg = renderSvg(result.value, { pageWidth: 260 });
+  const svg = renderSvg(result.value, { pageWidth: 260, justifyMode: "all" });
 
   assert.equal(noteX(svg, 8), noteX(svg, 0));
+  assert.equal(dashCenterX(svg, 8), noteX(svg, 1));
   assert.equal(noteX(svg, 9), noteX(svg, 2));
+  assert.equal(dashCenterX(svg, 9), noteX(svg, 3));
   assert.equal(noteX(svg, 10), noteX(svg, 4));
+  assert.equal(dashCenterX(svg, 10), noteX(svg, 5));
   assert.equal(noteX(svg, 11), noteX(svg, 6));
+  assert.equal(dashCenterX(svg, 11), noteX(svg, 7));
 });
 
 test("aligns simultaneous tracks only within matching wrapped measure spans", () => {

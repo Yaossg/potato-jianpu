@@ -107,9 +107,12 @@ In labeled multi-voice groups, simultaneous tracks share measure-local rhythmic
 anchors. After each track has been wrapped into visual lines, the renderer
 aligns lines that cover the same measure span and places notes with the same
 start position inside a measure at the same x coordinate. The shared coordinate
-uses enough horizontal advance for the widest note at that rhythmic position,
-so accidentals, dotted notes, and dashed notes can reserve the required space
-without shifting another track off the beat.
+uses enough horizontal advance for the widest note or duration mark at that
+rhythmic position, so accidentals and dotted notes can reserve the required
+space without shifting another track off the beat. Dash extension marks are
+treated as their own rhythmic anchors, so a held note's extension aligns with
+later notes in simultaneous tracks instead of moving as one block with the held
+note head.
 
 Lyric lines render below the preceding score group. A lyric string with
 multiple whitespace-separated syllables is rendered as centered syllables under

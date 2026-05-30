@@ -9,6 +9,7 @@ export interface MeasureLayout {
   rightPadding: number;
   repeatStartX: number | null;
   notePositions: number[];
+  dashPositions: number[][];
   paddingUp: number;
   paddingDown: number;
 }
@@ -60,6 +61,7 @@ function layoutMeasure(
   repeatEndBeforeStart = false,
 ): MeasureLayout {
   const notePositions: number[] = [];
+  const dashPositions: number[][] = [];
   const repeatStartPadding = measure.repeatStart
     ? inlineRepeatStart
       ? DIMENSIONS.repeatInlineLeftPadding
@@ -73,6 +75,9 @@ function layoutMeasure(
 
   for (const note of measure.notes) {
     notePositions.push(totalWidth);
+    dashPositions.push(
+      Array.from({ length: note.duration.dashes }, (_, index) => totalWidth + DIMENSIONS.dashSpacing * (index + 1)),
+    );
     totalWidth += widthOf(note);
     paddingUp = Math.max(paddingUp, paddingUpOf(note, noteTieAfter(note, allNotes), note === measure.notes[0] && measure.ending !== undefined));
     paddingDown = Math.max(paddingDown, paddingDownOf(note));
@@ -85,6 +90,7 @@ function layoutMeasure(
     rightPadding,
     repeatStartX: measure.repeatStart ? (inlineRepeatStart ? -6 : 2) : null,
     notePositions,
+    dashPositions,
     paddingUp,
     paddingDown,
   };

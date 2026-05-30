@@ -72,7 +72,7 @@ function renderPitchNote(note: PitchNote, x: number, y: number): string {
   return parts.join("");
 }
 
-function renderDuration(note: Note, x: number, y: number, full: boolean): string {
+function renderDuration(note: Note, x: number, y: number, full: boolean, dashAnchors: number[]): string {
   const parts: string[] = [];
   const maxOffset = note.kind === "pitch" ? maxAccidentalOffset(note.chord) : 0;
   for (let i = 0; i < note.duration.halves; i += 1) {
@@ -85,9 +85,8 @@ function renderDuration(note: Note, x: number, y: number, full: boolean): string
   for (let i = 0; i < note.duration.dots; i += 1) {
     parts.push(`<circle class="dot" cx="${x + DIMENSIONS.dotXOffset + i * DIMENSIONS.dotSpacing + maxOffset}" cy="${y - 9}" r="3"/>`);
   }
-  for (let i = 0; i < note.duration.dashes; i += 1) {
-    const dashX = x + DIMENSIONS.dashXOffset + i * DIMENSIONS.dashSpacing + maxOffset;
-    parts.push(`<line class="dash" x1="${dashX + 2}" y1="${y - 9}" x2="${dashX + 18}" y2="${y - 9}"/>`);
+  for (const dashAnchor of dashAnchors) {
+    parts.push(`<line class="dash" x1="${dashAnchor - 10}" y1="${y - 9}" x2="${dashAnchor + 6}" y2="${y - 9}"/>`);
   }
   return parts.join("");
 }
@@ -260,7 +259,7 @@ function renderLine(
   finalBarMeasures: Set<Measure>,
 ): RenderedLine {
   const parts: string[] = [];
-  const lineEntries: Array<{ note: Note; x: number; y: number; full: boolean }> = [];
+  const lineEntries: Array<{ note: Note; x: number; y: number; full: boolean; dashAnchors: number[] }> = [];
   const unit = actualNotePerBeat(document.header.timeSignature);
   const displayLabel = scoreLineDisplayLabel(document, layout.line);
   const contentOffset = labelOffset + bracketOffset;
@@ -308,11 +307,16 @@ function renderLine(
       const naturalX = xOffset + measureLayout.notePositions[noteIndex]! + measureLayout.leftPadding;
       groupStartX ??= naturalX;
       const groupShift = justifyX(groupStartX) - groupStartX;
+      const dashAnchors = measureLayout.dashPositions[noteIndex]!.map((dashPosition) => {
+        const naturalDashX = xOffset + dashPosition + measureLayout.leftPadding;
+        return contentOffset + justifyX(naturalDashX);
+      });
       lineEntries.push({
         note,
         x: contentOffset + naturalX + groupShift,
         y: lineY + layout.maxPaddingUp,
         full: fullness[noteIndex] ?? false,
+        dashAnchors,
       });
       groupDuration += note.duration.value;
       if (Math.abs(groupDuration % unit) < 1e-9) {
@@ -360,7 +364,7 @@ function renderLine(
     } else {
       noteParts.push(renderRestOrDrum(entry.note, entry.x, entry.y));
     }
-    noteParts.push(renderDuration(entry.note, entry.x, entry.y, entry.full));
+    noteParts.push(renderDuration(entry.note, entry.x, entry.y, entry.full, entry.dashAnchors));
     parts.push(`<g class="${className}" data-note-index="${entry.note.index}">${noteParts.join("")}</g>`);
   }
 
@@ -390,26 +394,52 @@ function timelineKey(value: number): string {
   return value.toFixed(9);
 }
 
-function noteStartPositions(measure: Measure): number[] {
+interface MeasureRhythmPositions {
+  noteStarts: number[];
+  dashStarts: number[][];
+}
+
+function measureRhythmPositions(measure: Measure): MeasureRhythmPositions {
   let start = 0;
-  return measure.notes.map((note) => {
-    const position = start;
+  const noteStarts: number[] = [];
+  const dashStarts: number[][] = [];
+  for (const note of measure.notes) {
+    noteStarts.push(start);
+    dashStarts.push(Array.from({ length: note.duration.dashes }, (_, index) => start + (index + 1) / 4));
     start += note.duration.value;
-    return position;
-  });
+  }
+  return { noteStarts, dashStarts };
+}
+
+function rhythmicSlotWidth(note: Note): number {
+  return widthOf(note) - note.duration.dashes * DIMENSIONS.dashSpacing;
+}
+
+function setTimelineWidth(widthsByStart: Map<string, { start: number; width: number }>, start: number, width: number) {
+  const key = timelineKey(start);
+  const current = widthsByStart.get(key);
+  widthsByStart.set(key, { start, width: Math.max(current?.width ?? 0, width) });
+}
+
+function positionsForStarts(starts: number[], positionsByStart: Map<string, number>): number[] {
+  return starts.map((start) => positionsByStart.get(timelineKey(start)) ?? 0);
+}
+
+function dashPositionsForStarts(starts: number[][], positionsByStart: Map<string, number>): number[][] {
+  return starts.map((dashStarts) => positionsForStarts(dashStarts, positionsByStart));
 }
 
 function alignMeasureLayouts(measureLayouts: MeasureLayout[]): MeasureLayout[] {
-  const startsByMeasure = measureLayouts.map((layout) => noteStartPositions(layout.measure));
+  const positionsByMeasure = measureLayouts.map((layout) => measureRhythmPositions(layout.measure));
   const widthsByStart = new Map<string, { start: number; width: number }>();
 
   for (const [layoutIndex, layout] of measureLayouts.entries()) {
-    const starts = startsByMeasure[layoutIndex]!;
+    const positions = positionsByMeasure[layoutIndex]!;
     for (const [noteIndex, note] of layout.measure.notes.entries()) {
-      const start = starts[noteIndex]!;
-      const key = timelineKey(start);
-      const current = widthsByStart.get(key);
-      widthsByStart.set(key, { start, width: Math.max(current?.width ?? 0, widthOf(note)) });
+      setTimelineWidth(widthsByStart, positions.noteStarts[noteIndex]!, rhythmicSlotWidth(note));
+      for (const dashStart of positions.dashStarts[noteIndex]!) {
+        setTimelineWidth(widthsByStart, dashStart, DIMENSIONS.dashSpacing);
+      }
     }
   }
 
@@ -424,13 +454,14 @@ function alignMeasureLayouts(measureLayouts: MeasureLayout[]): MeasureLayout[] {
   const leftPadding = Math.max(...measureLayouts.map((layout) => layout.leftPadding));
   const rightPadding = Math.max(...measureLayouts.map((layout) => layout.rightPadding));
   return measureLayouts.map((layout, layoutIndex) => {
-    const starts = startsByMeasure[layoutIndex]!;
+    const positions = positionsByMeasure[layoutIndex]!;
     return {
       ...layout,
       width: position + leftPadding + rightPadding + 4 + (layout.measure.repeatEnd ? DIMENSIONS.repeatRightPadding - DIMENSIONS.leftPadding : 0),
       leftPadding,
       rightPadding,
-      notePositions: starts.map((start) => positionsByStart.get(timelineKey(start)) ?? 0),
+      notePositions: positionsForStarts(positions.noteStarts, positionsByStart),
+      dashPositions: dashPositionsForStarts(positions.dashStarts, positionsByStart),
     };
   });
 }
@@ -544,6 +575,10 @@ function renderedLineRightEdge(width: number, pageWidth: number, justified: bool
   return justified || scaled ? pageWidth : Math.min(pageWidth, width);
 }
 
+function renderedItemRightEdge(item: RenderLineLayout, pageWidth: number, justified: boolean, scaled: boolean): number {
+  return renderedLineRightEdge(lineVisualWidth(item), pageWidth, justified, scaled);
+}
+
 function renderVoiceBracket(x: number, y1: number, y2: number, side: "left" | "right"): string {
   const hook = 9;
   const bevel = 7;
@@ -639,7 +674,7 @@ export function renderScore(document: Document, yStart: number, pageWidth: numbe
     if (groups[item.groupIndex]?.bracketed) {
       const y1 = y + Math.max(0, item.layout.maxPaddingUp - DIMENSIONS.baseNoteHeight - 4);
       const y2 = y + item.layout.height;
-      const rightEdge = renderedLineRightEdge(item.groupVisualWidth, pageWidth, shouldJustify, groupScaled);
+      const rightEdge = renderedItemRightEdge(item, pageWidth, shouldJustify, scaled);
       const current = groupBounds.get(item.groupIndex);
       groupBounds.set(item.groupIndex, {
         y1: Math.min(current?.y1 ?? y1, y1),
