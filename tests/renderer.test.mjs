@@ -37,6 +37,10 @@ function rightVoiceBracketX(svg) {
   return right[0];
 }
 
+function finalBarXs(svg) {
+  return [...svg.matchAll(/<line class="bar-final" x1="([^"]+)"/g)].map((match) => Number(match[1]));
+}
+
 test("renders a parse result as an SVG document", () => {
   const result = parse(`title: "Render Test"\nkey: "F#"\n=\n1 #4/ 5-|`);
   assert.equal(result.ok, true);
@@ -401,6 +405,17 @@ test("aligns notes across simultaneous tracks by rhythmic position", () => {
   assert.equal(dashCenterX(svg, 10), noteX(svg, 5));
   assert.equal(noteX(svg, 11), noteX(svg, 6));
   assert.equal(dashCenterX(svg, 11), noteX(svg, 7));
+});
+
+test("falls back to measure-level alignment when track rhythms differ", () => {
+  const result = parse("T1: 1 2 3 4\nT2: 5, - 6,");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 260 });
+
+  assert.equal(noteX(svg, 4), noteX(svg, 0));
+  assert.notEqual(dashCenterX(svg, 4), noteX(svg, 1));
+  assert.notEqual(noteX(svg, 5), noteX(svg, 2));
+  assert.equal(new Set(finalBarXs(svg)).size, 1);
 });
 
 test("aligns simultaneous tracks only within matching wrapped measure spans", () => {

@@ -429,8 +429,57 @@ function dashPositionsForStarts(starts: number[][], positionsByStart: Map<string
   return starts.map((dashStarts) => positionsForStarts(dashStarts, positionsByStart));
 }
 
+function measureTimelineSignature(positions: MeasureRhythmPositions): string {
+  return [...positions.noteStarts, ...positions.dashStarts.flat()]
+    .sort((a, b) => a - b)
+    .map(timelineKey)
+    .join("|");
+}
+
+function measureTrailingWidth(measure: Measure): number {
+  return 4 + (measure.repeatEnd ? DIMENSIONS.repeatRightPadding - DIMENSIONS.leftPadding : 0);
+}
+
+function measureContentWidth(layout: MeasureLayout): number {
+  return layout.width - layout.leftPadding - layout.rightPadding - measureTrailingWidth(layout.measure);
+}
+
+function scalePositions(positions: number[], sourceWidth: number, targetWidth: number): number[] {
+  if (sourceWidth <= 0 || targetWidth === sourceWidth) {
+    return positions;
+  }
+  const scale = targetWidth / sourceWidth;
+  return positions.map((position) => position * scale);
+}
+
+function scaleDashPositions(positions: number[][], sourceWidth: number, targetWidth: number): number[][] {
+  return positions.map((dashPositions) => scalePositions(dashPositions, sourceWidth, targetWidth));
+}
+
+function alignMeasureLinesOnly(measureLayouts: MeasureLayout[]): MeasureLayout[] {
+  const contentWidth = Math.max(0, ...measureLayouts.map(measureContentWidth));
+  const leftPadding = Math.max(...measureLayouts.map((layout) => layout.leftPadding));
+  const rightPadding = Math.max(...measureLayouts.map((layout) => layout.rightPadding));
+  return measureLayouts.map((layout) => {
+    const sourceWidth = measureContentWidth(layout);
+    return {
+      ...layout,
+      width: contentWidth + leftPadding + rightPadding + measureTrailingWidth(layout.measure),
+      leftPadding,
+      rightPadding,
+      notePositions: scalePositions(layout.notePositions, sourceWidth, contentWidth),
+      dashPositions: scaleDashPositions(layout.dashPositions, sourceWidth, contentWidth),
+    };
+  });
+}
+
 function alignMeasureLayouts(measureLayouts: MeasureLayout[]): MeasureLayout[] {
   const positionsByMeasure = measureLayouts.map((layout) => measureRhythmPositions(layout.measure));
+  const signatures = new Set(positionsByMeasure.map(measureTimelineSignature));
+  if (signatures.size > 1) {
+    return alignMeasureLinesOnly(measureLayouts);
+  }
+
   const widthsByStart = new Map<string, { start: number; width: number }>();
 
   for (const [layoutIndex, layout] of measureLayouts.entries()) {

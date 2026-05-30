@@ -105,14 +105,17 @@ padding is applied.
 
 In labeled multi-voice groups, simultaneous tracks share measure-local rhythmic
 anchors. After each track has been wrapped into visual lines, the renderer
-aligns lines that cover the same measure span and places notes with the same
-start position inside a measure at the same x coordinate. The shared coordinate
-uses enough horizontal advance for the widest note or duration mark at that
-rhythmic position, so accidentals and dotted notes can reserve the required
-space without shifting another track off the beat. Dash extension marks are
-treated as their own rhythmic anchors, so a held note's extension aligns with
-later notes in simultaneous tracks instead of moving as one block with the held
-note head.
+aligns lines that cover the same measure span. When every track in a measure
+has the same rhythmic anchor set, notes with the same start position are placed
+at the same x coordinate. The shared coordinate uses enough horizontal advance
+for the widest note or duration mark at that rhythmic position, so accidentals
+and dotted notes can reserve the required space without shifting another track
+off the beat. Dash extension marks are treated as their own rhythmic anchors,
+so a held note's extension aligns with later notes in simultaneous tracks
+instead of moving as one block with the held note head. When the tracks in a
+measure do not have matching rhythmic anchors, the renderer falls back to
+measure-level alignment: measure barlines align across tracks, and each track's
+own measure contents are stretched to fit between those aligned barlines.
 
 Lyric lines render below the preceding score group. A lyric string with
 multiple whitespace-separated syllables is rendered as centered syllables under
