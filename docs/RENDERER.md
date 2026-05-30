@@ -103,6 +103,14 @@ interface LineLayout {
 `notePositions` are x offsets within a measure before the measure-level left
 padding is applied.
 
+In labeled multi-voice groups, simultaneous tracks share measure-local rhythmic
+anchors. After each track has been wrapped into visual lines, the renderer
+aligns lines that cover the same measure span and places notes with the same
+start position inside a measure at the same x coordinate. The shared coordinate
+uses enough horizontal advance for the widest note at that rhythmic position,
+so accidentals, dotted notes, and dashed notes can reserve the required space
+without shifting another track off the beat.
+
 Lyric lines render below the preceding score group. A lyric string with
 multiple whitespace-separated syllables is rendered as centered syllables under
 the main voice note anchors when the syllable count matches the main voice note

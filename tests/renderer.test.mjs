@@ -364,12 +364,25 @@ test("aligns voice brackets with group-level justification", () => {
 });
 
 test("aligns notes across simultaneous tracks by rhythmic position", () => {
-  const result = parse("T1: 1 2 3 4\nT2: 5, - 6, -");
+  const result = parse("T1: 1 2 3 4 | 5 6 7 1'\nT2: 5, - 6, - | 1, - 2, -");
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 260 });
 
-  assert.equal(noteX(svg, 4), noteX(svg, 0));
-  assert.equal(noteX(svg, 5), noteX(svg, 2));
+  assert.equal(noteX(svg, 8), noteX(svg, 0));
+  assert.equal(noteX(svg, 9), noteX(svg, 2));
+  assert.equal(noteX(svg, 10), noteX(svg, 4));
+  assert.equal(noteX(svg, 11), noteX(svg, 6));
+});
+
+test("aligns simultaneous tracks only within matching wrapped measure spans", () => {
+  const result = parse("T1: 1 2 3 4 | 5 6 7 1'\nT2: 5, - 6, - | 1, - 2, -");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 112 });
+
+  assert.equal(noteX(svg, 8), noteX(svg, 0));
+  assert.equal(noteX(svg, 9), noteX(svg, 2));
+  assert.equal(noteX(svg, 10), noteX(svg, 4));
+  assert.equal(noteX(svg, 11), noteX(svg, 6));
 });
 
 test("does not render voice brackets for single-voice groups", () => {
