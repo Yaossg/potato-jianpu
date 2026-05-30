@@ -1,6 +1,6 @@
 import { actualNotePerBeat, type Document, type LyricLine, type Measure, type Note, type Pitch, type PitchNote, type ScoreLine } from "../core/index.js";
 import { DIMENSIONS } from "./dimensions.js";
-import { lyricLineDisplayLabel, scoreLineDisplayLabel } from "./labels.js";
+import { labelOffsetForTexts, lyricLineDisplayLabel, scoreLineDisplayLabel } from "./labels.js";
 import { flattenNotes, layoutLine, lineWidth, measureXOffset, type LineLayout, type MeasureLayout } from "./layout.js";
 import { chordHeight, maxAccidentalOffset, noteTieAfter, widthOf } from "./metrics.js";
 import type { JustifyMode } from "./options.js";
@@ -557,8 +557,8 @@ function scoreLineGroups(document: Document): ScoreLineGroup[] {
   if (!hasLabels) {
     return document.score.map((line) => {
       const lyrics = line.lyrics ?? [];
-      const hasDisplayLabel = lyrics.some((lyric) => lyricLineDisplayLabel(document, lyric));
-      return { lines: [line], lyrics, bracketed: false, labelOffset: hasDisplayLabel ? DIMENSIONS.labelWidth : 0, bracketOffset: 0 };
+      const labelOffset = labelOffsetForTexts(lyrics.map((lyric) => lyricLineDisplayLabel(document, lyric)));
+      return { lines: [line], lyrics, bracketed: false, labelOffset, bracketOffset: 0 };
     });
   }
 
@@ -577,13 +577,16 @@ function scoreLineGroups(document: Document): ScoreLineGroup[] {
 
   return groups.map((lines) => {
     const lyrics = lines.flatMap((line) => line.lyrics ?? []);
-    const hasDisplayLabel = lines.some((line) => scoreLineDisplayLabel(document, line)) || lyrics.some((lyric) => lyricLineDisplayLabel(document, lyric));
+    const labelOffset = labelOffsetForTexts([
+      ...lines.map((line) => scoreLineDisplayLabel(document, line)),
+      ...lyrics.map((lyric) => lyricLineDisplayLabel(document, lyric)),
+    ]);
     const bracketed = lines.length > 1;
     return {
       lines,
       lyrics,
       bracketed,
-      labelOffset: hasDisplayLabel ? DIMENSIONS.labelWidth : 0,
+      labelOffset,
       bracketOffset: bracketed ? DIMENSIONS.voiceBracketWidth : 0,
     };
   });

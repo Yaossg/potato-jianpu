@@ -1,6 +1,6 @@
 import type { Document, ScoreLine } from "../core/index.js";
 import { DIMENSIONS } from "./dimensions.js";
-import { lyricLineDisplayLabel, scoreLineDisplayLabel } from "./labels.js";
+import { labelOffsetForTexts, lyricLineDisplayLabel, scoreLineDisplayLabel } from "./labels.js";
 import { flattenNotes, layoutLine } from "./layout.js";
 import { DEFAULT_OPTIONS } from "./options.js";
 
@@ -53,8 +53,10 @@ export function inferContentPageWidth(document: Document, options: InferPageWidt
     0,
     ...scoreLineGroups(document).flatMap((group) => {
       const lyrics = group.flatMap((line) => line.lyrics ?? []);
-      const labelOffset =
-        group.some((line) => scoreLineDisplayLabel(document, line)) || lyrics.some((lyric) => lyricLineDisplayLabel(document, lyric)) ? DIMENSIONS.labelWidth : 0;
+      const labelOffset = labelOffsetForTexts([
+        ...group.map((line) => scoreLineDisplayLabel(document, line)),
+        ...lyrics.map((lyric) => lyricLineDisplayLabel(document, lyric)),
+      ]);
       const bracketOffset = group.length > 1 ? DIMENSIONS.voiceBracketWidth * 2 : 0;
       const lyricTextWidth = Math.max(0, ...lyrics.map((lyric) => lyric.text.length * LYRIC_CHARACTER_WIDTH));
       const lyricWidth = lyricTextWidth > 0 ? lyricTextWidth + labelOffset + bracketOffset + DIMENSIONS.leftPadding : 0;

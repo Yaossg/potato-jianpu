@@ -353,7 +353,18 @@ test("renders header-defined track labels with reserved horizontal space", () =>
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 160 });
   assert.match(svg, /<text class="line-label" x="8" y="[^"]+" text-anchor="start">Verse<\/text>/);
-  assert.match(svg, /<g class="note-item" data-note-index="0"><text class="note" x="72"/);
+  assert.match(svg, /<g class="note-item" data-note-index="0"><text class="note" x="79"/);
+});
+
+test("sizes label space from rendered label text", () => {
+  const short = parse(`T1: "A"\n=\nT1: 1 2`);
+  const long = parse(`T1: "Extremely Long Track Label For Width"\n=\nT1: 1 2`);
+  assert.equal(short.ok, true);
+  assert.equal(long.ok, true);
+
+  assert.equal(noteX(renderSvg(short.value), 0), 45);
+  assert.equal(noteX(renderSvg(long.value), 0), 342);
+  assert.ok(inferContentPageWidth(long.value, { maxWidth: 1000 }) > inferContentPageWidth(short.value, { maxWidth: 1000 }));
 });
 
 test("does not render bare track labels without header-defined names", () => {
@@ -371,8 +382,8 @@ test("renders voice brackets around simultaneous track groups", () => {
   const bracketCount = svg.match(/class="voice-bracket"/g)?.length ?? 0;
   assert.equal(bracketCount, 2);
   assert.match(svg, /<text class="line-label" x="8" y="[^"]+" text-anchor="start">High<\/text>/);
-  assert.match(svg, /<path class="voice-bracket" d="M71,[^"]+ L62,[^"]+ V[^"]+ L71,[^"]+"\/>/);
-  assert.match(svg, /<g class="note-item" data-note-index="0"><text class="note" x="88"/);
+  assert.match(svg, /<path class="voice-bracket" d="M69,[^"]+ L60,[^"]+ V[^"]+ L69,[^"]+"\/>/);
+  assert.match(svg, /<g class="note-item" data-note-index="0"><text class="note" x="86"/);
 });
 
 test("aligns voice brackets with group-level justification", () => {
@@ -456,9 +467,9 @@ test("renders header-defined lyric labels with reserved horizontal space", () =>
   const result = parse('L1: "Verse"\n=\n1 2\nL1: "hello"\n"again"');
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 180 });
-  assert.match(svg, /<text class="line-label" x="8" y="\d+" text-anchor="start">Verse<\/text><text class="lyric-line" x="72" y="\d+" text-anchor="start">hello<\/text>/);
-  assert.match(svg, /<text class="lyric-line" x="72" y="\d+" text-anchor="start">again<\/text>/);
-  assert.match(svg, /<g class="note-item" data-note-index="0"><text class="note" x="72"/);
+  assert.match(svg, /<text class="line-label" x="8" y="\d+" text-anchor="start">Verse<\/text><text class="lyric-line" x="79" y="\d+" text-anchor="start">hello<\/text>/);
+  assert.match(svg, /<text class="lyric-line" x="79" y="\d+" text-anchor="start">again<\/text>/);
+  assert.match(svg, /<g class="note-item" data-note-index="0"><text class="note" x="79"/);
 });
 
 test("justifies lyric text with its score group", () => {

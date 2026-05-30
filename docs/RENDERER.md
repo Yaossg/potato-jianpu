@@ -124,6 +124,10 @@ count and the main voice occupies one rendered visual line. Otherwise it remains
 a normal left-aligned lyric line. In multi-voice groups, the renderer uses `T1`
 as the main voice; unlabeled lines in labeled scores also count as `T1`.
 
+Track and lyric labels reserve horizontal space based on the rendered label
+text length plus padding. A group uses the widest visible label in that group,
+so short labels do not consume the same left margin as long labels.
+
 ## Dimensions
 
 Renderer dimensions are centralized in the `DIMENSIONS` object:
