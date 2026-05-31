@@ -2,7 +2,7 @@ import { actualNotePerBeat, type Document, type LyricLine, type Measure, type No
 import { DIMENSIONS } from "./dimensions.js";
 import { labelOffsetForTexts, lyricLineDisplayLabel, scoreLineDisplayLabel } from "./labels.js";
 import { flattenNotes, layoutLine, lineWidth, measureXOffset, type LineLayout, type MeasureLayout } from "./layout.js";
-import { chordHeight, maxAccidentalOffset, noteTieAfter, widthOf } from "./metrics.js";
+import { chordHeight, maxAccidentalOffset, widthOf } from "./metrics.js";
 import type { JustifyMode } from "./options.js";
 import { escapeXml } from "./xml.js";
 
@@ -18,6 +18,14 @@ const LYRIC_CHARACTER_WIDTH = 9;
 interface RenderedLine {
   svg: string;
   lyricAnchors: number[];
+}
+
+interface LineEntry {
+  note: Note;
+  x: number;
+  y: number;
+  full: boolean;
+  dashAnchors: number[];
 }
 
 function renderOctaveDots(pitch: Pitch, x: number, y: number, isBase: boolean, halves: number): string {
@@ -246,6 +254,35 @@ function hasLaterDifferentEnding(document: Document, measure: Measure): boolean 
   return false;
 }
 
+function notesInLine(line: ScoreLine): Note[] {
+  return line.measures.flatMap((measure) => measure.notes);
+}
+
+function previousNoteInSequence(notes: Note[], note: Note): Note | undefined {
+  const index = notes.indexOf(note);
+  return index > 0 ? notes[index - 1] : undefined;
+}
+
+function nextNoteInSequence(notes: Note[], note: Note): Note | undefined {
+  const index = notes.indexOf(note);
+  return index >= 0 ? notes[index + 1] : undefined;
+}
+
+function lineNotesByTrack(document: Document): Map<ScoreLine, Note[]> {
+  const hasLabels = document.score.some((line) => line.label !== undefined);
+  if (!hasLabels) {
+    return new Map(document.score.map((line) => [line, notesInLine(line)]));
+  }
+
+  const notesByTrack = new Map<string, Note[]>();
+  for (const line of document.score) {
+    const trackLabel = line.label ?? "";
+    notesByTrack.set(trackLabel, [...(notesByTrack.get(trackLabel) ?? []), ...notesInLine(line)]);
+  }
+
+  return new Map(document.score.map((line) => [line, notesByTrack.get(line.label ?? "") ?? notesInLine(line)]));
+}
+
 function renderLine(
   layout: LineLayout,
   lineY: number,
@@ -257,9 +294,11 @@ function renderLine(
   labelOffset: number,
   bracketOffset: number,
   finalBarMeasures: Set<Measure>,
+  notesByLine: Map<ScoreLine, Note[]>,
 ): RenderedLine {
   const parts: string[] = [];
-  const lineEntries: Array<{ note: Note; x: number; y: number; full: boolean; dashAnchors: number[] }> = [];
+  const lineEntries: LineEntry[] = [];
+  const trackNotes = notesByLine.get(layout.line) ?? notesInLine(layout.line);
   const unit = actualNotePerBeat(document.header.timeSignature);
   const displayLabel = scoreLineDisplayLabel(document, layout.line);
   const contentOffset = labelOffset + bracketOffset;
@@ -342,8 +381,9 @@ function renderLine(
     );
   }
 
-  for (const [index, entry] of lineEntries.entries()) {
-    const previous = lineEntries[index - 1];
+  for (const entry of lineEntries) {
+    const previousNote = previousNoteInSequence(trackNotes, entry.note);
+    const previous = previousNote ? lineEntries.find((candidate) => candidate.note === previousNote) : undefined;
     if (entry.note.tie && previous) {
       const startX = previous.x + (previous.note.kind === "pitch" ? maxAccidentalOffset(previous.note.chord) : 0);
       const endX = entry.x + (entry.note.kind === "pitch" ? maxAccidentalOffset(entry.note.chord) : 0);
@@ -352,7 +392,9 @@ function renderLine(
       const endX = entry.x + (entry.note.kind === "pitch" ? maxAccidentalOffset(entry.note.chord) : 0);
       parts.push(renderIncomingTie(leftTieEdgeX, endX, lineY + layout.maxPaddingUp - DIMENSIONS.tiePadding, chordHeight(entry.note)));
     }
-    if (noteTieAfter(entry.note, allNotes) && index === lineEntries.length - 1) {
+    const nextNote = nextNoteInSequence(trackNotes, entry.note);
+    const nextRendered = nextNote ? lineEntries.some((candidate) => candidate.note === nextNote) : false;
+    if (nextNote?.tie && !nextRendered) {
       const startX = entry.x + (entry.note.kind === "pitch" ? maxAccidentalOffset(entry.note.chord) : 0);
       parts.push(renderOutgoingTie(startX, rightTieEdgeX, lineY + layout.maxPaddingUp - DIMENSIONS.tiePadding, chordHeight(entry.note)));
     }
@@ -680,6 +722,7 @@ export function renderScore(document: Document, yStart: number, pageWidth: numbe
   const activeNoteIndexSet = new Set(activeNoteIndices);
   const groups = scoreLineGroups(document);
   const hasLabels = document.score.some((line) => line.label !== undefined);
+  const notesByLine = lineNotesByTrack(document);
   const finalMeasures = finalBarMeasures(groups);
   const layouts = groups.flatMap((group, groupIndex) => {
     const groupLayouts = alignLineLayouts(
@@ -716,6 +759,7 @@ export function renderScore(document: Document, yStart: number, pageWidth: numbe
       item.labelOffset,
       item.bracketOffset,
       finalMeasures,
+      notesByLine,
     );
     parts.push(scaled ? `<g class="score-line scaled" transform="scale(${scaleX},1)">${renderedLine.svg}</g>` : renderedLine.svg);
     if (isPrimaryLyricLine(item.layout.line, hasLabels)) {

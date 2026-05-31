@@ -41,6 +41,16 @@ function finalBarXs(svg) {
   return [...svg.matchAll(/<line class="bar-final" x1="([^"]+)"/g)].map((match) => Number(match[1]));
 }
 
+function notePosition(svg, noteIndex) {
+  const match = svg.match(new RegExp(`<g class="note-item(?: active)?" data-note-index="${noteIndex}"><text class="note" x="([^"]+)" y="([^"]+)"`));
+  assert.ok(match, `note ${noteIndex} should render`);
+  return { x: Number(match[1]), y: Number(match[2]) };
+}
+
+function tiePaths(svg) {
+  return [...svg.matchAll(/<path class="tie" d="([^"]+)"/g)].map((match) => match[1]);
+}
+
 test("renders a parse result as an SVG document", () => {
   const result = parse(`title: "Render Test"\nkey: "F#"\n=\n1 #4/ 5-|`);
   assert.equal(result.ok, true);
@@ -132,6 +142,23 @@ test("renders cross-line ties as cut halves after justification", () => {
   const svg = renderSvg(result.value, { pageWidth: 160, justifyMode: "all", background: "#ffffff" });
   assert.match(svg, /<path class="tie" d="M[^"]+ Q[^"]+ [^,]+,88 L[^,]+,89\.5 Q[^"]+ Z"/);
   assert.match(svg, /<path class="tie" d="M[^,]+,148 Q[^"]+ Q[^"]+ [^,]+,149\.5 Z"/);
+});
+
+test("connects ties to the previous note in the same track", () => {
+  const result = parse("T1: 1 2\nT2: 5, -\nT1: 3 4\nT2: ~5, 6,");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 220 });
+  const secondT1 = notePosition(svg, 4);
+  const secondT2Tied = notePosition(svg, 5);
+  const paths = tiePaths(svg);
+  const incomingTie = paths.find((path) => path.startsWith("M16,") && path.includes(`${secondT2Tied.x},`));
+  assert.ok(incomingTie, "incoming tie should render into the tied T2 note");
+  assert.match(incomingTie, new RegExp(` ${secondT2Tied.x},${secondT2Tied.y - 24}(?: |$)`));
+  assert.equal(
+    paths.some((path) => path.startsWith(`M${secondT1.x},`) && path.includes(` ${secondT2Tied.x},${secondT2Tied.y - 24}`)),
+    false,
+    "tied T2 note should not connect back to the previous T1 note in the visual group",
+  );
 });
 
 test("renders tempo without musical glyph codepoints", () => {
