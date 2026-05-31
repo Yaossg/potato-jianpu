@@ -190,6 +190,32 @@ test("expands repeats independently inside each arrangement track", () => {
   );
 });
 
+test("expands labeled repeats across later groups in the same track", () => {
+  const result = parse("T1: |: 1\nT2: 5,\nT1: 2 :|\nT2: 6,");
+  assert.equal(result.ok, true);
+  const arrangement = compileArrangement(result.value);
+  assert.deepEqual(
+    arrangement.tracks.map((track) => track.notes.map((note) => note.chord)),
+    [
+      [[60], [62], [60], [62]],
+      [[55], [57]],
+    ],
+  );
+});
+
+test("keeps later groups after earlier in-line repeats finish", () => {
+  const result = parse("T1: |: 1 :|\nT2: 5,\nT1: 2\nT2: 6,");
+  assert.equal(result.ok, true);
+  const arrangement = compileArrangement(result.value);
+  assert.deepEqual(
+    arrangement.tracks.map((track) => track.notes.map((note) => note.chord)),
+    [
+      [[60], [60], [62]],
+      [[55], "rest", [57]],
+    ],
+  );
+});
+
 test("omits shared initial arrangement rests only up to the first sounding track", () => {
   const result = parse("T1: 0 1\nT2: 0 0 5,");
   assert.equal(result.ok, true);

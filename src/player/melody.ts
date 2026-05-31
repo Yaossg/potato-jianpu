@@ -160,8 +160,19 @@ function noteDuration(notes: MelodyNote[]): number {
   return notes.reduce((sum, note) => sum + note.duration, 0);
 }
 
-function rest(duration: number): MelodyNote[] {
-  return duration > 0 ? [{ chord: "rest", duration, index: -1 }] : [];
+function restMeasure(duration: number, range: Measure["range"]): Measure {
+  return {
+    notes: [
+      {
+        kind: "rest",
+        tie: false,
+        duration: { dashes: 0, halves: 0, dots: 0, value: duration },
+        index: -1,
+        range,
+      },
+    ],
+    range,
+  };
 }
 
 function arrangementLineGroups(lines: ScoreLine[]): ScoreLine[][] {
@@ -180,6 +191,12 @@ function arrangementLineGroups(lines: ScoreLine[]): ScoreLine[][] {
   return groups;
 }
 
+interface ArrangementSegment {
+  name: string;
+  measures: Measure[];
+  start: number;
+}
+
 export function compileArrangement(document: Document, program = 0): Arrangement {
   assertProgram(program);
   const base = melodyBase(document);
@@ -191,27 +208,37 @@ export function compileArrangement(document: Document, program = 0): Arrangement
     };
   }
 
-  const trackNotes = new Map<string, MelodyNote[]>();
+  const trackMeasures = new Map<string, Measure[]>();
+  const segments: ArrangementSegment[] = [];
   let groupStart = 0;
   for (const group of arrangementLineGroups(document.score)) {
-    const compiledLines = group.map((line) => ({
+    const lines = group.map((line) => ({
       name: line.label ?? "",
-      notes: compileMeasures(document, line.measures, program).notes,
+      measures: line.measures,
     }));
-    const groupDuration = Math.max(0, ...compiledLines.map((line) => noteDuration(line.notes)));
-    for (const line of compiledLines) {
-      const notes = trackNotes.get(line.name) ?? [];
-      notes.push(...rest(groupStart - noteDuration(notes)), ...line.notes);
-      trackNotes.set(line.name, notes);
+    const groupDuration = Math.max(0, ...lines.map((line) => noteDuration(compileMeasures(document, line.measures, program).notes)));
+    for (const line of lines) {
+      segments.push({ ...line, start: groupStart });
     }
     groupStart += groupDuration;
   }
 
+  for (const segment of segments) {
+    const measures = trackMeasures.get(segment.name) ?? [];
+    const gap = segment.start - noteDuration(compileMeasures(document, measures, program).notes);
+    const firstMeasure = segment.measures[0];
+    if (gap > 1e-9 && firstMeasure) {
+      measures.push(restMeasure(gap, firstMeasure.range));
+    }
+    measures.push(...segment.measures);
+    trackMeasures.set(segment.name, measures);
+  }
+
   return {
-    tracks: [...trackNotes].map(([name, notes]) => ({
+    tracks: [...trackMeasures].map(([name, measures]) => ({
       name,
       program,
-      notes,
+      notes: compileMeasures(document, measures, program).notes,
       ...base,
     })),
     ...base,
