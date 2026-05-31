@@ -238,8 +238,11 @@ button:disabled {
 
 .workspace {
   display: grid;
-  grid-template-columns: minmax(320px, 0.9fr) minmax(360px, 1.1fr);
-  gap: 16px;
+  grid-template-columns:
+    minmax(280px, var(--editor-pane-percent, 45%))
+    12px
+    minmax(280px, 1fr);
+  gap: 0;
   padding: 16px;
   min-height: 0;
   flex: 1;
@@ -264,6 +267,35 @@ button:disabled {
   min-width: 0;
   display: flex;
   flex-direction: column;
+}
+
+.workspace-resizer {
+  position: relative;
+  min-width: 12px;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.workspace-resizer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 5px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--panel-border);
+}
+
+.workspace-resizer:hover::before,
+.workspace-resizer:focus-visible::before,
+.workspace-resizer:active::before {
+  background: var(--control-hover-border);
+}
+
+.workspace-resizer:focus-visible {
+  outline: 2px solid var(--control-hover-border);
+  outline-offset: 2px;
 }
 
 .settings-panel,
@@ -458,6 +490,11 @@ textarea {
 
   .workspace {
     grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .workspace-resizer {
+    display: none;
   }
 
   .settings-grid .select-control {

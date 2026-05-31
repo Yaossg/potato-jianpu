@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { MouseEvent } from "react";
+import type { CSSProperties, KeyboardEvent, MouseEvent, PointerEvent } from "react";
 import {
   arrangementDuration,
   arrangementNoteCount,
@@ -34,6 +34,8 @@ const DEFAULT_PAGE_WIDTH = 1000;
 const MIN_PAGE_WIDTH = 240;
 const MAX_PAGE_WIDTH = 2000;
 const PREVIEW_HORIZONTAL_PADDING = 32;
+const MIN_WORKSPACE_PANE_WIDTH = 280;
+const DEFAULT_EDITOR_PANE_PERCENT = 45;
 
 type ThemeName = "light" | "dark";
 type Language = "en" | "zh";
@@ -436,7 +438,9 @@ export function App() {
   const [showExamples, setShowExamples] = useState(false);
   const [pendingExampleSource, setPendingExampleSource] = useState<string | null>(null);
   const [confirmClearSource, setConfirmClearSource] = useState(false);
+  const [editorPanePercent, setEditorPanePercent] = useState(DEFAULT_EDITOR_PANE_PERCENT);
   const playerRef = useRef<PreviewAudioPlayer | null>(null);
+  const workspaceRef = useRef<HTMLElement | null>(null);
   const previewPanelRef = useRef<HTMLElement | null>(null);
   const t = (key: TranslationKey, values?: Record<string, string | number>) => translate(language, key, values);
   const parsed = useMemo(() => parse(source), [source]);
@@ -489,6 +493,63 @@ export function App() {
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
+
+  function updateWorkspaceSplit(clientX: number) {
+    const element = workspaceRef.current;
+    if (!element) {
+      return;
+    }
+
+    const bounds = element.getBoundingClientRect();
+    if (bounds.width <= 0) {
+      return;
+    }
+
+    const minPercent = Math.min(50, (MIN_WORKSPACE_PANE_WIDTH / bounds.width) * 100);
+    const rawPercent = ((clientX - bounds.left) / bounds.width) * 100;
+    setEditorPanePercent(Math.min(100 - minPercent, Math.max(minPercent, rawPercent)));
+  }
+
+  function adjustWorkspaceSplit(delta: number) {
+    const element = workspaceRef.current;
+    const width = element?.getBoundingClientRect().width ?? 0;
+    const minPercent = width > 0 ? Math.min(50, (MIN_WORKSPACE_PANE_WIDTH / width) * 100) : 0;
+    setEditorPanePercent((current) => Math.min(100 - minPercent, Math.max(minPercent, current + delta)));
+  }
+
+  function startWorkspaceResize(event: PointerEvent<HTMLDivElement>) {
+    if (window.matchMedia?.("(max-width: 980px)").matches) {
+      return;
+    }
+    event.currentTarget.setPointerCapture(event.pointerId);
+    updateWorkspaceSplit(event.clientX);
+  }
+
+  function resizeWorkspace(event: PointerEvent<HTMLDivElement>) {
+    if (!event.currentTarget.hasPointerCapture(event.pointerId)) {
+      return;
+    }
+    updateWorkspaceSplit(event.clientX);
+  }
+
+  function stopWorkspaceResize(event: PointerEvent<HTMLDivElement>) {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  }
+
+  function resizeWorkspaceWithKeyboard(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      adjustWorkspaceSplit(-2);
+    } else if (event.key === "ArrowRight") {
+      event.preventDefault();
+      adjustWorkspaceSplit(2);
+    } else if (event.key === "Home") {
+      event.preventDefault();
+      setEditorPanePercent(DEFAULT_EDITOR_PANE_PERCENT);
+    }
+  }
 
   function exportSvg() {
     if (svg) {
@@ -937,7 +998,11 @@ export function App() {
         </div>
       )}
 
-      <section className="workspace">
+      <section
+        className="workspace"
+        ref={workspaceRef}
+        style={{ "--editor-pane-percent": `${editorPanePercent}%` } as CSSProperties}
+      >
         <section className="editor-panel">
           <div className="panel-title">
             <h2>{t("source")}</h2>
@@ -969,6 +1034,22 @@ export function App() {
             </div>
           )}
         </section>
+
+        <div
+          className="workspace-resizer"
+          role="separator"
+          aria-label="Resize editor and preview panes"
+          aria-orientation="vertical"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(editorPanePercent)}
+          tabIndex={0}
+          onPointerDown={startWorkspaceResize}
+          onPointerMove={resizeWorkspace}
+          onPointerUp={stopWorkspaceResize}
+          onPointerCancel={stopWorkspaceResize}
+          onKeyDown={resizeWorkspaceWithKeyboard}
+        />
 
         <section className="preview-panel" ref={previewPanelRef}>
           <div className="panel-title">
