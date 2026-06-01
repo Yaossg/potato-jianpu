@@ -26,6 +26,7 @@ pnpm run cli -- export-mp3 examples/twinkle.jpu -o twinkle.mp3
 | `drums.jpu` | Drum-note syntax and short durations |
 | `jingle-bells.jpu` | Song example with dotted/slashed rhythms |
 | `happy-birthday.jpu` | 3/4 example with compact rests |
+| `canon.jpu` | Multi-track arrangement with chords, repeats, and dense rhythm |
 | `dear-little-wish.jpu` | Long example with dense compact notation |
 | `burning-field.jpu` | Example with rests, ties, and octave marks |
 | `blocky-heroes.jpu` | Example with naturals and dense sixteenth notes |
