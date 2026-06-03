@@ -91,12 +91,11 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(grammar, /Modern Jianpu Markup Grammar Reference/);
   assert.match(grammar, /class="railroad-diagram"/);
   assert.match(grammar, /durable_note ::= tie\? general_note length\?/);
-  assert.match(grammar, /IDENTIFIER ::=/);
+  assert.ok(grammar.includes("IDENTIFIER ::= /[A-Za-z][A-Za-z0-9_]*/"));
   assert.match(grammar, /Reference/);
-  assert.match(grammar, /Whitespace And Comments/);
-  assert.match(grammar, />5\. Key</);
-  assert.match(grammar, />6\. Time</);
-  assert.match(grammar, />7\. Tempo</);
+  assert.match(grammar, />5\. Key Header</);
+  assert.match(grammar, />6\. Time Header</);
+  assert.match(grammar, />7\. Tempo Header</);
   assert.match(grammar, /Token Reference/);
   assert.ok(grammar.indexOf("<h2>Reference</h2>") < grammar.indexOf("<h2>Railroad And EBNF</h2>"));
   assert.match(appSource, /function updateSource/);

@@ -164,10 +164,14 @@ test("validates repeated endings independently for labeled tracks", () => {
   assert.doesNotMatch(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /appears more than once|out of order|should end with/);
 });
 
-test("keeps reporting empty measures between consecutive bars", () => {
+test("warns and ignores empty measures between consecutive bars", () => {
   const result = parse("1 2 || 3 4");
-  assert.equal(result.ok, false);
-  assert.match(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Expected at least one note in measure/);
+  assert.equal(result.ok, true);
+  assert.equal(result.value.score[0].measures.length, 2);
+  assert.equal(result.value.score[0].measures[0].notes.length, 2);
+  assert.equal(result.value.score[0].measures[1].notes.length, 2);
+  const diagnostic = result.diagnostics.find((item) => item.message === "Empty measure ignored.");
+  assert.equal(diagnostic?.severity, "warning");
 });
 
 test("keeps comment boundaries between header and score lines", () => {
@@ -201,10 +205,22 @@ test("parses chords, accidentals, rests, and drums", () => {
   assert.equal(notes[2].kind, "drum");
 });
 
-test("rejects empty chords and non-pitch chord members", () => {
+test("parses compact drum notes independently", () => {
+  const result = parse("XX X1");
+  assert.equal(result.ok, true);
+  const notes = result.value.score[0].measures[0].notes;
+  assert.deepEqual(
+    notes.map((note) => note.kind),
+    ["drum", "drum", "drum", "pitch"],
+  );
+});
+
+test("renders empty chords as rests and rejects non-pitch chord members", () => {
   const empty = parse("{}");
-  assert.equal(empty.ok, false);
-  assert.match(empty.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Expected at least one pitch in chord/);
+  assert.equal(empty.ok, true);
+  assert.equal(empty.value.score[0].measures[0].notes[0].kind, "rest");
+  const diagnostic = empty.diagnostics.find((item) => item.message === "Empty chord rendered as a rest.");
+  assert.equal(diagnostic?.severity, "warning");
 
   const restMember = parse("{1 0 3}");
   assert.equal(restMember.ok, false);
@@ -311,10 +327,16 @@ test("recovers malformed header lines without score-syntax cascades", () => {
 });
 
 test("preserves unknown header fields in raw metadata", () => {
-  const result = parse(`arranger: "Ada"\ntitle: "Raw Header"\n=\n1 2 3 4`);
+  const result = parse(`arranger2_name: "Ada"\ntitle: "Raw Header"\n=\n1 2 3 4`);
   assert.equal(result.ok, true);
-  assert.equal(result.value.header.raw.arranger, "Ada");
+  assert.equal(result.value.header.raw.arranger2_name, "Ada");
   assert.equal(result.value.header.title, "Raw Header");
+});
+
+test("requires identifiers to start with a letter", () => {
+  const result = parse(`_arranger: "Ada"\n=\n1 2 3 4`);
+  assert.equal(result.ok, false);
+  assert.match(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Unexpected character '_'/);
 });
 
 test("rejects a tie on the first note", () => {
@@ -365,6 +387,19 @@ test("accepts T-prefixed header and score line labels", () => {
   const highTrack = parse("T1: 1\nT2: 1\nT3: 1\nT4: 1\nT5: 1\nT6: 1\nT7: 1\nT8: 1\nT9: 1\nT11: 1");
   assert.equal(highTrack.ok, true);
   assert.equal(highTrack.value.score.at(-1).label, "T11");
+
+  const digitHeader = parse(`T1_name: "Drums"\n=\nT1: X1 X2`);
+  assert.equal(digitHeader.ok, true);
+  assert.equal(digitHeader.value.header.raw.T1_name, "Drums");
+  assert.equal(digitHeader.value.score[0].measures[0].notes[0].kind, "drum");
+
+  const xHeader = parse(`X_name: "Drums"\n=\nXX`);
+  assert.equal(xHeader.ok, true);
+  assert.equal(xHeader.value.header.raw.X_name, "Drums");
+  assert.deepEqual(
+    xHeader.value.score[0].measures[0].notes.map((note) => note.kind),
+    ["drum", "drum"],
+  );
 });
 
 test("treats unlabeled score lines as T1 when any score line has a track label", () => {

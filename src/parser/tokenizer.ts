@@ -145,17 +145,28 @@ export function tokenize(source: string): { tokens: Token[]; diagnostics: Diagno
       continue;
     }
 
-    const word = /^[A-Za-z_]+/.exec(rest)?.[0];
+    const labeledIdentifier = /^[A-Za-z][A-Za-z0-9_]*(?=:)/.exec(rest)?.[0];
+    if (labeledIdentifier) {
+      push("identifier", labeledIdentifier, labeledIdentifier);
+      continue;
+    }
+
+    if (rest.startsWith("bb") && /^[1-7]/.test(rest[2] ?? "")) {
+      push("flatflat", "bb");
+      continue;
+    }
+    if (rest.startsWith("b") && /^[1-7]/.test(rest[1] ?? "")) {
+      push("flat", "b");
+      continue;
+    }
+    if (rest.startsWith("X")) {
+      push("drum", "X");
+      continue;
+    }
+
+    const word = /^[A-Za-z][A-Za-z0-9_]*/.exec(rest)?.[0];
     if (word) {
-      if (word === "bb") {
-        push("flatflat", word);
-      } else if (word === "b") {
-        push("flat", word);
-      } else if (word === "X") {
-        push("drum", word);
-      } else {
-        push("identifier", word, word);
-      }
+      push("identifier", word, word);
       continue;
     }
 

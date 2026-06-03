@@ -257,7 +257,10 @@ class Parser {
     }
     const measures: Measure[] = [];
     let currentEnding = this.parseOptionalEnding() ?? this.activeEndings.get(trackKey);
-    measures.push(this.parseMeasure(leadingRepeatStart, currentEnding));
+    const firstMeasure = this.parseMeasure(leadingRepeatStart, currentEnding);
+    if (firstMeasure) {
+      measures.push(firstMeasure);
+    }
     while (true) {
       while (this.match("repeatEnd")) {
         const previous = measures.at(-1);
@@ -272,7 +275,10 @@ class Parser {
         }
         currentEnding = this.parseOptionalEnding();
         this.activeEndings.set(trackKey, currentEnding);
-        measures.push(this.parseMeasure(true, currentEnding));
+        const measure = this.parseMeasure(true, currentEnding);
+        if (measure) {
+          measures.push(measure);
+        }
         continue;
       }
       if (this.at("newline") || this.at("eof")) {
@@ -284,18 +290,27 @@ class Parser {
         }
         currentEnding = this.parseOptionalEnding() ?? currentEnding;
         this.activeEndings.set(trackKey, currentEnding);
-        measures.push(this.parseMeasure(false, currentEnding));
+        const measure = this.parseMeasure(false, currentEnding);
+        if (measure) {
+          measures.push(measure);
+        }
         continue;
       }
       if (this.match("repeatStart")) {
         currentEnding = this.parseOptionalEnding() ?? currentEnding;
         this.activeEndings.set(trackKey, currentEnding);
-        measures.push(this.parseMeasure(true, currentEnding));
+        const measure = this.parseMeasure(true, currentEnding);
+        if (measure) {
+          measures.push(measure);
+        }
         continue;
       }
       currentEnding = this.parseOptionalEnding() ?? currentEnding;
       this.activeEndings.set(trackKey, currentEnding);
-      measures.push(this.parseMeasure(false, currentEnding));
+      const measure = this.parseMeasure(false, currentEnding);
+      if (measure) {
+        measures.push(measure);
+      }
     }
     this.activeEndings.set(trackKey, currentEnding);
     return {
@@ -305,7 +320,7 @@ class Parser {
     };
   }
 
-  private parseMeasure(repeatStart = false, ending?: number): Measure {
+  private parseMeasure(repeatStart = false, ending?: number): Measure | null {
     const start = this.current().range;
     const octavePrefix = this.parseOptionalMeasureOctave();
     const notes: Note[] = [];
@@ -325,7 +340,8 @@ class Parser {
       notes.push(this.parseDurableNote(octavePrefix));
     }
     if (notes.length === 0) {
-      this.error("Expected at least one note in measure.", start);
+      this.warning("Empty measure ignored.", start);
+      return null;
     }
     const end = notes.at(-1)?.range ?? start;
     return { notes, range: mergeRange(start, end), repeatStart, ending };
@@ -422,7 +438,8 @@ class Parser {
         this.consume("rbrace", "Expected '}' after chord.");
       }
       if (chord.length === 0) {
-        this.error("Expected at least one pitch in chord.");
+        this.warning("Empty chord rendered as a rest.");
+        return { kind: "rest" };
       }
       return { kind: "pitch", chord };
     }
