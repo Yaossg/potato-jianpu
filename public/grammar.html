@@ -925,8 +925,8 @@ EOF        ::= end-of-file</pre>
 
       <p>
         <code>IDENTIFIER</code> is used for header property names and labels before <code>:</code>. In score text,
-        reserved drum and accidental spellings keep their token priority, so compact notes such as <code>XX</code> still
-        parse as drums.
+        reserved drum and accidental spellings keep their token priority. Whitespace is optional between score tokens,
+        so <code>XX</code> parses the same as <code>X X</code>.
       </p>
 
     </main>

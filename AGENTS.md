@@ -146,12 +146,13 @@ Parser:
 - Chords with `{ ... }`.
 - Duration suffixes with dashes, slashes, and dots.
 - Leading tie marker `~`.
-- Compact notation with optional spaces.
+- Whitespace is optional between score tokens; spaced and unspaced notation are
+  the same grammar, not separate parser modes.
 - Comments beginning with `;`.
 - Source ranges for diagnostics.
 - Validation for malformed headers, invalid notes, empty measures, empty
-  chords, invalid chord members, malformed compact notation, stray duration
-  suffixes, unmatched chord braces, unterminated strings, tie legality, and
+  chords, invalid chord members, invalid score tokens, stray duration suffixes,
+  unmatched chord braces, unterminated strings, tie legality, and
   measure-duration mismatches.
 
 Renderer:
@@ -352,8 +353,10 @@ Expected release file allow-list:
 
 Higher priority:
 
-- Improve parser diagnostics and recovery for additional malformed compact
-  notation and header edge cases discovered during testing.
+- Improve parser diagnostics and recovery for additional invalid score-token
+  sequences and header edge cases discovered during testing. Treat spaced and
+  unspaced score input uniformly; whitespace must not create a separate syntax
+  mode.
 - Validate TinySynth WAV/MP3 quality and performance on longer scores in both
   backend and browser exporters.
 - Review frontend responsive layout manually in real browsers when UI structure

@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { parse } from "../dist/parser/index.js";
 
-test("parses a header and compact score", () => {
+test("parses a header and unspaced score", () => {
   const result = parse(`title: "Twinkle"\nkey: "D"\ntime: "4/4"\ntempo: "180"\n=\n1155|665-|\n`);
   assert.equal(result.ok, true);
   assert.equal(result.value.header.title, "Twinkle");
@@ -205,7 +205,7 @@ test("parses chords, accidentals, rests, and drums", () => {
   assert.equal(notes[2].kind, "drum");
 });
 
-test("parses compact drum notes independently", () => {
+test("parses adjacent drum notes independently", () => {
   const result = parse("XX X1");
   assert.equal(result.ok, true);
   const notes = result.value.score[0].measures[0].notes;
@@ -255,7 +255,7 @@ test("rejects mixed dash and slash duration marks with a specific diagnostic", (
   assert.doesNotMatch(slashThenDash.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Expected note, rest, drum note, chord, or tie/);
 });
 
-test("reports invalid compact notation characters at their source position", () => {
+test("reports invalid score characters at their source position", () => {
   const result = parse("18");
   assert.equal(result.ok, false);
   const diagnostic = result.diagnostics.find((item) => item.message.includes("Unexpected character '8'"));
@@ -266,7 +266,7 @@ test("reports invalid compact notation characters at their source position", () 
   assert.doesNotMatch(result.diagnostics.map((item) => item.message).join("\n"), /Expected note, rest, drum note, chord, or tie/);
 });
 
-test("reports specific diagnostics for stray compact duration and chord markers", () => {
+test("reports specific diagnostics for stray duration and chord markers", () => {
   const duration = parse("/1");
   assert.equal(duration.ok, false);
   assert.match(duration.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Duration mark must follow/);
