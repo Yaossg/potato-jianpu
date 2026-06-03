@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, KeyboardEvent, MouseEvent, PointerEvent } from "react";
+import type { Document, Result } from "../core/model.js";
 import {
   arrangementDuration,
   arrangementNoteCount,
@@ -92,6 +93,7 @@ type TranslationKey =
   | "preview"
   | "noPreview"
   | "previewSummary"
+  | "stalePreview"
   | "fixParseErrors"
   | "valid"
   | "error"
@@ -153,6 +155,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     preview: "Preview",
     noPreview: "No preview",
     previewSummary: "{lines} source line(s), {width}px {mode}",
+    stalePreview: "Current source has parse errors. Preview is showing the last valid render and has not updated.",
     fixParseErrors: "Fix parse errors to preview.",
     valid: "Valid",
     error: "error",
@@ -213,6 +216,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     preview: "预览",
     noPreview: "无预览",
     previewSummary: "{lines} 行源码，{width}px，{mode}",
+    stalePreview: "当前源码有解析错误，预览正在显示上一次有效的渲染结果，尚未更新。",
     fixParseErrors: "修复解析错误后显示预览。",
     valid: "有效",
     error: "个错误",
@@ -442,25 +446,31 @@ export function App() {
   const playerRef = useRef<PreviewAudioPlayer | null>(null);
   const workspaceRef = useRef<HTMLElement | null>(null);
   const previewPanelRef = useRef<HTMLElement | null>(null);
+  const lastValidParsedRef = useRef<Result<Document> | null>(null);
   const t = (key: TranslationKey, values?: Record<string, string | number>) => translate(language, key, values);
   const parsed = useMemo(() => parse(source), [source]);
+  if (parsed.ok) {
+    lastValidParsedRef.current = parsed;
+  }
+  const previewParsed = parsed.ok ? parsed : lastValidParsedRef.current;
+  const previewIsStale = !parsed.ok && previewParsed?.ok === true;
   const contentPageWidth = useMemo(
-    () => (parsed.ok ? inferContentPageWidth(parsed.value, { minWidth: MIN_PAGE_WIDTH, maxWidth: MAX_PAGE_WIDTH }) : DEFAULT_PAGE_WIDTH),
-    [parsed],
+    () => (previewParsed?.ok ? inferContentPageWidth(previewParsed.value, { minWidth: MIN_PAGE_WIDTH, maxWidth: MAX_PAGE_WIDTH }) : DEFAULT_PAGE_WIDTH),
+    [previewParsed],
   );
   const pageWidth = pageWidthMode === "panel" ? panelPageWidth : pageWidthMode === "content" ? contentPageWidth : manualPageWidth;
   const svg = useMemo(
     () =>
-      parsed.ok
-        ? renderSvg(parsed.value, {
+      previewParsed?.ok
+        ? renderSvg(previewParsed.value, {
             pageWidth,
             justifyMode,
-            activeNoteIndices,
+            activeNoteIndices: parsed.ok ? activeNoteIndices : [],
             color: scoreColor,
             background: pageBackground,
           })
         : null,
-    [activeNoteIndices, justifyMode, pageBackground, pageWidth, parsed, scoreColor],
+    [activeNoteIndices, justifyMode, pageBackground, pageWidth, parsed.ok, previewParsed, scoreColor],
   );
 
   useEffect(() => {
@@ -552,17 +562,17 @@ export function App() {
   }
 
   function exportSvg() {
-    if (svg) {
-      downloadBytes(svg, exportFilename(parsed.ok ? parsed.value.header.title : "", "svg"), "image/svg+xml");
+    if (parsed.ok && svg) {
+      downloadBytes(svg, exportFilename(parsed.value.header.title, "svg"), "image/svg+xml");
     }
   }
 
   async function exportPng() {
-    if (!svg) {
+    if (!parsed.ok || !svg) {
       return;
     }
     try {
-      downloadBlob(await svgToPngBlob(svg), exportFilename(parsed.ok ? parsed.value.header.title : "", "png"));
+      downloadBlob(await svgToPngBlob(svg), exportFilename(parsed.value.header.title, "png"));
     } catch (error) {
       window.alert(error instanceof Error ? error.message : "Failed to export PNG.");
     }
@@ -788,10 +798,10 @@ export function App() {
           <details className="export-menu">
             <summary>{t("export")}</summary>
             <div className="export-menu-items">
-              <button type="button" onClick={exportSvg} disabled={!svg}>
+              <button type="button" onClick={exportSvg} disabled={!parsed.ok || !svg}>
                 SVG
               </button>
-              <button type="button" onClick={() => void exportPng()} disabled={!svg}>
+              <button type="button" onClick={() => void exportPng()} disabled={!parsed.ok || !svg}>
                 PNG
               </button>
               <button type="button" onClick={exportMidi} disabled={!parsed.ok}>
@@ -1055,9 +1065,9 @@ export function App() {
           <div className="panel-title">
             <h2>{t("preview")}</h2>
             <span>
-              {parsed.ok
+              {previewParsed?.ok
                 ? t("previewSummary", {
-                    lines: parsed.value.score.length,
+                    lines: previewParsed.value.score.length,
                     width: pageWidth,
                     mode: t(pageWidthModeLabels[pageWidthMode]),
                   })
@@ -1065,6 +1075,7 @@ export function App() {
             </span>
           </div>
           <div className="preview-scroll" onClick={playFromPreview}>
+            {previewIsStale && <p className="stale-preview-notice">{t("stalePreview")}</p>}
             {svg ? <div className="score-svg" dangerouslySetInnerHTML={{ __html: svg }} /> : <p>{t("fixParseErrors")}</p>}
           </div>
         </section>
