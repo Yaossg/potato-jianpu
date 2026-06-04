@@ -428,21 +428,122 @@ button:disabled {
   color: #b3261e;
 }
 
-textarea {
+.editor-field {
+  position: relative;
   flex: 1;
+  display: grid;
+  grid-template-columns: minmax(44px, max-content) minmax(0, 1fr);
   min-height: 520px;
-  resize: vertical;
-  border: 0;
-  outline: 0;
-  padding: 14px;
-  color: var(--text);
   background: var(--panel-bg);
+}
+
+.editor-line-numbers,
+.editor-current-line,
+.editor-highlights,
+textarea {
   font-family: "Cascadia Code", "Fira Code", Consolas, monospace;
   font-variant-ligatures: none;
   font-feature-settings:
     "liga" 0,
     "calt" 0;
   line-height: 1.55;
+}
+
+.editor-line-numbers {
+  padding: 14px 10px;
+  overflow: hidden;
+  color: var(--muted-text);
+  background: var(--app-bg);
+  border-right: 1px solid var(--subtle-border);
+  text-align: right;
+  user-select: none;
+}
+
+.editor-line-numbers span {
+  display: block;
+  min-width: 2ch;
+}
+
+.editor-line-numbers .current {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.editor-source-layer {
+  position: relative;
+  min-width: 0;
+}
+
+.editor-current-line,
+.editor-highlights {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  border: 0;
+  padding: 14px;
+  overflow: hidden;
+  pointer-events: none;
+  white-space: pre;
+  tab-size: 4;
+  scrollbar-gutter: stable;
+}
+
+.editor-current-line {
+  color: transparent;
+  background: transparent;
+}
+
+.editor-current-line span {
+  display: block;
+  min-height: 1.55em;
+}
+
+.editor-current-line .current {
+  background: rgba(96, 165, 250, 0.12);
+}
+
+.editor-highlights {
+  z-index: 2;
+  color: transparent;
+  background: transparent;
+}
+
+.editor-highlights::after {
+  content: " ";
+}
+
+.diagnostic-highlight {
+  color: transparent;
+  border-radius: 2px;
+  pointer-events: auto;
+}
+
+.diagnostic-highlight.error {
+  background: rgba(179, 38, 30, 0.22);
+  box-shadow: 0 0 0 1px rgba(179, 38, 30, 0.3);
+}
+
+.diagnostic-highlight.warning {
+  background: rgba(138, 91, 0, 0.22);
+  box-shadow: 0 0 0 1px rgba(138, 91, 0, 0.3);
+}
+
+textarea {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 520px;
+  resize: vertical;
+  border: 0;
+  outline: 0;
+  padding: 14px;
+  color: var(--text);
+  background: transparent;
+  white-space: pre;
+  tab-size: 4;
+  scrollbar-gutter: stable;
 }
 
 .diagnostics {
@@ -455,6 +556,20 @@ textarea {
   margin: 4px 0;
   font-family: "Cascadia Code", Consolas, monospace;
   font-size: 13px;
+}
+
+.diagnostics button {
+  border: 0;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+}
+
+.diagnostics button:hover,
+.diagnostics button:focus-visible {
+  text-decoration: underline;
 }
 
 .diagnostics .error {
@@ -471,7 +586,7 @@ textarea {
   flex: 1;
 }
 
-.stale-preview-notice {
+.preview-notice {
   margin: 0 0 12px;
   padding: 10px 12px;
   border: 1px solid rgba(179, 38, 30, 0.35);
@@ -511,6 +626,7 @@ textarea {
     grid-column: auto;
   }
 
+  .editor-field,
   textarea {
     min-height: 360px;
   }

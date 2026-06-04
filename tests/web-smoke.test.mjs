@@ -64,6 +64,10 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(script, /Examples/);
   assert.match(script, /Enter your Jianpu here/);
   assert.match(script, /Clear editor/);
+  assert.match(script, /editor-highlights/);
+  assert.match(script, /editor-line-numbers/);
+  assert.match(script, /editor-current-line/);
+  assert.match(script, /diagnostic-highlight/);
   assert.doesNotMatch(script, /Grammar Reference/);
   assert.match(script, /General MIDI/);
   assert.match(script, /Volume/);
@@ -77,6 +81,11 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(style, /\.export-menu/);
   assert.match(style, /\.export-menu-items/);
   assert.match(style, /\.export-status/);
+  assert.match(style, /\.editor-highlights/);
+  assert.match(style, /\.editor-line-numbers/);
+  assert.match(style, /\.editor-current-line/);
+  assert.match(style, /\.diagnostic-highlight\.error/);
+  assert.match(style, /pointer-events:auto/);
   assert.match(style, /\.settings-panel/);
   assert.match(style, /\.settings-section\s*\+\s*\.settings-section/);
   assert.match(style, /\.settings-grid/);
@@ -88,6 +97,7 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(style, /max-width:100%/);
   assert.match(style, /height:auto/);
   assert.match(style, /\.preview-panel/);
+  assert.match(style, /\.preview-notice/);
   assert.match(grammar, /Modern Jianpu Markup Grammar Reference/);
   assert.match(grammar, /class="railroad-diagram"/);
   assert.match(grammar, /durable_note ::= tie\? general_note length\?/);
@@ -99,7 +109,9 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(grammar, /Token Reference/);
   assert.ok(grammar.indexOf("<h2>Reference</h2>") < grammar.indexOf("<h2>Railroad And EBNF</h2>"));
   assert.match(appSource, /function updateSource/);
-  assert.match(appSource, /onChange=\{\(event\) => updateSource\(event\.target\.value\)\}/);
+  assert.match(appSource, /onChange=\{\(event\) => updateSource\(event\.target\.value, event\.target\.selectionStart\)\}/);
+  assert.match(appSource, /selectDiagnosticRange/);
+  assert.match(appSource, /title=\{part\.tooltip\}/);
   assert.match(appSource, /inferContentPageWidth/);
   assert.match(audioSource, /SCHEDULE_AHEAD_SECONDS/);
   assert.match(audioSource, /currentTime > context\.currentTime \+ SCHEDULE_AHEAD_SECONDS/);

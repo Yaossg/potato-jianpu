@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { CSSProperties, KeyboardEvent, MouseEvent, PointerEvent } from "react";
-import type { Document, Result } from "../core/model.js";
+import type { CSSProperties, KeyboardEvent, MouseEvent, PointerEvent, UIEvent } from "react";
+import type { Diagnostic, Document, Result } from "../core/model.js";
 import {
   arrangementDuration,
   arrangementNoteCount,
@@ -408,6 +408,63 @@ function diagnosticSummary(language: Language, ok: boolean, diagnostics: Array<{
   return translate(language, "valid");
 }
 
+interface DiagnosticHighlightPart {
+  text: string;
+  severity?: Diagnostic["severity"];
+  tooltip?: string;
+}
+
+function diagnosticHighlightParts(source: string, diagnostics: Diagnostic[]): DiagnosticHighlightPart[] {
+  const ranges = diagnostics
+    .filter((diagnostic): diagnostic is Diagnostic & { range: NonNullable<Diagnostic["range"]> } => Boolean(diagnostic.range))
+    .map((diagnostic) => {
+      const start = Math.min(source.length, Math.max(0, diagnostic.range.start.offset));
+      const end = Math.min(source.length, Math.max(start + 1, diagnostic.range.end.offset));
+      return { start, end, severity: diagnostic.severity, message: diagnostic.message };
+    })
+    .filter((range) => range.start < source.length && range.end > range.start);
+
+  const offsets = [...new Set([0, source.length, ...ranges.flatMap((range) => [range.start, range.end])])].sort((left, right) => left - right);
+  const parts: DiagnosticHighlightPart[] = [];
+  for (let index = 0; index < offsets.length - 1; index += 1) {
+    const start = offsets[index]!;
+    const end = offsets[index + 1]!;
+    const text = source.slice(start, end);
+    const activeRanges = ranges.filter((range) => range.start < end && range.end > start);
+    const severity = activeRanges.some((range) => range.severity === "error")
+      ? "error"
+      : activeRanges.some((range) => range.severity === "warning")
+        ? "warning"
+        : undefined;
+    const tooltip = [...activeRanges]
+      .sort((left, right) => (left.severity === right.severity ? 0 : left.severity === "error" ? -1 : 1))
+      .map((range) => `${range.severity}: ${range.message}`)
+      .filter((message, messageIndex, messages) => messages.indexOf(message) === messageIndex)
+      .join("\n");
+    const previous = parts.at(-1);
+    if (previous && previous.severity === severity && previous.tooltip === (tooltip || undefined)) {
+      previous.text += text;
+    } else {
+      parts.push({ text, severity, tooltip: tooltip || undefined });
+    }
+  }
+  return parts.length > 0 ? parts : [{ text: source }];
+}
+
+function sourceLineNumbers(source: string): number[] {
+  const lineCount = source.length === 0 ? 1 : source.split(/\r\n|\r|\n/).length;
+  return Array.from({ length: lineCount }, (_, index) => index + 1);
+}
+
+function sourceLineAtOffset(source: string, offset: number): number {
+  const safeOffset = Math.min(source.length, Math.max(0, offset));
+  return source.slice(0, safeOffset).split(/\r\n|\r|\n/).length;
+}
+
+function sourceLines(source: string): string[] {
+  return source.length === 0 ? [""] : source.split(/\r\n|\r|\n/);
+}
+
 function waitForNextFrame(): Promise<void> {
   return new Promise((resolve) => window.requestAnimationFrame(() => resolve()));
 }
@@ -443,12 +500,20 @@ export function App() {
   const [pendingExampleSource, setPendingExampleSource] = useState<string | null>(null);
   const [confirmClearSource, setConfirmClearSource] = useState(false);
   const [editorPanePercent, setEditorPanePercent] = useState(DEFAULT_EDITOR_PANE_PERCENT);
+  const [currentEditorLine, setCurrentEditorLine] = useState(1);
   const playerRef = useRef<PreviewAudioPlayer | null>(null);
   const workspaceRef = useRef<HTMLElement | null>(null);
+  const editorRef = useRef<HTMLTextAreaElement | null>(null);
+  const editorCurrentLineRef = useRef<HTMLPreElement | null>(null);
+  const editorHighlightRef = useRef<HTMLPreElement | null>(null);
+  const editorLineNumbersRef = useRef<HTMLDivElement | null>(null);
   const previewPanelRef = useRef<HTMLElement | null>(null);
   const lastValidParsedRef = useRef<Result<Document> | null>(null);
   const t = (key: TranslationKey, values?: Record<string, string | number>) => translate(language, key, values);
   const parsed = useMemo(() => parse(source), [source]);
+  const diagnosticHighlights = useMemo(() => diagnosticHighlightParts(source, parsed.diagnostics), [parsed.diagnostics, source]);
+  const editorLines = useMemo(() => sourceLines(source), [source]);
+  const lineNumbers = useMemo(() => sourceLineNumbers(source), [source]);
   if (parsed.ok) {
     lastValidParsedRef.current = parsed;
   }
@@ -737,11 +802,52 @@ export function App() {
     setPendingExampleSource(nextSource);
   }
 
-  function updateSource(nextSource: string) {
+  function updateSource(nextSource: string, selectionStart = editorRef.current?.selectionStart ?? 0) {
     playerRef.current?.stop();
     setIsPlaying(false);
     setActiveNoteIndices([]);
+    setCurrentEditorLine(sourceLineAtOffset(nextSource, selectionStart));
     setSource(nextSource);
+  }
+
+  function updateCurrentEditorLine(selectionStart = editorRef.current?.selectionStart ?? 0) {
+    setCurrentEditorLine(sourceLineAtOffset(source, selectionStart));
+  }
+
+  function selectDiagnosticRange(diagnostic: Diagnostic) {
+    if (!diagnostic.range) {
+      return;
+    }
+    const editor = editorRef.current;
+    if (!editor) {
+      return;
+    }
+    const start = Math.min(source.length, Math.max(0, diagnostic.range.start.offset));
+    const end = Math.min(source.length, Math.max(start + 1, diagnostic.range.end.offset));
+    editor.focus();
+    editor.setSelectionRange(start, end);
+    setCurrentEditorLine(diagnostic.range.start.line);
+    window.requestAnimationFrame(() => syncEditorLayers(editor));
+  }
+
+  function syncEditorLayers(editor: HTMLTextAreaElement) {
+    const highlight = editorHighlightRef.current;
+    if (!highlight) {
+      return;
+    }
+    highlight.scrollTop = editor.scrollTop;
+    highlight.scrollLeft = editor.scrollLeft;
+    if (editorCurrentLineRef.current) {
+      editorCurrentLineRef.current.scrollTop = editor.scrollTop;
+      editorCurrentLineRef.current.scrollLeft = editor.scrollLeft;
+    }
+    if (editorLineNumbersRef.current) {
+      editorLineNumbersRef.current.scrollTop = editor.scrollTop;
+    }
+  }
+
+  function syncEditorHighlightScroll(event: UIEvent<HTMLTextAreaElement>) {
+    syncEditorLayers(event.currentTarget);
   }
 
   function clearSource() {
@@ -1025,20 +1131,61 @@ export function App() {
               </button>
             </div>
           </div>
-          <textarea
-            value={source}
-            onChange={(event) => updateSource(event.target.value)}
-            onFocus={() => setShowExamples(false)}
-            placeholder={t("sourcePlaceholder")}
-            spellCheck={false}
-          />
+          <div className="editor-field">
+            <div className="editor-line-numbers" ref={editorLineNumbersRef} aria-hidden="true">
+              {lineNumbers.map((lineNumber) => (
+                <span key={lineNumber} className={lineNumber === currentEditorLine ? "current" : undefined}>
+                  {lineNumber}
+                </span>
+              ))}
+            </div>
+            <div className="editor-source-layer">
+              <pre className="editor-current-line" ref={editorCurrentLineRef} aria-hidden="true">
+                {editorLines.map((line, index) => (
+                  <span key={index} className={index + 1 === currentEditorLine ? "current" : undefined}>
+                    {line || " "}
+                  </span>
+                ))}
+              </pre>
+              <pre className="editor-highlights" ref={editorHighlightRef} aria-hidden="true">
+                {diagnosticHighlights.map((part, index) =>
+                  part.severity ? (
+                    <mark key={index} className={`diagnostic-highlight ${part.severity}`} title={part.tooltip}>
+                      {part.text}
+                    </mark>
+                  ) : (
+                    <span key={index}>{part.text}</span>
+                  ),
+                )}
+              </pre>
+              <textarea
+                ref={editorRef}
+                value={source}
+                onChange={(event) => updateSource(event.target.value, event.target.selectionStart)}
+                onFocus={(event) => {
+                  setShowExamples(false);
+                  updateCurrentEditorLine(event.currentTarget.selectionStart);
+                }}
+                onClick={(event) => updateCurrentEditorLine(event.currentTarget.selectionStart)}
+                onKeyUp={(event) => updateCurrentEditorLine(event.currentTarget.selectionStart)}
+                onSelect={(event) => updateCurrentEditorLine(event.currentTarget.selectionStart)}
+                onScroll={syncEditorHighlightScroll}
+                placeholder={t("sourcePlaceholder")}
+                spellCheck={false}
+              />
+            </div>
+          </div>
           {parsed.diagnostics.length > 0 && (
             <div className="diagnostics">
               {parsed.diagnostics.map((diagnostic, index) => (
                 <p key={index} className={diagnostic.severity}>
-                  {diagnostic.range
-                    ? `${diagnostic.range.start.line}:${diagnostic.range.start.column} ${diagnostic.message}`
-                    : diagnostic.message}
+                  {diagnostic.range ? (
+                    <button type="button" onClick={() => selectDiagnosticRange(diagnostic)}>
+                      {`${diagnostic.range.start.line}:${diagnostic.range.start.column} ${diagnostic.message}`}
+                    </button>
+                  ) : (
+                    diagnostic.message
+                  )}
                 </p>
               ))}
             </div>
@@ -1075,8 +1222,8 @@ export function App() {
             </span>
           </div>
           <div className="preview-scroll" onClick={playFromPreview}>
-            {previewIsStale && <p className="stale-preview-notice">{t("stalePreview")}</p>}
-            {svg ? <div className="score-svg" dangerouslySetInnerHTML={{ __html: svg }} /> : <p>{t("fixParseErrors")}</p>}
+            {previewIsStale && <p className="preview-notice">{t("stalePreview")}</p>}
+            {svg ? <div className="score-svg" dangerouslySetInnerHTML={{ __html: svg }} /> : <p className="preview-notice">{t("fixParseErrors")}</p>}
           </div>
         </section>
       </section>
