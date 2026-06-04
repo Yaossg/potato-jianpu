@@ -1,4 +1,11 @@
-import type { Diagnostic, Header, KeySignature, TimeSignature } from "../core/index.js";
+import type { Diagnostic, Header, KeySignature, SourceRange, TimeSignature } from "../core/index.js";
+
+export interface RawHeaderField {
+  value: string;
+  range: SourceRange;
+}
+
+export type RawHeaderInput = Record<string, string | RawHeaderField>;
 
 const keyMap: Record<string, KeySignature> = {
   C: 0,
@@ -49,39 +56,53 @@ function parseTimeSignature(time: string): TimeSignature | null {
   return { beatsPerMeasure, beatsPerWholeNote };
 }
 
-export function normalizeHeader(raw: Record<string, string>): { header: Header; diagnostics: Diagnostic[] } {
+function headerValue(raw: RawHeaderInput, key: string): string | undefined {
+  const field = raw[key];
+  return typeof field === "string" ? field : field?.value;
+}
+
+function headerRange(raw: RawHeaderInput, key: string): SourceRange | undefined {
+  const field = raw[key];
+  return typeof field === "string" ? undefined : field?.range;
+}
+
+function rawHeaderValues(raw: RawHeaderInput): Record<string, string> {
+  return Object.fromEntries(Object.entries(raw).map(([key, field]) => [key, typeof field === "string" ? field : field.value]));
+}
+
+export function normalizeHeader(raw: RawHeaderInput): { header: Header; diagnostics: Diagnostic[] } {
   const diagnostics: Diagnostic[] = [];
-  const tempoText = raw.tempo ?? "120";
+  const rawValues = rawHeaderValues(raw);
+  const tempoText = headerValue(raw, "tempo") ?? "120";
   const tempo = Number(tempoText);
   if (Number.isNaN(tempo) || tempo <= 0) {
-    diagnostics.push({ severity: "error", message: `Invalid tempo '${tempoText}'.` });
+    diagnostics.push({ severity: "error", message: `Invalid tempo '${tempoText}'.`, range: headerRange(raw, "tempo") });
   }
 
-  const timeText = raw.time ?? "4/4";
+  const timeText = headerValue(raw, "time") ?? "4/4";
   const timeSignature = parseTimeSignature(timeText);
   if (timeSignature === null) {
-    diagnostics.push({ severity: "error", message: `Invalid time signature '${timeText}'.` });
+    diagnostics.push({ severity: "error", message: `Invalid time signature '${timeText}'.`, range: headerRange(raw, "time") });
   }
 
-  const keyText = raw.key ?? "C";
+  const keyText = headerValue(raw, "key") ?? "C";
   const keySignature = parseKeySignature(keyText);
   if (keySignature === null) {
-    diagnostics.push({ severity: "error", message: `Invalid key signature '${keyText}'.` });
+    diagnostics.push({ severity: "error", message: `Invalid key signature '${keyText}'.`, range: headerRange(raw, "key") });
   }
 
   return {
     header: {
-      raw,
-      title: raw.title ?? "",
-      subtitle: raw.subtitle ?? "",
-      composer: raw.composer ?? "",
+      raw: rawValues,
+      title: headerValue(raw, "title") ?? "",
+      subtitle: headerValue(raw, "subtitle") ?? "",
+      composer: headerValue(raw, "composer") ?? "",
       keySignature: keySignature ?? 0,
       keySignatureText: keyText,
       timeSignature: timeSignature ?? { beatsPerMeasure: 4, beatsPerWholeNote: 4 },
       tempo: Number.isNaN(tempo) || tempo <= 0 ? 120 : tempo,
-      hidden: raw.hidden ?? "",
+      hidden: headerValue(raw, "hidden") ?? "",
     },
     diagnostics,
   };
 }
-

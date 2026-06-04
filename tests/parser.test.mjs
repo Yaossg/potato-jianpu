@@ -285,6 +285,24 @@ test("rejects invalid header values", () => {
   assert.match(result.diagnostics.map((d) => d.message).join("\n"), /Invalid tempo/);
   assert.match(result.diagnostics.map((d) => d.message).join("\n"), /Invalid time signature/);
   assert.match(result.diagnostics.map((d) => d.message).join("\n"), /Invalid key signature/);
+
+  const tempo = result.diagnostics.find((diagnostic) => diagnostic.message.includes("Invalid tempo"));
+  assert.ok(tempo?.range);
+  assert.equal(tempo.range.start.line, 1);
+  assert.equal(tempo.range.start.column, 8);
+  assert.equal(tempo.range.end.column, 12);
+
+  const time = result.diagnostics.find((diagnostic) => diagnostic.message.includes("Invalid time signature"));
+  assert.ok(time?.range);
+  assert.equal(time.range.start.line, 2);
+  assert.equal(time.range.start.column, 7);
+  assert.equal(time.range.end.column, 12);
+
+  const key = result.diagnostics.find((diagnostic) => diagnostic.message.includes("Invalid key signature"));
+  assert.ok(key?.range);
+  assert.equal(key.range.start.line, 3);
+  assert.equal(key.range.start.column, 6);
+  assert.equal(key.range.end.column, 9);
 });
 
 test("accepts accidental-first key spellings", () => {

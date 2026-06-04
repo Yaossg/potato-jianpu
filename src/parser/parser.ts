@@ -12,7 +12,7 @@ import type {
   ScoreLine,
   SourceRange,
 } from "../core/index.js";
-import { normalizeHeader } from "./header.js";
+import { normalizeHeader, type RawHeaderField } from "./header.js";
 import { tokenize, type Token, type TokenType } from "./tokenizer.js";
 
 type DraftNote =
@@ -141,8 +141,8 @@ class Parser {
     return false;
   }
 
-  private parseHeader(): Record<string, string> {
-    const raw: Record<string, string> = {};
+  private parseHeader(): Record<string, RawHeaderField> {
+    const raw: Record<string, RawHeaderField> = {};
     while (!this.at("equals") && !this.at("eof")) {
       if (this.at("newline")) {
         this.skipNewlines();
@@ -161,7 +161,7 @@ class Parser {
         this.error("Expected newline after header property.");
       }
       if (label && value) {
-        raw[label.value ?? label.text] = value.value ?? "";
+        raw[label.value ?? label.text] = { value: value.value ?? "", range: value.range };
       } else if (!label || !colon || !value) {
         this.synchronizeHeaderLine();
       }
