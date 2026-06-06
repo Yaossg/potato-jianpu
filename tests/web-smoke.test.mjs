@@ -31,6 +31,7 @@ test("frontend production build emits the expected app shell", async () => {
   const style = await readFile(new URL(`../dist-web/${stylePath.replace(/^\//, "")}`, import.meta.url), "utf8");
   const grammar = await readFile(new URL("../dist-web/grammar.html", import.meta.url), "utf8");
   const appSource = await readFile(new URL("../src/web/App.tsx", import.meta.url), "utf8");
+  const sourceEditorSource = await readFile(new URL("../src/web/SourceEditor.tsx", import.meta.url), "utf8");
   const audioSource = await readFile(new URL("../src/web/audio.ts", import.meta.url), "utf8");
 
   assert.match(script, /Modern Jianpu Markup/);
@@ -109,9 +110,10 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(grammar, /Token Reference/);
   assert.ok(grammar.indexOf("<h2>Reference</h2>") < grammar.indexOf("<h2>Railroad And EBNF</h2>"));
   assert.match(appSource, /function updateSource/);
-  assert.match(appSource, /onChange=\{\(event\) => updateSource\(event\.target\.value, event\.target\.selectionStart\)\}/);
-  assert.match(appSource, /selectDiagnosticRange/);
-  assert.match(appSource, /title=\{part\.tooltip\}/);
+  assert.match(appSource, /<SourceEditor/);
+  assert.match(sourceEditorSource, /onChange=\{\(event\) => updateSource\(event\.target\.value, event\.target\.selectionStart\)\}/);
+  assert.match(sourceEditorSource, /selectDiagnosticRange/);
+  assert.match(sourceEditorSource, /title=\{part\.tooltip\}/);
   assert.match(appSource, /inferContentPageWidth/);
   assert.match(audioSource, /SCHEDULE_AHEAD_SECONDS/);
   assert.match(audioSource, /currentTime > context\.currentTime \+ SCHEDULE_AHEAD_SECONDS/);

@@ -1,0 +1,188 @@
+import { DRUM_PROGRAMS, GM_PROGRAMS } from "../index.js";
+import type { JustifyMode, PageWidthMode, TranslationKey } from "./i18n.js";
+
+interface SettingsPanelProps {
+  t: (key: TranslationKey) => string;
+  pageWidthMode: PageWidthMode;
+  panelPageWidth: number;
+  contentPageWidth: number;
+  manualPageWidth: number;
+  minPageWidth: number;
+  maxPageWidth: number;
+  scoreColor: string;
+  pageBackground: string;
+  justifyMode: JustifyMode;
+  program: number;
+  volume: number;
+  audioSampleRate: number;
+  omitInitialRests: boolean;
+  onClose: () => void;
+  onPageWidthModeChange: (mode: PageWidthMode) => void;
+  onManualPageWidthChange: (width: number) => void;
+  onScoreColorChange: (color: string) => void;
+  onPageBackgroundChange: (color: string) => void;
+  onJustifyModeChange: (mode: JustifyMode) => void;
+  onProgramChange: (program: number) => void;
+  onVolumeChange: (volume: number) => void;
+  onAudioSampleRateChange: (sampleRate: number) => void;
+  onOmitInitialRestsChange: (omit: boolean) => void;
+  onAuditionProgram: () => void;
+}
+
+function toPageWidthMode(value: string): PageWidthMode {
+  return value === "content" || value === "manual" ? value : "panel";
+}
+
+function toJustifyMode(value: string): JustifyMode {
+  return value === "except-last" || value === "all" ? value : "none";
+}
+
+export function SettingsPanel({
+  t,
+  pageWidthMode,
+  panelPageWidth,
+  contentPageWidth,
+  manualPageWidth,
+  minPageWidth,
+  maxPageWidth,
+  scoreColor,
+  pageBackground,
+  justifyMode,
+  program,
+  volume,
+  audioSampleRate,
+  omitInitialRests,
+  onClose,
+  onPageWidthModeChange,
+  onManualPageWidthChange,
+  onScoreColorChange,
+  onPageBackgroundChange,
+  onJustifyModeChange,
+  onProgramChange,
+  onVolumeChange,
+  onAudioSampleRateChange,
+  onOmitInitialRestsChange,
+  onAuditionProgram,
+}: SettingsPanelProps) {
+  const displayedPageWidth = pageWidthMode === "panel" ? panelPageWidth : pageWidthMode === "content" ? contentPageWidth : manualPageWidth;
+
+  return (
+    <section className="settings-panel">
+      <div className="panel-title">
+        <h2>{t("settingsTitle")}</h2>
+        <button type="button" onClick={onClose}>
+          {t("close")}
+        </button>
+      </div>
+      <div className="settings-sections">
+        <section className="settings-section">
+          <h3>{t("pageSettings")}</h3>
+          <div className="settings-grid">
+            <label className="select-control">
+              {t("widthMode")}
+              <select value={pageWidthMode} onChange={(event) => onPageWidthModeChange(toPageWidthMode(event.target.value))}>
+                <option value="panel">{t("panel")}</option>
+                <option value="content">{t("content")}</option>
+                <option value="manual">{t("manual")}</option>
+              </select>
+            </label>
+            <label className="number-control">
+              {t("width")}
+              <input
+                type="number"
+                min={minPageWidth}
+                max={maxPageWidth}
+                step={20}
+                value={displayedPageWidth}
+                disabled={pageWidthMode !== "manual"}
+                onChange={(event) => {
+                  const value = Number(event.target.value);
+                  if (Number.isFinite(value) && value > 0) {
+                    onManualPageWidthChange(Math.min(maxPageWidth, Math.max(minPageWidth, Math.round(value))));
+                  }
+                }}
+              />
+            </label>
+            <label className="color-control">
+              {t("color")}
+              <input type="color" value={scoreColor} onChange={(event) => onScoreColorChange(event.target.value)} />
+            </label>
+            <label className="color-control">
+              {t("page")}
+              <input type="color" value={pageBackground} onChange={(event) => onPageBackgroundChange(event.target.value)} />
+            </label>
+            <label className="select-control">
+              {t("justify")}
+              <select value={justifyMode} onChange={(event) => onJustifyModeChange(toJustifyMode(event.target.value))}>
+                <option value="none">{t("none")}</option>
+                <option value="except-last">{t("exceptLastLine")}</option>
+                <option value="all">{t("allLines")}</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section className="settings-section">
+          <h3>{t("soundSettings")}</h3>
+          <div className="settings-grid">
+            <label className="select-control">
+              {t("program")}
+              <select
+                value={program}
+                onChange={(event) => {
+                  const value = Number(event.target.value);
+                  if (Number.isInteger(value) && value >= 0 && value <= 220) {
+                    onProgramChange(value);
+                  }
+                }}
+              >
+                <optgroup label={t("generalMidi")}>
+                  {GM_PROGRAMS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label={t("drums")}>
+                  {DRUM_PROGRAMS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
+            </label>
+            <label className="range-control">
+              {t("volume")}
+              <input type="range" min={0} max={200} step={1} value={volume} onChange={(event) => onVolumeChange(Number(event.target.value))} />
+              <span>{Math.round(volume)}%</span>
+            </label>
+            <label className="number-control">
+              {t("audioSampleRate")}
+              <input
+                type="number"
+                min={8000}
+                max={192000}
+                step={1000}
+                value={audioSampleRate}
+                onChange={(event) => {
+                  const value = Number(event.target.value);
+                  if (Number.isFinite(value) && value > 0) {
+                    onAudioSampleRateChange(Math.round(value));
+                  }
+                }}
+              />
+            </label>
+            <label className="checkbox-control">
+              <input type="checkbox" checked={omitInitialRests} onChange={(event) => onOmitInitialRestsChange(event.target.checked)} />
+              {t("omitInitialRests")}
+            </label>
+            <button type="button" onClick={onAuditionProgram}>
+              {t("audition")}
+            </button>
+          </div>
+        </section>
+      </div>
+    </section>
+  );
+}
