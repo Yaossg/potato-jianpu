@@ -540,9 +540,19 @@ textarea {
   padding: 14px;
   overflow: hidden;
   pointer-events: none;
-  white-space: pre;
   tab-size: 4;
   scrollbar-gutter: stable;
+}
+
+.editor-wrap .editor-current-line,
+.editor-wrap .editor-highlights {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.editor-nowrap .editor-current-line,
+.editor-nowrap .editor-highlights {
+  white-space: pre;
 }
 
 .editor-current-line {
@@ -552,6 +562,8 @@ textarea {
 
 .editor-current-line span {
   display: block;
+  width: fit-content;
+  min-width: 100%;
   min-height: 1.55em;
 }
 
@@ -598,9 +610,18 @@ textarea {
   padding: 14px;
   color: var(--text);
   background: transparent;
-  white-space: pre;
   tab-size: 4;
   scrollbar-gutter: stable;
+}
+
+.editor-wrap textarea {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.editor-nowrap textarea {
+  overflow-wrap: normal;
+  white-space: pre;
 }
 
 .diagnostics {

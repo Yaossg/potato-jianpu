@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { UIEvent } from "react";
 import type { Diagnostic } from "../core/model.js";
 import { diagnosticHighlightParts, sourceLineAtOffset, sourceLineNumbers, sourceLines } from "./diagnostics.js";
@@ -9,6 +9,7 @@ interface SourceEditorProps {
   diagnostics: Diagnostic[];
   ok: boolean;
   summary: string;
+  sourceWrap: boolean;
   t: (key: TranslationKey) => string;
   onSourceChange: (source: string) => void;
   onClearRequest: () => void;
@@ -20,6 +21,7 @@ export function SourceEditor({
   diagnostics,
   ok,
   summary,
+  sourceWrap,
   t,
   onSourceChange,
   onClearRequest,
@@ -28,11 +30,29 @@ export function SourceEditor({
   const [currentEditorLine, setCurrentEditorLine] = useState(1);
   const editorRef = useRef<HTMLTextAreaElement | null>(null);
   const editorCurrentLineRef = useRef<HTMLPreElement | null>(null);
+  const editorCurrentLineSpansRef = useRef<Array<HTMLSpanElement | null>>([]);
   const editorHighlightRef = useRef<HTMLPreElement | null>(null);
   const editorLineNumbersRef = useRef<HTMLDivElement | null>(null);
+  const [lineHeights, setLineHeights] = useState<number[]>([]);
   const diagnosticHighlights = useMemo(() => diagnosticHighlightParts(source, diagnostics), [diagnostics, source]);
   const editorLines = useMemo(() => sourceLines(source), [source]);
   const lineNumbers = useMemo(() => sourceLineNumbers(source), [source]);
+
+  useLayoutEffect(() => {
+    function updateLineHeights() {
+      setLineHeights(editorCurrentLineSpansRef.current.map((line) => line?.getBoundingClientRect().height ?? 0));
+    }
+
+    updateLineHeights();
+    const layer = editorCurrentLineRef.current;
+    if (!layer || typeof ResizeObserver === "undefined") {
+      return;
+    }
+
+    const observer = new ResizeObserver(updateLineHeights);
+    observer.observe(layer);
+    return () => observer.disconnect();
+  }, [editorLines, sourceWrap]);
 
   function updateSource(nextSource: string, selectionStart: number) {
     setCurrentEditorLine(sourceLineAtOffset(nextSource, selectionStart));
@@ -90,10 +110,10 @@ export function SourceEditor({
           </button>
         </div>
       </div>
-      <div className="editor-field">
+      <div className={`editor-field ${sourceWrap ? "editor-wrap" : "editor-nowrap"}`}>
         <div className="editor-line-numbers" ref={editorLineNumbersRef} aria-hidden="true">
-          {lineNumbers.map((lineNumber) => (
-            <span key={lineNumber} className={lineNumber === currentEditorLine ? "current" : undefined}>
+          {lineNumbers.map((lineNumber, index) => (
+            <span key={lineNumber} className={lineNumber === currentEditorLine ? "current" : undefined} style={lineHeights[index] ? { height: lineHeights[index] } : undefined}>
               {lineNumber}
             </span>
           ))}
@@ -101,7 +121,13 @@ export function SourceEditor({
         <div className="editor-source-layer">
           <pre className="editor-current-line" ref={editorCurrentLineRef} aria-hidden="true">
             {editorLines.map((line, index) => (
-              <span key={index} className={index + 1 === currentEditorLine ? "current" : undefined}>
+              <span
+                key={index}
+                ref={(element) => {
+                  editorCurrentLineSpansRef.current[index] = element;
+                }}
+                className={index + 1 === currentEditorLine ? "current" : undefined}
+              >
                 {line || " "}
               </span>
             ))}
@@ -131,6 +157,7 @@ export function SourceEditor({
             onScroll={syncEditorHighlightScroll}
             placeholder={t("sourcePlaceholder")}
             spellCheck={false}
+            wrap={sourceWrap ? "soft" : "off"}
           />
         </div>
       </div>

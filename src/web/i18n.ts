@@ -40,12 +40,14 @@ export type TranslationKey =
   | "exceptLastLine"
   | "allLines"
   | "soundSettings"
+  | "editorSettings"
   | "program"
   | "generalMidi"
   | "drums"
   | "volume"
   | "audioSampleRate"
   | "omitInitialRests"
+  | "sourceWrap"
   | "audition"
   | "source"
   | "sourcePlaceholder"
@@ -102,12 +104,14 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     exceptLastLine: "Except last line",
     allLines: "All lines",
     soundSettings: "Sound Settings",
+    editorSettings: "Editor Settings",
     program: "Program",
     generalMidi: "General MIDI",
     drums: "Drums",
     volume: "Volume",
     audioSampleRate: "Audio sample rate",
     omitInitialRests: "Omit initial rests",
+    sourceWrap: "Source editor word wrap",
     audition: "Audition",
     source: "Source",
     sourcePlaceholder: "Enter your Jianpu here...",
@@ -163,12 +167,14 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     exceptLastLine: "除最后一行",
     allLines: "所有行",
     soundSettings: "声音设置",
+    editorSettings: "编辑器设置",
     program: "音色",
     generalMidi: "通用 MIDI",
     drums: "鼓组",
     volume: "音量",
     audioSampleRate: "音频采样率",
     omitInitialRests: "忽略开头休止符",
+    sourceWrap: "源码自动换行",
     audition: "试听",
     source: "源码",
     sourcePlaceholder: "在这里输入简谱...",

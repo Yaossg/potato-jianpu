@@ -30,6 +30,7 @@ const MELODIC_AUDITION_SOURCE = "1 2 3 4 5 6 7 1'";
 const DRUM_AUDITION_SOURCE = "X X X X";
 const LANGUAGE_STORAGE_KEY = "modern-jianpu-markup-language";
 const SOURCE_STORAGE_KEY = "modern-jianpu-markup-source";
+const SOURCE_WRAP_STORAGE_KEY = "modern-jianpu-markup-source-wrap";
 const DEFAULT_PAGE_WIDTH = 1000;
 const MIN_PAGE_WIDTH = 240;
 const MAX_PAGE_WIDTH = 2000;
@@ -58,6 +59,14 @@ function storedSource(): string {
   }
 }
 
+function storedSourceWrap(): boolean {
+  try {
+    return window.localStorage.getItem(SOURCE_WRAP_STORAGE_KEY) !== "false";
+  } catch {
+    return true;
+  }
+}
+
 function initialLanguage(): Language {
   if (typeof window === "undefined") {
     return "en";
@@ -70,6 +79,13 @@ function initialSource(): string {
     return "";
   }
   return storedSource();
+}
+
+function initialSourceWrap(): boolean {
+  if (typeof window === "undefined") {
+    return true;
+  }
+  return storedSourceWrap();
 }
 
 function diagnosticSummary(language: Language, ok: boolean, diagnostics: Array<{ severity: "error" | "warning" }>): string {
@@ -96,6 +112,7 @@ function audioExportSummary(language: Language, noteCount: number, seconds: numb
 
 export function App() {
   const [source, setSource] = useState(() => initialSource());
+  const [sourceWrap, setSourceWrap] = useState(() => initialSourceWrap());
   const [language, setLanguage] = useState<Language>(() => initialLanguage());
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeNoteIndices, setActiveNoteIndices] = useState<number[]>([]);
@@ -158,6 +175,14 @@ export function App() {
       // Source persistence is optional.
     }
   }, [source]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(SOURCE_WRAP_STORAGE_KEY, String(sourceWrap));
+    } catch {
+      // Editor preference persistence is optional.
+    }
+  }, [sourceWrap]);
 
   useEffect(() => {
     const element = previewPanelRef.current;
@@ -483,6 +508,7 @@ export function App() {
           volume={volume}
           audioSampleRate={audioSampleRate}
           omitInitialRests={omitInitialRests}
+          sourceWrap={sourceWrap}
           onClose={() => setShowSettings(false)}
           onPageWidthModeChange={setPageWidthMode}
           onManualPageWidthChange={setManualPageWidth}
@@ -493,6 +519,7 @@ export function App() {
           onVolumeChange={setVolume}
           onAudioSampleRateChange={setAudioSampleRate}
           onOmitInitialRestsChange={setOmitInitialRests}
+          onSourceWrapChange={setSourceWrap}
           onAuditionProgram={() => void auditionProgram()}
         />
       )}
@@ -543,6 +570,7 @@ export function App() {
           diagnostics={parsed.diagnostics}
           ok={parsed.ok}
           summary={diagnosticSummary(language, parsed.ok, parsed.diagnostics)}
+          sourceWrap={sourceWrap}
           t={t}
           onSourceChange={updateSource}
           onClearRequest={() => setConfirmClearSource(true)}

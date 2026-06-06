@@ -16,6 +16,7 @@ interface SettingsPanelProps {
   volume: number;
   audioSampleRate: number;
   omitInitialRests: boolean;
+  sourceWrap: boolean;
   onClose: () => void;
   onPageWidthModeChange: (mode: PageWidthMode) => void;
   onManualPageWidthChange: (width: number) => void;
@@ -26,6 +27,7 @@ interface SettingsPanelProps {
   onVolumeChange: (volume: number) => void;
   onAudioSampleRateChange: (sampleRate: number) => void;
   onOmitInitialRestsChange: (omit: boolean) => void;
+  onSourceWrapChange: (wrap: boolean) => void;
   onAuditionProgram: () => void;
 }
 
@@ -52,6 +54,7 @@ export function SettingsPanel({
   volume,
   audioSampleRate,
   omitInitialRests,
+  sourceWrap,
   onClose,
   onPageWidthModeChange,
   onManualPageWidthChange,
@@ -62,6 +65,7 @@ export function SettingsPanel({
   onVolumeChange,
   onAudioSampleRateChange,
   onOmitInitialRestsChange,
+  onSourceWrapChange,
   onAuditionProgram,
 }: SettingsPanelProps) {
   const displayedPageWidth = pageWidthMode === "panel" ? panelPageWidth : pageWidthMode === "content" ? contentPageWidth : manualPageWidth;
@@ -118,6 +122,16 @@ export function SettingsPanel({
                 <option value="except-last">{t("exceptLastLine")}</option>
                 <option value="all">{t("allLines")}</option>
               </select>
+            </label>
+          </div>
+        </section>
+
+        <section className="settings-section">
+          <h3>{t("editorSettings")}</h3>
+          <div className="settings-grid">
+            <label className="checkbox-control">
+              <input type="checkbox" checked={sourceWrap} onChange={(event) => onSourceWrapChange(event.target.checked)} />
+              {t("sourceWrap")}
             </label>
           </div>
         </section>
