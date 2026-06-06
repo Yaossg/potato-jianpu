@@ -93,7 +93,11 @@ function expandRepeatedMeasures(measures: Measure[]): Measure[] {
   const expanded: Measure[] = [];
 
   function shouldPlayOnPass(measure: Measure, pass: number): boolean {
-    return measure.ending === undefined || measure.ending === pass;
+    return measure.ending === undefined || measure.ending.includes(pass);
+  }
+
+  function maxEnding(measure: Measure): number {
+    return measure.ending === undefined ? 1 : Math.max(...measure.ending);
   }
 
   function clearRepeatFlags(measure: Measure): Measure {
@@ -120,8 +124,8 @@ function expandRepeatedMeasures(measures: Measure[]): Measure[] {
       endingBlockEndIndex += 1;
     }
     const endingBlockMeasures = measures.slice(nextRepeatEndIndex + 1, endingBlockEndIndex + 1);
-    const maxEnding = Math.max(2, ...repeatedMeasures.map((repeatedMeasure) => repeatedMeasure.ending ?? 1), ...endingBlockMeasures.map((endingMeasure) => endingMeasure.ending ?? 1));
-    for (let pass = 1; pass <= maxEnding; pass += 1) {
+    const maxEndingPass = Math.max(2, ...repeatedMeasures.map(maxEnding), ...endingBlockMeasures.map(maxEnding));
+    for (let pass = 1; pass <= maxEndingPass; pass += 1) {
       const passMeasures = [
         ...repeatedMeasures.filter((repeatedMeasure) => shouldPlayOnPass(repeatedMeasure, pass)),
         ...endingBlockMeasures.filter((endingMeasure) => shouldPlayOnPass(endingMeasure, pass)),

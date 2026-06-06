@@ -199,13 +199,24 @@ function renderRepeatBoth(x: number, baselineY: number): string {
   ].join("");
 }
 
-function renderEnding(ending: number, startX: number, endX: number, noteY: number, openEnd = false): string {
+function sameEnding(left: number[] | undefined, right: number[] | undefined): boolean {
+  if (left === undefined || right === undefined) {
+    return left === right;
+  }
+  return left.length === right.length && left.every((ending, index) => ending === right[index]);
+}
+
+function formatEnding(endings: number[]): string {
+  return endings.join(",");
+}
+
+function renderEnding(ending: number[], startX: number, endX: number, noteY: number, openEnd = false): string {
   const y = noteY - DIMENSIONS.baseNoteHeight - DIMENSIONS.endingTopOffset;
   const labelX = startX + 4;
   const path = openEnd ? `M${startX},${y + 8} V${y} H${endX}` : `M${startX},${y + 8} V${y} H${endX} V${y + 8}`;
   return [
     `<path class="ending-line" d="${path}"/>`,
-    `<text class="ending-label" x="${labelX}" y="${y - 4}" text-anchor="start">${ending}.</text>`,
+    `<text class="ending-label" x="${labelX}" y="${y - 4}" text-anchor="start">${formatEnding(ending)}.</text>`,
   ].join("");
 }
 
@@ -247,7 +258,7 @@ function hasLaterDifferentEnding(document: Document, measure: Measure): boolean 
     if (candidate.repeatStart) {
       return false;
     }
-    if (candidate.ending !== undefined && candidate.ending !== measure.ending) {
+    if (candidate.ending !== undefined && !sameEnding(candidate.ending, measure.ending)) {
       return true;
     }
   }
@@ -314,9 +325,9 @@ function renderLine(
     const previousMeasure = layout.measures[measureIndex - 1]?.measure;
     const nextMeasure = layout.measures[measureIndex + 1]?.measure;
     const naturalBarX = xOffset + measureLayout.width - measureLayout.rightPadding - DIMENSIONS.repeatRightPadding + 12;
-    if (measureLayout.measure.ending !== undefined && previousMeasure?.ending !== measureLayout.measure.ending) {
+    if (measureLayout.measure.ending !== undefined && !sameEnding(previousMeasure?.ending, measureLayout.measure.ending)) {
       let endingEndMeasureIndex = measureIndex;
-      while (layout.measures[endingEndMeasureIndex + 1]?.measure.ending === measureLayout.measure.ending) {
+      while (sameEnding(layout.measures[endingEndMeasureIndex + 1]?.measure.ending, measureLayout.measure.ending)) {
         endingEndMeasureIndex += 1;
       }
       const endingEndLayout = layout.measures[endingEndMeasureIndex]!;
@@ -324,7 +335,9 @@ function renderLine(
       const endingNaturalBarX = endingEndXOffset + endingEndLayout.width - endingEndLayout.rightPadding - DIMENSIONS.repeatRightPadding + 12;
       const endingStartX = xOffset + measureLayout.leftPadding - DIMENSIONS.leftPadding / 2 - DIMENSIONS.endingLeftOverhang;
       const endingEndX = endingNaturalBarX + (endingEndLayout.measure.repeatEnd ? DIMENSIONS.repeatEndLeftGap : 0);
-      const openEnd = nextMeasureInDocument(document, endingEndLayout.measure)?.ending === measureLayout.measure.ending || !hasLaterDifferentEnding(document, measureLayout.measure);
+      const openEnd =
+        sameEnding(nextMeasureInDocument(document, endingEndLayout.measure)?.ending, measureLayout.measure.ending) ||
+        !hasLaterDifferentEnding(document, measureLayout.measure);
       parts.push(
         renderEnding(
           measureLayout.measure.ending,

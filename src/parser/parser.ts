@@ -24,7 +24,7 @@ type ResolvedTieTarget =
   | { kind: "pitch"; pitches: string[] }
   | { kind: "drum" };
 
-type EndingBlock = { ending: number; startIndex: number; endIndex: number };
+type EndingBlock = { endings: number[]; startIndex: number; endIndex: number };
 
 function mergeRange(start: SourceRange, end: SourceRange): SourceRange {
   return { start: start.start, end: end.end };
@@ -44,7 +44,7 @@ class Parser {
   private index = 0;
   private diagnostics: Diagnostic[];
   private noteIndex = 0;
-  private activeEndings = new Map<string, number | undefined>();
+  private activeEndings = new Map<string, number[] | undefined>();
   private labeledScoreMode = false;
 
   constructor(
@@ -320,7 +320,7 @@ class Parser {
     };
   }
 
-  private parseMeasure(repeatStart = false, ending?: number): Measure | null {
+  private parseMeasure(repeatStart = false, ending?: number[]): Measure | null {
     const start = this.current().range;
     const octavePrefix = this.parseOptionalMeasureOctave();
     const notes: Note[] = [];
@@ -347,16 +347,26 @@ class Parser {
     return { notes, range: mergeRange(start, end), repeatStart, ending };
   }
 
-  private parseOptionalEnding(): number | undefined {
+  private parseOptionalEnding(): number[] | undefined {
     if (!this.match("lbracket")) {
       return undefined;
     }
+    const numbers: number[] = [];
     const number = this.consume("note", "Expected ending number after '['.");
+    if (number) {
+      numbers.push(Number(number.value ?? number.text));
+    }
+    while (this.match("lower")) {
+      const nextNumber = this.consume("note", "Expected ending number after ','.");
+      if (nextNumber) {
+        numbers.push(Number(nextNumber.value ?? nextNumber.text));
+      }
+    }
     this.consume("rbracket", "Expected ']' after ending number.");
-    if (!number) {
+    if (numbers.length === 0) {
       return undefined;
     }
-    return Number(number.value ?? number.text);
+    return numbers;
   }
 
   private parseOptionalMeasureOctave(): number {
@@ -712,6 +722,32 @@ class Parser {
     return previous.pitches.length === current.pitches.length && previous.pitches.every((pitch, index) => pitch === current.pitches[index]);
   }
 
+  private formatEnding(endings: number[]): string {
+    return `[${endings.join(",")}]`;
+  }
+
+  private sameEnding(left: number[] | undefined, right: number[] | undefined): boolean {
+    if (left === undefined || right === undefined) {
+      return left === right;
+    }
+    return left.length === right.length && left.every((ending, index) => ending === right[index]);
+  }
+
+  private maxEnding(endings: number[]): number {
+    return Math.max(...endings);
+  }
+
+  private firstMissingEnding(endings: number[]): number | undefined {
+    const endingSet = new Set(endings);
+    const maxEnding = Math.max(...endingSet);
+    for (let ending = 1; ending <= maxEnding; ending += 1) {
+      if (!endingSet.has(ending)) {
+        return ending;
+      }
+    }
+    return undefined;
+  }
+
   private validateMeasureDurations(lines: ScoreLine[], expectedDuration: number) {
     for (const line of lines) {
       for (const measure of line.measures) {
@@ -739,10 +775,20 @@ class Parser {
     const measures = lines.flatMap((line) => line.measures);
     const endingGroups = this.groupEndingBlocks(measures);
     for (const endingBlocks of endingGroups) {
-      if (endingBlocks.length === 1) {
+      if (endingBlocks.length === 1 && !(endingBlocks[0]!.endings.includes(1) && endingBlocks[0]!.endings.includes(2))) {
         const block = endingBlocks[0]!;
         const measure = measures[block.startIndex]!;
         this.error(`Repeated endings need at least [1] and [2].`, measure.range);
+      }
+      if (!endingBlocks.some((block) => measures[block.endIndex]?.repeatEnd)) {
+        const block = endingBlocks[0]!;
+        const measure = measures[block.startIndex]!;
+        this.error(`Repeated endings need at least one ending with ':|'.`, measure.range);
+      }
+      const finalBlock = endingBlocks.at(-1)!;
+      if (measures[finalBlock.endIndex]?.repeatEnd) {
+        const measure = measures[finalBlock.startIndex]!;
+        this.error(`Repeated endings need a final ending without ':|'.`, measure.range);
       }
 
       for (let blockIndex = 0; blockIndex < endingBlocks.length - 1; blockIndex += 1) {
@@ -750,31 +796,50 @@ class Parser {
         const endingMeasure = measures[block.endIndex]!;
         const internalRepeatEnd = measures.slice(block.startIndex, block.endIndex).find((measure) => measure.repeatEnd);
         if (internalRepeatEnd) {
-          this.error(`Ending [${block.ending}] has ':|' before its last measure; move ':|' to the end of the ending.`, internalRepeatEnd.range);
+          this.error(`Ending ${this.formatEnding(block.endings)} has ':|' before its last measure; move ':|' to the end of the ending.`, internalRepeatEnd.range);
         } else if (!endingMeasure.repeatEnd) {
           const nextBlock = endingBlocks[blockIndex + 1]!;
-          this.error(`Ending [${block.ending}] should end with ':|' before ending [${nextBlock.ending}].`, endingMeasure.range);
+          this.error(`Ending ${this.formatEnding(block.endings)} should end with ':|' before ending ${this.formatEnding(nextBlock.endings)}.`, endingMeasure.range);
         }
       }
 
-      const duplicateBlock = endingBlocks.find((block, index) => endingBlocks.findIndex((candidate) => candidate.ending === block.ending) !== index);
-      if (duplicateBlock) {
-        const measure = measures[duplicateBlock.startIndex]!;
-        this.error(`Ending [${duplicateBlock.ending}] appears more than once. Use each ending number only once.`, measure.range);
-        continue;
+      const seenEndings = new Set<number>();
+      let previousBlockMinEnding = 0;
+      for (const [blockIndex, block] of endingBlocks.entries()) {
+        const blockEndings = new Set<number>();
+        const duplicateEnding = block.endings.find((ending) => {
+          const duplicate = blockEndings.has(ending) || seenEndings.has(ending);
+          blockEndings.add(ending);
+          return duplicate;
+        });
+        if (duplicateEnding !== undefined) {
+          const measure = measures[block.startIndex]!;
+          this.error(`Ending [${duplicateEnding}] appears more than once. Use each ending number only once.`, measure.range);
+          break;
+        }
+        const blockMinEnding = Math.min(...block.endings);
+        if (blockIndex === 0 && blockMinEnding > 1) {
+          const measure = measures[block.startIndex]!;
+          this.error(`Ending ${this.formatEnding(block.endings)} is out of order; write ending [1] before it.`, measure.range);
+          break;
+        }
+        if (blockMinEnding < previousBlockMinEnding) {
+          const measure = measures[block.startIndex]!;
+          this.error(`Ending ${this.formatEnding(block.endings)} is out of order; write ending [${previousBlockMinEnding}] before it.`, measure.range);
+          break;
+        }
+        for (const ending of block.endings) {
+          seenEndings.add(ending);
+        }
+        previousBlockMinEnding = blockMinEnding;
       }
 
-      const endingNumbers = endingBlocks.map((block) => block.ending);
-      const firstOutOfSequenceIndex = endingNumbers.findIndex((ending, index) => ending !== index + 1);
-      if (firstOutOfSequenceIndex >= 0) {
-        const expectedEnding = firstOutOfSequenceIndex + 1;
-        const block = endingBlocks[firstOutOfSequenceIndex]!;
-        const measure = measures[block.startIndex]!;
-        if (endingNumbers.slice(firstOutOfSequenceIndex + 1).includes(expectedEnding)) {
-          this.error(`Ending [${block.ending}] is out of order; write ending [${expectedEnding}] before it.`, measure.range);
-        } else {
-          this.error(`Ending [${expectedEnding}] is missing before ending [${block.ending}].`, measure.range);
-        }
+      const endingNumbers = endingBlocks.flatMap((block) => block.endings);
+      const missingEnding = this.firstMissingEnding(endingNumbers);
+      if (missingEnding !== undefined) {
+        const laterBlock = endingBlocks.find((block) => block.endings.some((ending) => ending > missingEnding))!;
+        const measure = measures[laterBlock.startIndex]!;
+        this.error(`Ending [${missingEnding}] is missing before ending ${this.formatEnding(laterBlock.endings)}.`, measure.range);
       }
     }
   }
@@ -789,10 +854,10 @@ class Parser {
         continue;
       }
       let endingEndIndex = measureIndex;
-      while (measures[endingEndIndex + 1]?.ending === measure.ending) {
+      while (this.sameEnding(measures[endingEndIndex + 1]?.ending, measure.ending)) {
         endingEndIndex += 1;
       }
-      endingBlocks.push({ ending: measure.ending, startIndex: measureIndex, endIndex: endingEndIndex });
+      endingBlocks.push({ endings: measure.ending, startIndex: measureIndex, endIndex: endingEndIndex });
       measureIndex = endingEndIndex + 1;
     }
     return endingBlocks;
@@ -804,7 +869,11 @@ class Parser {
     let currentGroup: EndingBlock[] = [];
     for (const block of endingBlocks) {
       const previousBlock = currentGroup.at(-1);
-      if (previousBlock && block.ending === 1 && this.hasRepeatStartBetween(measures, previousBlock.endIndex + 1, block.startIndex)) {
+      if (
+        previousBlock &&
+        block.endings.includes(1) &&
+        (!measures[previousBlock.endIndex]?.repeatEnd || this.hasRepeatStartBetween(measures, previousBlock.endIndex + 1, block.startIndex))
+      ) {
         endingGroups.push(currentGroup);
         currentGroup = [];
       }
@@ -837,10 +906,10 @@ class Parser {
     for (let blockIndex = 0; blockIndex < endingBlocks.length; blockIndex += 1) {
       const block = endingBlocks[blockIndex]!;
       const nextBlock = endingBlocks[blockIndex + 1];
-      if (nextBlock && nextBlock.ending > block.ending) {
+      if (nextBlock && this.maxEnding(nextBlock.endings) > this.maxEnding(block.endings)) {
         continue;
       }
-      for (let index = block.startIndex + 1; measures[index]?.ending === block.ending; index += 1) {
+      for (let index = block.startIndex + 1; this.sameEnding(measures[index]?.ending, block.endings); index += 1) {
         measures[index]!.ending = undefined;
       }
     }

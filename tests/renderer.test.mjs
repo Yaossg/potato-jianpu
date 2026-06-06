@@ -299,6 +299,14 @@ test("renders repeated ending brackets", () => {
   assert.match(svg, /<text class="ending-label" x="\d+" y="\d+" text-anchor="start">2\.<\/text>/);
 });
 
+test("renders repeated ending brackets for multiple passes", () => {
+  const result = parse("|: 1 | [1,2] 2 :| [3] 3 |");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  assert.match(svg, /<text class="ending-label" x="\d+" y="\d+" text-anchor="start">1,2\.<\/text>/);
+  assert.match(svg, /<text class="ending-label" x="\d+" y="\d+" text-anchor="start">3\.<\/text>/);
+});
+
 test("renders ending brackets open at wrapped line ends", () => {
   const result = parse("|: 1 | [1] 2 | 3 | 4 :| [2] 5 |");
   assert.equal(result.ok, true);

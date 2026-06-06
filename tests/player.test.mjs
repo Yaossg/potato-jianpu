@@ -93,6 +93,94 @@ test("plays repeated endings beyond the second pass", () => {
   );
 });
 
+test("plays one repeated ending on multiple passes", () => {
+  const result = parse("|: 1 | [1,2] 2 :| [3] 3 |");
+  assert.equal(result.ok, true);
+  const melody = compileMelody(result.value);
+  assert.deepEqual(
+    melody.notes.map((note) => note.chord),
+    [[60], [62], [60], [62], [60], [64]],
+  );
+});
+
+test("plays non-contiguous passes in one repeated ending", () => {
+  const result = parse("1111|[1,3]2222:|[2]3333:|[4]4444");
+  assert.equal(result.ok, true);
+  const melody = compileMelody(result.value);
+  assert.deepEqual(
+    melody.notes.map((note) => note.chord),
+    [
+      [60],
+      [60],
+      [60],
+      [60],
+      [62],
+      [62],
+      [62],
+      [62],
+      [60],
+      [60],
+      [60],
+      [60],
+      [64],
+      [64],
+      [64],
+      [64],
+      [60],
+      [60],
+      [60],
+      [60],
+      [62],
+      [62],
+      [62],
+      [62],
+      [60],
+      [60],
+      [60],
+      [60],
+      [65],
+      [65],
+      [65],
+      [65],
+    ],
+  );
+});
+
+test("plays a multi-pass ending before an explicit final pass", () => {
+  const result = parse("1111|[1,2]2222:|[3]3333");
+  assert.equal(result.ok, true);
+  const melody = compileMelody(result.value);
+  assert.deepEqual(
+    melody.notes.map((note) => note.chord),
+    [
+      [60],
+      [60],
+      [60],
+      [60],
+      [62],
+      [62],
+      [62],
+      [62],
+      [60],
+      [60],
+      [60],
+      [60],
+      [62],
+      [62],
+      [62],
+      [62],
+      [60],
+      [60],
+      [60],
+      [60],
+      [64],
+      [64],
+      [64],
+      [64],
+    ],
+  );
+});
+
 test("plays repeated endings across source lines", () => {
   const result = parse("|: 1 | [1] 2\n3 :| [2] 4 |");
   assert.equal(result.ok, true);
@@ -110,6 +198,49 @@ test("plays repeated endings in multiple repeat sections", () => {
   assert.deepEqual(
     melody.notes.map((note) => note.chord),
     [[60], [62], [60], [64], [65], [67], [69], [67], [71]],
+  );
+});
+
+test("plays adjacent repeated ending groups independently", () => {
+  const result = parse("1111|[1]2222:|[2]3333\n1111|[1]4444:|[2]5555");
+  assert.equal(result.ok, true);
+  const melody = compileMelody(result.value);
+  assert.deepEqual(
+    melody.notes.map((note) => note.chord),
+    [
+      [60],
+      [60],
+      [60],
+      [60],
+      [62],
+      [62],
+      [62],
+      [62],
+      [60],
+      [60],
+      [60],
+      [60],
+      [64],
+      [64],
+      [64],
+      [64],
+      [60],
+      [60],
+      [60],
+      [60],
+      [65],
+      [65],
+      [65],
+      [65],
+      [60],
+      [60],
+      [60],
+      [60],
+      [67],
+      [67],
+      [67],
+      [67],
+    ],
   );
 });
 

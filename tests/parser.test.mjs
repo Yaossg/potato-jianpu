@@ -63,8 +63,63 @@ test("parses repeated endings", () => {
   const result = parse("|: 1 | [1] 2 :| [2] 3 |");
   assert.equal(result.ok, true);
   assert.equal(result.value.score[0].measures.length, 3);
-  assert.equal(result.value.score[0].measures[1].ending, 1);
-  assert.equal(result.value.score[0].measures[2].ending, 2);
+  assert.deepEqual(result.value.score[0].measures[1].ending, [1]);
+  assert.deepEqual(result.value.score[0].measures[2].ending, [2]);
+});
+
+test("parses repeated endings with multiple passes in one ending", () => {
+  const result = parse("|: 1 | [1,2] 2 :| [3] 3 |");
+  assert.equal(result.ok, true);
+  assert.equal(result.value.score[0].measures.length, 3);
+  assert.deepEqual(result.value.score[0].measures[1].ending, [1, 2]);
+  assert.deepEqual(result.value.score[0].measures[2].ending, [3]);
+});
+
+test("parses non-contiguous passes in one repeated ending", () => {
+  const result = parse("1111|[1,3]2222:|[2]3333:|[4]4444");
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.value.score[0].measures[1].ending, [1, 3]);
+  assert.deepEqual(result.value.score[0].measures[2].ending, [2]);
+  assert.deepEqual(result.value.score[0].measures[3].ending, [4]);
+});
+
+test("rejects a repeated ending group without an explicit final pass", () => {
+  const result = parse("1111|[1,2]2222:|");
+  assert.equal(result.ok, false);
+  assert.match(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Repeated endings need a final ending without ':|'/);
+});
+
+test("rejects repeated endings that rely on unmarked following measures as the final pass", () => {
+  const result = parse("1111|[1]2222:|[2]3333:|4444");
+  assert.equal(result.ok, false);
+  assert.match(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Repeated endings need a final ending without ':|'/);
+});
+
+test("rejects multi-pass repeated endings without an explicit final ending", () => {
+  const result = parse("1111|[1,2]2222:|3333");
+  assert.equal(result.ok, false);
+  assert.match(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Repeated endings need a final ending without ':|'/);
+});
+
+test("rejects repeated endings without any repeat end", () => {
+  const result = parse("1111|[1,2]2222");
+  assert.equal(result.ok, false);
+  assert.match(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Repeated endings need at least one ending with ':|'/);
+});
+
+test("accepts repeated endings with an explicit final pass", () => {
+  const result = parse("1111|[1]2222:|[2]3333:|[3]4444");
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.value.score[0].measures[1].ending, [1]);
+  assert.deepEqual(result.value.score[0].measures[2].ending, [2]);
+  assert.deepEqual(result.value.score[0].measures[3].ending, [3]);
+});
+
+test("accepts multi-pass repeated endings with an explicit final pass", () => {
+  const result = parse("1111|[1,2]2222:|[3]3333");
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.value.score[0].measures[1].ending, [1, 2]);
+  assert.deepEqual(result.value.score[0].measures[2].ending, [3]);
 });
 
 test("rejects a non-final ending that does not end with repeat end", () => {
@@ -127,20 +182,30 @@ test("rejects repeated ending numbers that are out of order", () => {
   assert.equal(result.diagnostics.find((diagnostic) => diagnostic.message.includes("out of order"))?.severity, "error");
 });
 
-test("rejects repeated ending numbers that are reused", () => {
-  const result = parse("|: 1 | [1] 2 :| [2] 3 | [1] 4 |");
+test("rejects repeated ending numbers that restart after later endings", () => {
+  const result = parse("|: 1 | [1] 2 :| [2] 3 :| [1] 4 |");
   assert.equal(result.ok, false);
   assert.match(
     result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"),
     /Ending \[1\] appears more than once/,
   );
-  assert.equal(result.diagnostics.find((diagnostic) => diagnostic.message.includes("more than once"))?.severity, "error");
+  assert.equal(result.diagnostics.find((diagnostic) => diagnostic.message.includes("appears more than once"))?.severity, "error");
 });
 
-test("keeps only the first measure in the final ending", () => {
+test("rejects repeated ending numbers repeated inside one marker", () => {
+  const first = parse("|: 1 | [1,1] 2 :| [2] 3 |");
+  assert.equal(first.ok, false);
+  assert.match(first.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Ending \[1\] appears more than once/);
+
+  const second = parse("|: 1 | [1] 2 :| [2,2] 3 |");
+  assert.equal(second.ok, false);
+  assert.match(second.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Ending \[2\] appears more than once/);
+});
+
+test("keeps only the first measure in an explicit final ending", () => {
   const result = parse("|: 1 | [1] 2 :| [2] 3 | 4 |");
   assert.equal(result.ok, true);
-  assert.equal(result.value.score[0].measures[2].ending, 2);
+  assert.deepEqual(result.value.score[0].measures[2].ending, [2]);
   assert.equal(result.value.score[0].measures[3].ending, undefined);
   assert.doesNotMatch(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Ending \[2\]/);
 });
@@ -148,19 +213,28 @@ test("keeps only the first measure in the final ending", () => {
 test("validates repeated endings independently for multiple repeat sections", () => {
   const result = parse("|: 1 | [1] 2 :| [2] 3 | 4 |: 5 | [1] 6 :| [2] 7 |");
   assert.equal(result.ok, true);
-  assert.equal(result.value.score[0].measures[2].ending, 2);
+  assert.deepEqual(result.value.score[0].measures[2].ending, [2]);
   assert.equal(result.value.score[0].measures[3].ending, undefined);
   assert.equal(result.value.score[0].measures[4].ending, undefined);
-  assert.equal(result.value.score[0].measures[5].ending, 1);
-  assert.equal(result.value.score[0].measures[6].ending, 2);
+  assert.deepEqual(result.value.score[0].measures[5].ending, [1]);
+  assert.deepEqual(result.value.score[0].measures[6].ending, [2]);
   assert.doesNotMatch(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /appears more than once|out of order|should end with/);
+});
+
+test("validates adjacent repeated ending groups independently", () => {
+  const result = parse("1111|[1]2222:|[2]3333\n1111|[1]4444:|[2]5555");
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.value.score[0].measures[1].ending, [1]);
+  assert.deepEqual(result.value.score[0].measures[2].ending, [2]);
+  assert.deepEqual(result.value.score[1].measures[1].ending, [1]);
+  assert.deepEqual(result.value.score[1].measures[2].ending, [2]);
 });
 
 test("validates repeated endings independently for labeled tracks", () => {
   const result = parse("T1: |: 1 | [1] 2 :| [2] 3 |\nT2: |: 5, | [1] 6, :| [2] 7, |");
   assert.equal(result.ok, true);
-  assert.equal(result.value.score[0].measures[2].ending, 2);
-  assert.equal(result.value.score[1].measures[2].ending, 2);
+  assert.deepEqual(result.value.score[0].measures[2].ending, [2]);
+  assert.deepEqual(result.value.score[1].measures[2].ending, [2]);
   assert.doesNotMatch(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /appears more than once|out of order|should end with/);
 });
 

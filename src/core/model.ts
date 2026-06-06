@@ -66,7 +66,7 @@ export interface Measure {
   range: SourceRange;
   repeatStart?: boolean;
   repeatEnd?: boolean;
-  ending?: number;
+  ending?: number[];
 }
 
 export interface LyricLine {
