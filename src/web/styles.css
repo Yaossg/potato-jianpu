@@ -20,6 +20,12 @@
   --control-border: #b8c0cc;
   --control-hover-bg: #f0f4f8;
   --control-hover-border: #50627a;
+  --play-control: #16803a;
+  --play-control-bg: #edf8f0;
+  --play-control-border: #71b989;
+  --stop-control: #c92c2c;
+  --stop-control-bg: #fff0f0;
+  --stop-control-border: #e07d7d;
   --diagnostics-bg: #fff9f3;
 }
 
@@ -35,6 +41,12 @@
   --control-border: #596577;
   --control-hover-bg: #384252;
   --control-hover-border: #8b9bb1;
+  --play-control: #58d27d;
+  --play-control-bg: #1d3728;
+  --play-control-border: #458a5b;
+  --stop-control: #ff7a7a;
+  --stop-control-bg: #432426;
+  --stop-control-border: #9c5555;
   --diagnostics-bg: #2d261b;
 }
 
@@ -69,6 +81,46 @@ button:hover:not(:disabled) {
 button:disabled {
   cursor: not-allowed;
   opacity: 0.55;
+}
+
+.icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+}
+
+.playback-button {
+  border-color: var(--control-hover-border);
+}
+
+.play-button {
+  color: var(--play-control);
+  background: var(--play-control-bg);
+  border-color: var(--play-control-border);
+}
+
+.stop-button {
+  color: var(--stop-control);
+  background: var(--stop-control-bg);
+  border-color: var(--stop-control-border);
+}
+
+.toolbar-icon {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+}
+
+.toolbar-icon-play,
+.toolbar-icon-stop {
+  width: 26px;
+  height: 26px;
+}
+
+.toolbar-icon-cutout {
+  fill: var(--control-bg);
 }
 
 .app-shell {
@@ -128,11 +180,16 @@ button:disabled {
   list-style: none;
 }
 
+.export-menu summary.icon-button {
+  display: inline-grid;
+  padding: 0;
+}
+
 .export-menu summary::-webkit-details-marker {
   display: none;
 }
 
-.export-menu summary::after {
+.export-menu summary:not(.icon-button)::after {
   content: "";
   width: 0;
   height: 0;

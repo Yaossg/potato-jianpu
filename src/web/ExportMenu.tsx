@@ -1,4 +1,5 @@
 import type { TranslationKey } from "./i18n.js";
+import { ToolbarIcon } from "./ToolbarIcon.js";
 
 interface ExportMenuProps {
   canExportScore: boolean;
@@ -27,7 +28,9 @@ export function ExportMenu({
 }: ExportMenuProps) {
   return (
     <details className="export-menu">
-      <summary>{t("export")}</summary>
+      <summary className="icon-button" aria-label={t("export")} title={t("export")}>
+        <ToolbarIcon name="export" />
+      </summary>
       <div className="export-menu-items">
         <button type="button" onClick={onExportSvg} disabled={!canExportImage}>
           SVG
