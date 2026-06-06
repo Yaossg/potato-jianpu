@@ -445,14 +445,25 @@ test("aligns notes across simultaneous tracks by rhythmic position", () => {
   assert.equal(dashCenterX(svg, 11), noteX(svg, 7));
 });
 
-test("falls back to measure-level alignment when track rhythms differ", () => {
-  const result = parse("T1: 1 2 3 4\nT2: 5, - 6,");
+test("aligns differing simultaneous track rhythms when beat boundaries match", () => {
+  const result = parse("T1: 1 2 3 4\nT2: 5,/ 5,/ 6,/ 6,/ 7, 1,");
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 260 });
 
   assert.equal(noteX(svg, 4), noteX(svg, 0));
-  assert.notEqual(dashCenterX(svg, 4), noteX(svg, 1));
-  assert.notEqual(noteX(svg, 5), noteX(svg, 2));
+  assert.equal(noteX(svg, 6), noteX(svg, 1));
+  assert.equal(noteX(svg, 8), noteX(svg, 2));
+  assert.equal(noteX(svg, 9), noteX(svg, 3));
+  assert.equal(new Set(finalBarXs(svg)).size, 1);
+});
+
+test("falls back to measure-level alignment when track rhythms miss beat boundaries", () => {
+  const result = parse('time: "2/4"\n=\nT1: 1/ 2 1/\nT2: 5, 6,');
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 260 });
+
+  assert.equal(noteX(svg, 3), noteX(svg, 0));
+  assert.notEqual(noteX(svg, 4), noteX(svg, 1));
   assert.equal(new Set(finalBarXs(svg)).size, 1);
 });
 

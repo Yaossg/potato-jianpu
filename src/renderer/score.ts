@@ -439,6 +439,7 @@ function timelineKey(value: number): string {
 interface MeasureRhythmPositions {
   noteStarts: number[];
   dashStarts: number[][];
+  totalDuration: number;
 }
 
 function measureRhythmPositions(measure: Measure): MeasureRhythmPositions {
@@ -450,7 +451,7 @@ function measureRhythmPositions(measure: Measure): MeasureRhythmPositions {
     dashStarts.push(Array.from({ length: note.duration.dashes }, (_, index) => start + (index + 1) / 4));
     start += note.duration.value;
   }
-  return { noteStarts, dashStarts };
+  return { noteStarts, dashStarts, totalDuration: start };
 }
 
 function rhythmicSlotWidth(note: Note): number {
@@ -515,11 +516,98 @@ function alignMeasureLinesOnly(measureLayouts: MeasureLayout[]): MeasureLayout[]
   });
 }
 
-function alignMeasureLayouts(measureLayouts: MeasureLayout[]): MeasureLayout[] {
+function allStarts(positions: MeasureRhythmPositions): number[] {
+  return [...positions.noteStarts, ...positions.dashStarts.flat()];
+}
+
+function canAlignBeatBoundaries(positionsByMeasure: MeasureRhythmPositions[], unit: number): boolean {
+  if (unit <= 0) {
+    return false;
+  }
+
+  return positionsByMeasure.every((positions) => {
+    const starts = new Set(allStarts(positions).map(timelineKey));
+    for (let beatStart = 0; beatStart < positions.totalDuration - 1e-9; beatStart += unit) {
+      if (!starts.has(timelineKey(beatStart))) {
+        return false;
+      }
+    }
+    return true;
+  });
+}
+
+function beatStarts(totalDuration: number, unit: number): number[] {
+  const starts: number[] = [];
+  for (let beatStart = 0; beatStart < totalDuration - 1e-9; beatStart += unit) {
+    starts.push(beatStart);
+  }
+  return starts;
+}
+
+function alignMeasureLayoutsByBeat(measureLayouts: MeasureLayout[], positionsByMeasure: MeasureRhythmPositions[], unit: number): MeasureLayout[] {
+  const beatStartsByMeasure = positionsByMeasure.map((positions) => beatStarts(positions.totalDuration, unit));
+  const beatCount = Math.max(0, ...beatStartsByMeasure.map((starts) => starts.length));
+  const positionsByAbsoluteStart = new Map<string, number>();
+  let position = 0;
+
+  for (let beatIndex = 0; beatIndex < beatCount; beatIndex += 1) {
+    const widthsByRelativeStart = new Map<string, { start: number; width: number }>();
+
+    for (const [layoutIndex, layout] of measureLayouts.entries()) {
+      const positions = positionsByMeasure[layoutIndex]!;
+      const beatStart = beatStartsByMeasure[layoutIndex]![beatIndex];
+      const beatEnd = beatStartsByMeasure[layoutIndex]![beatIndex + 1] ?? positions.totalDuration;
+      if (beatStart === undefined) {
+        continue;
+      }
+
+      for (const [noteIndex, note] of layout.measure.notes.entries()) {
+        const noteStart = positions.noteStarts[noteIndex]!;
+        if (noteStart >= beatStart - 1e-9 && noteStart < beatEnd - 1e-9) {
+          setTimelineWidth(widthsByRelativeStart, noteStart - beatStart, rhythmicSlotWidth(note));
+        }
+        for (const dashStart of positions.dashStarts[noteIndex]!) {
+          if (dashStart >= beatStart - 1e-9 && dashStart < beatEnd - 1e-9) {
+            setTimelineWidth(widthsByRelativeStart, dashStart - beatStart, DIMENSIONS.dashSpacing);
+          }
+        }
+      }
+    }
+
+    const timeline = [...widthsByRelativeStart.values()].sort((a, b) => a.start - b.start);
+    for (const entry of timeline) {
+      for (const starts of beatStartsByMeasure) {
+        const beatStart = starts[beatIndex];
+        if (beatStart !== undefined) {
+          positionsByAbsoluteStart.set(timelineKey(beatStart + entry.start), position);
+        }
+      }
+      position += entry.width;
+    }
+  }
+
+  const leftPadding = Math.max(...measureLayouts.map((layout) => layout.leftPadding));
+  const rightPadding = Math.max(...measureLayouts.map((layout) => layout.rightPadding));
+  return measureLayouts.map((layout, layoutIndex) => {
+    const positions = positionsByMeasure[layoutIndex]!;
+    return {
+      ...layout,
+      width: position + leftPadding + rightPadding + 4 + (layout.measure.repeatEnd ? DIMENSIONS.repeatRightPadding - DIMENSIONS.leftPadding : 0),
+      leftPadding,
+      rightPadding,
+      notePositions: positionsForStarts(positions.noteStarts, positionsByAbsoluteStart),
+      dashPositions: dashPositionsForStarts(positions.dashStarts, positionsByAbsoluteStart),
+    };
+  });
+}
+
+function alignMeasureLayouts(measureLayouts: MeasureLayout[], unit: number): MeasureLayout[] {
   const positionsByMeasure = measureLayouts.map((layout) => measureRhythmPositions(layout.measure));
   const signatures = new Set(positionsByMeasure.map(measureTimelineSignature));
   if (signatures.size > 1) {
-    return alignMeasureLinesOnly(measureLayouts);
+    return canAlignBeatBoundaries(positionsByMeasure, unit)
+      ? alignMeasureLayoutsByBeat(measureLayouts, positionsByMeasure, unit)
+      : alignMeasureLinesOnly(measureLayouts);
   }
 
   const widthsByStart = new Map<string, { start: number; width: number }>();
@@ -557,7 +645,7 @@ function alignMeasureLayouts(measureLayouts: MeasureLayout[]): MeasureLayout[] {
   });
 }
 
-function alignLineLayouts(layouts: LineLayout[]): LineLayout[] {
+function alignLineLayouts(layouts: LineLayout[], unit: number): LineLayout[] {
   const aligned = [...layouts];
   const layoutsBySpan = new Map<string, Array<{ index: number; layout: LineLayout }>>();
 
@@ -575,7 +663,7 @@ function alignLineLayouts(layouts: LineLayout[]): LineLayout[] {
 
     for (let measureIndex = 0; measureIndex < measureCount; measureIndex += 1) {
       const measureLayouts = entries.map((entry) => entry.layout.measures[measureIndex]!);
-      const alignedMeasureLayouts = alignMeasureLayouts(measureLayouts);
+      const alignedMeasureLayouts = alignMeasureLayouts(measureLayouts, unit);
       for (const [entryIndex, measureLayout] of alignedMeasureLayouts.entries()) {
         alignedMeasures[entryIndex]![measureIndex] = measureLayout;
       }
@@ -719,6 +807,7 @@ function isPrimaryLyricLine(line: ScoreLine, hasLabels: boolean): boolean {
 
 export function renderScore(document: Document, yStart: number, pageWidth: number, activeNoteIndices: number[], justifyMode: JustifyMode): { svg: string; height: number; width: number } {
   const allNotes = flattenNotes(document);
+  const unit = actualNotePerBeat(document.header.timeSignature);
   const activeNoteIndexSet = new Set(activeNoteIndices);
   const groups = scoreLineGroups(document);
   const hasLabels = document.score.some((line) => line.label !== undefined);
@@ -727,6 +816,7 @@ export function renderScore(document: Document, yStart: number, pageWidth: numbe
   const layouts = groups.flatMap((group, groupIndex) => {
     const groupLayouts = alignLineLayouts(
       group.lines.flatMap((line) => layoutLine(line, allNotes, Math.max(1, pageWidth - group.labelOffset - group.bracketOffset * 2))),
+      unit,
     );
     const groupVisualWidth = Math.max(0, lyricNaturalWidth(group), ...groupLayouts.map((layout) => layout.width + group.labelOffset + group.bracketOffset * 2));
     return groupLayouts.map((layout) => ({
