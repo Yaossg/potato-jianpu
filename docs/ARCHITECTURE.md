@@ -288,8 +288,8 @@ Practical rules:
 
 ## Current Known Architecture Debt
 
-- The renderer is still one large file rather than split into header, score,
-  layout, and primitive modules.
+- The renderer is split into focused modules, but note-level spacing and
+  collision handling still have room to grow for dense notation.
 - There is no formal theme object yet; dimensions and styles are internal.
 - Melody timing and note events are still named `Melody`, not a richer
   `TimedNote` model.

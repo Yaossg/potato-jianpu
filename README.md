@@ -45,10 +45,12 @@ core, parser, renderer, player, and backend modules.
 
 `pnpm run web:build` emits the browser application in `dist-web/`.
 
-See `AGENTS.md` for repository handoff notes. Syntax is documented in
-`public/grammar.html`, renderer behavior in
-`docs/RENDERER.md`, player behavior in `docs/PLAYER.md`, and export behavior in
-`docs/EXPORTS.md`. Module boundaries are documented in `docs/ARCHITECTURE.md`,
-and release shape is documented in `docs/RELEASE.md`. The frontend build also includes
-`grammar.html`, a detailed grammar reference with railroad diagrams generated
-from `docs/grammar.ebnf`.
+See `AGENTS.md` for repository handoff notes and `docs/COMMANDS.md` for the
+full command reference. Syntax is documented in `public/grammar.html` and
+`public/grammar.zh.html`; grammar railroad diagrams are generated from
+`docs/grammar.ebnf`. Module boundaries are documented in
+`docs/ARCHITECTURE.md`, renderer behavior in `docs/RENDERER.md`, player
+behavior in `docs/PLAYER.md`, export behavior in `docs/EXPORTS.md`, quality
+policy in `docs/QUALITY.md`, documentation maintenance in
+`docs/DOCUMENTATION.md`, translation rules in `docs/TRANSLATION.md`, future
+work in `docs/ROADMAP.md`, and release shape in `docs/RELEASE.md`.
