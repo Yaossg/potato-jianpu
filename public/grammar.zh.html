@@ -191,80 +191,80 @@
     <main>
       <h1>Modern Jianpu Markup 语法参考</h1>
       <p>
-        面向谱面作者的 <code>.jpu</code> 语法参考。章节顺序按写谱时常见的查阅路径组织：文档基础、标题元数据、音乐记号、谱面排布，最后是校验诊断。
+        这是一份写 <code>.jpu</code> 谱面时用来查语法的参考。内容按实际写谱时最常查的顺序组织：文件结构、文件头信息、记谱方式、谱面排布，最后列出校验提示。
       </p>
 
       <h2>文档基础</h2>
 
       <h3>1. 文件结构</h3>
-      <p>文件可以先写可选的标题区，然后写谱面文本。</p>
+      <p>一个文件可以先写可选的文件头，再写谱面正文。</p>
       <pre class="notation-example">title: "Twinkle"
 key: "C"
 time: "4/4"
 tempo: "120"
 =
 1 1 5 5 | 6 6 5 - |</pre>
-      <p>也可以只写谱面：</p>
+      <p>也可以不写文件头，直接写谱面：</p>
       <pre class="notation-example">1 2 3 4 | 5 6 7 1' |</pre>
       <p>
-        如果文件使用标题分隔符，所有标题字段都必须写在分隔符之前。没有分隔符时，整个文件都会被当作谱面文本。
-        空文件也是有效的，会使用默认调号、拍号和速度。
+        如果使用文件头分隔符，所有文件头字段都必须放在分隔符前面。没有分隔符时，整个文件都会按谱面正文解析。
+        空文件也合法，会使用默认的调号、拍号和速度。
       </p>
 
 
       <h3>2. 空白和注释</h3>
       <p>
-        空格和制表符可以出现在 token 之间，解析时会被忽略；只要不会造成歧义，也可以省略。下面几种写法是等价的：
+        空格和制表符可以写在记号之间，解析时会被忽略。只要省略后不会产生歧义，也可以不写空格。下面两种写法等价：
       </p>
       <pre class="notation-example">1 2 3 4
 5 6 7 1'</pre>
       <pre class="notation-example">1234
 5671'</pre> 
       <p>
-        注释以 <code>;</code> 开始，一直到下一个换行结束。注释只给人阅读，解析器会忽略它们。下面的写法也是有效的，并且等价于前面的例子：
+        注释从 <code>;</code> 开始，到本行结束为止。注释只给人看，解析器会忽略。下面的写法仍然有效，也和前面的例子等价：
       </p>
       <pre class="notation-example">1 2 3 4 ; this comment is ignored
 5 6 7 1' ; this comment is also ignored</pre>
       <p>
-        用来分隔谱面行和标题属性的换行有语义，不会被简单忽略，但连续换行会被当作一个换行处理。
+        换行会分隔文件头字段和谱面行，因此不是普通空白；不过连续多个换行会按一个换行处理。
       </p>
       <pre class="notation-example">1 2 3 4 5 6 7 1' ; this score is rendered in a single line </pre>
       <pre class="notation-example">1 2 3 4
          ; consecutive line breaks are treated as one
 5 6 7 1' ; therefore, this score is rendered in two lines, not three</pre>
 
-      <h2>标题元数据</h2>
+      <h2>文件头信息</h2>
 
-      <h3>3. 标题区</h3>
+      <h3>3. 文件头</h3>
       <p>
-        标题字段使用 <code>name: "value"</code> 形式。内置属性名使用 ASCII 字母或下划线。
-        轨道显示名属性使用 <code>T1</code>、<code>T16</code> 这样的标签。值必须是同一行内的双引号字符串。
+        文件头字段写成 <code>name: "value"</code>。内置字段名使用 ASCII 字母或下划线。
+        如果要给轨道设置显示名，可以使用 <code>T1</code>、<code>T16</code> 这样的标签。字段值必须是同一行里的双引号字符串。
       </p>
       <table>
         <thead>
           <tr><th>字段</th><th>默认值</th><th>含义</th></tr>
         </thead>
         <tbody>
-          <tr><td><code>title</code></td><td>空</td><td>渲染出的标题</td></tr>
-          <tr><td><code>subtitle</code></td><td>空</td><td>渲染出的副标题</td></tr>
-          <tr><td><code>composer</code></td><td>空</td><td>渲染出的作曲者</td></tr>
-          <tr><td><code>key</code></td><td><code>C</code></td><td>用于播放并显示在元数据中的调号</td></tr>
+          <tr><td><code>title</code></td><td>空</td><td>谱面标题</td></tr>
+          <tr><td><code>subtitle</code></td><td>空</td><td>副标题</td></tr>
+          <tr><td><code>composer</code></td><td>空</td><td>作曲者</td></tr>
+          <tr><td><code>key</code></td><td><code>C</code></td><td>播放使用的调号，也会显示在文件头信息里</td></tr>
           <tr><td><code>time</code></td><td><code>4/4</code></td><td>拍号</td></tr>
           <tr><td><code>tempo</code></td><td><code>120</code></td><td>每分钟拍数</td></tr>
-          <tr><td><code>hidden</code></td><td>空</td><td>任意非空值都会隐藏渲染出的标题元数据</td></tr>
+          <tr><td><code>hidden</code></td><td>空</td><td>任意非空值都会隐藏渲染出的文件头信息</td></tr>
         </tbody>
       </table>
       <p>
-        未知标题字段是允许的，但没有内置效果。多个 <code>=</code> 字符也可以作为标题分隔符。
+        可以写未知文件头字段；它们会被保留，但没有内置效果。文件头分隔符可以是一个或多个 <code>=</code>。
       </p>
       <pre class="notation-example">title: "Example"
 ===
 1 2 3 4</pre>
 
 
-      <h3>4. 标题字符串</h3>
+      <h3>4. 文件头字符串</h3>
       <p>
-        字符串用 <code>"</code> 包围。反斜杠会在分词时跳过后面的一个字符，但反斜杠本身会按原样保留，
+        字符串用 <code>"</code> 包住。反斜杠会让分词器跳过后面的一个字符，但反斜杠本身会原样保留，
         不会被解释成转义序列。
       </p>
       <pre class="notation-example">title: "A \"quoted\" title"</pre>
@@ -274,20 +274,20 @@ tempo: "120"
 1 2 3 4</pre>
 
 
-      <h3>5. 调号标题</h3>
+      <h3>5. 调号字段</h3>
       <p>支持的调号：</p>
       <pre class="notation-example">C C# Db D D# Eb E F F# Gb G G# Ab A A# Bb B</pre>
       <p>
-        调号值里的一个空格会被忽略。变音记号也可以写在字母前面，例如 <code>#C</code> 和 <code>bB</code>。
+        调号值里的一个空格会被忽略。变音记号也可以写在字母前，例如 <code>#C</code> 和 <code>bB</code>。
         无效调号会报错。
       </p>
       <pre class="notation-example">key: "#C"
 key: "bB"</pre>
 
 
-      <h3>6. 拍号标题</h3>
+      <h3>6. 拍号字段</h3>
       <p>
-        拍号使用 <code>beatsPerMeasure/beatsPerWholeNote</code> 形式。允许的分子是
+        拍号写成 <code>beatsPerMeasure/beatsPerWholeNote</code>。允许的分子是
         <code>2 3 4 6 9 12</code>，允许的分母是 <code>2 4 8 16</code>。无效拍号会报错。
       </p>
       <pre class="notation-example">time: "4/4"
@@ -295,7 +295,7 @@ time: "6/8"
 time: "2/16"</pre>
 
 
-      <h3>7. 速度标题</h3>
+      <h3>7. 速度字段</h3>
       <p>速度必须是正数。无效速度值会报错。</p>
       <pre class="notation-example">tempo: "96"
 tempo: "120"
@@ -304,11 +304,11 @@ tempo: "132.5"</pre>
       <h2>音乐语法</h2>
 
       <h3>8. 音符、休止符和鼓音符</h3>
-      <p>音高音符是数字 <code>1</code> 到 <code>7</code>。休止符是 <code>0</code>。鼓音符是大写 <code>X</code>。</p>
+      <p>有音高的音符用数字 <code>1</code> 到 <code>7</code> 表示。休止符是 <code>0</code>。鼓音符是大写 <code>X</code>。</p>
       <pre class="notation-example">1 2 3 4 5 6 7
 0
 X</pre>
-      <p>小写 <code>x</code> 是标识符 token，不是鼓音符。</p>
+      <p>小写 <code>x</code> 会被当作标识符，不是鼓音符。</p>
 
 
       <h3>9. 变音记号</h3>
@@ -326,8 +326,8 @@ X</pre>
       </table>
       <pre class="notation-example">#4 b7 %4 ##1 bb6</pre>
       <p>
-        变音记号只作用于音高音符。为了播放和连音线校验，变音记号会在同一小节内持续生效，
-        并在每个小节边界重置。
+        变音记号只作用于有音高的音符。播放和连音线校验会沿用同一小节内已经出现过的变音记号；
+        到下一个小节时，这些临时变音会重置。
       </p>
 
 
@@ -337,8 +337,8 @@ X</pre>
       </p>
       <pre class="notation-example">1' 2'' 6, 5,,</pre>
       <p>
-        小节可以以小节级八度前缀开头。该前缀作用于该小节内所有音高音符。
-        单个音符上的后缀会叠加到小节前缀上。前缀必须出现在所有音符之前。混用不同前缀字符不会被接受为一个前缀。
+        小节开头可以写小节级八度前缀，它会作用于该小节内所有有音高的音符。
+        单个音符上的八度后缀会叠加在小节前缀上。前缀必须写在该小节所有音符之前；混用不同前缀字符不会被视为合法前缀。
       </p>
       <pre class="notation-example">'' 1 2 3 4
 ,, 5 6 7 1</pre>
@@ -364,35 +364,35 @@ X</pre>
         </tbody>
       </table>
       <p>
-        横线时值和斜线/附点后缀互斥。像 <code>1-/</code> 或 <code>1/-</code> 这样的输入会被专门的时值诊断拒绝。
+        横线时值不能和斜线、附点混用。像 <code>1-/</code> 或 <code>1/-</code> 这样的写法会被明确报为时值错误。
         时值后缀必须跟在音符、休止符、鼓音符或和弦之后。像 <code>/1</code>、<code>.1</code> 或 <code>-1</code>
-        这样的游离后缀也会被专门的诊断拒绝。
+        这样的游离后缀也会被拒绝，并给出对应诊断。
       </p>
       <pre class="notation-example">1 2/ 3// 4. 5/. 6- 7--</pre>
 
 
       <h3>12. 和弦</h3>
       <p>
-        和弦写在大括号中。和弦内部只能包含音高音符，休止符和鼓音符不能作为和弦成员。
-        空和弦允许使用，会渲染为休止符并给出 warning。没有匹配 <code>{</code> 的右大括号也是无效的；例如 <code>1}2</code>
+        和弦写在大括号中。和弦内部只能放有音高的音符，休止符和鼓音符不能作为和弦成员。
+        空和弦可以解析，会渲染为休止符并给出警告。没有匹配 <code>{</code> 的右大括号无效；例如 <code>1}2</code>
         会把游离的 <code>}</code> 报告为未匹配的和弦结束符。
       </p>
       <pre class="notation-example">{1 3 5}
 {#1 3 b5}/
 {1' 3' 5'}</pre>
-      <p>时值后缀应写在右大括号之后，并作用于整个和弦。</p>
+      <p>和弦的时值后缀写在右大括号之后，作用于整个和弦。</p>
       <pre class="notation-example">{1 3 5}/
 {1 3 5}-</pre>
 
 
       <h3>13. 连音线</h3>
-      <p>连音标记 <code>~</code> 写在被连音的音符前。文档中的第一个音符不能带连音。</p>
+      <p>连音标记 <code>~</code> 写在后一个被连住的音符前。文档中的第一个音符不能带连音。</p>
       <pre class="notation-example">1 ~1
 3 - ~3/</pre>
       <p>
-        带连音的音符必须跟在一个发声音符之后。休止符后的连音无效。
-        带连音的音高音符必须在应用小节内变音持续规则后，与前一个发声音高或和弦匹配。
-        带连音的鼓音符可以连到前一个鼓音符。播放器会把被连音的音符合并进前一个旋律事件。
+        带连音的音符必须跟在一个会发声的音符之后，因此休止符后的连音无效。
+        有音高的连音音符会先应用小节内临时变音规则，再与前一个发声音符或和弦比较。
+        鼓音符可以连到前一个鼓音符。播放时，被连住的音符会并入前一个旋律事件。
       </p>
       <pre class="notation-example">有效:
 #4 ~4
@@ -408,7 +408,7 @@ X ~1</pre>
 
       <h3>14. 谱面行</h3>
       <p>
-        谱面行包含小节，也可以选择以轨道标签开头。轨道标签是 <code>T1:</code> 到 <code>T9:</code>，以及
+        谱面行由小节组成，也可以在行首写轨道标签。轨道标签是 <code>T1:</code> 到 <code>T9:</code>，以及
         <code>T11:</code> 到 <code>T16:</code>。<code>T10:</code> 保留给 MIDI 鼓通道，不能作为旋律轨道标签。
       </p>
       <pre class="notation-example">T1: "旋律"
@@ -417,33 +417,33 @@ T2: "低音"
 T1: 1 2 3 4 | 5 6 7 1'
 T2: 5, 5, 1 1</pre>
       <p>
-        轨道标签会定义播放、MIDI 导出和音频导出的编排轨道，但标签本身不会渲染。若要在对应谱面行左侧显示名称，
-        可以在标题区用同一个标签写一个字符串。
+        轨道标签用于区分播放、MIDI 导出和音频导出时的编排轨道，但标签本身不会显示在谱面上。若要在对应谱面行左侧显示名称，
+        可以在文件头里用同一个标签写一个字符串。
       </p>
 
 
       <h3>15. 轨道分组</h3>
       <p>
-        只要任意谱面行带有轨道标签，谱面行会先按声部组切分。每一组都从 <code>T1</code> 开始，并按轨道编号递增，
+        只要任意谱面行带有轨道标签，谱面行就会按声部组切分。每组都从 <code>T1</code> 开始，并按轨道编号递增，
         例如 <code>T1 T2 T3</code>。一组可以提前结束，所以 <code>T1 T2 T3 T1 T2</code> 和 <code>T1 T1 T2</code>
-        都是合法的；<code>T1 T2 T2 T1</code>、<code>T1 T2 T2</code> 是错误。
+        都是合法的；<code>T1 T2 T2 T1</code>、<code>T1 T2 T2</code> 不合法。
       </p>
       <p>
-        同一组内的行同时播放，下一组会等上一组结束后再开始。带标签谱面里的无标签行会按 <code>T1</code> 处理。
-        如果某个标签没有在标题区指定名称，该行左侧就不会显示文字。
+        同一组内的谱面行会同时播放；下一组会等上一组结束后再开始。带标签谱面里的无标签行会按 <code>T1</code> 处理。
+        如果某个标签没有在文件头里指定名称，该行左侧就不会显示文字。
       </p>
 
 
       <h3>16. 歌词</h3>
       <p>
-        歌词可以写在谱面行或声部组之后，格式是 <code>L1: "歌词"</code>。如果只写一行带引号的歌词、不加
-        <code>L</code> 标签，就会按 <code>L1</code> 处理。歌词标签本身不会渲染；如果想在对应歌词左侧显示名称，
-        可以在标题区用同一个标签定义显示名。歌词会渲染在前一个谱面组下方，不影响播放和导出时值。
+        歌词可以写在谱面行或声部组之后，格式是 <code>L1: "歌词"</code>。如果只写一行带引号的歌词，不加
+        <code>L</code> 标签，会按 <code>L1</code> 处理。歌词标签本身不会显示；如果想在对应歌词左侧显示名称，
+        可以在文件头里用同一个标签定义显示名。歌词会渲染在前一个谱面组下方，不影响播放和导出的时值。
       </p>
       <p>
-        如果歌词里有多个用空白分隔的音节，并且主声部渲染后只有一行，这些音节会居中渲染在主声部音符下方。休止符不占歌词位置。
+        如果歌词里有多个用空白分隔的音节，并且主声部渲染后只有一行，这些音节会居中放在主声部音符下方。休止符不占歌词位置。
         多声部组里的主声部是 <code>T1</code>；带标签谱面里的无标签行也按 <code>T1</code> 处理。
-        如果音节数量和主声部音符数量不一致，歌词会按普通整行渲染，并给出 warning。
+        如果音节数量和主声部音符数量不一致，歌词会按普通整行渲染，并给出警告。
       </p>
       <pre class="notation-example">L1: "第一段"
 =
@@ -457,7 +457,7 @@ L1: "一闪一闪亮晶晶"
 
       <h3>17. 小节</h3>
       <p>
-        小节用 <code>|</code> 分隔。开头小节线和结尾小节线都是允许的。空小节会被忽略，并以 warning 报告。
+        小节用 <code>|</code> 分隔。行首和行尾都可以写小节线。空小节会被忽略，并以警告报告。
       </p>
       <pre class="notation-example">| 1 2 3 4 | 5 6 7 1' |
 1 2 || 3 4</pre>
@@ -465,28 +465,29 @@ L1: "一闪一闪亮晶晶"
 
       <h3>18. 反复和房子</h3>
       <p>
-        反复小节线使用 <code>|:</code> 表示反复开始，使用 <code>:|</code> 表示反复结束，使用 <code>:|:</code>
-        表示结束一个反复段并开始下一个反复段。它们会在 SVG 输出中渲染为反复小节线，播放、MIDI 导出和音频导出会把每个反复段播放两遍。
+        反复小节线用 <code>|:</code> 表示反复开始，用 <code>:|</code> 表示反复结束，用 <code>:|:</code>
+        表示结束当前反复段并立刻开始下一个反复段。SVG 会把它们画成反复小节线；播放、MIDI 导出和音频导出会把每个反复段播放两遍。
       </p>
       <pre class="notation-example">|: 1 2 3 4 :|: 5 6 7 1' :|</pre>
       <p>
-        房子使用 <code>[1]</code>、<code>[2]</code>、<code>[3]</code> 这类标记写在对应房子的第一个小节前。
-        标记会持续到下一个房子标记。播放和导出会播放与当前遍数匹配的房子。非最后一个房子应该在下一个房子前用
-        <code>:|</code> 结束。最后一个房子不需要 <code>:|</code>；如果它后面还有其他小节，只有第一个小节会作为这个房子处理。
+        房子标记写在对应房子的第一个小节前，例如 <code>[1]</code>、<code>[2]</code>、<code>[3]</code>，也可以写成
+        <code>[1,2]</code> 让同一个房子用于多遍。标记会持续到下一个房子标记。播放和导出时，只会进入包含当前遍数的房子。
+        非最后一个房子必须在下一个房子之前用 <code>:|</code> 结束。每组房子都必须显式写出最后一个房子；最后一个房子不写
+        <code>:|</code>。如果最后一个房子后面还有普通小节，只有它自己的第一个小节属于这个房子。
       </p>
-      <pre class="notation-example">|: 1 2 | [1] 3 4 :| [2] 5 6 :| [3] 7 1' |</pre>
+      <pre class="notation-example">|: 1 2 | [1,2] 3 4 :| [3] 7 1' |</pre>
 
       <h2>校验和诊断</h2>
 
       <h3>19. 小节时值警告</h3>
-      <p>每个小节的时值都会和当前拍号比较：</p>
+      <p>每个小节的总时值都会和当前拍号比较：</p>
       <pre class="notation-example">expected = beatsPerMeasure / beatsPerWholeNote</pre>
       <ul>
         <li><code>4/4</code> 期望 <code>1</code>。</li>
         <li><code>3/4</code> 期望 <code>0.75</code>。</li>
         <li><code>6/8</code> 期望 <code>0.75</code>。</li>
       </ul>
-      <p>不匹配会产生警告，不会产生错误。</p>
+      <p>不匹配会产生警告，但不会阻止谱面解析。</p>
       <pre class="notation-example">time: "4/4"
 =
 1 2</pre>
@@ -497,10 +498,10 @@ L1: "一闪一闪亮晶晶"
       <ul>
         <li>意外字符</li>
         <li>未结束的字符串</li>
-        <li>格式错误的标题字段</li>
-        <li>检测到标题模式但缺少标题分隔符</li>
+        <li>格式错误的文件头字段</li>
+        <li>检测到文件头模式但缺少文件头分隔符</li>
         <li>无效调号、拍号或速度</li>
-        <li>空小节会作为 warning 报告并被忽略</li>
+        <li>空小节，会作为警告报告并被忽略</li>
         <li>无效音符、和弦或连音语法</li>
         <li>混用横线和斜线/附点时值后缀</li>
         <li>游离的时值后缀</li>
@@ -509,13 +510,13 @@ L1: "一闪一闪亮晶晶"
         <li>休止符后带连音</li>
         <li>连音目标不匹配</li>
       </ul>
-      <p>警告目前用于报告小节时值不匹配。</p>
+      <p>警告目前主要用于报告空小节和小节时值不匹配。</p>
 
       <h2>铁路图和 EBNF</h2>
 
       <div class="legend">
         <span class="rule">规则</span>
-        <span class="token">字面量或 token</span>
+        <span class="token">字面量或记号</span>
         <span class="optional">可选</span>
         <span class="repeat">重复</span>
       </div>
@@ -526,12 +527,12 @@ L1: "一闪一闪亮晶晶"
         <svg class="railroad-diagram" width="508.5" style="max-height: 79px;" viewBox="0 0 508.5 79"><g transform="translate(.5 .5)"><g><path d="M20 29v20m0 -10h20"></path></g><path d="M40 39h10"></path><g><path d="M50 39h0"></path><path d="M458.5 39h0"></path><g><path d="M50 39h0"></path><path d="M189.5 39h0"></path><path d="M50 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M70 19h99.5"></path></g><path d="M169.5 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M50 39h20"></path><g><path d="M70 39h0"></path><path d="M169.5 39h0"></path><path d="M70 39h10"></path><g class="non-terminal"><path d="M80 39h0"></path><path d="M159.5 39h0"></path><rect x="80" y="28" width="79.5" height="22"></rect><a xlink:href="#NEWLINE"><text x="119.75" y="43">NEWLINE</text></a></g><path d="M159.5 39h10"></path><path d="M80 39a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M80 59h79.5"></path></g><path d="M159.5 59a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M169.5 39h20"></path></g><g><path d="M189.5 39h0"></path><path d="M300.5 39h0"></path><path d="M189.5 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M209.5 19h71"></path></g><path d="M280.5 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M189.5 39h20"></path><g class="non-terminal"><path d="M209.5 39h0"></path><path d="M280.5 39h0"></path><rect x="209.5" y="28" width="71" height="22"></rect><a xlink:href="#header"><text x="245" y="43">header</text></a></g><path d="M280.5 39h20"></path></g><g><path d="M300.5 39h0"></path><path d="M403 39h0"></path><path d="M300.5 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M320.5 19h62.5"></path></g><path d="M383 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M300.5 39h20"></path><g class="non-terminal"><path d="M320.5 39h0"></path><path d="M383 39h0"></path><rect x="320.5" y="28" width="62.5" height="22"></rect><a xlink:href="#score"><text x="351.75" y="43">score</text></a></g><path d="M383 39h20"></path></g><path d="M403 39h10"></path><g class="non-terminal"><path d="M413 39h0"></path><path d="M458.5 39h0"></path><rect x="413" y="28" width="45.5" height="22"></rect><a xlink:href="#EOF"><text x="435.75" y="43">EOF</text></a></g></g><path d="M458.5 39h10"></path><path d="M 468.5 39 h 20 m 0 -10 v 20"></path></g></svg>
       </div>
       <p class="caption">
-        开头的换行会被忽略，然后在文件结束前解析可选标题区和可选谱面。
+        开头的换行会被忽略，然后在文件结束前解析可选文件头和可选谱面。
       </p>
 
       <pre class="ebnf">file ::= NEWLINE* header? score? EOF</pre>
 
-      <h3>标题区</h3>
+      <h3>文件头</h3>
       <div class="diagram">
         <div class="diagram-title">header</div>
         <svg class="railroad-diagram" width="709" style="max-height: 79px;" viewBox="0 0 709 79"><g transform="translate(.5 .5)"><g><path d="M20 29v20m0 -10h20"></path></g><path d="M40 39h10"></path><g><path d="M50 39h0"></path><path d="M659 39h0"></path><g><path d="M50 39h0"></path><path d="M198 39h0"></path><path d="M50 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M70 19h108"></path></g><path d="M178 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M50 39h20"></path><g><path d="M70 39h0"></path><path d="M178 39h0"></path><path d="M70 39h10"></path><g class="non-terminal"><path d="M80 39h0"></path><path d="M168 39h0"></path><rect x="80" y="28" width="88" height="22"></rect><a xlink:href="#property"><text x="124" y="43">property</text></a></g><path d="M168 39h10"></path><path d="M80 39a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M80 59h88"></path></g><path d="M168 59a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M178 39h20"></path></g><path d="M198 39h10"></path><g class="non-terminal"><path d="M208 39h0"></path><path d="M279 39h0"></path><rect x="208" y="28" width="71" height="22"></rect><a xlink:href="#EQUALS"><text x="243.5" y="43">EQUALS</text></a></g><path d="M279 39h10"></path><g><path d="M289 39h0"></path><path d="M420 39h0"></path><path d="M289 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M309 19h91"></path></g><path d="M400 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M289 39h20"></path><g><path d="M309 39h0"></path><path d="M400 39h0"></path><path d="M309 39h10"></path><g class="non-terminal"><path d="M319 39h0"></path><path d="M390 39h0"></path><rect x="319" y="28" width="71" height="22"></rect><a xlink:href="#EQUALS"><text x="354.5" y="43">EQUALS</text></a></g><path d="M390 39h10"></path><path d="M319 39a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M319 59h71"></path></g><path d="M390 59a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M400 39h20"></path></g><path d="M420 39h10"></path><g class="non-terminal"><path d="M430 39h0"></path><path d="M509.5 39h0"></path><rect x="430" y="28" width="79.5" height="22"></rect><a xlink:href="#NEWLINE"><text x="469.75" y="43">NEWLINE</text></a></g><path d="M509.5 39h10"></path><g><path d="M519.5 39h0"></path><path d="M659 39h0"></path><path d="M519.5 39a10 10 0 0 0 10 -10v0a10 10 0 0 1 10 -10"></path><g><path d="M539.5 19h99.5"></path></g><path d="M639 19a10 10 0 0 1 10 10v0a10 10 0 0 0 10 10"></path><path d="M519.5 39h20"></path><g><path d="M539.5 39h0"></path><path d="M639 39h0"></path><path d="M539.5 39h10"></path><g class="non-terminal"><path d="M549.5 39h0"></path><path d="M629 39h0"></path><rect x="549.5" y="28" width="79.5" height="22"></rect><a xlink:href="#NEWLINE"><text x="589.25" y="43">NEWLINE</text></a></g><path d="M629 39h10"></path><path d="M549.5 39a10 10 0 0 0 -10 10v0a10 10 0 0 0 10 10"></path><g><path d="M549.5 59h79.5"></path></g><path d="M629 59a10 10 0 0 0 10 -10v0a10 10 0 0 0 -10 -10"></path></g><path d="M639 39h20"></path></g></g><path d="M659 39h10"></path><path d="M 669 39 h 20 m 0 -10 v 20"></path></g></svg>
@@ -551,8 +552,8 @@ property       ::= property_label STRING NEWLINE+
 property_label ::= IDENTIFIER ":"</pre>
 
       <p>
-        具有语义的标题字段包括 <code>title</code>、<code>subtitle</code>、<code>composer</code>、<code>key</code>、
-        <code>time</code>、<code>tempo</code> 和 <code>hidden</code>。未知字段会被接受，但没有内置效果。
+        具有语义的文件头字段包括 <code>title</code>、<code>subtitle</code>、<code>composer</code>、<code>key</code>、
+        <code>time</code>、<code>tempo</code> 和 <code>hidden</code>。未知字段可以保留在文件里，但没有内置效果。
       </p>
 
       <h3>谱面</h3>
@@ -618,8 +619,8 @@ lyric_line        ::= lyric_label? STRING
 lyric_label       ::= LYRIC_LABEL ":"</pre>
 
       <p>
-        单个开头小节线、反复开始、结尾小节线和反复结束都是允许的。空小节会产生 warning；例如
-        <code>1 2 || 3 4</code> 会忽略两个小节线 token 之间的空小节。
+        行首可以单独写小节线或反复开始，行尾也可以单独写小节线或反复结束。空小节会产生警告；例如
+        <code>1 2 || 3 4</code> 会忽略两个小节线之间的空小节。
       </p>
 
       <h3>小节</h3>
@@ -636,8 +637,8 @@ lyric_label       ::= LYRIC_LABEL ":"</pre>
 octave  ::= LOWER+ | HIGHER+</pre>
 
       <p>
-        小节八度前缀只会在小节开头被消费。它必须是同一种 token 的重复：
-        <code>,+</code> 或 <code>'+</code>。混用前缀不算一个前缀。
+        小节八度前缀只在小节开头生效，而且必须由同一种记号重复组成：
+        <code>,+</code> 或 <code>'+</code>。混用两种前缀不合法。
       </p>
 
       <h3>带时值音符</h3>
@@ -654,7 +655,7 @@ octave  ::= LOWER+ | HIGHER+</pre>
 tie          ::= TIE</pre>
 
       <p>
-        连音合法性会在解析后校验。这里语法上接受前置 <code>~</code>，之后如果它是第一个音符、
+        连音是否合法会在解析后检查。这里语法上接受前置 <code>~</code>，之后如果它是第一个音符、
         跟在休止符之后，或与前一个发声音符不匹配，就会被拒绝。
       </p>
 
@@ -700,7 +701,7 @@ octave     ::= LOWER+ | HIGHER+</pre>
 
       <p>
         和弦只能包含音高音符。休止符、鼓音符、写在 <code>}</code> 之前的时值后缀都是无效的。
-        空和弦会被解析为休止符并产生 warning。
+        空和弦会被解析为休止符并产生警告。
       </p>
 
       <h3>时值</h3>
@@ -714,7 +715,7 @@ octave     ::= LOWER+ | HIGHER+</pre>
         横线时值标记不能和斜线或附点标记组合。像 <code>1-/</code> 和 <code>1/-</code> 这样的形式是无效的。
       </p>
 
-      <h3>Token 参考</h3>
+      <h3>记号参考</h3>
       <div class="diagram">
         <div class="diagram-title">skipped</div>
         <svg class="railroad-diagram" width="199.5" style="max-height: 92px;" viewBox="0 0 199.5 92"><g transform="translate(.5 .5)"><g><path d="M20 21v20m0 -10h20"></path></g><g><path d="M40 31h0"></path><path d="M159.5 31h0"></path><path d="M40 31h20"></path><g class="non-terminal"><path d="M60 31h21.25"></path><path d="M118.25 31h21.25"></path><rect x="81.25" y="20" width="37" height="22"></rect><a xlink:href="#WS"><text x="99.75" y="35">WS</text></a></g><path d="M139.5 31h20"></path><path d="M40 31a10 10 0 0 1 10 10v10a10 10 0 0 0 10 10"></path><g class="non-terminal"><path d="M60 61h0"></path><path d="M139.5 61h0"></path><rect x="60" y="50" width="79.5" height="22"></rect><a xlink:href="#COMMENT"><text x="99.75" y="65">COMMENT</text></a></g><path d="M139.5 61a10 10 0 0 0 10 -10v-10a10 10 0 0 1 10 -10"></path></g><path d="M 159.5 31 h 20 m 0 -10 v 20"></path></g></svg>
@@ -869,11 +870,11 @@ octave     ::= LOWER+ | HIGHER+</pre>
         <div class="diagram-title">EOF</div>
         <svg class="railroad-diagram" width="213.5" style="max-height: 62px;" viewBox="0 0 213.5 62"><g transform="translate(.5 .5)"><g><path d="M20 21v20m10 -20v20m-10 -10h20"></path></g><path d="M40 31h10"></path><g class="terminal"><path d="M50 31h0"></path><path d="M163.5 31h0"></path><rect x="50" y="20" width="113.5" height="22" rx="10" ry="10"></rect><text x="106.75" y="35">end of file</text></g><path d="M163.5 31h10"></path><path d="M 173.5 31 h 20 m -10 -10 v 20 m 10 -20 v 20"></path></g></svg>
       </div>
-      <pre class="ebnf">在 token 之间忽略:
+      <pre class="ebnf">记号之间会忽略:
 WS         ::= " " | "\t"
 COMMENT    ::= ";" 直到换行前的字符
 
-结构 token:
+结构记号:
 IDENTIFIER ::= /[A-Za-z][A-Za-z0-9_]*/
 TRACK_LABEL ::= "T1" | ... | "T9" | "T11" | ... | "T16"
 LYRIC_LABEL ::= "L" DIGIT+
@@ -904,8 +905,8 @@ NEWLINE    ::= "\n" | "\r\n" | "\r"
 EOF        ::= end-of-file</pre>
 
       <p>
-        <code>IDENTIFIER</code> 用于 <code>:</code> 前的标题属性名和标签。在谱面正文中，鼓音符和变音记号等保留拼写仍然有优先级，
-        因此 <code>XX</code> 这样的紧凑写法仍会解析为鼓音符。
+        <code>IDENTIFIER</code> 用于 <code>:</code> 前的文件头字段名和标签。在谱面正文中，鼓音符和变音记号等保留拼写仍然优先，
+        因此 <code>XX</code> 这样的紧凑写法会按两个鼓音符解析。
       </p>
 
     </main>
