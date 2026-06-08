@@ -1,0 +1,54 @@
+---
+interface RelatedLink {
+  href: string;
+  label: string;
+  description?: string;
+}
+
+interface Props {
+  title?: string;
+  links: RelatedLink[];
+}
+
+const { title = "Related pages", links } = Astro.props;
+---
+
+<nav class="related-links" aria-label={title}>
+  <h2>{title}</h2>
+  <ul>
+    {links.map((link) => (
+      <li>
+        <a href={link.href}>{link.label}</a>
+        {link.description && <p>{link.description}</p>}
+      </li>
+    ))}
+  </ul>
+</nav>
+
+<style>
+  .related-links {
+    margin: 2rem 0 0;
+  }
+
+  .related-links ul {
+    display: grid;
+    gap: 0.75rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .related-links li {
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .related-links a {
+    font-weight: 700;
+  }
+
+  .related-links p {
+    margin: 0.25rem 0 0;
+    color: var(--sl-color-gray-2);
+  }
+</style>

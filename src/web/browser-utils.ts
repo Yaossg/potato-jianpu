@@ -1,5 +1,6 @@
-export function openGrammarRailroad(language: "en" | "zh") {
-  window.open(language === "zh" ? "grammar.zh.html" : "grammar.html", "_blank", "noopener,noreferrer");
+export function openGrammarHelp(language: "en" | "zh") {
+  const path = language === "zh" ? "docs/zh/" : "docs/";
+  window.open(new URL(path, window.location.href), "_blank", "noopener,noreferrer");
 }
 
 export function waitForNextFrame(): Promise<void> {

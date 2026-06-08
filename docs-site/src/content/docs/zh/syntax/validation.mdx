@@ -1,0 +1,85 @@
+---
+title: 校验
+description: 理解解析错误、警告和可恢复的乐谱问题。
+docId: syntax-validation
+---
+
+import JianpuExample from '../../../../components/JianpuExample.astro';
+import RelatedLinks from '../../../../components/RelatedLinks.astro';
+
+Modern Jianpu Markup 会报告带源码范围的诊断。错误会阻止生成有效的解析乐谱。警告不会阻止文档继续使用，但会指出可能不符合预期的记谱。
+
+## 警告
+
+小节时值不匹配是警告。它使用当前 `time` 文件头。
+
+<JianpuExample title="时值不足的小节" status="warning" statusLabel="警告" description="这个例子可以解析，但小节比 4/4 短。">
+
+```jpu warning
+time: "4/4"
+=
+1 2 3
+```
+
+</JianpuExample>
+
+连续小节线之间的空小节也是警告。空小节会被忽略。
+
+<JianpuExample title="空小节" status="warning" statusLabel="警告" description="两个小节线之间的空小节会被忽略。">
+
+```jpu warning
+1 2 || 3 4
+```
+
+</JianpuExample>
+
+歌词音节数量和主声部音符不匹配时会报告警告，这样乐谱仍然可以渲染。
+
+## 错误
+
+常见硬错误包括：
+
+- 格式错误的文件头行，或已知文件头字段的无效值。
+- 未结束的字符串。
+- 无效的乐谱字符。
+- 空和弦和无效和弦成员。
+- 游离时值标记、未匹配的和弦括号，或未匹配的和弦结束符。
+- 非法延音线，例如轨道第一个音符带延音线，或连接到不兼容的前一个音符。
+- 没有显式最终结尾的反复结尾组。
+- 超出 `T1:` 到 `T16:` 范围的轨道标签，或使用保留的 `T10:`。
+
+<JianpuExample title="无效乐谱 token" status="invalid" statusLabel="错误" description="问号不是乐谱 token。">
+
+```jpu invalid
+1 2 ? 3
+```
+
+</JianpuExample>
+
+<JianpuExample title="非法延音线" status="invalid" statusLabel="错误" description="轨道不能以带延音线的音符开始。">
+
+```jpu invalid
+~1 2 3 4
+```
+
+</JianpuExample>
+
+<JianpuExample title="缺少最终反复结尾" status="invalid" statusLabel="错误" description="反复结尾组需要一个不以 :| 结束的显式最终结尾。">
+
+```jpu invalid
+|: 1 2 3 4 | [1] 5 - 5 - :|
+```
+
+</JianpuExample>
+
+解析器会尽量从许多局部错误中恢复，让 App 能在源码附近显示有用诊断，而不是在第一个问题处停止。
+
+<RelatedLinks
+  title="相关页面"
+  links={[
+    { href: '../overview/', label: '语法概览', description: '查看文档结构、注释和小节线。' },
+    { href: '../repeats/', label: '反复', description: '查看会产生校验错误的反复结尾规则。' },
+    { href: '../../guide/troubleshooting/', label: '故障排查', description: '从常见诊断和修复方式开始。' },
+    { href: '../../reference/grammar/', label: '语法参考', description: '快速查找乐谱 token。' },
+  ]}
+/>

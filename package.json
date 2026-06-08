@@ -40,6 +40,7 @@
     "dist/",
     "dist-web/",
     "docs/",
+    "docs-site/",
     "examples/",
     "README.md",
     "AGENTS.md",
@@ -51,7 +52,14 @@
     "test": "pnpm run build && node --test tests/*.test.mjs",
     "cli": "pnpm run build && node dist/cli/main.js",
     "dev": "vite",
-    "web:build": "vite build",
+    "web:app": "vite build",
+    "web:build": "pnpm run web:app && pnpm run docs:build",
+    "docs:dev": "pnpm -C docs-site dev",
+    "docs:build": "pnpm -C docs-site build",
+    "docs:check": "pnpm -C docs-site check",
+    "docs:i18n": "node scripts/check-docs-i18n.mjs",
+    "docs:examples": "pnpm run build && node scripts/check-doc-examples.mjs",
+    "docs:links": "node scripts/check-doc-links.mjs",
     "grammar:railroad": "node scripts/generate-grammar-railroad.mjs"
   },
   "devDependencies": {

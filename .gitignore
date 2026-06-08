@@ -1,6 +1,9 @@
 node_modules/
+.pnpm-store/
 dist/
 dist-web/
+dist-docs/
+docs-site/.astro/
 coverage/
 *.log
 vite.log

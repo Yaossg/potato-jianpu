@@ -1,0 +1,46 @@
+---
+title: 语法概览
+description: Modern Jianpu Markup 文档的整体结构。
+docId: syntax-overview
+---
+
+import SyntaxToken from '../../../../components/SyntaxToken.astro';
+
+一个文档可以包含可选的文件头、可选的分隔行，以及乐谱行。分隔行是只包含 `=` 的一行。文件头字段必须写在它之前；乐谱、歌词和轨道行写在它之后。
+
+```jpu valid
+title: "Example"
+composer: "Traditional"
+time: "4/4"
+=
+1 2 3 4 | 5 - 5 -
+```
+
+解析器把有空格和无空格的写法视为同一套语法。下面两个乐谱主体等价：
+
+```jpu valid
+1234|5-5-
+```
+
+```jpu valid
+1 2 3 4 | 5 - 5 -
+```
+
+注释从 `;` 开始，到当前行末结束。
+
+```jpu valid
+1 2 3 4 | ; a comment
+5 - 5 -
+```
+
+空行和开头的换行会被忽略。一个文档可以只有乐谱主体、只有文件头，甚至可以为空。只有乐谱主体时不需要分隔行。
+
+```jpu valid
+1 2 3 4 | 5 - 5 -
+```
+
+小节用 <SyntaxToken token="|" label="小节线" /> 分隔。行首可以单独写小节线或反复开始，行尾也可以单独写小节线或反复结束。连续小节线之间的空小节会产生警告并被忽略，不会变成实际发声内容。
+
+```jpu warning
+1 2 || 3 4
+```

@@ -1,0 +1,51 @@
+---
+const { title = "Support", features = [] } = Astro.props;
+const columns = [
+  ["parser", "Parser"],
+  ["render", "SVG"],
+  ["playback", "Playback"],
+  ["export", "Export"],
+  ["cli", "CLI"],
+];
+
+function supportLabel(value) {
+  if (value === true) return "Yes";
+  if (value === false) return "No";
+  return value === undefined ? "-" : value;
+}
+---
+
+<section class="support-matrix">
+  <h2>{title}</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Feature</th>
+        {columns.map(([, label]) => <th>{label}</th>)}
+      </tr>
+    </thead>
+    <tbody>
+      {features.map((feature) => (
+        <tr>
+          <th scope="row">{feature.feature}</th>
+          {columns.map(([key]) => <td>{supportLabel(feature[key])}</td>)}
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</section>
+
+<style>
+  .support-matrix {
+    margin: 2rem 0;
+  }
+
+  .support-matrix h2 {
+    margin-bottom: 0.75rem;
+  }
+
+  .support-matrix table {
+    display: table;
+    width: 100%;
+  }
+</style>

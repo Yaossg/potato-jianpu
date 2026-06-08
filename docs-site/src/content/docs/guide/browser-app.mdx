@@ -1,0 +1,27 @@
+---
+title: Browser App
+description: Edit, preview, play, and download scores in the browser.
+docId: guide-browser-app
+---
+
+Use the browser app when you want immediate feedback while writing a score. The editor starts empty; paste or type `.jpu` source, then use the preview, playback, settings, examples, and export controls around it.
+
+## Core workflow
+
+1. Write source in the editor.
+2. Watch diagnostics for errors and warnings.
+3. Preview the rendered SVG.
+4. Use playback or click a rendered note to audition the score.
+5. Download SVG, PNG, MIDI, WAV, or MP3 from the export menu.
+
+The preview updates from the same parser and renderer used by the CLI, so syntax behavior stays shared across browser and terminal workflows.
+
+## Settings
+
+Page settings control visual output such as page width, score color, and background. Sound settings control playback and audio export, including program, volume, audio sample rate, and whether initial rests are omitted.
+
+Changing the source stops active playback. Loading an example also stops playback and closes the examples panel.
+
+## Help
+
+The grammar help button opens the localized documentation home: `/docs/` in English and `/docs/zh/` in Simplified Chinese.

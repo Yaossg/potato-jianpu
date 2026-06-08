@@ -1,0 +1,87 @@
+---
+title: Repeats
+description: Write repeat barlines and repeated endings for playback and export.
+docId: syntax-repeats
+---
+
+import JianpuExample from '../../../components/JianpuExample.astro';
+import RelatedLinks from '../../../components/RelatedLinks.astro';
+import SupportMatrix from '../../../components/SupportMatrix.astro';
+
+Use `|:` to start a repeated section and `:|` to end it.
+
+```jpu valid
+time: "4/4"
+=
+|: 1 2 3 4 | 5 6 5 - :|
+```
+
+If a repeat end appears before any repeat start in the same line or track, playback treats the repeated section as starting at the beginning of that line or track.
+
+Use `:|:` when one barline ends the previous repeated section and starts the next one.
+
+```jpu valid
+time: "4/4"
+=
+|: 1 2 3 4 :|: 5 6 7 1' :|
+```
+
+Repeated endings use bracket markers such as `[1]` and `[2]`. Non-final endings should end with `:|`; the final ending should be explicit and should not end with `:|`.
+
+```jpu valid
+time: "4/4"
+=
+|: 1 2 3 4 | [1] 5 - 5 - :| [2] 1 - - -
+```
+
+An ending can apply to multiple passes.
+
+```jpu valid
+time: "4/4"
+=
+|: 1 2 3 4 | [1,2] 5 - 5 - :| [3] 1 - - -
+```
+
+Ending pass lists can also be non-contiguous.
+
+```jpu valid
+time: "4/4"
+=
+|: 1 2 3 4 | [1,3] 5 - 5 - :| [2] 3 - 3 - :| [4] 1 - - -
+```
+
+Every repeated-ending group must include an explicit final ending. When more measures follow a final ending marker, only the first measure after that marker is treated as part of the ending.
+
+<JianpuExample title="Missing final ending" status="invalid" description="A repeated-ending group cannot rely on unmarked following measures as the final pass.">
+
+```jpu invalid
+|: 1 2 3 4 | [1] 5 - 5 - :|
+```
+
+</JianpuExample>
+
+<JianpuExample title="Skipped ending number" status="invalid" description="Ending numbers must cover the pass order without skipping required earlier passes.">
+
+```jpu invalid
+|: 1 2 3 4 | [1] 5 - 5 - :| [3] 1 - - -
+```
+
+</JianpuExample>
+
+Repeated-ending validation is scoped to each repeat section and to each labeled track. Non-final endings return with `:|`; the explicit final ending closes the group without a repeat end.
+
+<SupportMatrix
+  title="Repeat support"
+  features={[
+    { feature: 'Repeat barlines', parser: true, render: true, playback: true, export: true, cli: true },
+    { feature: 'Repeated endings', parser: true, render: true, playback: true, export: true, cli: true },
+  ]}
+/>
+
+<RelatedLinks
+  links={[
+    { href: '../rhythm/', label: 'Rhythm', description: 'Check how durations are counted inside repeated measures.' },
+    { href: '../validation/', label: 'Validation', description: 'Review repeated-ending errors and warnings.' },
+    { href: '../../reference/grammar/', label: 'Grammar Reference', description: 'Look up repeat tokens quickly.' },
+  ]}
+/>

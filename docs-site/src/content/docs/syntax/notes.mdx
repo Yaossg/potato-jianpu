@@ -1,0 +1,117 @@
+---
+title: Notes and Rests
+description: Write numbered notes, rests, drum notes, accidentals, octave marks, and chords.
+docId: syntax-notes
+---
+
+import JianpuExample from '../../../components/JianpuExample.astro';
+import RelatedLinks from '../../../components/RelatedLinks.astro';
+import SupportMatrix from '../../../components/SupportMatrix.astro';
+
+Numbered notes use `1` through `7`. Use `0` for a rest and `X` for a drum note.
+
+```jpu valid
+1 2 3 4 | 5 6 7 0 | X X X X
+```
+
+Lowercase `x` is not a drum note.
+
+<JianpuExample title="Invalid drum spelling" status="invalid" description="Drum notes use uppercase X only.">
+
+```jpu invalid
+1 2 x 4
+```
+
+</JianpuExample>
+
+Accidentals come before a pitch note. `#` and `##` raise a pitch, `b` and `bb` lower it, and `%` cancels the active accidental for that note spelling.
+
+```jpu valid
+#1 b2 %3 ##4 | bb5 - - -
+```
+
+Accidentals apply only to pitch notes. They persist within the current measure for playback, export, and tie validation, then reset at the next measure boundary.
+
+Octave suffixes come after a note. A dot above or below the note changes the octave.
+
+```jpu valid
+1' 2'' 3, 4,,
+```
+
+Each `'` raises the note by one octave; each `,` lowers it by one octave. Measure-level octave prefixes can also shift all pitch notes at the start of a measure. Per-note suffixes add to that measure prefix.
+
+```jpu valid
+time: "3/4"
+=
+' 1 2 3 | , 1 2 3
+```
+
+The prefix must appear before notes in the measure. Mixed prefix characters are not one prefix.
+
+Chords are written with braces.
+
+```jpu valid
+{1 3 5} - {2 4 6} -
+```
+
+Chord members can use accidentals and octave suffixes. Rests and drum notes are not valid chord members. Put the duration suffix after the closing brace to apply it to the whole chord.
+
+```jpu valid
+{#1 3 b5}/ {1' 3' 5'}- 0/ 0
+```
+
+<JianpuExample title="Empty chord" status="warning" description="An empty chord is accepted, rendered as a rest, and reported as a warning.">
+
+```jpu warning
+1 {} 3 4
+```
+
+</JianpuExample>
+
+<JianpuExample title="Invalid chord member" status="invalid" description="Chord members must be pitch notes, so rests and drums are rejected inside braces.">
+
+```jpu invalid
+{1 0 X}
+```
+
+</JianpuExample>
+
+A leading tie marker `~` ties a note to the previous compatible note.
+
+```jpu valid
+1 - - - | ~1 - - -
+```
+
+The tie target must be compatible with the previous sounding pitch. A tied note cannot be the first note in a track, and ties are validated independently for labeled tracks.
+
+```jpu valid
+time: "2/4"
+=
+#4 ~4 | X ~X | {1 3 5} ~{1 3 5}
+```
+
+<JianpuExample title="Illegal tie" status="invalid" description="A tie cannot start a track, follow a rest, or change pitch target.">
+
+```jpu invalid
+1 0 ~1
+```
+
+</JianpuExample>
+
+<SupportMatrix
+  title="Note support"
+  features={[
+    { feature: 'Pitch notes, rests, and drums', parser: true, render: true, playback: true, export: true, cli: true },
+    { feature: 'Accidentals and octaves', parser: true, render: true, playback: true, export: true, cli: true },
+    { feature: 'Chords and ties', parser: true, render: true, playback: true, export: true, cli: true },
+    { feature: 'Lyrics', parser: true, render: true, playback: false, export: false, cli: true },
+  ]}
+/>
+
+<RelatedLinks
+  links={[
+    { href: '../rhythm/', label: 'Rhythm', description: 'Add duration suffixes to notes, rests, drums, and chords.' },
+    { href: '../validation/', label: 'Validation', description: 'Review chord and tie diagnostics.' },
+    { href: '../../reference/grammar/', label: 'Grammar Reference', description: 'Look up pitch, chord, and tie grammar.' },
+  ]}
+/>

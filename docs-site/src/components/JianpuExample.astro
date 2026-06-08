@@ -1,0 +1,80 @@
+---
+interface Props {
+  title?: string;
+  description?: string;
+  status?: "valid" | "warning" | "invalid";
+  statusLabel?: string;
+}
+
+const { title, description, status = "valid", statusLabel } = Astro.props;
+
+const labels = {
+  valid: "Valid",
+  warning: "Warning",
+  invalid: "Invalid",
+};
+---
+
+<section class={`jianpu-example jianpu-example-${status}`}>
+  {(title || description) && (
+    <header class="jianpu-example-header">
+      {title && <strong>{title}</strong>}
+      <span class="jianpu-example-badge">{statusLabel ?? labels[status]}</span>
+      {description && <p>{description}</p>}
+    </header>
+  )}
+  <slot />
+</section>
+
+<style>
+  .jianpu-example {
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.5rem;
+    margin: 1rem 0;
+    overflow: hidden;
+  }
+
+  .jianpu-example :global(pre) {
+    margin: 0;
+    border-radius: 0;
+  }
+
+  .jianpu-example-header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.25rem 0.75rem;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--sl-color-gray-6);
+  }
+
+  .jianpu-example-header p {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: var(--sl-color-gray-2);
+    font-size: 0.9rem;
+  }
+
+  .jianpu-example-badge {
+    border-radius: 999px;
+    padding: 0.1rem 0.55rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  .jianpu-example-valid .jianpu-example-badge {
+    background: var(--sl-color-green-low);
+    color: var(--sl-color-green-high);
+  }
+
+  .jianpu-example-warning .jianpu-example-badge {
+    background: var(--sl-color-orange-low);
+    color: var(--sl-color-orange-high);
+  }
+
+  .jianpu-example-invalid .jianpu-example-badge {
+    background: var(--sl-color-red-low);
+    color: var(--sl-color-red-high);
+  }
+</style>

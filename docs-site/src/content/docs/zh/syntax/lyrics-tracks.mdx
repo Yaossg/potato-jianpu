@@ -1,0 +1,94 @@
+---
+title: 歌词与多轨
+description: 添加歌词行和带标签的编排轨道。
+docId: syntax-lyrics-tracks
+---
+
+import JianpuExample from '../../../../components/JianpuExample.astro';
+import RelatedLinks from '../../../../components/RelatedLinks.astro';
+
+歌词行跟在它标注的乐谱行之后。当一份乐谱有多行歌词时，使用 `L1:` 这样的标签。
+
+```jpu valid
+time: "4/4"
+=
+1 2 3 4 |
+L1: "do re mi fa"
+5 6 7 1'
+L1: "so la ti do"
+```
+
+不带标签的引号歌词行也可以使用。
+
+```jpu valid
+time: "4/4"
+=
+1 2 3 4 |
+"one two three four"
+5 6 7 1'
+"five six sev-en one"
+```
+
+轨道标签 `T1:` 到 `T16:` 用来书写多轨编排。`T10:` 保留给鼓轨，不作为乐谱行标签使用。
+
+```jpu valid
+time: "4/4"
+=
+T1: 1 2 3 4 |
+T2: 5 5 5 5 |
+T1: 5 6 7 1' |
+T2: 3 3 3 3
+```
+
+当乐谱中出现任何带标签轨道时，不带标签的乐谱行会按 `T1` 处理。
+
+歌词会附着到前一个乐谱组。任何乐谱行之前出现的歌词行都是无效的。渲染器会把歌词音节对齐到主声部音符下方；音节数量不匹配会产生警告。
+
+<JianpuExample title="歌词数量不匹配" status="warning" statusLabel="警告" description="乐谱仍然可以渲染，但歌词音节少于音符数量。">
+
+```jpu warning
+1 2 3 4
+L1: "one two"
+```
+
+</JianpuExample>
+
+<JianpuExample title="歌词出现在乐谱之前" status="invalid" statusLabel="错误" description="歌词必须跟在它标注的乐谱行之后。">
+
+```jpu invalid
+L1: "too soon"
+1 2 3 4
+```
+
+</JianpuExample>
+
+轨道行按递增标签顺序分组，例如 `T1`、`T2`、`T3`。一组可以提前结束，所以 `T1 T2 T3 T1 T2` 会在第一组结束后开始第二组。同一组内的行会同时播放；下一组会等上一组结束后再开始。
+
+```jpu valid
+T1: 1 2 3 4
+T2: 5 5 5 5
+T3: 1 1 1 1
+T1: 5 6 7 1'
+T2: 3 3 3 3
+```
+
+文件头字段可以给轨道和歌词行命名。这些标签会在渲染乐谱时预留水平空间。
+
+```jpu valid
+T1: "Flute"
+T2: "Harmony"
+L1: "Verse"
+=
+T1: 1 2 3 4 |
+T2: 5 5 5 5 |
+L1: "do re mi fa"
+```
+
+<RelatedLinks
+  title="相关页面"
+  links={[
+    { href: '../header/', label: '文件头', description: '在元数据中命名轨道和歌词行。' },
+    { href: '../validation/', label: '校验', description: '查看歌词和轨道诊断。' },
+    { href: '../../reference/grammar/', label: '语法参考', description: '快速查找轨道和歌词标签语法。' },
+  ]}
+/>

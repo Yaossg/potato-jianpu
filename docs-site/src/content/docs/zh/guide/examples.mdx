@@ -1,0 +1,32 @@
+---
+title: 示例
+description: 使用随仓库提供的 .jpu 示例作为起点和回归参考。
+docId: guide-examples
+---
+
+仓库在 `examples/` 下提供了一组精选 `.jpu` 乐谱。它们适合作为起点，因为覆盖了常见记谱功能，同时避免重复。
+
+## 先打开哪些示例
+
+- `scale.jpu`：紧凑的音高和八度参考。
+- `twinkle.jpu`：带元数据的小型完整乐谱。
+- `6-8-example.jpu`：复拍子和更短时值。
+- `drums.jpu`：使用 `X` 的鼓音播放。
+- `canon.jpu`：较大的多轨编排。
+
+可以用浏览器示例面板把这些示例载入编辑器。加载示例会停止当前播放、替换源码，并关闭示例面板。
+
+## CLI 检查
+
+示例应当在解析时没有警告。
+
+```sh
+pnpm run cli -- validate examples/twinkle.jpu
+pnpm run cli -- validate examples/canon.jpu
+```
+
+添加新示例时，请在文件头中写有用的元数据，并让示例聚焦于现有示例尚未覆盖的行为。
+
+## 文档示例
+
+本文档中的示例使用标记为 `jpu valid`、`jpu warning` 或 `jpu invalid` 的代码块。`pnpm run docs:examples` 会用解析器检查这些代码块。

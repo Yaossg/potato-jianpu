@@ -11,6 +11,7 @@ Current status:
 - backend WAV and MP3 export
 - frontend web preview with SVG, PNG, MIDI, WAV, and MP3 export
 - browser playback with current-note highlighting and click-to-play preview notes
+- Astro Starlight documentation site built from MDX
 - example scores in `examples/`
 - Node built-in test runner for parser, renderer, player, backend, CLI, and examples
 
@@ -31,7 +32,11 @@ pnpm run cli -- export-midi examples/twinkle.jpu -o twinkle.mid --program 0
 pnpm run cli -- export-wav examples/twinkle.jpu -o twinkle.wav --program 0 --sample-rate 44100 --amplitude 1
 pnpm run cli -- export-mp3 examples/twinkle.jpu -o twinkle.mp3 --program 0 --sample-rate 44100 --amplitude 1 --bit-rate 128
 pnpm run dev
+pnpm run docs:dev
 pnpm run web:build
+pnpm run docs:build
+pnpm run docs:i18n
+pnpm run docs:examples
 ```
 
 This repository records `pnpm@8.10.3` in `package.json` as the expected package
@@ -43,14 +48,18 @@ manager.
 The package metadata exposes `jianpu` as the CLI binary and exports the shared
 core, parser, renderer, player, and backend modules.
 
-`pnpm run web:build` emits the browser application in `dist-web/`.
+`pnpm run web:build` emits the browser application in `dist-web/` and builds
+the documentation site under `dist-web/docs/`. `pnpm run docs:build` builds the
+documentation site by itself at the same subpath.
 
 See `AGENTS.md` for repository handoff notes and `docs/COMMANDS.md` for the
-full command reference. Syntax is documented in `public/grammar.html` and
-`public/grammar.zh.html`; grammar railroad diagrams are generated from
-`docs/grammar.ebnf`. Module boundaries are documented in
-`docs/ARCHITECTURE.md`, renderer behavior in `docs/RENDERER.md`, player
-behavior in `docs/PLAYER.md`, export behavior in `docs/EXPORTS.md`, quality
-policy in `docs/QUALITY.md`, documentation maintenance in
-`docs/DOCUMENTATION.md`, translation rules in `docs/TRANSLATION.md`, future
-work in `docs/ROADMAP.md`, and release shape in `docs/RELEASE.md`.
+full command reference. User-facing syntax documentation lives in
+`docs-site/src/content/docs/`, with legacy generated grammar pages in
+`public/grammar.html` and `public/grammar.zh.html` still shipped for now;
+grammar railroad diagrams are generated from `docs/grammar.ebnf`. Module
+boundaries are documented in `docs/ARCHITECTURE.md`, renderer behavior in
+`docs/RENDERER.md`, player behavior in `docs/PLAYER.md`, export behavior in
+`docs/EXPORTS.md`, quality policy in `docs/QUALITY.md`, documentation
+maintenance in `docs/DOCUMENTATION.md`, translation rules in
+`docs/TRANSLATION.md`, future work in `docs/ROADMAP.md`, and release shape in
+`docs/RELEASE.md`.

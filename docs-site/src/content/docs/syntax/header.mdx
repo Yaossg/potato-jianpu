@@ -1,0 +1,93 @@
+---
+title: File Header
+description: Use header fields to describe the score and set musical defaults.
+docId: syntax-header
+---
+
+import JianpuExample from '../../../components/JianpuExample.astro';
+import RelatedLinks from '../../../components/RelatedLinks.astro';
+
+The file header is line-oriented. Put it before the `=` separator.
+
+```jpu valid
+title: "Evening Song"
+subtitle: "Short Study"
+composer: "Anonymous"
+key: "G"
+time: "3/4"
+tempo: "72"
+=
+5 6 5 | 3 - -
+```
+
+Known fields include:
+
+| Field | Meaning |
+| --- | --- |
+| `title` | Main title rendered above the score. |
+| `subtitle` | Secondary title text. |
+| `composer` | Composer or source text. |
+| `key` | Key signature for playback and export. |
+| `time` | Time signature used for measure-duration validation. |
+| `tempo` | Playback and MIDI tempo. |
+| `hidden` | Header fields that should not be rendered. |
+
+Unknown fields are preserved as metadata. They do not change parsing, rendering, playback, or export behavior unless a future version gives them meaning.
+
+Header values use quoted strings. Escape sequences are kept as source text, so write the visible metadata exactly as you want users to read it.
+
+```jpu valid
+title: "Evening Song"
+composer: "Anonymous"
+tempo: "72"
+=
+1 2 3 4
+```
+
+Header names must start with a letter and may continue with letters, digits, or underscores. A header string must close on the same line.
+
+<JianpuExample title="Unterminated header string" status="invalid" description="The title string never closes, so the document is invalid.">
+
+```jpu invalid
+title: "Open title
+=
+1 2 3 4
+```
+
+</JianpuExample>
+
+The `key` field accepts natural keys and accidental keys such as `C`, `G`, `F`, `#F`, `F#`, `bB`, and `Bb`. It affects playback and export pitch spelling; invalid key names are reported as diagnostics.
+
+The `time` field uses `beats/beat-unit`, such as `4/4`, `3/4`, or `6/8`. It is used for measure-duration validation. Measures that do not add up to the time signature produce warnings, not hard parse failures.
+
+The `tempo` field is a positive beats-per-minute value. It is used by playback, MIDI export, and audio export.
+
+Use `hidden` to keep rendered header metadata out of the SVG while retaining it in the document.
+
+```jpu valid
+title: "Practice Line"
+composer: "Anonymous"
+hidden: "composer"
+=
+1 2 3 4
+```
+
+Track and lyric labels can also be named in the file header. Use the same label text that appears in the score body.
+
+```jpu valid
+T1: "Melody"
+T2: "Harmony"
+L1: "Verse"
+=
+T1: 1 2 3 4
+T2: 5 5 5 5
+L1: "do re mi fa"
+```
+
+<RelatedLinks
+  links={[
+    { href: '../lyrics-tracks/', label: 'Lyrics and Tracks', description: 'Use header labels with multi-track and lyric lines.' },
+    { href: '../validation/', label: 'Validation', description: 'Review header and string diagnostics.' },
+    { href: '../../reference/grammar/', label: 'Grammar Reference', description: 'Look up the compact header grammar.' },
+  ]}
+/>

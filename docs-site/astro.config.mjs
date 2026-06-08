@@ -1,0 +1,179 @@
+import mdx from "@astrojs/mdx";
+import starlight from "@astrojs/starlight";
+import { defineConfig } from "astro/config";
+
+export default defineConfig({
+  base: "/docs",
+  outDir: "../dist-web/docs",
+  integrations: [
+    starlight({
+      title: "Modern Jianpu Markup",
+      description: "Documentation for writing, rendering, playing, and exporting Jianpu scores.",
+      defaultLocale: "root",
+      expressiveCode: {
+        shiki: {
+          langAlias: {
+            jpu: "text",
+          },
+        },
+      },
+      locales: {
+        root: {
+          label: "English",
+          lang: "en",
+        },
+        zh: {
+          label: "简体中文",
+          lang: "zh-CN",
+        },
+      },
+      sidebar: [
+        {
+          label: "Start",
+          translations: {
+            "zh-CN": "开始",
+          },
+          items: [
+            {
+              label: "Overview",
+              slug: "index",
+              translations: {
+                "zh-CN": "概览",
+              },
+            },
+            {
+              label: "Getting Started",
+              slug: "getting-started",
+              translations: {
+                "zh-CN": "快速开始",
+              },
+            },
+          ],
+        },
+        {
+          label: "Syntax",
+          translations: {
+            "zh-CN": "语法",
+          },
+          items: [
+            {
+              label: "Syntax Overview",
+              slug: "syntax/overview",
+              translations: {
+                "zh-CN": "语法概览",
+              },
+            },
+            {
+              label: "File Header",
+              slug: "syntax/header",
+              translations: {
+                "zh-CN": "文件头",
+              },
+            },
+            {
+              label: "Notes and Rests",
+              slug: "syntax/notes",
+              translations: {
+                "zh-CN": "音符与休止符",
+              },
+            },
+            {
+              label: "Rhythm",
+              slug: "syntax/rhythm",
+              translations: {
+                "zh-CN": "节奏",
+              },
+            },
+            {
+              label: "Repeats",
+              slug: "syntax/repeats",
+              translations: {
+                "zh-CN": "反复",
+              },
+            },
+            {
+              label: "Lyrics and Tracks",
+              slug: "syntax/lyrics-tracks",
+              translations: {
+                "zh-CN": "歌词与多轨",
+              },
+            },
+            {
+              label: "Validation",
+              slug: "syntax/validation",
+              translations: {
+                "zh-CN": "校验",
+              },
+            },
+          ],
+        },
+        {
+          label: "Guide",
+          translations: {
+            "zh-CN": "指南",
+          },
+          items: [
+            {
+              label: "Browser App",
+              slug: "guide/browser-app",
+              translations: {
+                "zh-CN": "浏览器 App",
+              },
+            },
+            {
+              label: "CLI",
+              slug: "guide/cli",
+              translations: {
+                "zh-CN": "命令行",
+              },
+            },
+            {
+              label: "Playback",
+              slug: "guide/playback",
+              translations: {
+                "zh-CN": "播放",
+              },
+            },
+            {
+              label: "Export",
+              slug: "guide/export",
+              translations: {
+                "zh-CN": "导出",
+              },
+            },
+            {
+              label: "Examples",
+              slug: "guide/examples",
+              translations: {
+                "zh-CN": "示例",
+              },
+            },
+            {
+              label: "Troubleshooting",
+              slug: "guide/troubleshooting",
+              translations: {
+                "zh-CN": "故障排查",
+              },
+            },
+          ],
+        },
+        {
+          label: "Reference",
+          translations: {
+            "zh-CN": "参考",
+          },
+          items: [
+            {
+              label: "Grammar",
+              slug: "reference/grammar",
+              translations: {
+                "zh-CN": "语法参考",
+              },
+            },
+          ],
+        },
+      ],
+    }),
+    mdx(),
+  ],
+});

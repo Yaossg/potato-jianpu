@@ -6,10 +6,10 @@ Treat this directory as the project root.
 ## Read First
 
 - `docs/AGENT_WORKFLOW.md`: agent workflow and change rules.
-- `docs/COMMANDS.md`: development, verification, CLI, grammar, and release
-  commands.
+- `docs/COMMANDS.md`: development, verification, CLI, grammar, docs-site, and
+  release commands.
 - `docs/DOCUMENTATION.md`: documentation maintenance rules, including grammar
-  reference updates.
+  reference and docs-site updates.
 - `README.md`: user-facing overview and common usage.
 - `docs/ARCHITECTURE.md`: product targets, module boundaries, source map, and
   dependency direction.
@@ -21,8 +21,9 @@ Treat this directory as the project root.
 - `docs/TRANSLATION.md`: bilingual documentation and terminology rules.
 - `docs/ROADMAP.md`: known risks and future work.
 - `docs/RELEASE.md`: build outputs, packaging, and release checklist.
-- `public/grammar.html` and `public/grammar.zh.html`: user-facing grammar
-  references.
+- `docs-site/src/content/docs/`: Starlight MDX documentation source.
+- `public/grammar.html` and `public/grammar.zh.html`: legacy user-facing
+  grammar references.
 - `docs/grammar.ebnf`: grammar source used for railroad generation.
 
 ## Quick Rules
@@ -35,9 +36,11 @@ Treat this directory as the project root.
 - Serverless/API deployment is not a project target.
 - Use `.jpu` for score files.
 - Keep behavior changes documented and tested.
+- Keep docs-site MDX content bilingual by matching English and `zh/` paths and
+  keeping `docId` values aligned.
 - When grammar behavior changes, update `public/grammar.html`,
-  `public/grammar.zh.html`, and `docs/grammar.ebnf`; follow
-  `docs/DOCUMENTATION.md` and `docs/TRANSLATION.md`, then run
+  `public/grammar.zh.html`, `docs/grammar.ebnf`, and relevant docs-site MDX;
+  follow `docs/DOCUMENTATION.md` and `docs/TRANSLATION.md`, then run
   `pnpm run grammar:railroad`.
 - After each conversation turn, if you made any repository changes, commit them
   inside this repository before finishing the turn.

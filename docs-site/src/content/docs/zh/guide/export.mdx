@@ -1,0 +1,35 @@
+---
+title: 导出
+description: 将乐谱导出为 SVG、PNG、MIDI、WAV 和 MP3。
+docId: guide-export
+---
+
+Modern Jianpu Markup 可以从浏览器 App 和 CLI 把同一个解析后的乐谱导出为视觉、MIDI 和音频格式。
+
+## 视觉导出
+
+SVG 是渲染器输出的确定性文本。PNG 会栅格化同一份渲染后的 SVG。两者都支持页面宽度、颜色和背景选项。
+
+```sh
+pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --page-width 1000 --color "#111827" --background "#ffffff"
+pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --page-width 1000 --color "#111827" --background "#ffffff"
+```
+
+## MIDI 导出
+
+MIDI 导出会写出 format 1 MIDI 文件，包含元数据、速度、拍号、音色处理，以及每个带标签编排轨道对应的一条音乐轨。
+
+```sh
+pnpm run cli -- export-midi examples/twinkle.jpu -o twinkle.mid --program 0 --omit-initial-rest
+```
+
+## 音频导出
+
+WAV 和 MP3 通过基于 TinySynth 的音频路径渲染。浏览器导出使用 `OfflineAudioContext`；后端导出使用 Node 可用的离线渲染路径。MP3 通过 `lamejs` 在本地编码。
+
+```sh
+pnpm run cli -- export-wav examples/twinkle.jpu -o twinkle.wav --program 0 --sample-rate 44100 --amplitude 1 --omit-initial-rest
+pnpm run cli -- export-mp3 examples/twinkle.jpu -o twinkle.mp3 --program 0 --sample-rate 44100 --amplitude 1 --bit-rate 128 --omit-initial-rest
+```
+
+音频采样率默认是 `44100`。MP3 比特率默认是 `128` kbps。

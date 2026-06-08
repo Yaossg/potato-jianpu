@@ -1,0 +1,37 @@
+---
+title: 快速开始
+description: 创建一个小乐谱，并从浏览器 App 或 CLI 导出。
+docId: getting-started
+---
+
+import RelatedLinks from '../../../components/RelatedLinks.astro';
+
+先写一个小的 `.jpu` 文件。可选的文件头放在前面，然后是一行 `=`，最后是乐谱主体。
+
+```jpu valid
+title: "First Phrase"
+key: "C"
+time: "4/4"
+tempo: "88"
+=
+1 2 3 4 | 5 - 5 -
+```
+
+需要即时预览、播放和下载时，使用浏览器 App。需要在终端里做可重复的校验或导出时，使用 CLI。
+
+```sh
+pnpm run cli -- validate examples/twinkle.jpu
+pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg
+pnpm run cli -- export-midi examples/twinkle.jpu -o twinkle.mid
+```
+
+这个仓库里的乐谱示例使用 `.jpu` 扩展名。
+
+<RelatedLinks
+  title="相关页面"
+  links={[
+    { href: '../syntax/overview/', label: '语法概览', description: '理解第一份乐谱背后的文档结构。' },
+    { href: '../guide/examples/', label: '示例', description: '打开随仓库提供的 .jpu 乐谱，查看常见写法。' },
+    { href: '../guide/export/', label: '导出', description: '选择 SVG、PNG、MIDI、WAV 或 MP3 输出。' },
+  ]}
+/>

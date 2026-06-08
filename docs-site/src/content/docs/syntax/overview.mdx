@@ -1,0 +1,46 @@
+---
+title: Syntax Overview
+description: The high-level shape of a Modern Jianpu Markup document.
+docId: syntax-overview
+---
+
+import SyntaxToken from '../../../components/SyntaxToken.astro';
+
+A document has an optional file header, an optional separator line, and score lines. The separator is a line containing `=`. Header fields must appear before it; score, lyric, and track lines appear after it.
+
+```jpu valid
+title: "Example"
+composer: "Traditional"
+time: "4/4"
+=
+1 2 3 4 | 5 - 5 -
+```
+
+The parser treats spaced and unspaced notation as the same grammar. These two score bodies are equivalent:
+
+```jpu valid
+1234|5-5-
+```
+
+```jpu valid
+1 2 3 4 | 5 - 5 -
+```
+
+Comments begin with `;` and continue to the end of the line.
+
+```jpu valid
+1 2 3 4 | ; a comment
+5 - 5 -
+```
+
+Blank lines and leading newlines are ignored. A document may contain only a score body, only a header, or even be empty. Score-only documents do not need a separator.
+
+```jpu valid
+1 2 3 4 | 5 - 5 -
+```
+
+Measures are separated with <SyntaxToken token="|" label="barline" />. A line may begin with a barline or repeat start, and it may end with a barline or repeat end. Empty measures between consecutive bar tokens are ignored with a warning rather than becoming sounding music.
+
+```jpu warning
+1 2 || 3 4
+```

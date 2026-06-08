@@ -1,0 +1,32 @@
+---
+title: Examples
+description: Use the bundled .jpu examples as starting points and regression references.
+docId: guide-examples
+---
+
+The repository includes curated `.jpu` scores under `examples/`. They are useful starting points because they cover common notation features without being redundant.
+
+## What to open first
+
+- `scale.jpu`: a compact pitch and octave reference.
+- `twinkle.jpu`: a small complete score with metadata.
+- `6-8-example.jpu`: compound meter and shorter durations.
+- `drums.jpu`: drum-note playback with `X`.
+- `canon.jpu`: a larger multi-track arrangement.
+
+Use the browser examples panel to load these into the editor. Loading an example stops active playback, replaces the source, and closes the panel.
+
+## CLI checks
+
+Examples should parse without warnings.
+
+```sh
+pnpm run cli -- validate examples/twinkle.jpu
+pnpm run cli -- validate examples/canon.jpu
+```
+
+When adding a new example, include useful metadata in the file header and keep the example focused on a behavior that the existing examples do not already show.
+
+## Documentation examples
+
+Examples inside this documentation use fenced code blocks marked as `jpu valid`, `jpu warning`, or `jpu invalid`. `pnpm run docs:examples` checks those blocks against the parser.

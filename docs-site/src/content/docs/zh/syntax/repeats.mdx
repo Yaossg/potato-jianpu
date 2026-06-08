@@ -1,0 +1,88 @@
+---
+title: 反复
+description: 为播放和导出书写反复小节线与反复结尾。
+docId: syntax-repeats
+---
+
+import JianpuExample from '../../../../components/JianpuExample.astro';
+import RelatedLinks from '../../../../components/RelatedLinks.astro';
+import SupportMatrix from '../../../../components/SupportMatrix.astro';
+
+使用 `|:` 开始反复段落，使用 `:|` 结束反复段落。
+
+```jpu valid
+time: "4/4"
+=
+|: 1 2 3 4 | 5 6 5 - :|
+```
+
+如果同一行或同一轨道里，反复结束出现在任何反复开始之前，播放会把反复段落视为从该行或该轨道开头开始。
+
+当一个小节线既结束前一个反复段落，又开始下一个反复段落时，使用 `:|:`。
+
+```jpu valid
+time: "4/4"
+=
+|: 1 2 3 4 :|: 5 6 7 1' :|
+```
+
+反复结尾使用 `[1]`、`[2]` 这样的方括号标记。非最终结尾应以 `:|` 结束；最终结尾需要明确写出，且不应以 `:|` 结束。
+
+```jpu valid
+time: "4/4"
+=
+|: 1 2 3 4 | [1] 5 - 5 - :| [2] 1 - - -
+```
+
+一个结尾可以用于多个反复轮次。
+
+```jpu valid
+time: "4/4"
+=
+|: 1 2 3 4 | [1,2] 5 - 5 - :| [3] 1 - - -
+```
+
+结尾轮次列表也可以不连续。
+
+```jpu valid
+time: "4/4"
+=
+|: 1 2 3 4 | [1,3] 5 - 5 - :| [2] 3 - 3 - :| [4] 1 - - -
+```
+
+每组反复结尾都必须明确写出最终结尾。当最终结尾标记后还有更多小节时，只有标记后的第一个小节会被视为该结尾的一部分。
+
+<JianpuExample title="缺少最终结尾" status="invalid" description="反复结尾组不能依赖后续未标记的小节作为最终轮次。">
+
+```jpu invalid
+|: 1 2 3 4 | [1] 5 - 5 - :|
+```
+
+</JianpuExample>
+
+<JianpuExample title="跳过结尾编号" status="invalid" description="结尾编号必须覆盖反复轮次顺序，不能跳过必要的前置轮次。">
+
+```jpu invalid
+|: 1 2 3 4 | [1] 5 - 5 - :| [3] 1 - - -
+```
+
+</JianpuExample>
+
+反复结尾校验会按每个反复段落、每个带标签轨道分别进行。非最终结尾用 `:|` 返回；明确的最终结尾不用反复结束记号。
+
+<SupportMatrix
+  title="反复支持"
+  features={[
+    { feature: '反复小节线', parser: true, render: true, playback: true, export: true, cli: true },
+    { feature: '反复结尾', parser: true, render: true, playback: true, export: true, cli: true },
+  ]}
+/>
+
+<RelatedLinks
+  title="相关页面"
+  links={[
+    { href: '../rhythm/', label: '节奏', description: '查看反复小节中的时值如何计算。' },
+    { href: '../validation/', label: '校验', description: '查看反复结尾错误和警告。' },
+    { href: '../../reference/grammar/', label: '语法参考', description: '快速查找反复 token。' },
+  ]}
+/>

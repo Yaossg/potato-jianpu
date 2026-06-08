@@ -1,4 +1,4 @@
-import { openGrammarRailroad } from "./browser-utils.js";
+import { openGrammarHelp } from "./browser-utils.js";
 import { ExportMenu } from "./ExportMenu.js";
 import type { Language, TranslationKey } from "./i18n.js";
 import type { ThemeName } from "./theme.js";
@@ -57,7 +57,7 @@ export function Toolbar({
       <button type="button" className="icon-button" onClick={onToggleTheme} aria-label={`${t("theme")}: ${theme === "light" ? t("light") : t("dark")}`} title={`${t("theme")}: ${theme === "light" ? t("light") : t("dark")}`}>
         <ToolbarIcon name={theme === "light" ? "light" : "dark"} />
       </button>
-      <button type="button" className="icon-button" onClick={() => openGrammarRailroad(language)} aria-label={t("help")} title={t("help")}>
+      <button type="button" className="icon-button" onClick={() => openGrammarHelp(language)} aria-label={t("help")} title={t("help")}>
         <ToolbarIcon name="help" />
       </button>
       <button type="button" className="icon-button" onClick={onToggleSettings} aria-label={t("settings")} title={t("settings")}>

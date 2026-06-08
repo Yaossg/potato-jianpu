@@ -1,0 +1,93 @@
+---
+title: Lyrics and Tracks
+description: Add lyric lines and labeled arrangement tracks.
+docId: syntax-lyrics-tracks
+---
+
+import JianpuExample from '../../../components/JianpuExample.astro';
+import RelatedLinks from '../../../components/RelatedLinks.astro';
+
+Lyric lines follow the score line they annotate. Use `L1:`-style labels when a score has multiple lyric lines.
+
+```jpu valid
+time: "4/4"
+=
+1 2 3 4 |
+L1: "do re mi fa"
+5 6 7 1'
+L1: "so la ti do"
+```
+
+An unlabeled quoted lyric line is also accepted.
+
+```jpu valid
+time: "4/4"
+=
+1 2 3 4 |
+"one two three four"
+5 6 7 1'
+"five six sev-en one"
+```
+
+Track labels `T1:` through `T16:` write multi-track arrangements. `T10:` is reserved for drums and is not used as a score-line label.
+
+```jpu valid
+time: "4/4"
+=
+T1: 1 2 3 4 |
+T2: 5 5 5 5 |
+T1: 5 6 7 1' |
+T2: 3 3 3 3
+```
+
+When a score contains any labeled track, unlabeled score lines are treated as `T1`.
+
+Lyrics are attached to the preceding score group. A lyric line before any score line is invalid. The renderer aligns lyric syllables under the main voice notes; mismatched syllable counts are reported as warnings.
+
+<JianpuExample title="Mismatched lyric count" status="warning" description="The score still renders, but the lyric line has fewer syllables than notes.">
+
+```jpu warning
+1 2 3 4
+L1: "one two"
+```
+
+</JianpuExample>
+
+<JianpuExample title="Lyric before score" status="invalid" description="Lyrics must follow the score line they annotate.">
+
+```jpu invalid
+L1: "too soon"
+1 2 3 4
+```
+
+</JianpuExample>
+
+Track lines are grouped in ascending label order such as `T1`, `T2`, `T3`. A group may end early, so `T1 T2 T3 T1 T2` starts a second group after the first group finishes. Lines in the same group play together; the next group starts after the previous group ends.
+
+```jpu valid
+T1: 1 2 3 4
+T2: 5 5 5 5
+T3: 1 1 1 1
+T1: 5 6 7 1'
+T2: 3 3 3 3
+```
+
+Header fields can name tracks and lyric lines. These labels reserve horizontal space in the rendered score.
+
+```jpu valid
+T1: "Flute"
+T2: "Harmony"
+L1: "Verse"
+=
+T1: 1 2 3 4 |
+T2: 5 5 5 5 |
+L1: "do re mi fa"
+```
+
+<RelatedLinks
+  links={[
+    { href: '../header/', label: 'File Header', description: 'Name tracks and lyric lines in metadata.' },
+    { href: '../validation/', label: 'Validation', description: 'Review lyric and track diagnostics.' },
+    { href: '../../reference/grammar/', label: 'Grammar Reference', description: 'Look up track and lyric label syntax.' },
+  ]}
+/>

@@ -1,0 +1,41 @@
+---
+title: Modern Jianpu Markup
+description: Write, preview, play, and export Jianpu scores from one text format.
+docId: home
+---
+
+import RelatedLinks from '../../components/RelatedLinks.astro';
+
+Modern Jianpu Markup is a text format and toolkit for Jianpu scores. It includes a browser editor, a command-line interface, a parser, an SVG renderer, playback, and export paths for SVG, PNG, MIDI, WAV, and MP3.
+
+This documentation is the primary user-facing guide for writing `.jpu` scores. Start with a short score, then use the syntax pages when you need a precise rule for metadata, rhythm, repeats, lyrics, or multi-track arrangements.
+
+## What you can write
+
+- Numbered notes `1` through `7`, rests `0`, and drum notes `X`.
+- File metadata such as `title`, `composer`, `key`, `time`, and `tempo`.
+- Accidentals, octave marks, chords, ties, lyrics, repeat barlines, repeated endings, and labeled tracks.
+- Compact notation where whitespace is optional between score tokens.
+
+```jpu valid
+title: "Twinkle"
+time: "4/4"
+tempo: "96"
+=
+1 1 5 5 | 6 6 5 - |
+4 4 3 3 | 2 2 1 -
+```
+
+## How to read the docs
+
+The syntax pages explain the format in the same order a score is usually written: file header, notes, rhythm, repeats, lyrics, and tracks. The grammar reference at the end is a compact lookup table, not the only place where the rules are documented.
+
+Examples marked as valid are checked against the project parser so the guide stays aligned with the implementation.
+
+<RelatedLinks
+  links={[
+    { href: './getting-started/', label: 'Getting Started', description: 'Write a first score and try basic CLI commands.' },
+    { href: './guide/browser-app/', label: 'Browser App', description: 'Preview, play, and export scores interactively.' },
+    { href: './syntax/overview/', label: 'Syntax Overview', description: 'Learn the shape of a .jpu document.' },
+  ]}
+/>

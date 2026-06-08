@@ -1,0 +1,25 @@
+---
+title: Playback
+description: Understand browser playback, click-to-play, programs, drums, and repeats.
+docId: guide-playback
+---
+
+Playback is compiled from the parsed document. Notes, rests, accidentals, octave marks, chords, ties, repeat barlines, repeated endings, and labeled tracks all affect the timed playback result.
+
+## Browser playback
+
+The browser app uses WebAudioTinySynth. Playback schedules notes incrementally, highlights active rendered notes, and stops when the source changes.
+
+Click-to-play starts from rendered note metadata. If the clicked note is the first playback note and initial-rest omission is enabled, leading rests are skipped.
+
+## Programs and drums
+
+Programs `0..127` use melodic TinySynth programs. Programs `128..220` use drum mode. In drum mode, source `X` maps to percussion note `program - 128 + 35`.
+
+The browser app includes program selection, volume, audition, and an initial-rest omission toggle in Sound Settings.
+
+## Repeats and tracks
+
+Repeat barlines and repeated endings are expanded for playback and export. Labeled tracks play together inside a voice group; the next group starts after the previous group ends.
+
+Lyrics render visually but do not affect playback timing.

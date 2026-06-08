@@ -1,0 +1,36 @@
+---
+title: Getting Started
+description: Create a small score and export it from the browser app or CLI.
+docId: getting-started
+---
+
+import RelatedLinks from '../../components/RelatedLinks.astro';
+
+Start with a small `.jpu` file. The optional file header comes first, then a line containing `=`, then the score body.
+
+```jpu valid
+title: "First Phrase"
+key: "C"
+time: "4/4"
+tempo: "88"
+=
+1 2 3 4 | 5 - 5 -
+```
+
+Use the browser app when you want immediate preview, playback, and downloads. Use the CLI when you want repeatable validation or export commands in a terminal.
+
+```sh
+pnpm run cli -- validate examples/twinkle.jpu
+pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg
+pnpm run cli -- export-midi examples/twinkle.jpu -o twinkle.mid
+```
+
+The score examples in this repository use the `.jpu` extension.
+
+<RelatedLinks
+  links={[
+    { href: '../syntax/overview/', label: 'Syntax Overview', description: 'Understand the document structure behind the first score.' },
+    { href: '../guide/examples/', label: 'Examples', description: 'Open bundled .jpu scores that demonstrate common patterns.' },
+    { href: '../guide/export/', label: 'Export', description: 'Choose SVG, PNG, MIDI, WAV, or MP3 output.' },
+  ]}
+/>

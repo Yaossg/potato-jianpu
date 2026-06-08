@@ -1,0 +1,118 @@
+---
+title: 音符与休止符
+description: 编写数字音符、休止符、鼓音、变音记号、八度标记和和弦。
+docId: syntax-notes
+---
+
+import JianpuExample from '../../../../components/JianpuExample.astro';
+import RelatedLinks from '../../../../components/RelatedLinks.astro';
+import SupportMatrix from '../../../../components/SupportMatrix.astro';
+
+数字音符使用 `1` 到 `7`。休止符使用 `0`，鼓音使用 `X`。
+
+```jpu valid
+1 2 3 4 | 5 6 7 0 | X X X X
+```
+
+小写 `x` 不是鼓音。
+
+<JianpuExample title="鼓音写法错误" status="invalid" description="鼓音只能写作大写 X。">
+
+```jpu invalid
+1 2 x 4
+```
+
+</JianpuExample>
+
+变音记号写在音高音符前面。`#` 和 `##` 升高音高，`b` 和 `bb` 降低音高，`%` 取消当前音名的临时变音。
+
+```jpu valid
+#1 b2 %3 ##4 | bb5 - - -
+```
+
+变音记号只作用于音高音符。在播放、导出和延音线校验中，临时变音会持续到当前小节结束，并在下一个小节重置。
+
+八度后缀写在音符后面。音符上方或下方的点会改变八度。
+
+```jpu valid
+1' 2'' 3, 4,,
+```
+
+每个 `'` 升高一个八度；每个 `,` 降低一个八度。小节开头也可以使用小节级八度前缀，移动本小节所有音高音符；单个音符的后缀会叠加在这个前缀上。
+
+```jpu valid
+time: "3/4"
+=
+' 1 2 3 | , 1 2 3
+```
+
+小节级八度前缀必须出现在本小节的音符之前。不同方向的前缀字符不能混在一起作为同一个前缀。
+
+和弦使用花括号。
+
+```jpu valid
+{1 3 5} - {2 4 6} -
+```
+
+和弦成员可以带变音记号和八度后缀。休止符和鼓音不能作为和弦成员。持续时值写在右花括号之后，作用于整个和弦。
+
+```jpu valid
+{#1 3 b5}/ {1' 3' 5'}- 0/ 0
+```
+
+<JianpuExample title="空和弦" status="warning" description="空和弦会被接受，渲染为休止符，并产生警告。">
+
+```jpu warning
+1 {} 3 4
+```
+
+</JianpuExample>
+
+<JianpuExample title="非法和弦成员" status="invalid" description="和弦成员必须是音高音符，因此花括号里的休止符和鼓音会被拒绝。">
+
+```jpu invalid
+{1 0 X}
+```
+
+</JianpuExample>
+
+前导延音线标记 `~` 会把当前音符连接到前一个兼容音符。
+
+```jpu valid
+1 - - - | ~1 - - -
+```
+
+延音线目标必须和前一个发声音高兼容。轨道里的第一个音符不能带延音线；带标签轨道的延音线会按轨道分别校验。
+
+```jpu valid
+time: "2/4"
+=
+#4 ~4 | X ~X | {1 3 5} ~{1 3 5}
+```
+
+<JianpuExample title="非法延音线" status="invalid" description="延音线不能出现在轨道开头，不能接在休止符之后，也不能改变目标音高。">
+
+```jpu invalid
+1 0 ~1
+```
+
+</JianpuExample>
+
+<SupportMatrix
+  title="音符支持"
+  features={[
+    { feature: '音高音符、休止符和鼓音', parser: true, render: true, playback: true, export: true, cli: true },
+    { feature: '变音记号和八度', parser: true, render: true, playback: true, export: true, cli: true },
+    { feature: '和弦和延音线', parser: true, render: true, playback: true, export: true, cli: true },
+    { feature: '歌词', parser: true, render: true, playback: false, export: false, cli: true },
+  ]}
+/>
+
+<RelatedLinks
+  title="相关页面"
+  links={[
+    { href: '../rhythm/', label: '节奏', description: '给音符、休止符、鼓音和和弦添加时值后缀。' },
+    { href: '../validation/', label: '校验', description: '查看和弦与延音线诊断。' },
+    { href: '../../reference/grammar/', label: '语法参考', description: '查询音高、和弦和延音线语法。' },
+  ]}
+/>

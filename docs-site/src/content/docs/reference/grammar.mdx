@@ -1,0 +1,35 @@
+---
+title: Grammar Reference
+description: A compact reference for the current score syntax.
+docId: reference-grammar
+---
+
+This page is a compact lookup reference. For explanations and examples, use the syntax guide pages in the sidebar.
+
+| Construct | Syntax |
+| --- | --- |
+| Header field | `name: value` |
+| Separator | `=` |
+| Note | `1` through `7` |
+| Rest | `0` |
+| Drum note | `X` |
+| Accidental | `#`, `##`, `b`, `bb`, `%` |
+| Chord | `{1 3 5}` |
+| Tie | `~1` |
+| Measure separator | `|` |
+| Repeat start | `|:` |
+| Repeat end | `:|` |
+| Repeat end/start | `:|:` |
+| Repeated ending | `[1]`, `[2]`, `[1,3]` |
+| Track label | `T1:` through `T16:`, except `T10:` |
+| Lyric line | `L1: "lyrics"` or `"lyrics"` |
+| Comment | `; comment` |
+
+Consecutive bar tokens create an empty measure warning, and the empty measure is ignored.
+
+```jpu valid
+title: "Repeat Example"
+time: "4/4"
+=
+|: 1 2 3 4 | [1] 5 - 5 - :| [2] 1 - - -
+```

@@ -1,0 +1,61 @@
+---
+title: Troubleshooting
+description: Understand common diagnostics and how to fix them.
+docId: guide-troubleshooting
+---
+
+Diagnostics are split into errors and warnings. Errors stop a document from being accepted. Warnings mean the score can still render, play, or export, but something likely needs attention.
+
+## Measure duration warnings
+
+Measure durations are compared with the active `time` header. A short or long measure is a warning, not a parse error.
+
+```jpu warning
+time: "4/4"
+=
+1 2
+```
+
+Fix it by adding the missing duration, changing the note lengths, or updating the `time` header.
+
+## Empty measures
+
+Consecutive bar tokens create an empty measure between them. Empty measures are ignored and reported as warnings.
+
+```jpu warning
+1 2 || 3 4
+```
+
+Use a single `|` when you only meant to separate two measures.
+
+## Header and string errors
+
+Header fields must appear before the `=` separator, use `name: "value"` syntax, and keep the quoted string on one line.
+
+```jpu invalid
+title: "Open title
+=
+1 2 3 4
+```
+
+## Note, chord, and duration errors
+
+Use uppercase `X` for drums, keep chord members to pitch notes, and put duration suffixes after notes, rests, drums, or chords.
+
+```jpu invalid
+{1 0 X}
+```
+
+```jpu invalid
+1-/ 2 3 4
+```
+
+## Repeat ending errors
+
+Repeated-ending groups need an explicit final ending. Non-final endings return with `:|`; the final ending is written without a repeat end.
+
+```jpu invalid
+|: 1 2 3 4 | [1] 5 - 5 - :|
+```
+
+When a diagnostic is surprising, compare the score with the syntax page for the feature involved, then run `pnpm run cli -- validate <file>` to check the full source.
