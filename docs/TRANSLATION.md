@@ -19,6 +19,10 @@ Keep section order, examples, and coverage parallel between the two pages. The
 Chinese page does not need to translate every English sentence literally, but it
 should document the same user-visible behavior.
 
+## Docs Site Translations
+
+Docs-site-specific translation rules live in `docs-site/docs/TRANSLATION.md`.
+
 ## Tone And Audience
 
 Write grammar documentation for score authors, not parser implementers.

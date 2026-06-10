@@ -10,6 +10,9 @@ Treat this directory as the project root.
   release commands.
 - `docs/DOCUMENTATION.md`: documentation maintenance rules, including grammar
   reference and docs-site updates.
+- `docs-site/AGENTS.md`: local rules for Astro Starlight docs-site work.
+- `docs-site/docs/`: local docs-site maintenance, command, and translation
+  references.
 - `README.md`: user-facing overview and common usage.
 - `docs/ARCHITECTURE.md`: product targets, module boundaries, source map, and
   dependency direction.
@@ -38,6 +41,8 @@ Treat this directory as the project root.
 - Keep behavior changes documented and tested.
 - Keep docs-site MDX content bilingual by matching English and `zh/` paths and
   keeping `docId` values aligned.
+- When working in `docs-site/`, read `docs-site/AGENTS.md` as the local
+  handoff guide. Docs-site-specific details live under `docs-site/docs/`.
 - When grammar behavior changes, update `public/grammar.html`,
   `public/grammar.zh.html`, `docs/grammar.ebnf`, and relevant docs-site MDX;
   follow `docs/DOCUMENTATION.md` and `docs/TRANSLATION.md`, then run

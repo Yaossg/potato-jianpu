@@ -51,7 +51,9 @@ Practical rules:
 - Keep export options grouped under the export menu.
 - Keep Page Settings and Sound Settings distinct.
 - Avoid UI copy that talks about implementation history.
-- Keep grammar help in `grammar.html`, not on the main page.
+- Keep grammar help pointed at the localized docs-site home under `/docs/`,
+  not as an in-app grammar panel.
+- Keep detailed docs-site quality and authoring rules in `docs-site/docs/`.
 - Do not import backend modules from `src/web/`.
 
 PNG, WAV, and MP3 are supported in the browser through browser-specific

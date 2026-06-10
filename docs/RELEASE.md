@@ -99,8 +99,8 @@ Before cutting a release:
 - Run `pnpm run test`.
 - Run `pnpm run web:build` if not already covered by the test output being
   inspected.
-- Run `pnpm run docs:i18n` and `pnpm run docs:examples` when documentation
-  content changed.
+- When docs-site content changed, run the checks listed in
+  `docs-site/docs/COMMANDS.md`.
 - Run `npm pack --dry-run --json` and inspect the file list. The package should
   include `dist/` backend/library output, `dist-web/` static frontend and docs
   output, and `docs-site/` documentation source, but not `dist/web/`

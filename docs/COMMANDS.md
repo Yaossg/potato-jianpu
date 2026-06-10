@@ -20,7 +20,8 @@ pnpm run web:build
 ```
 
 `pnpm run build` emits backend CLI and shared library modules in `dist/`.
-`pnpm run web:build` emits the browser application in `dist-web/`.
+`pnpm run web:build` emits the browser application and builds the documentation
+site under `dist-web/docs/`.
 
 ## Verification
 
@@ -32,6 +33,8 @@ pnpm run web:build
 
 `pnpm run test` builds the backend TypeScript output, runs Node tests, and
 includes the frontend production-build smoke test.
+
+Docs-site-specific commands live in `docs-site/docs/COMMANDS.md`.
 
 ## CLI Smoke Tests
 
@@ -52,7 +55,9 @@ pnpm run grammar:railroad
 ```
 
 Run this after updating `docs/grammar.ebnf` or grammar behavior documented in
-the generated railroad references.
+the generated railroad references. If the behavior is user-facing, also update
+the relevant docs-site MDX pages; see `docs-site/docs/COMMANDS.md` for
+docs-site verification.
 
 ## Release-Oriented Checks
 

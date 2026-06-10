@@ -31,6 +31,13 @@ those details are genuinely useful to score authors.
 
 Follow `docs/TRANSLATION.md` when updating bilingual grammar references.
 
+## Docs Site
+
+The Astro Starlight site under `docs-site/` is the primary user-facing
+documentation site. Keep project-level docs here limited to this relationship.
+Docs-site authoring details live in `docs-site/docs/`, with the local handoff
+entry point at `docs-site/AGENTS.md`.
+
 ## Focused References
 
 Use the existing focused references instead of creating catch-all notes:
@@ -46,5 +53,6 @@ Use the existing focused references instead of creating catch-all notes:
 - `docs/QUALITY.md`: testing policy, frontend quality policy, and known test
   gaps.
 - `docs/TRANSLATION.md`: bilingual documentation and terminology rules.
+- `docs-site/docs/`: docs-site authoring, command, and translation details.
 - `docs/ROADMAP.md`: known risks and future work.
 - `docs/RELEASE.md`: build outputs, packaging, and release checklist.
