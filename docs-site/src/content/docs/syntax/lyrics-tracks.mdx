@@ -42,7 +42,7 @@ T2: 3 3 3 3
 
 When a score contains any labeled track, unlabeled score lines are treated as `T1`.
 
-Lyrics are attached to the preceding score group. A lyric line before any score line is invalid. The renderer aligns lyric syllables under the main voice notes; mismatched syllable counts are reported as warnings.
+Lyrics are attached to the preceding score group. A lyric line before any score line is invalid. When a lyric line contains multiple whitespace-separated syllables and the main voice renders on one row, the renderer centers those syllables under sounding main-voice notes. Rests do not receive lyric positions. If the syllable count does not match the main voice note count, the lyric is rendered as a plain full line and reported as a warning.
 
 <JianpuExample title="Mismatched lyric count" status="warning" description="The score still renders, but the lyric line has fewer syllables than notes.">
 
@@ -62,7 +62,7 @@ L1: "too soon"
 
 </JianpuExample>
 
-Track lines are grouped in ascending label order such as `T1`, `T2`, `T3`. A group may end early, so `T1 T2 T3 T1 T2` starts a second group after the first group finishes. Lines in the same group play together; the next group starts after the previous group ends.
+Track lines are grouped in ascending label order and every labeled group starts at `T1`. A group may end early, so `T1 T2 T3 T1 T2` starts a second group after the first group finishes. `T1 T1 T2` is also valid because the second `T1` starts a new group. `T1 T2 T2`, `T1 T2 T2 T1`, or a group that starts at `T2` are invalid. Lines in the same group play together; the next group starts after the previous group ends.
 
 ```jpu valid
 T1: 1 2 3 4

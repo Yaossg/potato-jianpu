@@ -6,7 +6,7 @@ docId: syntax-overview
 
 import SyntaxToken from '../../../components/SyntaxToken.astro';
 
-A document has an optional file header, an optional separator line, and score lines. The separator is a line containing `=`. Header fields must appear before it; score, lyric, and track lines appear after it.
+A document has an optional file header followed by optional score text. A header is only recognized when the file uses a separator line made of one or more `=` characters. Header fields must appear before that separator; score, lyric, and track lines appear after it. Without a separator, the whole file is parsed as score text.
 
 ```jpu valid
 title: "Example"
@@ -33,7 +33,7 @@ Comments begin with `;` and continue to the end of the line.
 5 - 5 -
 ```
 
-Blank lines and leading newlines are ignored. A document may contain only a score body, only a header, or even be empty. Score-only documents do not need a separator.
+Blank lines and leading newlines are ignored. A document may contain only a score body, a header plus separator with no score body, or even be empty. Score-only documents do not need a separator.
 
 ```jpu valid
 1 2 3 4 | 5 - 5 -
@@ -43,4 +43,12 @@ Measures are separated with <SyntaxToken token="|" label="barline" />. A line ma
 
 ```jpu warning
 1 2 || 3 4
+```
+
+Line breaks are meaningful because they separate header fields, score lines, and lyric lines. Consecutive blank lines are collapsed, so a blank line between two score lines does not create an extra rendered row.
+
+```jpu valid
+1 2 3 4
+
+5 6 7 1'
 ```

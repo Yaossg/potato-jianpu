@@ -30,7 +30,7 @@ Known fields include:
 | `key` | Key signature for playback and export. |
 | `time` | Time signature used for measure-duration validation. |
 | `tempo` | Playback and MIDI tempo. |
-| `hidden` | Header fields that should not be rendered. |
+| `hidden` | Any non-empty value hides the rendered header block. |
 
 Unknown fields are preserved as metadata. They do not change parsing, rendering, playback, or export behavior unless a future version gives them meaning.
 
@@ -56,13 +56,13 @@ title: "Open title
 
 </JianpuExample>
 
-The `key` field accepts natural keys and accidental keys such as `C`, `G`, `F`, `#F`, `F#`, `bB`, and `Bb`. It affects playback and export pitch spelling; invalid key names are reported as diagnostics.
+The `key` field accepts `C`, `C#`, `Db`, `D`, `D#`, `Eb`, `E`, `F`, `F#`, `Gb`, `G`, `G#`, `Ab`, `A`, `A#`, `Bb`, and `B`. One space inside the value is ignored, and accidental-first spellings such as `#F` or `bB` are accepted. It affects playback and export pitch spelling; invalid key names are reported as diagnostics.
 
-The `time` field uses `beats/beat-unit`, such as `4/4`, `3/4`, or `6/8`. It is used for measure-duration validation. Measures that do not add up to the time signature produce warnings, not hard parse failures.
+The `time` field uses `beats/beat-unit`, such as `4/4`, `3/4`, or `6/8`. Allowed numerators are `2`, `3`, `4`, `6`, `9`, and `12`; allowed denominators are `2`, `4`, `8`, and `16`. It is used for measure-duration validation. Measures that do not add up to the time signature produce warnings, not hard parse failures.
 
-The `tempo` field is a positive beats-per-minute value. It is used by playback, MIDI export, and audio export.
+The `tempo` field is a positive beats-per-minute value. Integer and decimal values such as `96`, `120`, and `132.5` are accepted. It is used by playback, MIDI export, and audio export.
 
-Use `hidden` to keep rendered header metadata out of the SVG while retaining it in the document.
+Use `hidden` to keep the rendered header block out of the SVG while retaining the metadata in the document. Any non-empty string enables this behavior.
 
 ```jpu valid
 title: "Practice Line"

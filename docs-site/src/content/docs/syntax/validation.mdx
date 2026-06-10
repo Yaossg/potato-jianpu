@@ -35,6 +35,16 @@ Empty measures between consecutive bar tokens are also warnings. The empty measu
 
 Lyric syllable counts that do not match the main voice notes are reported as warnings so the score can still render.
 
+Empty chords are accepted as rests and reported as warnings.
+
+<JianpuExample title="Empty chord" status="warning" description="The empty chord renders as a rest and keeps the document usable.">
+
+```jpu warning
+1 {} 3 4
+```
+
+</JianpuExample>
+
 ## Errors
 
 Common hard errors include:
@@ -42,7 +52,7 @@ Common hard errors include:
 - Malformed header lines or invalid known header values.
 - Unterminated strings.
 - Invalid score characters.
-- Empty chords and invalid chord members.
+- Invalid chord members, including rests, drum notes, or duration suffixes inside braces.
 - Stray duration marks, unmatched chord braces, or unmatched chord endings.
 - Illegal ties, such as a tied first note or a tie to an incompatible previous note.
 - Repeated-ending groups without an explicit final ending.
