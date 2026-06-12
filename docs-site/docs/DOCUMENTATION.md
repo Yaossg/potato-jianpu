@@ -81,8 +81,8 @@ Use this map when a code change is user-visible but is not a pure grammar
 change:
 
 - Parser or diagnostic changes: update the relevant syntax page, the grammar
-  reference when quick lookup changes, and the troubleshooting page only when
-  the task workflow changes.
+  reference when quick lookup changes, and the diagnostics index when the
+  lookup workflow changes.
 - Renderer changes: update the syntax page that explains the affected notation,
   `guide/browser-app.mdx` when the browser preview workflow changes, and
   `../../docs/RENDERER.md` for implementation-facing renderer behavior.
@@ -137,10 +137,11 @@ Prefer local components instead of ad hoc repeated markup:
 - `RailroadDiagram.astro` for generated diagrams backed by
   `../../docs/grammar.ebnf`.
 - `ScorePreview.astro` for deterministic build-time SVG previews of valid
-  `.jpu` examples. It exposes an accessible image label from `title`, or from
-  `ariaLabel` when a preview needs a more specific label without a visible
-  caption. When neither prop is present, it uses an English or Simplified
-  Chinese default based on the current page locale.
+  `.jpu` examples with client-side playback controls. It exposes an accessible
+  image label from `title`, or from `ariaLabel` when a preview needs a more
+  specific label without a visible caption. When neither prop is present, it
+  uses an English or Simplified Chinese default based on the current page
+  locale.
 
 Keep component props simple and serializable in MDX. Do not add client-side
 interactivity unless the user explicitly asks for it.

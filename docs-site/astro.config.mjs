@@ -135,20 +135,6 @@ export default defineConfig({
                 "zh-CN": "导出",
               },
             },
-            {
-              label: "Examples",
-              slug: "guide/examples",
-              translations: {
-                "zh-CN": "示例",
-              },
-            },
-            {
-              label: "Troubleshooting",
-              slug: "guide/troubleshooting",
-              translations: {
-                "zh-CN": "故障排查",
-              },
-            },
           ],
         },
         {

@@ -8,24 +8,10 @@ sectionIds:
   - audio-exports
 ---
 
-import JianpuSource from '../../../../components/JianpuSource.astro';
-import ScorePreview from '../../../../components/ScorePreview.astro';
 import SupportMatrix from '../../../../components/SupportMatrix.astro';
 import RelatedLinks from '../../../../components/RelatedLinks.astro';
 
 Modern Jianpu Markup 可以从浏览器 App 和 CLI 把同一个解析后的乐谱导出为视觉、MIDI 和音频格式。
-
-<JianpuSource title="导出预览源码" source={`title: "Export preview"
-time: "4/4"
-=
-1 2 3 4 | 5 6 7 1'
-L1: "do re mi fa so la ti do"`} />
-
-<ScorePreview source={`title: "Export preview"
-time: "4/4"
-=
-1 2 3 4 | 5 6 7 1'
-L1: "do re mi fa so la ti do"`} />
 
 <SupportMatrix
   title="导出支持"

@@ -13,6 +13,10 @@ async function runPnpmScript(script) {
     await execFileAsync(process.execPath, [process.env.npm_execpath, "run", script], { cwd: repoDir });
     return;
   }
+  if (process.platform === "win32") {
+    await execFileAsync("powershell.exe", ["-NoProfile", "-Command", `pnpm run ${script}`], { cwd: repoDir });
+    return;
+  }
   await execFileAsync("pnpm", ["run", script], { cwd: repoDir });
 }
 
@@ -34,10 +38,8 @@ test("frontend production build emits the expected app shell", async () => {
   const zhDocsHome = await readFile(new URL("../dist-web/docs/zh/index.html", import.meta.url), "utf8");
   const docsGrammar = await readFile(new URL("../dist-web/docs/reference/grammar/index.html", import.meta.url), "utf8");
   const zhDocsGrammar = await readFile(new URL("../dist-web/docs/zh/reference/grammar/index.html", import.meta.url), "utf8");
-  const docsExamples = await readFile(new URL("../dist-web/docs/guide/examples/index.html", import.meta.url), "utf8");
-  const zhDocsExamples = await readFile(new URL("../dist-web/docs/zh/guide/examples/index.html", import.meta.url), "utf8");
-  const docsTroubleshooting = await readFile(new URL("../dist-web/docs/guide/troubleshooting/index.html", import.meta.url), "utf8");
-  const zhDocsTroubleshooting = await readFile(new URL("../dist-web/docs/zh/guide/troubleshooting/index.html", import.meta.url), "utf8");
+  const docsPlayback = await readFile(new URL("../dist-web/docs/guide/playback/index.html", import.meta.url), "utf8");
+  const zhDocsPlayback = await readFile(new URL("../dist-web/docs/zh/guide/playback/index.html", import.meta.url), "utf8");
   const docsOverview = await readFile(new URL("../dist-web/docs/syntax/overview/index.html", import.meta.url), "utf8");
   const docsRepeats = await readFile(new URL("../dist-web/docs/syntax/repeats/index.html", import.meta.url), "utf8");
   const docsRhythm = await readFile(new URL("../dist-web/docs/syntax/rhythm/index.html", import.meta.url), "utf8");
@@ -144,14 +146,8 @@ test("frontend production build emits the expected app shell", async () => {
   assert.doesNotMatch(zhDocsGrammar, /迁移目标|第一版|继续随包/);
   assert.match(zhDocsGrammar, /反复结尾/);
   assert.match(zhDocsGrammar, /空小节警告/);
-  assert.match(docsExamples, /Examples/);
-  assert.match(docsExamples, /examples\/twinkle\.jpu/);
-  assert.match(zhDocsExamples, /示例/);
-  assert.match(zhDocsExamples, /examples\/twinkle\.jpu/);
-  assert.match(docsTroubleshooting, /Troubleshooting/);
-  assert.match(docsTroubleshooting, /syntax\/rhythm/);
-  assert.match(zhDocsTroubleshooting, /故障排查/);
-  assert.match(zhDocsTroubleshooting, /syntax\/rhythm/);
+  assert.match(docsPlayback, /same playback compiler/);
+  assert.match(zhDocsPlayback, /播放编译器/);
   assert.match(docsOverview, /syntax-token/);
   assert.match(docsRepeats, /support-matrix/);
   assert.match(docsRepeats, /related-links/);

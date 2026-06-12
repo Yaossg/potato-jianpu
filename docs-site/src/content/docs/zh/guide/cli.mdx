@@ -7,20 +7,8 @@ sectionIds:
 ---
 
 import RelatedLinks from '../../../../components/RelatedLinks.astro';
-import JianpuSource from '../../../../components/JianpuSource.astro';
-import ScorePreview from '../../../../components/ScorePreview.astro';
 
 需要可重复检查和脚本化导出时，使用 CLI。
-
-<JianpuSource title="小型 CLI 输入" source={`title: "CLI preview"
-time: "4/4"
-=
-1 2 3 4 | 5 6 7 1'`} />
-
-<ScorePreview title="渲染后的 CLI 输入" source={`title: "CLI preview"
-time: "4/4"
-=
-1 2 3 4 | 5 6 7 1'`} />
 
 ```sh
 pnpm run cli -- --version
@@ -50,6 +38,6 @@ MIDI、WAV 和 MP3 导出支持 `--program <number>` 和 `--omit-initial-rest`�
   title="相关页面"
   links={[
     { href: '../export/', label: '导出', description: '选择输出格式前，先查看各格式的行为。' },
-    { href: '../troubleshooting/', label: '故障排查', description: '用校验诊断定位到对应语法页面。' },
+    { href: '../../syntax/validation/', label: '诊断索引', description: '用校验诊断定位到对应语法页面。' },
   ]}
 />

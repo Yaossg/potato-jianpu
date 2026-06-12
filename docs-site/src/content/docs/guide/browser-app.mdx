@@ -3,50 +3,72 @@ title: Browser App
 description: Edit, preview, play, and download scores in the browser.
 docId: guide-browser-app
 sectionIds:
-  - core-workflow
+  - editing-diagnostics
+  - preview-playback
+  - examples
+  - export
   - settings
   - help
 ---
 
 import RelatedLinks from '../../../components/RelatedLinks.astro';
-import JianpuSource from '../../../components/JianpuSource.astro';
-import ScorePreview from '../../../components/ScorePreview.astro';
 
-Use the browser app when you want immediate feedback while writing a score. The editor starts empty; paste or type `.jpu` source, then use the preview, playback, settings, examples, and export controls around it.
+Use the browser app when you want immediate feedback while writing a score. The app keeps editing, validation, preview, playback, and export in one local workspace, so it is the fastest place to try syntax before saving or scripting a `.jpu` file elsewhere.
 
-<JianpuSource title="Browser app input" source={`title: "Browser sketch"
-time: "4/4"
-=
-1 2 3 4 | 5 - 5 -`} />
+## Editing And Diagnostics
 
-<ScorePreview title="Rendered browser preview" source={`title: "Browser sketch"
-time: "4/4"
-=
-1 2 3 4 | 5 - 5 -`} />
+The source editor accepts the same `.jpu` text that the CLI reads. It shows line numbers, highlights the current line, and can wrap or preserve long source lines depending on the editor setting. Source text is stored in browser local storage, so reloading the page keeps the draft on the same device.
 
-## Core workflow
+Diagnostics appear below the editor and are also highlighted in the source. Click a diagnostic to focus the affected range. Errors prevent a fresh render, but the preview keeps the last valid score visible with a stale-preview notice so you can compare while fixing the source. Warnings keep the score usable and mark behavior that deserves review, such as measure-duration mismatches.
 
-1. Write source in the editor.
-2. Watch diagnostics for errors and warnings.
-3. Preview the rendered SVG.
-4. Use playback or click a rendered note to audition the score.
-5. Download SVG, PNG, MIDI, WAV, or MP3 from the export menu.
+The clear action asks for confirmation before removing the current source.
 
-The preview updates from the same parser and renderer used by the CLI, so syntax behavior stays shared across browser and terminal workflows.
+## Preview And Playback
+
+The preview updates from the same parser and renderer used by the CLI, so syntax behavior stays shared across browser and terminal workflows. The preview summary shows how many score lines are rendered, the active page width, and whether that width came from the panel, content inference, or a manual setting.
+
+Use the playback button to audition the current score. Active notes are highlighted in the rendered preview as playback advances. You can also click a rendered note to start playback from that note. Changing source, loading an example, or stopping playback clears the active highlight.
+
+Playback uses the shared arrangement compiler, so notes, rests, chords, ties, repeats, repeated endings, labeled tracks, key signatures, and drum programs follow the same timing rules used by MIDI, WAV, and MP3 export.
+
+## Examples
+
+The examples panel loads bundled `.jpu` scores into the editor. If the editor already contains text, the app asks before replacing it. Loading an example stops playback and closes the panel, then the loaded source is handled like any other editable draft.
+
+## Export
+
+The export menu downloads the current valid score as SVG, PNG, MIDI, WAV, or MP3. SVG and PNG use the current page settings: width, color, background, and justification. MIDI uses the selected program and initial-rest setting. WAV and MP3 are rendered locally in the browser with the selected program, volume, sample rate, and initial-rest setting.
+
+Audio export can take longer than image or MIDI export because the browser renders the full arrangement before downloading. While WAV or MP3 is rendering, the export menu reports the event count and approximate duration.
 
 ## Settings
 
-Page settings control visual output such as page width, score color, and background. Sound settings control playback and audio export, including program, volume, audio sample rate, and whether initial rests are omitted.
+Page settings control visual output:
 
-Changing the source stops active playback. Loading an example also stops playback and closes the examples panel.
+- Width mode: match the preview panel, infer width from score content, or use a manual pixel width.
+- Color and page: set notation color and SVG/PNG background.
+- Justify: leave natural spacing, justify all but the last line, or justify every line.
+
+Editor settings currently include source wrapping.
+
+Sound settings control playback and audio export:
+
+- Program: choose a General MIDI program or a drum-note program.
+- Volume: adjust browser playback and browser-rendered WAV/MP3 output.
+- Audio sample rate: choose the WAV/MP3 render sample rate.
+- Omit initial rests: skip shared leading silence when starting from the beginning.
+- Audition: play a short phrase with the selected sound.
+
+The language and theme buttons are in the top toolbar. Language preference, theme preference, source text, and source-wrap preference are stored locally in the browser.
 
 ## Help
 
-The grammar help button opens the localized documentation home: `/docs/` in English and `/docs/zh/` in Simplified Chinese.
+The help button opens the localized documentation home: `/docs/` in English and `/docs/zh/` in Simplified Chinese. From there, use the syntax pages for notation rules, the diagnostics index for warnings and errors, and the export guide for format-specific behavior.
 
 <RelatedLinks
   links={[
-    { href: '../examples/', label: 'Examples', description: 'Choose bundled scores to load into the browser app.' },
     { href: '../playback/', label: 'Playback', description: 'Understand audition, note highlighting, programs, drums, and repeats.' },
+    { href: '../export/', label: 'Export', description: 'Compare SVG, PNG, MIDI, WAV, and MP3 behavior.' },
+    { href: '../../syntax/validation/', label: 'Diagnostics Index', description: 'Map warnings and errors back to syntax topics.' },
   ]}
 />
