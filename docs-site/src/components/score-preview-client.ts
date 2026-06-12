@@ -1,12 +1,26 @@
-import { parse, renderSvg } from '../../../src/index.ts';
+import { compileArrangement, parse, renderSvg, trimArrangementAtNote } from '../../../src/index.ts';
+import { PreviewAudioPlayer } from '../../../src/web/audio.ts';
 
 const MIN_PREVIEW_PAGE_WIDTH = 280;
 const MAX_PREVIEW_PAGE_WIDTH = 1000;
+const DEFAULT_VOLUME = 1;
+const DEFAULT_PROGRAM = 0;
 
 interface PreviewPayload {
   source: string;
   pageWidth: number | null;
+  labels?: {
+    play?: string;
+    stop?: string;
+  };
 }
+
+interface PreviewState {
+  activeNoteIndices: number[];
+  lastPageWidth: number;
+}
+
+let activePreview: { figure: HTMLElement; player: PreviewAudioPlayer } | null = null;
 
 function clampPageWidth(width: number): number {
   return Math.max(MIN_PREVIEW_PAGE_WIDTH, Math.min(MAX_PREVIEW_PAGE_WIDTH, Math.floor(width)));
@@ -31,7 +45,7 @@ function payloadFor(figure: HTMLElement): PreviewPayload | null {
   }
 }
 
-function renderPreview(stage: HTMLElement, source: string, pageWidth: number): void {
+function renderPreview(stage: HTMLElement, source: string, pageWidth: number, activeNoteIndices: number[] = []): void {
   const result = parse(source);
   if (!result.ok) {
     return;
@@ -39,29 +53,104 @@ function renderPreview(stage: HTMLElement, source: string, pageWidth: number): v
 
   stage.innerHTML = renderSvg(result.value, {
     pageWidth,
+    activeNoteIndices,
     color: '#111827',
     background: '#ffffff',
   });
 }
 
+function setPlayButtonState(button: HTMLButtonElement | null, payload: PreviewPayload, isPlaying: boolean): void {
+  if (!button) {
+    return;
+  }
+  const playLabel = payload.labels?.play ?? 'Play';
+  const stopLabel = payload.labels?.stop ?? 'Stop';
+  button.textContent = isPlaying ? stopLabel : playLabel;
+  button.setAttribute('aria-pressed', String(isPlaying));
+}
+
+function stopPreview(figure: HTMLElement, payload: PreviewPayload, state: PreviewState, render: () => void): void {
+  if (activePreview?.figure !== figure) {
+    return;
+  }
+  activePreview.player.stop();
+  activePreview = null;
+  state.activeNoteIndices = [];
+  setPlayButtonState(figure.querySelector<HTMLButtonElement>('[data-score-preview-play]'), payload, false);
+  render();
+}
+
+async function playPreview(
+  figure: HTMLElement,
+  payload: PreviewPayload,
+  state: PreviewState,
+  render: () => void,
+  startNoteIndex = 0,
+): Promise<void> {
+  const result = parse(payload.source);
+  if (!result.ok) {
+    return;
+  }
+
+  if (activePreview) {
+    activePreview.player.stop();
+    if (activePreview.figure !== figure) {
+      activePreview.figure.dispatchEvent(new CustomEvent('score-preview-stop'));
+    }
+  }
+
+  const player = new PreviewAudioPlayer();
+  activePreview = { figure, player };
+  setPlayButtonState(figure.querySelector<HTMLButtonElement>('[data-score-preview-play]'), payload, true);
+
+  const compiled = compileArrangement(result.value, DEFAULT_PROGRAM);
+  const arrangement = startNoteIndex === 0 ? compiled : trimArrangementAtNote(compiled, startNoteIndex);
+  await player.play(
+    arrangement,
+    () => {
+      if (activePreview?.player !== player) {
+        return;
+      }
+      activePreview = null;
+      state.activeNoteIndices = [];
+      setPlayButtonState(figure.querySelector<HTMLButtonElement>('[data-score-preview-play]'), payload, false);
+      render();
+    },
+    (noteIndices) => {
+      if (activePreview?.player !== player) {
+        return;
+      }
+      state.activeNoteIndices = noteIndices;
+      render();
+    },
+    DEFAULT_VOLUME,
+    DEFAULT_PROGRAM,
+  );
+}
+
 function hydratePreview(figure: HTMLElement): void {
   const stage = figure.querySelector<HTMLElement>('[data-score-preview-stage]');
+  const playButton = figure.querySelector<HTMLButtonElement>('[data-score-preview-play]');
   const payload = payloadFor(figure);
   if (!stage || !payload) {
     return;
   }
 
-  let lastPageWidth = 0;
+  const state: PreviewState = {
+    activeNoteIndices: [],
+    lastPageWidth: 0,
+  };
   let frame = 0;
   const update = () => {
     frame = 0;
     const nextPageWidth = payload.pageWidth ?? stageContentWidth(stage);
-    if (nextPageWidth === lastPageWidth) {
+    if (nextPageWidth === state.lastPageWidth) {
       return;
     }
-    lastPageWidth = nextPageWidth;
-    renderPreview(stage, payload.source, nextPageWidth);
+    state.lastPageWidth = nextPageWidth;
+    renderPreview(stage, payload.source, nextPageWidth, state.activeNoteIndices);
   };
+  const render = () => renderPreview(stage, payload.source, state.lastPageWidth || (payload.pageWidth ?? stageContentWidth(stage)), state.activeNoteIndices);
   const scheduleUpdate = () => {
     if (frame === 0) {
       frame = window.requestAnimationFrame(update);
@@ -72,6 +161,29 @@ function hydratePreview(figure: HTMLElement): void {
   if (payload.pageWidth === null) {
     new ResizeObserver(scheduleUpdate).observe(stage);
   }
+  setPlayButtonState(playButton, payload, false);
+
+  playButton?.addEventListener('click', () => {
+    if (activePreview?.figure === figure) {
+      stopPreview(figure, payload, state, render);
+      return;
+    }
+    void playPreview(figure, payload, state, render);
+  });
+
+  stage.addEventListener('click', (event) => {
+    const target = event.target instanceof Element ? event.target.closest<SVGGElement>('[data-note-index]') : null;
+    const noteIndex = Number(target?.dataset.noteIndex);
+    if (Number.isInteger(noteIndex)) {
+      void playPreview(figure, payload, state, render, noteIndex);
+    }
+  });
+
+  figure.addEventListener('score-preview-stop', () => {
+    state.activeNoteIndices = [];
+    setPlayButtonState(playButton, payload, false);
+    render();
+  });
 }
 
 for (const figure of document.querySelectorAll<HTMLElement>('[data-score-preview]')) {

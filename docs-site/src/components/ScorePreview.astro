@@ -27,11 +27,28 @@ const defaultAccessibleLabel = Astro.url.pathname.includes('/zh/')
   ? '渲染后的简谱预览'
   : 'Rendered Jianpu score preview';
 const accessibleLabel = ariaLabel ?? title ?? defaultAccessibleLabel;
-const payload = JSON.stringify({ source, pageWidth: pageWidth ?? null });
+const isChinesePage = Astro.url.pathname.includes('/zh/');
+const labels = isChinesePage
+  ? {
+      play: '播放',
+      stop: '停止',
+    }
+  : {
+      play: 'Play',
+      stop: 'Stop',
+    };
+const payload = JSON.stringify({ source, pageWidth: pageWidth ?? null, labels });
 ---
 
 <figure class="score-preview" data-score-preview>
-  {title && <figcaption class="score-preview-title">{title}</figcaption>}
+  {(title || labels.play) && (
+    <div class="score-preview-header">
+      {title && <figcaption class="score-preview-title">{title}</figcaption>}
+      <button type="button" class="score-preview-play" data-score-preview-play>
+        {labels.play}
+      </button>
+    </div>
+  )}
   <div class="score-preview-stage" data-score-preview-stage role="img" aria-label={accessibleLabel} set:html={svg} />
   <script type="application/json" data-score-preview-source set:html={payload} />
   <script>
@@ -44,10 +61,42 @@ const payload = JSON.stringify({ source, pageWidth: pageWidth ?? null });
     margin: 1rem 0 1.5rem;
   }
 
+  .score-preview-header {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.35rem;
+  }
+
   .score-preview-title {
     color: var(--sl-color-text);
     font-weight: 700;
-    margin-bottom: 0.35rem;
+    margin: 0;
+  }
+
+  .score-preview-play {
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.375rem;
+    padding: 0.2rem 0.6rem;
+    background: var(--sl-color-bg);
+    color: var(--sl-color-text);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+
+  .score-preview-play:hover {
+    border-color: var(--sl-color-accent);
+    color: var(--sl-color-accent);
+  }
+
+  .score-preview-play[aria-pressed="true"] {
+    border-color: var(--sl-color-red-high);
+    color: var(--sl-color-red-high);
   }
 
   .score-preview-stage {
