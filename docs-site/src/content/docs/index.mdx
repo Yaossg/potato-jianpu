@@ -2,13 +2,25 @@
 title: Modern Jianpu Markup
 description: Write, preview, play, and export Jianpu scores from one text format.
 docId: home
+sectionIds:
+  - choose-task
+  - writable-syntax
+  - read-docs
 ---
 
+import JianpuSource from '../../components/JianpuSource.astro';
 import RelatedLinks from '../../components/RelatedLinks.astro';
+import ScorePreview from '../../components/ScorePreview.astro';
 
 Modern Jianpu Markup is a text format and toolkit for Jianpu scores. It includes a browser editor, a command-line interface, a parser, an SVG renderer, playback, and export paths for SVG, PNG, MIDI, WAV, and MP3.
 
 This documentation is the primary user-facing guide for writing `.jpu` scores. Start with a short score, then use the syntax pages when you need a precise rule for metadata, rhythm, repeats, lyrics, or multi-track arrangements.
+
+## Choose a task
+
+- Write a first score: start with [Getting Started](./getting-started/), then open the same source in the browser app.
+- Fix a warning or error: use [Troubleshooting](./guide/troubleshooting/) to match the diagnostic to the relevant syntax page.
+- Look up a precise token: use the compact [Grammar Reference](./reference/grammar/) after you know which part of the format you need.
 
 ## What you can write
 
@@ -17,14 +29,25 @@ This documentation is the primary user-facing guide for writing `.jpu` scores. S
 - Accidentals, octave marks, chords, ties, lyrics, repeat barlines, repeated endings, and labeled tracks.
 - Compact notation where whitespace is optional between score tokens.
 
-```jpu valid
-title: "Twinkle"
+<JianpuSource
+  title="Twinkle source"
+  source={`title: "Twinkle"
 time: "4/4"
 tempo: "96"
 =
 1 1 5 5 | 6 6 5 - |
-4 4 3 3 | 2 2 1 -
-```
+4 4 3 3 | 2 2 1 -`}
+/>
+
+<ScorePreview
+  title="Rendered score"
+  source={`title: "Twinkle"
+time: "4/4"
+tempo: "96"
+=
+1 1 5 5 | 6 6 5 - |
+4 4 3 3 | 2 2 1 -`}
+/>
 
 ## How to read the docs
 
@@ -35,7 +58,7 @@ Examples marked as valid are checked against the project parser so the guide sta
 <RelatedLinks
   links={[
     { href: './getting-started/', label: 'Getting Started', description: 'Write a first score and try basic CLI commands.' },
-    { href: './guide/browser-app/', label: 'Browser App', description: 'Preview, play, and export scores interactively.' },
+    { href: './guide/troubleshooting/', label: 'Troubleshooting', description: 'Match diagnostics to syntax rules and small repro cases.' },
     { href: './syntax/overview/', label: 'Syntax Overview', description: 'Learn the shape of a .jpu document.' },
   ]}
 />

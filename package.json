@@ -56,10 +56,13 @@
     "web:build": "pnpm run web:app && pnpm run docs:build",
     "docs:dev": "pnpm -C docs-site dev",
     "docs:build": "pnpm -C docs-site build",
-    "docs:check": "pnpm -C docs-site check",
+    "docs:check": "pnpm run docs:i18n && pnpm run docs:links && pnpm run docs:tables && pnpm run docs:cli && pnpm -C docs-site check",
+    "docs:verify": "pnpm run docs:check && pnpm run docs:examples && pnpm run docs:build",
     "docs:i18n": "node scripts/check-docs-i18n.mjs",
     "docs:examples": "pnpm run build && node scripts/check-doc-examples.mjs",
     "docs:links": "node scripts/check-doc-links.mjs",
+    "docs:tables": "node scripts/check-doc-table-pipes.mjs",
+    "docs:cli": "node scripts/check-doc-cli-commands.mjs",
     "grammar:railroad": "node scripts/generate-grammar-railroad.mjs"
   },
   "devDependencies": {

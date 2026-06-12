@@ -2,23 +2,49 @@
 title: File Header
 description: Use header fields to describe the score and set musical defaults.
 docId: syntax-header
+sectionIds:
+  - header-basics
+  - fields
+  - strings-and-validation
+  - musical-defaults
+  - hidden-header
+  - track-and-lyric-labels
 ---
 
 import JianpuExample from '../../../components/JianpuExample.astro';
+import JianpuSource from '../../../components/JianpuSource.astro';
 import RelatedLinks from '../../../components/RelatedLinks.astro';
+import ScorePreview from '../../../components/ScorePreview.astro';
+
+## Header Basics
 
 The file header is line-oriented. Put it before the `=` separator.
 
-```jpu valid
-title: "Evening Song"
+<JianpuSource
+  title="Header source"
+  source={`title: "Evening Song"
 subtitle: "Short Study"
 composer: "Anonymous"
 key: "G"
 time: "3/4"
 tempo: "72"
 =
-5 6 5 | 3 - -
-```
+5 6 5 | 3 - -`}
+/>
+
+<ScorePreview
+  title="Rendered header"
+  source={`title: "Evening Song"
+subtitle: "Short Study"
+composer: "Anonymous"
+key: "G"
+time: "3/4"
+tempo: "72"
+=
+5 6 5 | 3 - -`}
+/>
+
+## Fields
 
 Known fields include:
 
@@ -34,60 +60,99 @@ Known fields include:
 
 Unknown fields are preserved as metadata. They do not change parsing, rendering, playback, or export behavior unless a future version gives them meaning.
 
+## Strings and Validation
+
 Header values use quoted strings. Escape sequences are kept as source text, so write the visible metadata exactly as you want users to read it.
 
-```jpu valid
-title: "Evening Song"
+<JianpuSource
+  title="Quoted header source"
+  source={`title: "Evening Song"
 composer: "Anonymous"
 tempo: "72"
 =
-1 2 3 4
-```
+1 2 3 4`}
+/>
+
+<ScorePreview
+  title="Rendered quoted header"
+  source={`title: "Evening Song"
+composer: "Anonymous"
+tempo: "72"
+=
+1 2 3 4`}
+/>
 
 Header names must start with a letter and may continue with letters, digits, or underscores. A header string must close on the same line.
 
-<JianpuExample title="Unterminated header string" status="invalid" description="The title string never closes, so the document is invalid.">
-
-```jpu invalid
-title: "Open title
+<JianpuExample
+  title="Unterminated header string"
+  status="invalid"
+  description="The title string never closes, so the document is invalid."
+  source={`title: "Open title
 =
-1 2 3 4
-```
-
-</JianpuExample>
+1 2 3 4`}
+/>
 
 The `key` field accepts `C`, `C#`, `Db`, `D`, `D#`, `Eb`, `E`, `F`, `F#`, `Gb`, `G`, `G#`, `Ab`, `A`, `A#`, `Bb`, and `B`. One space inside the value is ignored, and accidental-first spellings such as `#F` or `bB` are accepted. It affects playback and export pitch spelling; invalid key names are reported as diagnostics.
+
+## Musical Defaults
 
 The `time` field uses `beats/beat-unit`, such as `4/4`, `3/4`, or `6/8`. Allowed numerators are `2`, `3`, `4`, `6`, `9`, and `12`; allowed denominators are `2`, `4`, `8`, and `16`. It is used for measure-duration validation. Measures that do not add up to the time signature produce warnings, not hard parse failures.
 
 The `tempo` field is a positive beats-per-minute value. Integer and decimal values such as `96`, `120`, and `132.5` are accepted. It is used by playback, MIDI export, and audio export.
 
+## Hidden Header
+
 Use `hidden` to keep the rendered header block out of the SVG while retaining the metadata in the document. Any non-empty string enables this behavior.
 
-```jpu valid
-title: "Practice Line"
+<JianpuSource
+  title="Hidden header source"
+  source={`title: "Practice Line"
 composer: "Anonymous"
 hidden: "composer"
 =
-1 2 3 4
-```
+1 2 3 4`}
+/>
+
+<ScorePreview
+  title="Rendered without header block"
+  source={`title: "Practice Line"
+composer: "Anonymous"
+hidden: "composer"
+=
+1 2 3 4`}
+/>
+
+## Track and Lyric Labels
 
 Track and lyric labels can also be named in the file header. Use the same label text that appears in the score body.
 
-```jpu valid
-T1: "Melody"
+<JianpuSource
+  title="Track and lyric label source"
+  source={`T1: "Melody"
 T2: "Harmony"
 L1: "Verse"
 =
 T1: 1 2 3 4
 T2: 5 5 5 5
-L1: "do re mi fa"
-```
+L1: "do re mi fa"`}
+/>
+
+<ScorePreview
+  title="Rendered track and lyric labels"
+  source={`T1: "Melody"
+T2: "Harmony"
+L1: "Verse"
+=
+T1: 1 2 3 4
+T2: 5 5 5 5
+L1: "do re mi fa"`}
+/>
 
 <RelatedLinks
   links={[
     { href: '../lyrics-tracks/', label: 'Lyrics and Tracks', description: 'Use header labels with multi-track and lyric lines.' },
-    { href: '../validation/', label: 'Validation', description: 'Review header and string diagnostics.' },
     { href: '../../reference/grammar/', label: 'Grammar Reference', description: 'Look up the compact header grammar.' },
+    { href: '../../guide/troubleshooting/', label: 'Troubleshooting', description: 'Use the CLI to inspect diagnostics in context.' },
   ]}
 />

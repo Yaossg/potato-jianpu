@@ -1,0 +1,74 @@
+---
+interface SyntaxTokenItem {
+  token: string;
+  label: string;
+  description: string;
+}
+
+interface Props {
+  title?: string;
+  tokens: SyntaxTokenItem[];
+}
+
+const { title = "Syntax tokens", tokens } = Astro.props;
+---
+
+<section class="syntax-token-grid" aria-labelledby="syntax-token-grid-title">
+  <h2 id="syntax-token-grid-title">{title}</h2>
+  <dl>
+    {tokens.map((item) => (
+      <div>
+        <dt>
+          <code>{item.token}</code>
+          <span>{item.label}</span>
+        </dt>
+        <dd>{item.description}</dd>
+      </div>
+    ))}
+  </dl>
+</section>
+
+<style>
+  .syntax-token-grid {
+    margin: 1.5rem 0;
+  }
+
+  .syntax-token-grid h2 {
+    margin-bottom: 0.75rem;
+  }
+
+  .syntax-token-grid dl {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    gap: 0.75rem;
+    margin: 0;
+  }
+
+  .syntax-token-grid div {
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+  }
+
+  .syntax-token-grid dt {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.35rem;
+    font-weight: 700;
+  }
+
+  .syntax-token-grid code {
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.25rem;
+    padding: 0.05rem 0.3rem;
+    background: var(--sl-color-gray-6);
+    white-space: nowrap;
+  }
+
+  .syntax-token-grid dd {
+    margin: 0;
+    color: var(--sl-color-gray-2);
+    font-size: 0.9rem;
+  }
+</style>

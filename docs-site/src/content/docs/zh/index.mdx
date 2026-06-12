@@ -2,13 +2,25 @@
 title: Modern Jianpu Markup
 description: 用同一种文本格式编写、预览、播放并导出简谱。
 docId: home
+sectionIds:
+  - choose-task
+  - writable-syntax
+  - read-docs
 ---
 
+import JianpuSource from '../../../components/JianpuSource.astro';
 import RelatedLinks from '../../../components/RelatedLinks.astro';
+import ScorePreview from '../../../components/ScorePreview.astro';
 
 Modern Jianpu Markup 是用于简谱的文本格式和工具集。它包含浏览器编辑器、命令行界面、解析器、SVG 渲染器、播放功能，以及 SVG、PNG、MIDI、WAV、MP3 导出路径。
 
 这份文档是编写 `.jpu` 乐谱的主要用户指南。可以先从一个短乐谱开始，再在语法页面里查找文件头、节奏、反复、歌词或多轨编排的具体规则。
+
+## 选择任务
+
+- 写第一份乐谱：从 [快速开始](./getting-started/) 入手，然后在浏览器 App 中打开同一份源码。
+- 修复警告或错误：用 [故障排查](./guide/troubleshooting/) 把诊断对应到相关语法页面。
+- 查找精确记号：知道要查哪一类格式之后，再使用紧凑的 [语法参考](./reference/grammar/)。
 
 ## 可以编写什么
 
@@ -17,14 +29,25 @@ Modern Jianpu Markup 是用于简谱的文本格式和工具集。它包含浏�
 - 变音记号、八度标记、和弦、延音线、歌词、反复小节线、反复结尾和多轨标签。
 - 紧凑写法；乐谱主体里的空白不是独立语法模式。
 
-```jpu valid
-title: "Twinkle"
+<JianpuSource
+  title="Twinkle 源码"
+  source={`title: "Twinkle"
 time: "4/4"
 tempo: "96"
 =
 1 1 5 5 | 6 6 5 - |
-4 4 3 3 | 2 2 1 -
-```
+4 4 3 3 | 2 2 1 -`}
+/>
+
+<ScorePreview
+  title="渲染预览"
+  source={`title: "Twinkle"
+time: "4/4"
+tempo: "96"
+=
+1 1 5 5 | 6 6 5 - |
+4 4 3 3 | 2 2 1 -`}
+/>
 
 ## 怎样阅读
 
@@ -36,7 +59,7 @@ tempo: "96"
   title="相关页面"
   links={[
     { href: './getting-started/', label: '快速开始', description: '写第一份乐谱，并尝试基本 CLI 命令。' },
-    { href: './guide/browser-app/', label: '浏览器 App', description: '交互式预览、播放和导出乐谱。' },
+    { href: './guide/troubleshooting/', label: '故障排查', description: '把诊断对应到语法规则和最小复现。' },
     { href: './syntax/overview/', label: '语法概览', description: '了解 .jpu 文档的整体结构。' },
   ]}
 />

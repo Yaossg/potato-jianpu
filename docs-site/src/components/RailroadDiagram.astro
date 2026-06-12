@@ -1,0 +1,94 @@
+---
+import diagrams from '../generated/railroad-diagrams.json';
+
+interface Props {
+  rule: string;
+  title?: string;
+  caption?: string;
+}
+
+const { rule, title = rule, caption } = Astro.props;
+const svg = diagrams[rule];
+const accessibleLabel = caption ? `${title}: ${caption}` : title;
+
+if (!svg) {
+  throw new Error(`Missing railroad diagram for grammar rule: ${rule}`);
+}
+---
+
+<figure class="railroad-diagram-figure">
+  <figcaption class="railroad-diagram-title">{title}</figcaption>
+  <div class="railroad-diagram-scroll" role="img" aria-label={accessibleLabel} set:html={svg} />
+  {caption && <p class="railroad-diagram-caption">{caption}</p>}
+</figure>
+
+<style>
+  .railroad-diagram-figure {
+    margin: 1.25rem 0;
+  }
+
+  .railroad-diagram-title {
+    color: var(--sl-color-text);
+    font-weight: 700;
+    margin-bottom: 0.35rem;
+  }
+
+  .railroad-diagram-scroll {
+    overflow-x: auto;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    background: var(--sl-color-bg);
+  }
+
+  .railroad-diagram-caption {
+    color: var(--sl-color-gray-2);
+    font-size: 0.9rem;
+    margin: 0.4rem 0 0;
+  }
+
+  .railroad-diagram-scroll :global(svg) {
+    display: block;
+    max-width: none;
+    min-width: max-content;
+    background: var(--sl-color-bg);
+  }
+
+  .railroad-diagram-scroll :global(path) {
+    fill: none;
+    stroke: var(--sl-color-gray-2);
+    stroke-width: 2;
+  }
+
+  .railroad-diagram-scroll :global(text) {
+    fill: var(--sl-color-text);
+    font-family: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+    font-size: 13px;
+    text-anchor: middle;
+  }
+
+  .railroad-diagram-scroll :global(text.comment) {
+    fill: var(--sl-color-gray-2);
+    font-size: 12px;
+    font-style: italic;
+  }
+
+  .railroad-diagram-scroll :global(g.terminal rect) {
+    fill: var(--sl-color-orange-low);
+    stroke: var(--sl-color-orange-high);
+  }
+
+  .railroad-diagram-scroll :global(g.non-terminal rect) {
+    fill: var(--sl-color-gray-6);
+    stroke: var(--sl-color-gray-3);
+  }
+
+  .railroad-diagram-scroll :global(rect) {
+    stroke: var(--sl-color-gray-3);
+  }
+
+  .railroad-diagram-scroll :global(rect.group-box) {
+    fill: transparent;
+    stroke: var(--sl-color-gray-4);
+  }
+</style>

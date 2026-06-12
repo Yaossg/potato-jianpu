@@ -1,18 +1,49 @@
 ---
+import { parse } from '../../../src/index.ts';
+
 interface Props {
   title?: string;
   description?: string;
   status?: "valid" | "warning" | "invalid";
   statusLabel?: string;
+  source?: string;
 }
 
-const { title, description, status = "valid", statusLabel } = Astro.props;
+const { title, description, status = "valid", statusLabel, source } = Astro.props;
 
-const labels = {
-  valid: "Valid",
-  warning: "Warning",
-  invalid: "Invalid",
-};
+const labels = Astro.url.pathname.includes("/zh/")
+  ? {
+      valid: "有效",
+      warning: "警告",
+      invalid: "错误",
+    }
+  : {
+      valid: "Valid",
+      warning: "Warning",
+      invalid: "Invalid",
+    };
+
+if (source) {
+  const result = parse(source);
+
+  if (status === 'invalid') {
+    if (result.ok) {
+      throw new Error('Expected invalid Jianpu example, but it parsed successfully.');
+    }
+  } else if (!result.ok) {
+    const message = result.diagnostics.map((diagnostic) => diagnostic.message).join('; ');
+    throw new Error(`Expected parseable Jianpu example: ${message}`);
+  } else {
+    const hasWarning = result.diagnostics.some((diagnostic) => diagnostic.severity === 'warning');
+    if (status === 'valid' && result.diagnostics.length > 0) {
+      const message = result.diagnostics.map((diagnostic) => diagnostic.message).join('; ');
+      throw new Error(`Expected warning-free Jianpu example: ${message}`);
+    }
+    if (status === 'warning' && !hasWarning) {
+      throw new Error('Expected warning Jianpu example, but no warning was reported.');
+    }
+  }
+}
 ---
 
 <section class={`jianpu-example jianpu-example-${status}`}>
@@ -23,7 +54,7 @@ const labels = {
       {description && <p>{description}</p>}
     </header>
   )}
-  <slot />
+  {source ? <pre><code>{source}</code></pre> : <slot />}
 </section>
 
 <style>

@@ -1,0 +1,65 @@
+---
+import { parse, renderSvg } from '../../../src/index.ts';
+
+interface Props {
+  source: string;
+  title?: string;
+  pageWidth?: number;
+  ariaLabel?: string;
+}
+
+const FALLBACK_PREVIEW_PAGE_WIDTH = 720;
+const { source, title, pageWidth, ariaLabel } = Astro.props;
+const renderPageWidth = pageWidth ?? FALLBACK_PREVIEW_PAGE_WIDTH;
+const result = parse(source);
+
+if (!result.ok) {
+  const message = result.diagnostics.map((diagnostic) => diagnostic.message).join("; ");
+  throw new Error(`Cannot render docs score preview: ${message}`);
+}
+
+const svg = renderSvg(result.value, {
+  pageWidth: renderPageWidth,
+  color: '#111827',
+  background: '#ffffff',
+});
+const defaultAccessibleLabel = Astro.url.pathname.includes('/zh/')
+  ? '渲染后的简谱预览'
+  : 'Rendered Jianpu score preview';
+const accessibleLabel = ariaLabel ?? title ?? defaultAccessibleLabel;
+const payload = JSON.stringify({ source, pageWidth: pageWidth ?? null });
+---
+
+<figure class="score-preview" data-score-preview>
+  {title && <figcaption class="score-preview-title">{title}</figcaption>}
+  <div class="score-preview-stage" data-score-preview-stage role="img" aria-label={accessibleLabel} set:html={svg} />
+  <script type="application/json" data-score-preview-source set:html={payload} />
+  <script>
+    import './score-preview-client.ts';
+  </script>
+</figure>
+
+<style>
+  .score-preview {
+    margin: 1rem 0 1.5rem;
+  }
+
+  .score-preview-title {
+    color: var(--sl-color-text);
+    font-weight: 700;
+    margin-bottom: 0.35rem;
+  }
+
+  .score-preview-stage {
+    overflow-x: auto;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    background: var(--sl-color-gray-6);
+  }
+
+  .score-preview-stage :global(svg) {
+    display: block;
+    max-width: none;
+  }
+</style>

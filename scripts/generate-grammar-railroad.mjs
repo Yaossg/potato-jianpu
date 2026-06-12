@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 
@@ -7,6 +7,7 @@ const { createDocumentation, parseEbnf, validateEbnf } = require("ebnf2railroad"
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const grammarPath = new URL("../docs/grammar.ebnf", import.meta.url);
+const docsSiteDiagramDataPath = new URL("../docs-site/src/generated/railroad-diagrams.json", import.meta.url);
 const pageTargets = [
   {
     path: new URL("../public/grammar.html", import.meta.url),
@@ -63,7 +64,7 @@ const pageTargets = [
     path: new URL("../public/grammar.zh.html", import.meta.url),
     diagrams: [
       { heading: "解析器概览", rules: ["file"] },
-      { heading: "标题区", rules: ["header", "property", "property_label"] },
+      { heading: "文件头", rules: ["header", "property", "property_label"] },
       { heading: "谱面", rules: ["score", "score_item"] },
       { heading: "行", rules: ["line", "track_label", "lyric_line", "lyric_label", "start_barline", "measure_separator", "end_barline", "ending"] },
       { heading: "小节", rules: ["measure", "octave"] },
@@ -73,7 +74,7 @@ const pageTargets = [
       { heading: "和弦", rules: ["chord"] },
       { heading: "时值", rules: ["length"] },
       {
-        heading: "Token 参考",
+        heading: "记号参考",
         rules: [
           "skipped",
           "IDENTIFIER",
@@ -121,6 +122,10 @@ function generatedDiagramMap(generatedHtml) {
     diagrams.set(match[1], match[2]);
   }
   return diagrams;
+}
+
+function diagramDataFor(diagrams) {
+  return Object.fromEntries([...diagrams.entries()].sort(([left], [right]) => left.localeCompare(right)));
 }
 
 function diagramBlockFor(rules, diagrams) {
@@ -183,3 +188,7 @@ for (const pageTarget of pageTargets) {
   await writeFile(pageTarget.path, pageHtml, "utf8");
   console.log(`Generated railroad diagrams in ${pageTarget.path.pathname.replace(root.replace(/\\/g, "/"), "")}`);
 }
+
+await mkdir(new URL("./", docsSiteDiagramDataPath), { recursive: true });
+await writeFile(docsSiteDiagramDataPath, `${JSON.stringify(diagramDataFor(diagrams), null, 2)}\n`, "utf8");
+console.log(`Generated docs-site railroad diagram data in ${docsSiteDiagramDataPath.pathname.replace(root.replace(/\\/g, "/"), "")}`);

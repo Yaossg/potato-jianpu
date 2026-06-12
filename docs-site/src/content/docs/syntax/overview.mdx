@@ -5,50 +5,79 @@ docId: syntax-overview
 ---
 
 import SyntaxToken from '../../../components/SyntaxToken.astro';
+import SyntaxTokenGrid from '../../../components/SyntaxTokenGrid.astro';
+import JianpuSource from '../../../components/JianpuSource.astro';
+import RelatedLinks from '../../../components/RelatedLinks.astro';
+import ScorePreview from '../../../components/ScorePreview.astro';
 
 A document has an optional file header followed by optional score text. A header is only recognized when the file uses a separator line made of one or more `=` characters. Header fields must appear before that separator; score, lyric, and track lines appear after it. Without a separator, the whole file is parsed as score text.
 
-```jpu valid
-title: "Example"
+<JianpuSource
+  title="Complete document source"
+  source={`title: "Example"
 composer: "Traditional"
 time: "4/4"
 =
-1 2 3 4 | 5 - 5 -
-```
+1 2 3 4 | 5 - 5 -`}
+/>
+
+<ScorePreview
+  title="Rendered overview example"
+  source={`title: "Example"
+composer: "Traditional"
+time: "4/4"
+=
+1 2 3 4 | 5 - 5 -`}
+/>
+
+<SyntaxTokenGrid
+  title="Common tokens"
+  tokens={[
+    { token: '=', label: 'header separator', description: 'Ends the optional file header and starts score parsing.' },
+    { token: '|', label: 'measure boundary', description: 'Separates measures inside a score line.' },
+    { token: '|:', label: 'repeat start', description: 'Marks the beginning of a repeated span.' },
+    { token: ':|', label: 'repeat end', description: 'Marks the end of a repeated span.' },
+    { token: '[1]', label: 'ending', description: 'Marks the pass number for a repeated ending measure.' },
+    { token: 'L1:', label: 'lyric line', description: 'Attaches lyric syllables to the preceding score line.' },
+    { token: 'T1:', label: 'track line', description: 'Labels a score line as part of a multi-track group.' },
+  ]}
+/>
 
 The parser treats spaced and unspaced notation as the same grammar. These two score bodies are equivalent:
 
-```jpu valid
-1234|5-5-
-```
+<JianpuSource title="Compact score body" source={`1234|5-5-`} />
 
-```jpu valid
-1 2 3 4 | 5 - 5 -
-```
+<JianpuSource title="Spaced score body" source={`1 2 3 4 | 5 - 5 -`} />
 
 Comments begin with `;` and continue to the end of the line.
 
-```jpu valid
-1 2 3 4 | ; a comment
-5 - 5 -
-```
+<JianpuSource
+  title="Comment after a measure"
+  source={`1 2 3 4 | ; a comment
+5 - 5 -`}
+/>
 
 Blank lines and leading newlines are ignored. A document may contain only a score body, a header plus separator with no score body, or even be empty. Score-only documents do not need a separator.
 
-```jpu valid
-1 2 3 4 | 5 - 5 -
-```
+<JianpuSource title="Score-only document" source={`1 2 3 4 | 5 - 5 -`} />
 
 Measures are separated with <SyntaxToken token="|" label="barline" />. A line may begin with a barline or repeat start, and it may end with a barline or repeat end. Empty measures between consecutive bar tokens are ignored with a warning rather than becoming sounding music.
 
-```jpu warning
-1 2 || 3 4
-```
+<JianpuSource title="Empty-measure warning" status="warning" source={`1 2 || 3 4`} />
 
 Line breaks are meaningful because they separate header fields, score lines, and lyric lines. Consecutive blank lines are collapsed, so a blank line between two score lines does not create an extra rendered row.
 
-```jpu valid
-1 2 3 4
+<JianpuSource
+  title="Blank line between score lines"
+  source={`1 2 3 4
 
-5 6 7 1'
-```
+5 6 7 1'`}
+/>
+
+<RelatedLinks
+  links={[
+    { href: '../header/', label: 'File Header', description: 'Add metadata and learn when the separator is required.' },
+    { href: '../notes/', label: 'Notes and Rests', description: 'Write pitches, rests, drums, chords, and ties.' },
+    { href: '../../guide/troubleshooting/', label: 'Troubleshooting', description: 'Find the syntax topic behind a warning or error.' },
+  ]}
+/>

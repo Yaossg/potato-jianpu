@@ -2,9 +2,27 @@
 title: 浏览器 App
 description: 在浏览器中编辑、预览、播放并下载乐谱。
 docId: guide-browser-app
+sectionIds:
+  - core-workflow
+  - settings
+  - help
 ---
 
+import RelatedLinks from '../../../../components/RelatedLinks.astro';
+import JianpuSource from '../../../../components/JianpuSource.astro';
+import ScorePreview from '../../../../components/ScorePreview.astro';
+
 需要边写边获得即时反馈时，使用浏览器 App。编辑器初始为空；粘贴或输入 `.jpu` 源码后，可以使用周围的预览、播放、设置、示例和导出控件。
+
+<JianpuSource title="浏览器 App 输入" source={`title: "Browser sketch"
+time: "4/4"
+=
+1 2 3 4 | 5 - 5 -`} />
+
+<ScorePreview title="渲染后的浏览器预览" source={`title: "Browser sketch"
+time: "4/4"
+=
+1 2 3 4 | 5 - 5 -`} />
 
 ## 基本流程
 
@@ -25,3 +43,11 @@ docId: guide-browser-app
 ## 帮助
 
 语法帮助按钮会打开本地化文档首页：英文为 `/docs/`，简体中文为 `/docs/zh/`。
+
+<RelatedLinks
+  title="相关页面"
+  links={[
+    { href: '../examples/', label: '示例', description: '选择内置乐谱并载入浏览器 App。' },
+    { href: '../playback/', label: '播放', description: '了解试听、音符高亮、音色、鼓音和反复。' },
+  ]}
+/>

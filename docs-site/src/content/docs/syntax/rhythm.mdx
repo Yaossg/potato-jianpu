@@ -2,44 +2,92 @@
 title: Rhythm
 description: Use dashes, slashes, and dots to write note durations.
 docId: syntax-rhythm
+sectionIds:
+  - plain-notes
+  - dash-durations
+  - slash-and-dot-durations
+  - duration-table
+  - diagnostics
 ---
 
 import JianpuExample from '../../../components/JianpuExample.astro';
+import JianpuSource from '../../../components/JianpuSource.astro';
 import RelatedLinks from '../../../components/RelatedLinks.astro';
+import ScorePreview from '../../../components/ScorePreview.astro';
+
+## Plain Notes
 
 Plain notes divide the current measure into regular quarter-note units in common time.
 
-```jpu valid
-time: "4/4"
+<JianpuSource
+  title="Plain quarter-note source"
+  source={`time: "4/4"
 =
-1 2 3 4
-```
+1 2 3 4`}
+/>
+
+<ScorePreview
+  title="Plain quarter notes"
+  source={`time: "4/4"
+=
+1 2 3 4`}
+/>
+
+## Dash Durations
 
 A dash extends the previous note or rest.
 
-```jpu valid
-time: "4/4"
+<JianpuSource
+  title="Dash duration source"
+  source={`time: "4/4"
 =
-1 - 2 -
-```
+1 - 2 -`}
+/>
+
+<ScorePreview
+  title="Dash extensions"
+  source={`time: "4/4"
+=
+1 - 2 -`}
+/>
+
+## Slash and Dot Durations
 
 Slashes shorten a note. One slash halves the duration, and additional slashes keep dividing it.
 
-```jpu valid
-time: "4/4"
+<JianpuSource
+  title="Slash duration source"
+  source={`time: "4/4"
 =
-1/ 2/ 3 4 5
-```
+1/ 2/ 3 4 5`}
+/>
+
+<ScorePreview
+  title="Slash durations"
+  source={`time: "4/4"
+=
+1/ 2/ 3 4 5`}
+/>
 
 Dots lengthen a note by adding half of the previous duration value.
 
-```jpu valid
-time: "6/8"
+<JianpuSource
+  title="Dotted duration source"
+  source={`time: "6/8"
 =
-1. 2/ 3/ 4/
-```
+1. 2/ 3/ 4/`}
+/>
+
+<ScorePreview
+  title="Dotted duration"
+  source={`time: "6/8"
+=
+1. 2/ 3/ 4/`}
+/>
 
 Dash duration marks and slash duration marks are separate duration forms. Do not combine them on the same note.
+
+## Duration Table
 
 | Syntax | Duration |
 | --- | --- |
@@ -56,44 +104,51 @@ Dash duration marks and slash duration marks are separate duration forms. Do not
 
 Duration marks belong to the note, rest, drum note, or chord immediately before them. A stray duration mark without a preceding item is invalid.
 
-```jpu valid
-time: "4/4"
+## Diagnostics
+
+<JianpuSource
+  title="Mixed item duration source"
+  source={`time: "4/4"
 =
-{1 3 5} - 0/ 1.
-```
+{1 3 5} - 0/ 1.`}
+/>
 
-<JianpuExample title="Mixed duration forms" status="invalid" description="Dash extensions and slash/dot suffixes cannot be combined on the same item.">
+<ScorePreview
+  title="Chord, rest, and dotted duration"
+  source={`time: "4/4"
+=
+{1 3 5} - 0/ 1.`}
+/>
 
-```jpu invalid
-1-/ 2 3 4
-```
+<JianpuExample
+  title="Mixed duration forms"
+  status="invalid"
+  description="Dash extensions and slash/dot suffixes cannot be combined on the same item."
+  source={`1-/ 2 3 4`}
+/>
 
-</JianpuExample>
-
-<JianpuExample title="Stray duration mark" status="invalid" description="A duration suffix must follow a note, rest, drum note, or chord.">
-
-```jpu invalid
-/1 2 3 4
-```
-
-</JianpuExample>
+<JianpuExample
+  title="Stray duration mark"
+  status="invalid"
+  description="A duration suffix must follow a note, rest, drum note, or chord."
+  source={`/1 2 3 4`}
+/>
 
 Measure-duration warnings use the active `time` header. A warning means the document can still render, but the measure is rhythmically longer or shorter than the declared meter.
 
-<JianpuExample title="Short measure" status="warning" description="In 4/4, this measure is shorter than the declared meter.">
-
-```jpu warning
-time: "4/4"
+<JianpuExample
+  title="Short measure"
+  status="warning"
+  description="In 4/4, this measure is shorter than the declared meter."
+  source={`time: "4/4"
 =
-1 2
-```
-
-</JianpuExample>
+1 2`}
+/>
 
 <RelatedLinks
   links={[
     { href: '../notes/', label: 'Notes and Rests', description: 'See which items can receive duration suffixes.' },
     { href: '../repeats/', label: 'Repeats', description: 'Check rhythm inside repeated measures and endings.' },
-    { href: '../validation/', label: 'Validation', description: 'Review duration and measure warnings.' },
+    { href: '../../reference/grammar/', label: 'Grammar Reference', description: 'Look up duration tokens quickly.' },
   ]}
 />

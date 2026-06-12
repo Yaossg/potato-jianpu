@@ -5,17 +5,30 @@ docId: getting-started
 ---
 
 import RelatedLinks from '../../components/RelatedLinks.astro';
+import JianpuSource from '../../components/JianpuSource.astro';
+import ScorePreview from '../../components/ScorePreview.astro';
 
 Start with a small `.jpu` file. The optional file header comes first, then a line containing `=`, then the score body.
 
-```jpu valid
-title: "First Phrase"
+<JianpuSource
+  title="First phrase source"
+  source={`title: "First Phrase"
 key: "C"
 time: "4/4"
 tempo: "88"
 =
-1 2 3 4 | 5 - 5 -
-```
+1 2 3 4 | 5 - 5 -`}
+/>
+
+<ScorePreview
+  title="Rendered preview"
+  source={`title: "First Phrase"
+key: "C"
+time: "4/4"
+tempo: "88"
+=
+1 2 3 4 | 5 - 5 -`}
+/>
 
 Use the browser app when you want immediate preview, playback, and downloads. Use the CLI when you want repeatable validation or export commands in a terminal.
 

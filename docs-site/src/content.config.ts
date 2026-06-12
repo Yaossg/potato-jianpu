@@ -8,6 +8,7 @@ export const collections = {
     schema: docsSchema({
       extend: z.object({
         docId: z.string(),
+        sectionIds: z.array(z.string()).optional(),
       }),
     }),
   }),

@@ -2,9 +2,41 @@
 title: Export
 description: Export scores as SVG, PNG, MIDI, WAV, and MP3.
 docId: guide-export
+sectionIds:
+  - visual-exports
+  - midi-export
+  - audio-exports
 ---
 
+import JianpuSource from '../../../components/JianpuSource.astro';
+import ScorePreview from '../../../components/ScorePreview.astro';
+import SupportMatrix from '../../../components/SupportMatrix.astro';
+import RelatedLinks from '../../../components/RelatedLinks.astro';
+
 Modern Jianpu Markup can export the same parsed score to visual, MIDI, and audio formats from both the browser app and the CLI.
+
+<JianpuSource title="Export preview source" source={`title: "Export preview"
+time: "4/4"
+=
+1 2 3 4 | 5 6 7 1'
+L1: "do re mi fa so la ti do"`} />
+
+<ScorePreview source={`title: "Export preview"
+time: "4/4"
+=
+1 2 3 4 | 5 6 7 1'
+L1: "do re mi fa so la ti do"`} />
+
+<SupportMatrix
+  title="Export support"
+  features={[
+    { id: 'svg-export', feature: 'SVG export', parser: true, render: true, playback: false, export: true, cli: true },
+    { id: 'png-export', feature: 'PNG export', parser: true, render: true, playback: false, export: true, cli: true },
+    { id: 'midi-export', feature: 'MIDI export', parser: true, render: false, playback: true, export: true, cli: true },
+    { id: 'wav-export', feature: 'WAV export', parser: true, render: false, playback: true, export: true, cli: true },
+    { id: 'mp3-export', feature: 'MP3 export', parser: true, render: false, playback: true, export: true, cli: true },
+  ]}
+/>
 
 ## Visual exports
 
@@ -33,3 +65,10 @@ pnpm run cli -- export-mp3 examples/twinkle.jpu -o twinkle.mp3 --program 0 --sam
 ```
 
 Audio sample rate defaults to `44100`. MP3 bit rate defaults to `128` kbps.
+
+<RelatedLinks
+  links={[
+    { href: '../cli/', label: 'CLI', description: 'Run repeatable export commands from a terminal.' },
+    { href: '../playback/', label: 'Playback', description: 'Review the timing model shared by MIDI and audio exports.' },
+  ]}
+/>

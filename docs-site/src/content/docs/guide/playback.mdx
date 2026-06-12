@@ -2,9 +2,39 @@
 title: Playback
 description: Understand browser playback, click-to-play, programs, drums, and repeats.
 docId: guide-playback
+sectionIds:
+  - browser-playback
+  - programs-drums
+  - repeats-tracks
 ---
 
+import JianpuSource from '../../../components/JianpuSource.astro';
+import ScorePreview from '../../../components/ScorePreview.astro';
+import SupportMatrix from '../../../components/SupportMatrix.astro';
+import RelatedLinks from '../../../components/RelatedLinks.astro';
+
 Playback is compiled from the parsed document. Notes, rests, accidentals, octave marks, chords, ties, repeat barlines, repeated endings, and labeled tracks all affect the timed playback result.
+
+<JianpuSource title="Playback preview source" source={`time: "4/4"
+=
+T1: |: 1 2 3 4 | [1] 5 - 5 - :| [2] 1 - - -
+T2: |: 5 5 5 5 | [1] 3 - 3 - :| [2] 1 - - -`} />
+
+<ScorePreview source={`time: "4/4"
+=
+T1: |: 1 2 3 4 | [1] 5 - 5 - :| [2] 1 - - -
+T2: |: 5 5 5 5 | [1] 3 - 3 - :| [2] 1 - - -`} />
+
+<SupportMatrix
+  title="Playback support"
+  features={[
+    { id: 'notes-rests-accidentals', feature: 'Notes, rests, and accidentals', parser: true, render: true, playback: true, export: true, cli: true },
+    { id: 'chords-ties', feature: 'Chords and ties', parser: true, render: true, playback: true, export: true, cli: true },
+    { id: 'repeats-endings', feature: 'Repeats and endings', parser: true, render: true, playback: true, export: true, cli: true },
+    { id: 'labeled-tracks', feature: 'Labeled tracks', parser: true, render: true, playback: true, export: true, cli: true },
+    { id: 'lyrics-timing', feature: 'Lyrics timing', parser: true, render: true, playback: false, export: 'visual only', cli: true },
+  ]}
+/>
 
 ## Browser playback
 
@@ -23,3 +53,11 @@ The browser app includes program selection, volume, audition, and an initial-res
 Repeat barlines and repeated endings are expanded for playback and export. Labeled tracks play together inside a voice group; the next group starts after the previous group ends.
 
 Lyrics render visually but do not affect playback timing.
+
+<RelatedLinks
+  links={[
+    { href: '../browser-app/', label: 'Browser App', description: 'Use interactive playback and click-to-play while editing.' },
+    { href: '../export/', label: 'Export', description: 'Create MIDI, WAV, and MP3 output from the same playback model.' },
+    { href: '../../syntax/repeats/', label: 'Repeats', description: 'Understand the repeat and ending syntax that playback expands.' },
+  ]}
+/>

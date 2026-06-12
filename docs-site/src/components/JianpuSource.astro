@@ -1,0 +1,177 @@
+---
+import { parse } from '../../../src/index.ts';
+
+interface Props {
+  source: string;
+  title?: string;
+  description?: string;
+  status?: 'valid' | 'warning' | 'invalid';
+  statusLabel?: string;
+  copyLabel?: string;
+  copiedLabel?: string;
+}
+
+const {
+  source,
+  title,
+  description,
+  status = 'valid',
+  statusLabel,
+  copyLabel,
+  copiedLabel,
+} = Astro.props;
+
+const isChinesePage = Astro.url.pathname.includes('/zh/');
+const labels = isChinesePage
+  ? {
+      valid: '有效',
+      warning: '警告',
+      invalid: '错误',
+    }
+  : {
+      valid: 'Valid',
+      warning: 'Warning',
+      invalid: 'Invalid',
+    };
+const resolvedCopyLabel = copyLabel ?? (isChinesePage ? '复制' : 'Copy');
+const resolvedCopiedLabel = copiedLabel ?? (isChinesePage ? '已复制' : 'Copied');
+
+const result = parse(source);
+
+if (status === 'invalid') {
+  if (result.ok) {
+    throw new Error('Expected invalid Jianpu docs source, but it parsed successfully.');
+  }
+} else if (!result.ok) {
+  const message = result.diagnostics.map((diagnostic) => diagnostic.message).join('; ');
+  throw new Error(`Expected parseable Jianpu docs source: ${message}`);
+} else {
+  const hasWarning = result.diagnostics.some((diagnostic) => diagnostic.severity === 'warning');
+  if (status === 'valid' && result.diagnostics.length > 0) {
+    const message = result.diagnostics.map((diagnostic) => diagnostic.message).join('; ');
+    throw new Error(`Expected warning-free Jianpu docs source: ${message}`);
+  }
+  if (status === 'warning' && !hasWarning) {
+    throw new Error('Expected warning Jianpu docs source, but no warning was reported.');
+  }
+}
+---
+
+<section class={`jianpu-source jianpu-source-${status}`}>
+  {(title || description) && (
+    <header class="jianpu-source-header">
+      {title && <strong>{title}</strong>}
+      <span class="jianpu-source-badge">{statusLabel ?? labels[status]}</span>
+      {description && <p>{description}</p>}
+    </header>
+  )}
+  <div class="jianpu-source-code">
+    <button
+      type="button"
+      class="jianpu-source-copy"
+      data-copy-source={source}
+      data-copy-label={resolvedCopyLabel}
+      data-copied-label={resolvedCopiedLabel}
+    >
+      {resolvedCopyLabel}
+    </button>
+    <pre><code>{source}</code></pre>
+  </div>
+</section>
+
+<script>
+  const buttons = document.querySelectorAll<HTMLButtonElement>('.jianpu-source-copy');
+
+  for (const button of buttons) {
+    button.addEventListener('click', async () => {
+      const source = button.dataset.copySource ?? '';
+      const copyLabel = button.dataset.copyLabel ?? 'Copy';
+      const copiedLabel = button.dataset.copiedLabel ?? 'Copied';
+
+      await navigator.clipboard.writeText(source);
+      button.textContent = copiedLabel;
+      window.setTimeout(() => {
+        button.textContent = copyLabel;
+      }, 1600);
+    });
+  }
+</script>
+
+<style>
+  .jianpu-source {
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.5rem;
+    margin: 1rem 0;
+    overflow: hidden;
+  }
+
+  .jianpu-source-header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.25rem 0.75rem;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--sl-color-gray-6);
+  }
+
+  .jianpu-source-header p {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: var(--sl-color-gray-2);
+    font-size: 0.9rem;
+  }
+
+  .jianpu-source-badge {
+    border-radius: 999px;
+    padding: 0.1rem 0.55rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  .jianpu-source-valid .jianpu-source-badge {
+    background: var(--sl-color-green-low);
+    color: var(--sl-color-green-high);
+  }
+
+  .jianpu-source-warning .jianpu-source-badge {
+    background: var(--sl-color-orange-low);
+    color: var(--sl-color-orange-high);
+  }
+
+  .jianpu-source-invalid .jianpu-source-badge {
+    background: var(--sl-color-red-low);
+    color: var(--sl-color-red-high);
+  }
+
+  .jianpu-source-code {
+    position: relative;
+  }
+
+  .jianpu-source-code pre {
+    margin: 0;
+    border-radius: 0;
+    padding-right: 5rem;
+  }
+
+  .jianpu-source-copy {
+    position: absolute;
+    top: 0.55rem;
+    right: 0.55rem;
+    z-index: 1;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.375rem;
+    padding: 0.2rem 0.5rem;
+    background: var(--sl-color-bg);
+    color: var(--sl-color-text);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.8rem;
+    line-height: 1.4;
+  }
+
+  .jianpu-source-copy:hover {
+    border-color: var(--sl-color-accent);
+    color: var(--sl-color-accent);
+  }
+</style>

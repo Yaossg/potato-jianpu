@@ -5,50 +5,80 @@ docId: syntax-overview
 ---
 
 import SyntaxToken from '../../../../components/SyntaxToken.astro';
+import SyntaxTokenGrid from '../../../../components/SyntaxTokenGrid.astro';
+import JianpuSource from '../../../../components/JianpuSource.astro';
+import RelatedLinks from '../../../../components/RelatedLinks.astro';
+import ScorePreview from '../../../../components/ScorePreview.astro';
 
 一个文档可以包含可选的文件头，后面再接可选的乐谱正文。只有文件里出现由一个或多个 `=` 组成的分隔行时，解析器才会识别文件头。文件头字段必须写在分隔行之前；乐谱、歌词和轨道行写在它之后。没有分隔行时，整个文件都会按乐谱正文解析。
 
-```jpu valid
-title: "Example"
+<JianpuSource
+  title="完整文档源码"
+  source={`title: "Example"
 composer: "Traditional"
 time: "4/4"
 =
-1 2 3 4 | 5 - 5 -
-```
+1 2 3 4 | 5 - 5 -`}
+/>
+
+<ScorePreview
+  title="渲染后的概览示例"
+  source={`title: "Example"
+composer: "Traditional"
+time: "4/4"
+=
+1 2 3 4 | 5 - 5 -`}
+/>
+
+<SyntaxTokenGrid
+  title="常见记号"
+  tokens={[
+    { token: '=', label: '文件头分隔线', description: '结束可选文件头，并开始按乐谱正文解析。' },
+    { token: '|', label: '小节边界', description: '分隔同一乐谱行里的小节。' },
+    { token: '|:', label: '反复开始', description: '标出反复段落的起点。' },
+    { token: ':|', label: '反复结束', description: '标出反复段落的终点。' },
+    { token: '[1]', label: '反复结尾', description: '标出反复结尾小节对应的轮次编号。' },
+    { token: 'L1:', label: '歌词行', description: '把歌词音节附加到前一行乐谱下面。' },
+    { token: 'T1:', label: '轨道行', description: '把乐谱行标记为多轨分组的一部分。' },
+  ]}
+/>
 
 解析器把有空格和无空格的写法视为同一套语法。下面两个乐谱主体等价：
 
-```jpu valid
-1234|5-5-
-```
+<JianpuSource title="紧凑谱面正文" source={`1234|5-5-`} />
 
-```jpu valid
-1 2 3 4 | 5 - 5 -
-```
+<JianpuSource title="带空格的谱面正文" source={`1 2 3 4 | 5 - 5 -`} />
 
 注释从 `;` 开始，到当前行末结束。
 
-```jpu valid
-1 2 3 4 | ; a comment
-5 - 5 -
-```
+<JianpuSource
+  title="小节后的注释"
+  source={`1 2 3 4 | ; a comment
+5 - 5 -`}
+/>
 
 空行和开头的换行会被忽略。一个文档可以只有乐谱主体，也可以只有“文件头加分隔行”而没有乐谱正文，甚至可以为空。只有乐谱主体时不需要分隔行。
 
-```jpu valid
-1 2 3 4 | 5 - 5 -
-```
+<JianpuSource title="只有谱面正文的文档" source={`1 2 3 4 | 5 - 5 -`} />
 
 小节用 <SyntaxToken token="|" label="小节线" /> 分隔。行首可以单独写小节线或反复开始，行尾也可以单独写小节线或反复结束。连续小节线之间的空小节会产生警告并被忽略，不会变成实际发声内容。
 
-```jpu warning
-1 2 || 3 4
-```
+<JianpuSource title="空小节警告" status="warning" source={`1 2 || 3 4`} />
 
 换行是有意义的，因为它会分隔文件头字段、乐谱行和歌词行。连续空行会被折叠，所以两行乐谱之间的空行不会生成额外的渲染行。
 
-```jpu valid
-1 2 3 4
+<JianpuSource
+  title="谱面行之间的空行"
+  source={`1 2 3 4
 
-5 6 7 1'
-```
+5 6 7 1'`}
+/>
+
+<RelatedLinks
+  title="相关页面"
+  links={[
+    { href: '../header/', label: '文件头', description: '添加元数据，并了解什么时候需要分隔行。' },
+    { href: '../notes/', label: '音符与休止符', description: '编写音高、休止符、鼓音、和弦和延音线。' },
+    { href: '../../guide/troubleshooting/', label: '故障排查', description: '从警告或错误定位到对应语法主题。' },
+  ]}
+/>

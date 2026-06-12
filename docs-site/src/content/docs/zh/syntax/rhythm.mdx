@@ -2,42 +2,90 @@
 title: 节奏
 description: 使用横线、斜线和附点书写音符时值。
 docId: syntax-rhythm
+sectionIds:
+  - plain-notes
+  - dash-durations
+  - slash-and-dot-durations
+  - duration-table
+  - diagnostics
 ---
 
 import JianpuExample from '../../../../components/JianpuExample.astro';
+import JianpuSource from '../../../../components/JianpuSource.astro';
 import RelatedLinks from '../../../../components/RelatedLinks.astro';
+import ScorePreview from '../../../../components/ScorePreview.astro';
+
+## 普通音符
 
 普通音符在常见的 `4/4` 拍中按四分音符单位填充小节。
 
-```jpu valid
-time: "4/4"
+<JianpuSource
+  title="普通四分音符源码"
+  source={`time: "4/4"
 =
-1 2 3 4
-```
+1 2 3 4`}
+/>
+
+<ScorePreview
+  title="普通四分音符"
+  source={`time: "4/4"
+=
+1 2 3 4`}
+/>
+
+## 横线时值
 
 横线会延长前一个音符或休止符。
 
-```jpu valid
-time: "4/4"
+<JianpuSource
+  title="横线时值源码"
+  source={`time: "4/4"
 =
-1 - 2 -
-```
+1 - 2 -`}
+/>
+
+<ScorePreview
+  title="横线延长"
+  source={`time: "4/4"
+=
+1 - 2 -`}
+/>
+
+## 斜线和附点时值
 
 斜线会缩短音符。一个斜线把时值减半，更多斜线继续二分。
 
-```jpu valid
-time: "4/4"
+<JianpuSource
+  title="斜线时值源码"
+  source={`time: "4/4"
 =
-1/ 2/ 3 4 5
-```
+1/ 2/ 3 4 5`}
+/>
+
+<ScorePreview
+  title="斜线时值"
+  source={`time: "4/4"
+=
+1/ 2/ 3 4 5`}
+/>
 
 附点会增加前一层时值的一半。
 
-```jpu valid
-time: "6/8"
+<JianpuSource
+  title="附点时值源码"
+  source={`time: "6/8"
 =
-1. 2/ 3/ 4/
-```
+1. 2/ 3/ 4/`}
+/>
+
+<ScorePreview
+  title="附点时值"
+  source={`time: "6/8"
+=
+1. 2/ 3/ 4/`}
+/>
+
+## 时值表
 
 横线时值和斜线时值是两种不同形式。不要在同一个音符上混用它们。
 
@@ -54,47 +102,54 @@ time: "6/8"
 | `1..` | 复附点四分音符 |
 | `1/.` | 附点八分音符 |
 
+## 诊断
+
 时值标记属于它前面的音符、休止符、鼓音或和弦。没有前置对象的游离时值标记是无效的。
 
-```jpu valid
-time: "4/4"
+<JianpuSource
+  title="混合项目时值源码"
+  source={`time: "4/4"
 =
-{1 3 5} - 0/ 1.
-```
+{1 3 5} - 0/ 1.`}
+/>
 
-<JianpuExample title="混合时值形式" status="invalid" description="横线延长和斜线/附点后缀不能混在同一个项目上。">
+<ScorePreview
+  title="和弦、休止符和附点时值"
+  source={`time: "4/4"
+=
+{1 3 5} - 0/ 1.`}
+/>
 
-```jpu invalid
-1-/ 2 3 4
-```
+<JianpuExample
+  title="混合时值形式"
+  status="invalid"
+  description="横线延长和斜线/附点后缀不能混在同一个项目上。"
+  source={`1-/ 2 3 4`}
+/>
 
-</JianpuExample>
-
-<JianpuExample title="游离时值标记" status="invalid" description="时值后缀必须跟在音符、休止符、鼓音或和弦之后。">
-
-```jpu invalid
-/1 2 3 4
-```
-
-</JianpuExample>
+<JianpuExample
+  title="游离时值标记"
+  status="invalid"
+  description="时值后缀必须跟在音符、休止符、鼓音或和弦之后。"
+  source={`/1 2 3 4`}
+/>
 
 小节时值警告使用当前 `time` 文件头。警告表示文档仍然可以渲染，但该小节比声明的拍号更长或更短。
 
-<JianpuExample title="小节过短" status="warning" description="在 4/4 中，这个小节比声明的拍号短。">
-
-```jpu warning
-time: "4/4"
+<JianpuExample
+  title="小节过短"
+  status="warning"
+  description="在 4/4 中，这个小节比声明的拍号短。"
+  source={`time: "4/4"
 =
-1 2
-```
-
-</JianpuExample>
+1 2`}
+/>
 
 <RelatedLinks
   title="相关页面"
   links={[
     { href: '../notes/', label: '音符与休止符', description: '查看哪些项目可以接收时值后缀。' },
     { href: '../repeats/', label: '反复', description: '检查反复小节和结尾里的节奏。' },
-    { href: '../validation/', label: '校验', description: '查看时值错误和小节警告。' },
+    { href: '../../reference/grammar/', label: '语法参考', description: '快速查找时值 token。' },
   ]}
 />

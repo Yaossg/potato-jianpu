@@ -14,6 +14,7 @@ export default defineConfig({
         shiki: {
           langAlias: {
             jpu: "text",
+            ebnf: "text",
           },
         },
       },
@@ -96,13 +97,6 @@ export default defineConfig({
               slug: "syntax/lyrics-tracks",
               translations: {
                 "zh-CN": "歌词与多轨",
-              },
-            },
-            {
-              label: "Validation",
-              slug: "syntax/validation",
-              translations: {
-                "zh-CN": "校验",
               },
             },
           ],

@@ -2,9 +2,46 @@
 title: 播放
 description: 了解浏览器播放、点击播放、音色、鼓音和反复。
 docId: guide-playback
+sectionIds:
+  - browser-playback
+  - programs-drums
+  - repeats-tracks
 ---
 
+import JianpuSource from '../../../../components/JianpuSource.astro';
+import ScorePreview from '../../../../components/ScorePreview.astro';
+import SupportMatrix from '../../../../components/SupportMatrix.astro';
+import RelatedLinks from '../../../../components/RelatedLinks.astro';
+
 播放结果由解析后的文档编译而来。音符、休止符、变音记号、八度标记、和弦、延音线、反复小节线、反复结尾和带标签轨道都会影响最终的计时播放结果。
+
+<JianpuSource title="播放预览源码" source={`time: "4/4"
+=
+T1: |: 1 2 3 4 | [1] 5 - 5 - :| [2] 1 - - -
+T2: |: 5 5 5 5 | [1] 3 - 3 - :| [2] 1 - - -`} />
+
+<ScorePreview source={`time: "4/4"
+=
+T1: |: 1 2 3 4 | [1] 5 - 5 - :| [2] 1 - - -
+T2: |: 5 5 5 5 | [1] 3 - 3 - :| [2] 1 - - -`} />
+
+<SupportMatrix
+  title="播放支持"
+  columns={[
+    ['parser', '解析器'],
+    ['render', 'SVG'],
+    ['playback', '播放'],
+    ['export', '导出'],
+    ['cli', 'CLI'],
+  ]}
+  features={[
+    { id: 'notes-rests-accidentals', feature: '音符、休止符和变音', parser: true, render: true, playback: true, export: true, cli: true },
+    { id: 'chords-ties', feature: '和弦与延音线', parser: true, render: true, playback: true, export: true, cli: true },
+    { id: 'repeats-endings', feature: '反复与反复结尾', parser: true, render: true, playback: true, export: true, cli: true },
+    { id: 'labeled-tracks', feature: '带标签轨道', parser: true, render: true, playback: true, export: true, cli: true },
+    { id: 'lyrics-timing', feature: '歌词计时', parser: true, render: true, playback: false, export: '仅视觉', cli: true },
+  ]}
+/>
 
 ## 浏览器播放
 
@@ -23,3 +60,12 @@ docId: guide-playback
 反复小节线和反复结尾会在播放和导出时展开。带标签轨道会在同一个声部组内同时播放；下一个声部组会在前一个组结束后开始。
 
 歌词只参与视觉渲染，不影响播放计时。
+
+<RelatedLinks
+  title="相关页面"
+  links={[
+    { href: '../browser-app/', label: '浏览器 App', description: '编辑时使用交互播放和点击播放。' },
+    { href: '../export/', label: '导出', description: '从同一套播放模型生成 MIDI、WAV 和 MP3。' },
+    { href: '../../syntax/repeats/', label: '反复', description: '了解播放展开的反复和反复结尾语法。' },
+  ]}
+/>

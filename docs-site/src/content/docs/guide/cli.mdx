@@ -2,9 +2,25 @@
 title: CLI
 description: Validate, inspect, and export .jpu scores from a terminal.
 docId: guide-cli
+sectionIds:
+  - export-commands
 ---
 
+import RelatedLinks from '../../../components/RelatedLinks.astro';
+import JianpuSource from '../../../components/JianpuSource.astro';
+import ScorePreview from '../../../components/ScorePreview.astro';
+
 Use the CLI for repeatable checks and scripted exports.
+
+<JianpuSource title="Small CLI input" source={`title: "CLI preview"
+time: "4/4"
+=
+1 2 3 4 | 5 6 7 1'`} />
+
+<ScorePreview title="Rendered CLI input" source={`title: "CLI preview"
+time: "4/4"
+=
+1 2 3 4 | 5 6 7 1'`} />
 
 ```sh
 pnpm run cli -- --version
@@ -29,3 +45,10 @@ SVG and PNG export accept `--page-width <px>`, `--color <css>`, and `--backgroun
 MIDI, WAV, and MP3 export accept `--program <number>` and `--omit-initial-rest`. WAV and MP3 also accept `--sample-rate <hz>` and `--amplitude <0-1>`. MP3 additionally accepts `--bit-rate <kbps>`.
 
 Programs `0..127` are melodic General MIDI programs. Programs `128..220` enable drum mode, mapping `X` to percussion note `program - 128 + 35`.
+
+<RelatedLinks
+  links={[
+    { href: '../export/', label: 'Export', description: 'Review format-specific export behavior before choosing an output.' },
+    { href: '../troubleshooting/', label: 'Troubleshooting', description: 'Use validation diagnostics to find the relevant syntax page.' },
+  ]}
+/>

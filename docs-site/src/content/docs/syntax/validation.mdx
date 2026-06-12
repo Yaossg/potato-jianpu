@@ -1,94 +1,31 @@
 ---
-title: Validation
-description: Understand parse errors, warnings, and recoverable score issues.
+title: Diagnostics Index
+description: Find the syntax page that explains a warning or error.
 docId: syntax-validation
 ---
 
-import JianpuExample from '../../../components/JianpuExample.astro';
 import RelatedLinks from '../../../components/RelatedLinks.astro';
 
-Modern Jianpu Markup reports diagnostics with source ranges. Errors prevent a valid parsed score. Warnings keep the document usable, but point to notation that may not mean what you intended.
+Diagnostics are documented with the syntax that causes them. Use this page only as a compact index when an older link or search result lands here.
 
-## Warnings
+| Diagnostic area | Where to look |
+| --- | --- |
+| Header fields, strings, `key`, `time`, `tempo` | [File Header](../header/) |
+| Notes, drums, accidentals, octaves, chords, empty chords, ties | [Notes and Rests](../notes/) |
+| Duration suffixes and measure-duration warnings | [Rhythm](../rhythm/) |
+| Repeat barlines and repeated endings | [Repeats](../repeats/) |
+| Lyric counts, lyric placement, track labels, track grouping | [Lyrics and Tracks](../lyrics-tracks/) |
 
-Measure-duration mismatches are warnings. They use the active `time` header.
+The CLI remains the best way to inspect the full diagnostic list for a file:
 
-<JianpuExample title="Short measure" status="warning" description="This parses, but the measure is shorter than 4/4.">
-
-```jpu warning
-time: "4/4"
-=
-1 2 3
+```sh
+pnpm run cli -- validate path/to/score.jpu
 ```
-
-</JianpuExample>
-
-Empty measures between consecutive bar tokens are also warnings. The empty measure is ignored.
-
-<JianpuExample title="Empty measure" status="warning" description="The empty measure between the bar tokens is ignored.">
-
-```jpu warning
-1 2 || 3 4
-```
-
-</JianpuExample>
-
-Lyric syllable counts that do not match the main voice notes are reported as warnings so the score can still render.
-
-Empty chords are accepted as rests and reported as warnings.
-
-<JianpuExample title="Empty chord" status="warning" description="The empty chord renders as a rest and keeps the document usable.">
-
-```jpu warning
-1 {} 3 4
-```
-
-</JianpuExample>
-
-## Errors
-
-Common hard errors include:
-
-- Malformed header lines or invalid known header values.
-- Unterminated strings.
-- Invalid score characters.
-- Invalid chord members, including rests, drum notes, or duration suffixes inside braces.
-- Stray duration marks, unmatched chord braces, or unmatched chord endings.
-- Illegal ties, such as a tied first note or a tie to an incompatible previous note.
-- Repeated-ending groups without an explicit final ending.
-- Track labels outside `T1:` through `T16:` or use of reserved `T10:`.
-
-<JianpuExample title="Invalid score token" status="invalid" description="The question mark is not a score token.">
-
-```jpu invalid
-1 2 ? 3
-```
-
-</JianpuExample>
-
-<JianpuExample title="Illegal tie" status="invalid" description="A track cannot start with a tied note.">
-
-```jpu invalid
-~1 2 3 4
-```
-
-</JianpuExample>
-
-<JianpuExample title="Repeated ending without final ending" status="invalid" description="A repeated-ending group needs an explicit final ending that does not end with :|.">
-
-```jpu invalid
-|: 1 2 3 4 | [1] 5 - 5 - :|
-```
-
-</JianpuExample>
-
-The parser tries to recover after many local errors so the app can show useful diagnostics near the source text instead of stopping at the first problem.
 
 <RelatedLinks
   links={[
-    { href: '../overview/', label: 'Syntax Overview', description: 'Review document structure, comments, and measure separators.' },
-    { href: '../repeats/', label: 'Repeats', description: 'See the repeated-ending rules that produce several validation errors.' },
-    { href: '../../guide/troubleshooting/', label: 'Troubleshooting', description: 'Start from common diagnostics and fixes.' },
-    { href: '../../reference/grammar/', label: 'Grammar Reference', description: 'Use the compact lookup table for score tokens.' },
+    { href: '../overview/', label: 'Syntax Overview', description: 'Start from document structure and comments.' },
+    { href: '../../guide/troubleshooting/', label: 'Troubleshooting', description: 'Work through diagnostics from the CLI or browser app.' },
+    { href: '../../reference/grammar/', label: 'Grammar Reference', description: 'Use the compact lookup reference.' },
   ]}
 />

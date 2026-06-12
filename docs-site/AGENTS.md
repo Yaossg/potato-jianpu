@@ -62,9 +62,6 @@ pnpm run web:build
 pnpm run test
 ```
 
-`pnpm run docs:check` currently may surface the known unrelated TypeScript hint
-for `src/renderer/score.ts` `allNotes`.
-
 ## Boundaries
 
 - Do not remove `../public/grammar.html` or `../public/grammar.zh.html` unless the

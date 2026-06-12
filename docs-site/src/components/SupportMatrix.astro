@@ -1,17 +1,28 @@
 ---
-const { title = "Support", features = [] } = Astro.props;
-const columns = [
-  ["parser", "Parser"],
-  ["render", "SVG"],
-  ["playback", "Playback"],
-  ["export", "Export"],
-  ["cli", "CLI"],
-];
+const {
+  title = "Support",
+  features = [],
+  columns = [
+    ["parser", "Parser"],
+    ["render", "SVG"],
+    ["playback", "Playback"],
+    ["export", "Export"],
+    ["cli", "CLI"],
+  ],
+  featureLabel,
+  yesLabel,
+  noLabel,
+  unknownLabel = "-",
+} = Astro.props;
+const isChinesePage = Astro.url.pathname.includes("/zh/");
+const resolvedFeatureLabel = featureLabel ?? (isChinesePage ? "功能" : "Feature");
+const resolvedYesLabel = yesLabel ?? (isChinesePage ? "是" : "Yes");
+const resolvedNoLabel = noLabel ?? (isChinesePage ? "否" : "No");
 
 function supportLabel(value) {
-  if (value === true) return "Yes";
-  if (value === false) return "No";
-  return value === undefined ? "-" : value;
+  if (value === true) return resolvedYesLabel;
+  if (value === false) return resolvedNoLabel;
+  return value === undefined ? unknownLabel : value;
 }
 ---
 
@@ -20,7 +31,7 @@ function supportLabel(value) {
   <table>
     <thead>
       <tr>
-        <th>Feature</th>
+        <th>{resolvedFeatureLabel}</th>
         {columns.map(([, label]) => <th>{label}</th>)}
       </tr>
     </thead>

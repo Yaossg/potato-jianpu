@@ -297,7 +297,6 @@ function lineNotesByTrack(document: Document): Map<ScoreLine, Note[]> {
 function renderLine(
   layout: LineLayout,
   lineY: number,
-  allNotes: Note[],
   document: Document,
   activeNoteIndices: Set<number>,
   justifyLine: boolean,
@@ -854,7 +853,6 @@ export function renderScore(document: Document, yStart: number, pageWidth: numbe
     const renderedLine = renderLine(
       item.layout,
       y,
-      allNotes,
       document,
       activeNoteIndexSet,
       shouldJustify && !scaled,

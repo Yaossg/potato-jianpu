@@ -2,39 +2,163 @@
 title: 语法参考
 description: 当前乐谱语法的紧凑参考。
 docId: reference-grammar
+sectionIds:
+  - document-structure
+  - header
+  - music-tokens
+  - durations
+  - score-layout
+  - diagnostics-summary
+  - railroad-diagrams
 ---
 
-这一页是紧凑速查表。需要解释和示例时，请使用侧边栏中的语法指南页面。
+import RailroadDiagram from '../../../../components/RailroadDiagram.astro';
+import RelatedLinks from '../../../../components/RelatedLinks.astro';
+
+这一页是紧凑速查表。需要解释、示例和诊断细节时，请使用侧边栏中的语法指南页面。
+
+## 文档结构
+
+一个 `.jpu` 文件可以有开头空行、可选文件头、可选乐谱正文，然后到达文件结束。
+
+```ebnf
+file = { NEWLINE }, [ header ], [ score ], EOF ;
+header = { property }, EQUALS, { EQUALS }, NEWLINE, { NEWLINE } ;
+score = score_item, { NEWLINE, { NEWLINE }, score_item }, { NEWLINE } ;
+score_item = line | lyric_line ;
+```
+
+只有出现分隔行时，文件头才会被识别。分隔行是单独一行的一个或多个 `=`。没有分隔行时，整个文件都会按乐谱正文解析。空文件也合法，并使用默认文件头值。
+
+空格和制表符可以出现在乐谱 token 之间。注释从 `;` 开始，到当前行结束。换行会分隔文件头字段、乐谱行和歌词行；连续空行会按一个分隔处理。
+
+## 文件头
+
+文件头字段写成 `name: "value"`，并且必须放在分隔行之前。字段名以 ASCII 字母开头，后面可以继续使用 ASCII 字母、数字或下划线。未知字段会作为元数据保留，但没有内置效果。
+
+| 字段 | 默认值 | 含义 |
+| --- | --- | --- |
+| `title` | 空 | 渲染在乐谱上方的主标题。 |
+| `subtitle` | 空 | 副标题文本。 |
+| `composer` | 空 | 作曲者或来源文本。 |
+| `key` | `C` | 用于渲染、播放和导出的调号。 |
+| `time` | `4/4` | 用于小节时值校验和导出元数据的拍号。 |
+| `tempo` | `120` | 播放和导出的每分钟拍数。 |
+| `hidden` | 空 | 任意非空值都会隐藏渲染出的文件头区域。 |
+
+文件头也可以定义轨道和歌词行的显示名，例如 `T1: "Melody"` 和 `L1: "Verse"`。
+
+字符串使用双引号，并且必须保持在同一行。反斜杠会让分词器跳过后面的一个字符，但反斜杠本身会作为源文本保留，不会被解释成转义序列。
+
+支持的 `key` 值包括 `C`、`C#`、`Db`、`D`、`D#`、`Eb`、`E`、`F`、`F#`、`Gb`、`G`、`G#`、`Ab`、`A`、`A#`、`Bb` 和 `B`。字段值内部的一个空格会被忽略，也接受 `#C`、`bB` 这样的变音在前写法。
+
+允许的 `time` 分子是 `2`、`3`、`4`、`6`、`9` 和 `12`。允许的分母是 `2`、`4`、`8` 和 `16`。
+
+`tempo` 必须是正数，可以是整数或小数。
+
+## 音乐 token
 
 | 构造 | 语法 |
 | --- | --- |
-| 文件头字段 | `name: "value"` |
-| 分隔行 | `=`、`==`、`===` |
-| 音符 | `1` 到 `7` |
+| 有音高音符 | `1` 到 `7` |
 | 休止符 | `0` |
 | 鼓音 | `X` |
 | 变音记号 | `#`、`##`、`b`、`bb`、`%` |
 | 八度后缀 | `1'`、`1''`、`1,`、`1,,` |
 | 小节八度前缀 | `' 1 2 3`、`, 1 2 3` |
-| 时值 | `-`、`--`、`/`、`//`、`.`、`/.` |
 | 和弦 | `{1 3 5}` |
 | 延音线 | `~1` |
-| 小节线 | `|` |
-| 反复开始 | `|:` |
-| 反复结束 | `:|` |
-| 反复结束并重新开始 | `:|:` |
-| 反复结尾 | `[1]`、`[2]`、`[1,3]` |
-| 轨道标签 | `T1:` 到 `T16:`，不包括 `T10:` |
-| 歌词行 | `L1: "lyrics"` 或 `"lyrics"` |
 | 注释 | `; comment` |
 
-只有出现分隔行时，文件头才会被识别。没有分隔行时，整个文件都会按乐谱正文解析。连续小节线会产生空小节警告，空小节会被忽略。
+变音记号只作用于有音高音符。它们会在同一小节内影响播放、导出和延音线校验，并在下一个小节边界重置。
 
-轨道标签是 `T1:` 到 `T9:`，以及 `T11:` 到 `T16:`。`T10:` 保留给鼓通道，不能作为乐谱行标签使用。
+八度后缀写在有音高音符之后。小节八度前缀写在该小节任何音符之前，并作用于该小节所有有音高音符；单个音符的八度后缀会叠加到小节前缀上。
 
-```jpu valid
-title: "Repeat Example"
-time: "4/4"
-=
-|: 1 2 3 4 | [1] 5 - 5 - :| [2] 1 - - -
+和弦内部只能包含有音高音符。写在 `}` 之前的休止符、鼓音和时值后缀都是无效的。空和弦会被接受、渲染为休止符，并报告警告。
+
+延音线标记写在被延住的音符之前。带延音线的音符必须跟在同一轨道内兼容的发声音符之后；休止符后的延音、首音延音和改变音高目标的延音都是错误。鼓音可以延到前一个鼓音。
+
+## 时值
+
+默认时值是四分音符。时值后缀写在音符、休止符、鼓音或和弦之后。
+
+| 写法 | 时值 |
+| --- | --- |
+| `1` | 四分音符 |
+| `1-` | 二分音符 |
+| `1--` | 附点二分音符 |
+| `1---` | 全音符 |
+| `1/` | 八分音符 |
+| `1//` | 十六分音符 |
+| `1///` | 三十二分音符 |
+| `1.` | 附点四分音符 |
+| `1..` | 复附点四分音符 |
+| `1/.` | 附点八分音符 |
+
+横线时值不能和斜线或附点时值组合。游离时值标记也是错误，例如 `/1`、`.1` 或 `-1`。
+
+## 谱面布局
+
+```ebnf
+line = [ track_label ], [ start_barline ], [ ending ], [ measure ],
+  { measure_separator, [ ending ], [ measure ] }, [ end_barline ] ;
+lyric_line = [ lyric_label ], STRING ;
 ```
+
+| 构造 | 语法 |
+| --- | --- |
+| 小节线 | `\|` |
+| 反复开始 | `\|:` |
+| 反复结束 | `:\|` |
+| 反复结束并重新开始 | `:\|:` |
+| 反复结尾 | `[1]`、`[2]`、`[1,3]` |
+| 轨道标签 | `T1:` 到 `T9:`，以及 `T11:` 到 `T16:` |
+| 歌词行 | `L1: "lyrics"` 或 `"lyrics"` |
+
+一行可以用单个小节线或反复开始作为开头，也可以用单个小节线或反复结束作为结尾。连续小节线会产生空小节警告，空小节会被忽略。
+
+反复结尾使用方括号标记。非最终结尾用 `:|` 返回；最终结尾需要显式写出，并且不使用 `:|`。如果最终结尾标记后面还有更多小节，只有标记后的第一个小节会被视为该结尾的一部分。
+
+`T10:` 保留给 MIDI 鼓通道，不能作为乐谱行标签使用。只要任意乐谱行带有轨道标签，乐谱行就会按声部组切分。每组从 `T1` 开始，并按轨道编号递增；`T1 T2 T3 T1 T2` 和 `T1 T1 T2` 这样的顺序是合法的。
+
+歌词写在它标注的乐谱行或声部组之后。不带标签的引号歌词行会按 `L1` 处理。歌词不影响播放或导出时值。如果用空白分隔的音节数量和主声部音符数量一致，并且主声部只渲染成一行，音节会居中放在发声音符下方；休止符会被跳过。
+
+## 诊断摘要
+
+警告不会阻止文档继续使用。目前的警告包括小节时值不匹配、空小节、空和弦，以及歌词音节数量不匹配。
+
+错误会阻止生成有效的解析乐谱。常见错误包括格式错误的文件头字段、检测到文件头模式但缺少分隔行、未结束字符串、无效调号/拍号/速度、意外字符、无效和弦成员、未匹配的和弦括号、混用时值形式、游离时值后缀、非法延音线、无效轨道标签、无效轨道分组、歌词出现在任何乐谱行之前，以及没有显式最终结尾的反复结尾组。
+
+## 铁路图
+
+这些图由 `docs/grammar.ebnf` 生成。
+
+<RailroadDiagram rule="file" title="file" caption="文档的顶层结构。" />
+<RailroadDiagram rule="header" title="header" caption="文件头字段后接一个或多个分隔符。" />
+<RailroadDiagram rule="score" title="score" caption="由一个或多个换行分隔的谱面项目。" />
+<RailroadDiagram rule="score_item" title="score_item" caption="谱面项目可以是音乐行或歌词行。" />
+<RailroadDiagram rule="line" title="line" caption="带可选轨道标签、小节线、反复结尾和小节的谱面行。" />
+<RailroadDiagram rule="track_label" title="track_label" caption="受支持的轨道标签后接冒号。" />
+<RailroadDiagram rule="lyric_line" title="lyric_line" caption="可选歌词标签后接带引号的字符串。" />
+<RailroadDiagram rule="ending" title="ending" caption="[1]、[2] 或 [1,3] 这样的反复结尾标记。" />
+<RailroadDiagram rule="measure_separator" title="measure_separator" caption="普通小节分隔符和带反复含义的小节分隔符。" />
+<RailroadDiagram rule="measure" title="measure" caption="可选八度前缀后接带时值音符。" />
+<RailroadDiagram rule="durable_note" title="durable_note" caption="带可选延音线和时值后缀的音符类项目。" />
+<RailroadDiagram rule="general_note" title="general_note" caption="会发声或占位的项目：音高音符、和弦、休止符或鼓音。" />
+<RailroadDiagram rule="pitch_note" title="pitch_note" caption="带可选变音记号和八度后缀的数字音高。" />
+<RailroadDiagram rule="accidental" title="accidental" caption="写在音高音符前的升号、降号、重升/重降或还原记号。" />
+<RailroadDiagram rule="octave" title="octave" caption="一个或多个逗号或撇号八度标记。" />
+<RailroadDiagram rule="chord" title="chord" caption="单个有音高音符，或用大括号包住的音高音符组。" />
+<RailroadDiagram rule="length" title="length" caption="横线时值，或斜线/附点时值后缀。" />
+
+<RelatedLinks
+  title="相关页面"
+  links={[
+    { href: '../../syntax/overview/', label: '语法概览', description: '从速查表回到完整文档的整体结构。' },
+    { href: '../../syntax/header/', label: '文件头', description: '查看文件头字段和分隔行背后的面向用户规则。' },
+    { href: '../../syntax/rhythm/', label: '节奏', description: '查看时值示例和小节时值诊断。' },
+    { href: '../../syntax/repeats/', label: '反复', description: '在上下文中理解反复小节线和反复结尾。' },
+    { href: '../../syntax/lyrics-tracks/', label: '歌词与轨道', description: '把歌词和轨道规则应用到真实谱面行。' },
+    { href: '../../guide/troubleshooting/', label: '故障排查', description: '把诊断对应回造成它的语法主题。' },
+  ]}
+/>

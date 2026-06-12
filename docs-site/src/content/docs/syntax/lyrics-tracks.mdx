@@ -2,92 +2,157 @@
 title: Lyrics and Tracks
 description: Add lyric lines and labeled arrangement tracks.
 docId: syntax-lyrics-tracks
+sectionIds:
+  - lyric-lines
+  - track-labels
+  - lyric-diagnostics
+  - track-grouping
+  - header-labels
 ---
 
 import JianpuExample from '../../../components/JianpuExample.astro';
+import JianpuSource from '../../../components/JianpuSource.astro';
 import RelatedLinks from '../../../components/RelatedLinks.astro';
+import ScorePreview from '../../../components/ScorePreview.astro';
+
+## Lyric Lines
 
 Lyric lines follow the score line they annotate. Use `L1:`-style labels when a score has multiple lyric lines.
 
-```jpu valid
-time: "4/4"
+<JianpuSource
+  title="Labeled lyric source"
+  source={`time: "4/4"
 =
 1 2 3 4 |
 L1: "do re mi fa"
 5 6 7 1'
-L1: "so la ti do"
-```
+L1: "so la ti do"`}
+/>
+
+<ScorePreview source={`time: "4/4"
+=
+1 2 3 4 |
+L1: "do re mi fa"
+5 6 7 1'
+L1: "so la ti do"`} />
 
 An unlabeled quoted lyric line is also accepted.
 
-```jpu valid
-time: "4/4"
+<JianpuSource
+  title="Unlabeled lyric source"
+  source={`time: "4/4"
 =
 1 2 3 4 |
 "one two three four"
 5 6 7 1'
-"five six sev-en one"
-```
+"five six sev-en one"`}
+/>
+
+<ScorePreview
+  title="Unlabeled lyrics"
+  source={`time: "4/4"
+=
+1 2 3 4 |
+"one two three four"
+5 6 7 1'
+"five six sev-en one"`}
+/>
+
+## Track Labels
 
 Track labels `T1:` through `T16:` write multi-track arrangements. `T10:` is reserved for drums and is not used as a score-line label.
 
-```jpu valid
-time: "4/4"
+<JianpuSource
+  title="Two-track source"
+  source={`time: "4/4"
 =
 T1: 1 2 3 4 |
 T2: 5 5 5 5 |
 T1: 5 6 7 1' |
-T2: 3 3 3 3
-```
+T2: 3 3 3 3`}
+/>
+
+<ScorePreview source={`time: "4/4"
+=
+T1: 1 2 3 4 |
+T2: 5 5 5 5 |
+T1: 5 6 7 1' |
+T2: 3 3 3 3`} />
 
 When a score contains any labeled track, unlabeled score lines are treated as `T1`.
 
+## Lyric Diagnostics
+
 Lyrics are attached to the preceding score group. A lyric line before any score line is invalid. When a lyric line contains multiple whitespace-separated syllables and the main voice renders on one row, the renderer centers those syllables under sounding main-voice notes. Rests do not receive lyric positions. If the syllable count does not match the main voice note count, the lyric is rendered as a plain full line and reported as a warning.
 
-<JianpuExample title="Mismatched lyric count" status="warning" description="The score still renders, but the lyric line has fewer syllables than notes.">
+<JianpuExample
+  title="Mismatched lyric count"
+  status="warning"
+  description="The score still renders, but the lyric line has fewer syllables than notes."
+  source={`1 2 3 4
+L1: "one two"`}
+/>
 
-```jpu warning
-1 2 3 4
-L1: "one two"
-```
+<JianpuExample
+  title="Lyric before score"
+  status="invalid"
+  description="Lyrics must follow the score line they annotate."
+  source={`L1: "too soon"
+1 2 3 4`}
+/>
 
-</JianpuExample>
-
-<JianpuExample title="Lyric before score" status="invalid" description="Lyrics must follow the score line they annotate.">
-
-```jpu invalid
-L1: "too soon"
-1 2 3 4
-```
-
-</JianpuExample>
+## Track Grouping
 
 Track lines are grouped in ascending label order and every labeled group starts at `T1`. A group may end early, so `T1 T2 T3 T1 T2` starts a second group after the first group finishes. `T1 T1 T2` is also valid because the second `T1` starts a new group. `T1 T2 T2`, `T1 T2 T2 T1`, or a group that starts at `T2` are invalid. Lines in the same group play together; the next group starts after the previous group ends.
 
-```jpu valid
-T1: 1 2 3 4
+<JianpuSource
+  title="Grouped track source"
+  source={`T1: 1 2 3 4
 T2: 5 5 5 5
 T3: 1 1 1 1
 T1: 5 6 7 1'
-T2: 3 3 3 3
-```
+T2: 3 3 3 3`}
+/>
+
+<ScorePreview
+  title="Rendered grouped tracks"
+  source={`T1: 1 2 3 4
+T2: 5 5 5 5
+T3: 1 1 1 1
+T1: 5 6 7 1'
+T2: 3 3 3 3`}
+/>
+
+## Header Labels
 
 Header fields can name tracks and lyric lines. These labels reserve horizontal space in the rendered score.
 
-```jpu valid
-T1: "Flute"
+<JianpuSource
+  title="Named track and lyric source"
+  source={`T1: "Flute"
 T2: "Harmony"
 L1: "Verse"
 =
 T1: 1 2 3 4 |
 T2: 5 5 5 5 |
-L1: "do re mi fa"
-```
+L1: "do re mi fa"`}
+/>
+
+<ScorePreview
+  title="Rendered named tracks and lyrics"
+  source={`T1: "Flute"
+T2: "Harmony"
+L1: "Verse"
+=
+T1: 1 2 3 4 |
+T2: 5 5 5 5 |
+L1: "do re mi fa"`}
+/>
 
 <RelatedLinks
   links={[
     { href: '../header/', label: 'File Header', description: 'Name tracks and lyric lines in metadata.' },
-    { href: '../validation/', label: 'Validation', description: 'Review lyric and track diagnostics.' },
+    { href: '../repeats/', label: 'Repeats', description: 'Review repeated sections inside labeled tracks.' },
     { href: '../../reference/grammar/', label: 'Grammar Reference', description: 'Look up track and lyric label syntax.' },
   ]}
 />
