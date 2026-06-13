@@ -64,8 +64,6 @@ pnpm run test
 
 ## Boundaries
 
-- Do not remove `../public/grammar.html` or `../public/grammar.zh.html` unless the
-  user explicitly asks.
 - Do not edit generated output under `../dist-web/`.
 - Do not add browser automation dependencies for docs checks.
 - Keep root `docs/` focused on project-level documentation. Put docs-site

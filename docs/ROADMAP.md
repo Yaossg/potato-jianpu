@@ -13,8 +13,8 @@ commitment.
   backend and browser exporters.
 - Review frontend responsive layout manually in real browsers when UI structure
   changes.
-- Keep `public/grammar.html`, `public/grammar.zh.html`, and
-  `docs/grammar.ebnf` aligned whenever grammar behavior changes.
+- Keep `docs/grammar.ebnf` and the docs-site grammar reference aligned whenever
+  grammar behavior changes.
 
 ## Renderer Risks
 

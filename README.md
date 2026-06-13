@@ -54,12 +54,10 @@ documentation site by itself at the same subpath.
 
 See `AGENTS.md` for repository handoff notes and `docs/COMMANDS.md` for the
 full command reference. User-facing syntax documentation lives in
-`docs-site/src/content/docs/`, with legacy generated grammar pages in
-`public/grammar.html` and `public/grammar.zh.html` still shipped for now;
-grammar railroad diagrams are generated from `docs/grammar.ebnf`. Module
-boundaries are documented in `docs/ARCHITECTURE.md`, renderer behavior in
-`docs/RENDERER.md`, player behavior in `docs/PLAYER.md`, export behavior in
-`docs/EXPORTS.md`, quality policy in `docs/QUALITY.md`, documentation
-maintenance in `docs/DOCUMENTATION.md`, translation rules in
-`docs/TRANSLATION.md`, future work in `docs/ROADMAP.md`, and release shape in
-`docs/RELEASE.md`.
+`docs-site/src/content/docs/`; grammar railroad diagrams are generated from
+`docs/grammar.ebnf`. Module boundaries are documented in
+`docs/ARCHITECTURE.md`, renderer behavior in `docs/RENDERER.md`, player
+behavior in `docs/PLAYER.md`, export behavior in `docs/EXPORTS.md`, quality
+policy in `docs/QUALITY.md`, documentation maintenance in
+`docs/DOCUMENTATION.md`, translation rules in `docs/TRANSLATION.md`, future
+work in `docs/ROADMAP.md`, and release shape in `docs/RELEASE.md`.

@@ -17,8 +17,6 @@ Grammar behavior is documented across these surfaces:
 - parser behavior and tests: behavior source of truth.
 - `docs/grammar.ebnf`: compact grammar source used for railroad generation.
 - `docs-site/src/content/docs/`: primary user-facing explanation layer.
-- `public/grammar.html`: legacy English compact grammar reference.
-- `public/grammar.zh.html`: legacy Simplified Chinese compact grammar reference.
 
 When grammar behavior changes, update all affected grammar docs in the same
 change, then run:
@@ -32,7 +30,7 @@ as return shapes, raw AST field names, or implementation diagnostics unless
 those details are genuinely useful to score authors.
 
 Follow `docs/TRANSLATION.md` and `docs-site/docs/DOCUMENTATION.md` when updating
-bilingual grammar references.
+bilingual docs-site grammar references.
 
 ## Docs Site
 

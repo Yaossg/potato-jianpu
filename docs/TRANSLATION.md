@@ -2,20 +2,15 @@
 
 This document defines translation rules for bilingual project documentation.
 Use it when editing paired English and Simplified Chinese user-facing content,
-especially the grammar references.
+especially the docs-site grammar reference.
 
-## Paired Grammar References
+## Paired Docs-Site Pages
 
-The English and Simplified Chinese grammar references should stay structurally
-aligned:
+English and Simplified Chinese docs-site pages should stay structurally aligned.
+When grammar behavior changes, update both locale pages in the same change
+unless the change is only correcting language in one locale.
 
-- `public/grammar.html`
-- `public/grammar.zh.html`
-
-When grammar behavior changes, update both pages in the same change unless the
-change is only correcting language in one locale.
-
-Keep section order, examples, and coverage parallel between the two pages. The
+Keep section order, examples, and coverage parallel between paired pages. The
 Chinese page does not need to translate every English sentence literally, but it
 should document the same user-visible behavior.
 

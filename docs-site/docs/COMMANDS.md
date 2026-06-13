@@ -56,9 +56,8 @@ pnpm run docs:build
 pnpm run grammar:railroad
 ```
 
-Run this after editing `../docs/grammar.ebnf`. It refreshes the legacy railroad
-HTML pages and the docs-site generated diagram data consumed by
-`RailroadDiagram.astro`.
+Run this after editing `../docs/grammar.ebnf`. It refreshes the docs-site
+generated diagram data consumed by `RailroadDiagram.astro`.
 
 For frontend integration changes involving the Help button or production
 output, also run:
