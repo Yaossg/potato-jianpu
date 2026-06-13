@@ -19,6 +19,11 @@ import RelatedLinks from '../../../../components/RelatedLinks.astro';
 | `WS` | 空格或制表符 |
 | `COMMENT` | `;` 后接直到换行前的文本 |
 | `IDENTIFIER` | ASCII 字母开头，后接 ASCII 字母、数字或 `_` |
+| `TEXT_KEY` | `title`、`subtitle` 或 `composer` |
+| `KEY_SIGNATURE` | `C`、`F#` 或 `Bb` 这样的受支持调名 |
+| `TIME_SIGNATURE` | `4/4`、`6/8` 或 `2/16` 这样的受支持分数 |
+| `NUMBER` | 正的有限数字 |
+| `BOOLEAN` | `true` 或 `false` |
 | `TRACK_LABEL` | `T1` 到 `T9`，以及 `T11` 到 `T16` |
 | `LYRIC_LABEL` | `L` 后接一个或多个数字 |
 | `STRING` | 同一行内的双引号字符串 |
@@ -53,8 +58,16 @@ import RelatedLinks from '../../../../components/RelatedLinks.astro';
 
 <RailroadDiagram rule="file" title="file" caption="文档的顶层结构。" />
 <RailroadDiagram rule="header" title="header" caption="文件头字段后接一个或多个分隔符。" />
-<RailroadDiagram rule="property" title="property" caption="文件头属性标签、值字符串和末尾换行。" />
-<RailroadDiagram rule="property_label" title="property_label" caption="文件头属性名后接冒号。" />
+<RailroadDiagram rule="property" title="property" caption="闭合的类型化文件头属性。" />
+<RailroadDiagram rule="text_property" title="text_property" caption="标题、副标题或作曲者文本。" />
+<RailroadDiagram rule="key_property" title="key_property" caption="调号文件头值。" />
+<RailroadDiagram rule="time_property" title="time_property" caption="拍号文件头值。" />
+<RailroadDiagram rule="tempo_property" title="tempo_property" caption="数字速度文件头值。" />
+<RailroadDiagram rule="hidden_property" title="hidden_property" caption="布尔文件头显示标记。" />
+<RailroadDiagram rule="track_name_property" title="track_name_property" caption="规范写法的可见轨道名称文件头字段。" />
+<RailroadDiagram rule="track_name_shorthand_property" title="track_name_shorthand_property" caption="简写的可见轨道名称文件头字段。" />
+<RailroadDiagram rule="lyric_label_property" title="lyric_label_property" caption="规范写法的可见歌词标签文件头字段。" />
+<RailroadDiagram rule="lyric_label_shorthand_property" title="lyric_label_shorthand_property" caption="简写的可见歌词标签文件头字段。" />
 <RailroadDiagram rule="score" title="score" caption="由一个或多个换行分隔的谱面项目。" />
 <RailroadDiagram rule="score_item" title="score_item" caption="谱面项目可以是音乐行或歌词行。" />
 <RailroadDiagram rule="line" title="line" caption="带可选轨道标签、小节线、反复结尾和小节的谱面行。" />

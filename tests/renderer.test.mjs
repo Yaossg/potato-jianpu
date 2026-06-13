@@ -52,7 +52,7 @@ function tiePaths(svg) {
 }
 
 test("renders a parse result as an SVG document", () => {
-  const result = parse(`title: "Render Test"\nkey: "F#"\n=\n1 #4/ 5-|`);
+  const result = parse(`title: "Render Test"\nkey: F#\n=\n1 #4/ 5-|`);
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 640 });
   assert.match(svg, /^<\?xml/);
@@ -67,7 +67,7 @@ test("renders a parse result as an SVG document", () => {
 });
 
 test("renders time signatures as stacked digits", () => {
-  const result = parse(`time: "4/4"\n=\n1 2 3 4`);
+  const result = parse(`time: 4/4\n=\n1 2 3 4`);
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 360, color: "#111827", background: "#ffffff" });
   assert.match(svg, /<g class="time-signature">/);
@@ -79,7 +79,7 @@ test("renders time signatures as stacked digits", () => {
 });
 
 test("keeps key, time, and tempo metadata gaps equal as key text changes", () => {
-  const result = parse(`key: "F#"\ntime: "6/8"\ntempo: "96"\n=\n1 2 3`);
+  const result = parse(`key: F#\ntime: 6/8\ntempo: 96\n=\n1 2 3`);
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 360, color: "#111827", background: "#ffffff" });
   const keyMatch = svg.match(/<text class="metadata" x="(?<x>\d+)" y="40" dominant-baseline="central"> = F&#9839;<\/text>/);
@@ -97,7 +97,7 @@ test("keeps key, time, and tempo metadata gaps equal as key text changes", () =>
 });
 
 test("matches the minimal SVG snapshot", () => {
-  const result = parse(`title: "Snapshot"\nkey: "C"\ntime: "4/4"\ntempo: "120"\n=\n1 2 | 3 4 |`);
+  const result = parse(`title: "Snapshot"\nkey: C\ntime: 4/4\ntempo: 120\n=\n1 2 | 3 4 |`);
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 360, color: "#111827", background: "#ffffff" });
   assert.equal(svg, minimalSnapshot);
@@ -105,7 +105,7 @@ test("matches the minimal SVG snapshot", () => {
 
 test("matches the full header SVG snapshot", () => {
   const result = parse(
-    `title: "Full Header"\nsubtitle: "Snapshot Case"\ncomposer: "Composer Name"\nkey: "Bb"\ntime: "6/8"\ntempo: "96"\n=\n`,
+    `title: "Full Header"\nsubtitle: "Snapshot Case"\ncomposer: "Composer Name"\nkey: Bb\ntime: 6/8\ntempo: 96\n=\n`,
   );
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 500, color: "#111827", background: "#ffffff" });
@@ -114,7 +114,7 @@ test("matches the full header SVG snapshot", () => {
 
 test("matches the hidden header SVG snapshot", () => {
   const result = parse(
-    `title: "Hidden Title"\nsubtitle: "Hidden Subtitle"\ncomposer: "Hidden Composer"\nhidden: "yes"\n=\n1 2 | 3 4 |`,
+    `title: "Hidden Title"\nsubtitle: "Hidden Subtitle"\ncomposer: "Hidden Composer"\nhidden: true\n=\n1 2 | 3 4 |`,
   );
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 320, color: "#111827", background: "#ffffff" });
@@ -162,7 +162,7 @@ test("connects ties to the previous note in the same track", () => {
 });
 
 test("renders tempo without musical glyph codepoints", () => {
-  const result = parse(`tempo: "132"\ntime: "6/8"\n=\n1 2 3`);
+  const result = parse(`tempo: 132\ntime: 6/8\n=\n1 2 3`);
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value);
   assert.match(svg, /class="tempo-mark"/);
@@ -172,7 +172,7 @@ test("renders tempo without musical glyph codepoints", () => {
 });
 
 test("uses a single sixteenth note for 16-denominator tempo marks", () => {
-  const result = parse(`tempo: "96"\ntime: "2/16"\n=\n1 2`);
+  const result = parse(`tempo: 96\ntime: 2/16\n=\n1 2`);
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value);
   assert.match(svg, />𝅘𝅥𝅯 = 96<\/text>/);
@@ -466,7 +466,7 @@ test("aligns differing simultaneous track rhythms when beat boundaries match", (
 });
 
 test("falls back to measure-level alignment when track rhythms miss beat boundaries", () => {
-  const result = parse('time: "2/4"\n=\nT1: 1/ 2 1/\nT2: 5, 6,');
+  const result = parse('time: 2/4\n=\nT1: 1/ 2 1/\nT2: 5, 6,');
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 260 });
 

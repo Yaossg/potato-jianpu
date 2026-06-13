@@ -53,7 +53,21 @@ Parse result shape:
 {
   "ok": true,
   "value": {
-    "header": {},
+    "header": {
+      "title": "",
+      "subtitle": "",
+      "composer": "",
+      "keySignature": 0,
+      "keySignatureText": "C",
+      "timeSignature": {
+        "beatsPerMeasure": 4,
+        "beatsPerWholeNote": 4
+      },
+      "tempo": 120,
+      "hidden": false,
+      "trackNames": {},
+      "lyricLabels": {}
+    },
     "score": [],
     "diagnostics": []
   },
@@ -153,12 +167,13 @@ track name. Score lines are divided into voice groups: every group starts at
 `T1`, increases by track number, and may stop early. Lines in the same group
 start together; each later group starts after the previous group finishes.
 Unlabeled lines in a labeled score are treated as `T1`.
-Header entries such as `T1: "Melody"` only control rendered line names; they do
-not change MIDI track timing. Labeled melodic arrangement tracks use the MIDI
-channel named by their label, so `T1` uses MIDI channel 1 and `T16` uses MIDI
-channel 16. `T10` is reserved for drums and is not accepted as a melodic track
-label. Unlabeled melodic tracks use the next available non-drum MIDI channel by
-export order. Drum mode uses channel 10 for every arrangement track.
+Header entries such as `T1.name: "Melody"` or the shorthand `T1: "Melody"` only
+control rendered line names; they do not change MIDI track timing. Labeled
+melodic arrangement tracks use the MIDI channel named by their label, so `T1`
+uses MIDI channel 1 and `T16` uses MIDI channel 16. `T10` is reserved for drums
+and is not accepted as a melodic track label. Unlabeled melodic tracks use the
+next available non-drum MIDI channel by export order. Drum mode uses channel 10
+for every arrangement track.
 
 Rests advance delta time within their track without emitting note events. Tied
 notes are merged by the arrangement compiler before MIDI writing.

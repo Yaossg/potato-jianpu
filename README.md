@@ -42,6 +42,21 @@ pnpm run docs:examples
 This repository records `pnpm@8.10.3` in `package.json` as the expected package
 manager.
 
+## Score Header
+
+Header fields are typed and closed. Text fields stay quoted, while musical
+defaults use their own value syntax:
+
+```jpu
+title: "Twinkle"
+key: C
+time: 4/4
+tempo: 96
+hidden: false
+=
+1 1 5 5 | 6 6 5 - |
+```
+
 ## Built Outputs
 
 `pnpm run build` emits the backend CLI and shared library modules in `dist/`.

@@ -21,14 +21,14 @@ Plain notes divide the current measure into regular quarter-note units in common
 
 <JianpuSource
   title="Plain quarter-note source"
-  source={`time: "4/4"
+  source={`time: 4/4
 =
 1 2 3 4`}
 />
 
 <ScorePreview
   title="Plain quarter notes"
-  source={`time: "4/4"
+  source={`time: 4/4
 =
 1 2 3 4`}
 />
@@ -39,14 +39,14 @@ A dash extends the previous note or rest.
 
 <JianpuSource
   title="Dash duration source"
-  source={`time: "4/4"
+  source={`time: 4/4
 =
 1 - 2 -`}
 />
 
 <ScorePreview
   title="Dash extensions"
-  source={`time: "4/4"
+  source={`time: 4/4
 =
 1 - 2 -`}
 />
@@ -57,14 +57,14 @@ Slashes shorten a note. One slash halves the duration, and additional slashes ke
 
 <JianpuSource
   title="Slash duration source"
-  source={`time: "4/4"
+  source={`time: 4/4
 =
 1/ 2/ 3 4 5`}
 />
 
 <ScorePreview
   title="Slash durations"
-  source={`time: "4/4"
+  source={`time: 4/4
 =
 1/ 2/ 3 4 5`}
 />
@@ -73,14 +73,14 @@ Dots lengthen a note by adding half of the previous duration value.
 
 <JianpuSource
   title="Dotted duration source"
-  source={`time: "6/8"
+  source={`time: 6/8
 =
 1. 2/ 3/ 4/`}
 />
 
 <ScorePreview
   title="Dotted duration"
-  source={`time: "6/8"
+  source={`time: 6/8
 =
 1. 2/ 3/ 4/`}
 />
@@ -108,14 +108,14 @@ Duration marks belong to the note, rest, drum note, or chord immediately before 
 
 <JianpuSource
   title="Mixed item duration source"
-  source={`time: "4/4"
+  source={`time: 4/4
 =
 {1 3 5} - 0/ 1.`}
 />
 
 <ScorePreview
   title="Chord, rest, and dotted duration"
-  source={`time: "4/4"
+  source={`time: 4/4
 =
 {1 3 5} - 0/ 1.`}
 />
@@ -140,7 +140,7 @@ Measure-duration warnings use the active `time` header. A warning means the docu
   title="Short measure"
   status="warning"
   description="In 4/4, this measure is shorter than the declared meter."
-  source={`time: "4/4"
+  source={`time: 4/4
 =
 1 2`}
 />

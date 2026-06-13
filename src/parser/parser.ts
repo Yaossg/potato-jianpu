@@ -12,7 +12,7 @@ import type {
   ScoreLine,
   SourceRange,
 } from "../core/index.js";
-import { normalizeHeader, type RawHeaderField } from "./header.js";
+import { applyHeaderProperty, createDefaultHeader, isLyricLabel, isMelodicScoreTrackLabel, type HeaderValue } from "./header.js";
 import { tokenize, type Token, type TokenType } from "./tokenizer.js";
 
 type DraftNote =
@@ -56,9 +56,7 @@ class Parser {
 
   parse(): Result<Document> {
     this.skipNewlines();
-    const rawHeader = this.hasHeaderSeparatorAhead() ? this.parseHeader() : {};
-    const { header, diagnostics } = normalizeHeader(rawHeader);
-    this.diagnostics.push(...diagnostics);
+    const header = this.hasHeaderSeparatorAhead() ? this.parseHeader() : createDefaultHeader();
     this.skipNewlines();
     this.labeledScoreMode = this.scoreHasTrackLabelsAhead();
     const score = this.at("eof") ? [] : this.parseScore();
@@ -141,16 +139,26 @@ class Parser {
     return false;
   }
 
-  private parseHeader(): Record<string, RawHeaderField> {
-    const raw: Record<string, RawHeaderField> = {};
+  private parseHeader(): Document["header"] {
+    const header = createDefaultHeader();
+    const seen = new Set<string>();
     while (!this.at("equals") && !this.at("eof")) {
       if (this.at("newline")) {
         this.skipNewlines();
         continue;
       }
       const label = this.consume("identifier", "Expected header property name.");
+      let key = label?.value ?? label?.text ?? "";
+      let keyRange = label?.range ?? this.current().range;
+      if (label && this.match("dot")) {
+        const property = this.consume("identifier", "Expected header property name after '.'.");
+        if (property) {
+          key = `${key}.${property.value ?? property.text}`;
+          keyRange = mergeRange(label.range, property.range);
+        }
+      }
       const colon = this.consume("colon", "Expected ':' after header property name.");
-      const value = this.consume("string", "Expected quoted string header value.");
+      const value = colon ? this.parseHeaderValue() : null;
       if (!this.at("newline") && !this.at("equals") && !this.at("eof")) {
         this.error("Expected newline after header property.");
         this.synchronizeHeaderLine();
@@ -160,8 +168,11 @@ class Parser {
       } else if (!this.at("equals") && !this.at("eof")) {
         this.error("Expected newline after header property.");
       }
-      if (label && value) {
-        raw[label.value ?? label.text] = { value: value.value ?? "", range: value.range };
+      if (label && colon) {
+        const result = applyHeaderProperty(header, seen, key, keyRange, value, this.diagnostics);
+        if (result === "unknown") {
+          this.error(`Unknown header key '${key}'.`, keyRange);
+        }
       } else if (!label || !colon || !value) {
         this.synchronizeHeaderLine();
       }
@@ -169,13 +180,32 @@ class Parser {
 
     if (!this.match("equals")) {
       this.error("Expected '=' header separator.");
-      return raw;
+      return header;
     }
     while (this.match("equals")) {
       // Multiple header separator characters are allowed.
     }
     this.consumeNewlines("Expected newline after header separator.");
-    return raw;
+    return header;
+  }
+
+  private parseHeaderValue(): HeaderValue | null {
+    if (this.at("newline") || this.at("equals") || this.at("eof")) {
+      this.error("Expected header value.");
+      return null;
+    }
+    if (this.at("string")) {
+      const token = this.current();
+      this.index += 1;
+      return { text: token.value ?? "", range: token.range, quoted: true };
+    }
+    const start = this.current();
+    const parts: string[] = [];
+    while (!this.at("newline") && !this.at("equals") && !this.at("eof")) {
+      parts.push(this.current().text);
+      this.index += 1;
+    }
+    return { text: parts.join(""), range: mergeRange(start.range, this.previous().range), quoted: false };
   }
 
   private parseScore(): ScoreLine[] {
@@ -205,7 +235,7 @@ class Parser {
       return true;
     }
     const label = this.current().value ?? this.current().text;
-    return this.at("identifier") && this.tokens[this.index + 1]?.type === "colon" && /^L\d+$/.test(label);
+    return this.at("identifier") && this.tokens[this.index + 1]?.type === "colon" && isLyricLabel(label);
   }
 
   private parseLyricLine(): LyricLine {
@@ -243,7 +273,7 @@ class Parser {
     let label: string | undefined;
     if (this.at("identifier") && this.tokens[this.index + 1]?.type === "colon") {
       label = this.current().value ?? this.current().text;
-      if (!/^T(?:[1-9]|1[1-6])$/.test(label)) {
+      if (!isMelodicScoreTrackLabel(label)) {
         this.error("Score line labels must be T1-T9 or T11-T16.", this.current().range);
       }
       this.index += 2;
@@ -581,7 +611,7 @@ class Parser {
       const token = this.tokens[index]!;
       const next = this.tokens[index + 1]!;
       const label = token.value ?? token.text;
-      if (token.type === "identifier" && next.type === "colon" && /^T(?:[1-9]|1[1-6])$/.test(label)) {
+      if (token.type === "identifier" && next.type === "colon" && isMelodicScoreTrackLabel(label)) {
         return true;
       }
     }

@@ -13,7 +13,7 @@ test("renders SVG output to PNG bytes", () => {
 });
 
 test("exports melody to WAV bytes", () => {
-  const result = parse(`tempo: "120"\n=\n1 2 3 4`);
+  const result = parse(`tempo: 120\n=\n1 2 3 4`);
   assert.equal(result.ok, true);
   const wav = exportWavBytes(result.value, { sampleRate: 8000 });
   assert.equal(String.fromCharCode(...wav.slice(0, 4)), "RIFF");
@@ -25,7 +25,7 @@ test("exports melody to WAV bytes", () => {
 });
 
 test("WAV export can omit initial rests", () => {
-  const result = parse(`tempo: "120"\n=\n0 0 1 2`);
+  const result = parse(`tempo: 120\n=\n0 0 1 2`);
   assert.equal(result.ok, true);
   const withRests = exportWavBytes(result.value, { sampleRate: 8000 });
   const withoutRests = exportWavBytes(result.value, { sampleRate: 8000, omitInitialRests: true });
@@ -33,7 +33,7 @@ test("WAV export can omit initial rests", () => {
 });
 
 test("exports melody to MP3 bytes", () => {
-  const result = parse(`tempo: "120"\n=\n1 2 3 4`);
+  const result = parse(`tempo: 120\n=\n1 2 3 4`);
   assert.equal(result.ok, true);
   const mp3 = exportMp3Bytes(result.value, { sampleRate: 44100, bitRate: 64 });
   const syncOffset = mp3.findIndex((byte, index) => byte === 0xff && (mp3[index + 1] & 0xe0) === 0xe0);

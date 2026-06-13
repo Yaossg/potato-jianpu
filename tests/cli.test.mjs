@@ -69,7 +69,7 @@ test("CLI export-svg succeeds with warnings", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
   const input = join(dir, "score.jpu");
   const output = join(dir, "score.svg");
-  await writeFile(input, `time: "4/4"\n=\n1 2`, "utf8");
+  await writeFile(input, `time: 4/4\n=\n1 2`, "utf8");
 
   const { stdout, stderr } = await execFileAsync(process.execPath, ["dist/cli/main.js", "export-svg", input, "-o", output], {
     cwd: repoDir,
@@ -190,7 +190,7 @@ test("CLI validate can emit machine-readable diagnostics", async () => {
 test("CLI parse JSON keeps diagnostics machine-readable", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
   const input = join(dir, "score.jpu");
-  await writeFile(input, `time: "4/4"\n=\n1 2`, "utf8");
+  await writeFile(input, `time: 4/4\n=\n1 2`, "utf8");
 
   const { stdout, stderr } = await execFileAsync(process.execPath, ["dist/cli/main.js", "parse", input, "--json"], {
     cwd: repoDir,
@@ -230,7 +230,7 @@ test("CLI export-wav writes a WAV file", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
   const input = join(dir, "score.jpu");
   const output = join(dir, "score.wav");
-  await writeFile(input, `tempo: "120"\n=\n1 2 3 4`, "utf8");
+  await writeFile(input, `tempo: 120\n=\n1 2 3 4`, "utf8");
 
   await execFileAsync(process.execPath, ["dist/cli/main.js", "export-wav", input, "-o", output, "--sample-rate", "8000", "--amplitude", "0.5"], {
     cwd: repoDir,
@@ -246,7 +246,7 @@ test("CLI export-mp3 writes an MP3 file", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
   const input = join(dir, "score.jpu");
   const output = join(dir, "score.mp3");
-  await writeFile(input, `tempo: "120"\n=\n1 2 3 4`, "utf8");
+  await writeFile(input, `tempo: 120\n=\n1 2 3 4`, "utf8");
 
   await execFileAsync(
     process.execPath,
@@ -269,7 +269,7 @@ test("CLI export-midi and export-wav can omit initial rests", async () => {
   const midiWithoutRests = join(dir, "without-rests.mid");
   const wavWithRests = join(dir, "with-rests.wav");
   const wavWithoutRests = join(dir, "without-rests.wav");
-  await writeFile(input, `tempo: "120"\n=\n0 0 1 2`, "utf8");
+  await writeFile(input, `tempo: 120\n=\n0 0 1 2`, "utf8");
 
   await execFileAsync(process.execPath, ["dist/cli/main.js", "export-midi", input, "-o", midiWithRests], { cwd: repoDir });
   await execFileAsync(process.execPath, ["dist/cli/main.js", "export-midi", input, "-o", midiWithoutRests, "--omit-initial-rest"], {

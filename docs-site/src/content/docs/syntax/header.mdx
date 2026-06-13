@@ -25,9 +25,9 @@ The file header is line-oriented. Put it before the `=` separator.
   source={`title: "Evening Song"
 subtitle: "Short Study"
 composer: "Anonymous"
-key: "G"
-time: "3/4"
-tempo: "72"
+key: G
+time: 3/4
+tempo: 72
 =
 5 6 5 | 3 - -`}
 />
@@ -37,9 +37,9 @@ tempo: "72"
   source={`title: "Evening Song"
 subtitle: "Short Study"
 composer: "Anonymous"
-key: "G"
-time: "3/4"
-tempo: "72"
+key: G
+time: 3/4
+tempo: 72
 =
 5 6 5 | 3 - -`}
 />
@@ -56,21 +56,21 @@ Known fields include:
 | `key` | Key signature for playback and export. |
 | `time` | Time signature used for measure-duration validation. |
 | `tempo` | Playback and MIDI tempo. |
-| `hidden` | Any non-empty value hides the rendered header block. |
+| `hidden` | Boolean flag that hides the rendered header block. |
 
-Default values are empty for `title`, `subtitle`, `composer`, and `hidden`; `key` defaults to `C`, `time` defaults to `4/4`, and `tempo` defaults to `120`.
+Default values are empty for `title`, `subtitle`, and `composer`; `hidden` defaults to `false`, `key` defaults to `C`, `time` defaults to `4/4`, and `tempo` defaults to `120`.
 
-Unknown fields are preserved as metadata. They do not change parsing, rendering, playback, or export behavior unless a future version gives them meaning.
+Only documented header fields are accepted. Unknown fields such as `arranger` or misspelled fields such as `temop` are parse errors.
 
 ## Strings and Validation
 
-Header values use double-quoted strings and must stay on one line. A backslash skips the following character during tokenization, but the backslash is preserved as source text rather than interpreted as an escape sequence. Write the visible metadata exactly as you want users to read it.
+Text fields use double-quoted strings and must stay on one line. A backslash skips the following character during tokenization, but the backslash is preserved as source text rather than interpreted as an escape sequence. Write the visible metadata exactly as you want users to read it.
 
 <JianpuSource
   title="Quoted header source"
   source={`title: "Evening Song"
 composer: "Anonymous"
-tempo: "72"
+tempo: 72
 =
 1 2 3 4`}
 />
@@ -79,12 +79,12 @@ tempo: "72"
   title="Rendered quoted header"
   source={`title: "Evening Song"
 composer: "Anonymous"
-tempo: "72"
+tempo: 72
 =
 1 2 3 4`}
 />
 
-Header names must start with a letter and may continue with letters, digits, or underscores. A header string must close on the same line.
+Header names are case-sensitive. Text values and visible label names must be quoted; `key`, `time`, `tempo`, and `hidden` use unquoted typed values. A header string must close on the same line.
 
 <JianpuExample
   title="Unterminated header string"
@@ -95,7 +95,7 @@ Header names must start with a letter and may continue with letters, digits, or 
 1 2 3 4`}
 />
 
-The `key` field accepts `C`, `C#`, `Db`, `D`, `D#`, `Eb`, `E`, `F`, `F#`, `Gb`, `G`, `G#`, `Ab`, `A`, `A#`, `Bb`, and `B`. One space inside the value is ignored, and accidental-first spellings such as `#F` or `bB` are accepted. It affects playback and export pitch spelling; invalid key names are reported as diagnostics.
+The `key` field accepts `C`, `C#`, `Db`, `D`, `D#`, `Eb`, `E`, `F`, `F#`, `Gb`, `G`, `G#`, `Ab`, `A`, `A#`, `Bb`, and `B`. Accidental-first spellings such as `#F` or `bB` are accepted. It affects playback and export pitch spelling; invalid key names are reported as diagnostics.
 
 ## Musical Defaults
 
@@ -105,13 +105,13 @@ The `tempo` field is a positive beats-per-minute value. Integer and decimal valu
 
 ## Hidden Header
 
-Use `hidden` to keep the rendered header block out of the SVG while retaining the metadata in the document. Any non-empty string enables this behavior.
+Use `hidden: true` to keep the rendered header block out of the SVG while retaining the metadata in the document. Use `hidden: false`, or omit the field, to render the header normally.
 
 <JianpuSource
   title="Hidden header source"
   source={`title: "Practice Line"
 composer: "Anonymous"
-hidden: "composer"
+hidden: true
 =
 1 2 3 4`}
 />
@@ -120,20 +120,20 @@ hidden: "composer"
   title="Rendered without header block"
   source={`title: "Practice Line"
 composer: "Anonymous"
-hidden: "composer"
+hidden: true
 =
 1 2 3 4`}
 />
 
 ## Track and Lyric Labels
 
-Track and lyric labels can also be named in the file header. Use the same label text that appears in the score body.
+Track and lyric labels can also be named in the file header. Use `Tn.name` or shorthand `Tn` for track names, and `Ln.name` or shorthand `Ln` for lyric labels.
 
 <JianpuSource
   title="Track and lyric label source"
-  source={`T1: "Melody"
+  source={`T1.name: "Melody"
 T2: "Harmony"
-L1: "Verse"
+L1.name: "Verse"
 =
 T1: 1 2 3 4
 T2: 5 5 5 5
@@ -142,9 +142,9 @@ L1: "do re mi fa"`}
 
 <ScorePreview
   title="Rendered track and lyric labels"
-  source={`T1: "Melody"
+  source={`T1.name: "Melody"
 T2: "Harmony"
-L1: "Verse"
+L1.name: "Verse"
 =
 T1: 1 2 3 4
 T2: 5 5 5 5

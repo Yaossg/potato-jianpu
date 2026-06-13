@@ -4,6 +4,7 @@ export type TokenType =
   | "identifier"
   | "string"
   | "note"
+  | "digit"
   | "rest"
   | "drum"
   | "bar"
@@ -172,6 +173,11 @@ export function tokenize(source: string): { tokens: Token[]; diagnostics: Diagno
 
     if (/^[1-7]$/.test(char)) {
       push("note", char, char);
+      continue;
+    }
+
+    if (/^[89]$/.test(char)) {
+      push("digit", char, char);
       continue;
     }
 

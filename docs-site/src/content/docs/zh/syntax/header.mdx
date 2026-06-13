@@ -25,9 +25,9 @@ import ScorePreview from '../../../../components/ScorePreview.astro';
   source={`title: "Evening Song"
 subtitle: "Short Study"
 composer: "Anonymous"
-key: "G"
-time: "3/4"
-tempo: "72"
+key: G
+time: 3/4
+tempo: 72
 =
 5 6 5 | 3 - -`}
 />
@@ -37,9 +37,9 @@ tempo: "72"
   source={`title: "Evening Song"
 subtitle: "Short Study"
 composer: "Anonymous"
-key: "G"
-time: "3/4"
-tempo: "72"
+key: G
+time: 3/4
+tempo: 72
 =
 5 6 5 | 3 - -`}
 />
@@ -56,21 +56,21 @@ tempo: "72"
 | `key` | 用于播放和导出的调号。 |
 | `time` | 用于小节时值校验的拍号。 |
 | `tempo` | 播放和 MIDI 的速度。 |
-| `hidden` | 任意非空值都会隐藏渲染出的文件头区域。 |
+| `hidden` | 隐藏渲染出的文件头区域的布尔标记。 |
 
-`title`、`subtitle`、`composer` 和 `hidden` 的默认值为空；`key` 默认为 `C`，`time` 默认为 `4/4`，`tempo` 默认为 `120`。
+`title`、`subtitle` 和 `composer` 的默认值为空；`hidden` 默认为 `false`，`key` 默认为 `C`，`time` 默认为 `4/4`，`tempo` 默认为 `120`。
 
-未知字段会作为元数据保留。除非未来版本赋予它们含义，否则它们不会改变解析、渲染、播放或导出行为。
+只接受文档列出的文件头字段。`arranger` 这样的未知字段，或 `temop` 这样的拼写错误字段，都会成为解析错误。
 
 ## 字符串和校验
 
-文件头值使用双引号字符串，并且必须保持在同一行。反斜杠会让分词器跳过后面的一个字符，但反斜杠本身会作为源文本保留，不会被解释成转义序列。因此请按希望用户读到的样子书写可见元数据。
+文本字段使用双引号字符串，并且必须保持在同一行。反斜杠会让分词器跳过后面的一个字符，但反斜杠本身会作为源文本保留，不会被解释成转义序列。因此请按希望用户读到的样子书写可见元数据。
 
 <JianpuSource
   title="带引号的文件头源码"
   source={`title: "Evening Song"
 composer: "Anonymous"
-tempo: "72"
+tempo: 72
 =
 1 2 3 4`}
 />
@@ -79,12 +79,12 @@ tempo: "72"
   title="渲染后的带引号文件头"
   source={`title: "Evening Song"
 composer: "Anonymous"
-tempo: "72"
+tempo: 72
 =
 1 2 3 4`}
 />
 
-字段名必须以字母开头，后面可以继续使用字母、数字或下划线。文件头字符串必须在同一行结束。
+文件头字段名区分大小写。文本值和可见标签名称必须加引号；`key`、`time`、`tempo` 和 `hidden` 使用不加引号的类型化值。文件头字符串必须在同一行结束。
 
 <JianpuExample
   title="未结束的文件头字符串"
@@ -97,7 +97,7 @@ tempo: "72"
 
 ## 音乐默认值
 
-`key` 字段接受 `C`、`C#`、`Db`、`D`、`D#`、`Eb`、`E`、`F`、`F#`、`Gb`、`G`、`G#`、`Ab`、`A`、`A#`、`Bb` 和 `B`。字段值内部的一个空格会被忽略，也可以写成 `#F` 或 `bB` 这样的变音在前形式。它会影响播放和导出的音高；无效调名会产生诊断。
+`key` 字段接受 `C`、`C#`、`Db`、`D`、`D#`、`Eb`、`E`、`F`、`F#`、`Gb`、`G`、`G#`、`Ab`、`A`、`A#`、`Bb` 和 `B`。也可以写成 `#F` 或 `bB` 这样的变音在前形式。它会影响播放和导出的音高；无效调名会产生诊断。
 
 `time` 字段使用 `拍数/拍单位`，例如 `4/4`、`3/4`、`6/8`。允许的分子是 `2`、`3`、`4`、`6`、`9` 和 `12`；允许的分母是 `2`、`4`、`8` 和 `16`。它用于小节时值校验。小节时值和拍号不一致时会产生警告，而不是硬解析失败。
 
@@ -105,13 +105,13 @@ tempo: "72"
 
 ## 隐藏文件头
 
-使用 `hidden` 可以让整块渲染文件头从 SVG 中隐藏，同时把元数据保留在文档里。任意非空字符串都会启用这个行为。
+使用 `hidden: true` 可以让整块渲染文件头从 SVG 中隐藏，同时把元数据保留在文档里。使用 `hidden: false` 或省略该字段时，会正常渲染文件头。
 
 <JianpuSource
   title="隐藏文件头源码"
   source={`title: "Practice Line"
 composer: "Anonymous"
-hidden: "composer"
+hidden: true
 =
 1 2 3 4`}
 />
@@ -120,20 +120,20 @@ hidden: "composer"
   title="隐藏文件头后的渲染"
   source={`title: "Practice Line"
 composer: "Anonymous"
-hidden: "composer"
+hidden: true
 =
 1 2 3 4`}
 />
 
 ## 轨道和歌词标签
 
-文件头也可以给轨道和歌词行命名。这里使用的标签文本应和乐谱主体中的标签一致。
+文件头也可以给轨道和歌词行命名。轨道名称可以写成 `Tn.name` 或简写 `Tn`；歌词标签可以写成 `Ln.name` 或简写 `Ln`。
 
 <JianpuSource
   title="轨道和歌词标签源码"
-  source={`T1: "Melody"
+  source={`T1.name: "Melody"
 T2: "Harmony"
-L1: "Verse"
+L1.name: "Verse"
 =
 T1: 1 2 3 4
 T2: 5 5 5 5
@@ -142,9 +142,9 @@ L1: "do re mi fa"`}
 
 <ScorePreview
   title="渲染后的轨道和歌词标签"
-  source={`T1: "Melody"
+  source={`T1.name: "Melody"
 T2: "Harmony"
-L1: "Verse"
+L1.name: "Verse"
 =
 T1: 1 2 3 4
 T2: 5 5 5 5

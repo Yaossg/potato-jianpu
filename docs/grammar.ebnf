@@ -1,9 +1,18 @@
 file = { NEWLINE }, [ header ], [ score ], EOF ;
 
 header = { property }, EQUALS, { EQUALS }, NEWLINE, { NEWLINE } ;
-property = property_label, STRING, NEWLINE, { NEWLINE } ;
+property = text_property | key_property | time_property | tempo_property | hidden_property | track_name_property | track_name_shorthand_property | lyric_label_property | lyric_label_shorthand_property ;
 
-property_label = IDENTIFIER, ":" ;
+text_property = TEXT_KEY, ":", STRING, NEWLINE, { NEWLINE } ;
+key_property = "key", ":", KEY_SIGNATURE, NEWLINE, { NEWLINE } ;
+time_property = "time", ":", TIME_SIGNATURE, NEWLINE, { NEWLINE } ;
+tempo_property = "tempo", ":", NUMBER, NEWLINE, { NEWLINE } ;
+hidden_property = "hidden", ":", BOOLEAN, NEWLINE, { NEWLINE } ;
+track_name_property = TRACK_LABEL, ".", "name", ":", STRING, NEWLINE, { NEWLINE } ;
+track_name_shorthand_property = TRACK_LABEL, ":", STRING, NEWLINE, { NEWLINE } ;
+lyric_label_property = LYRIC_LABEL, ".", "name", ":", STRING, NEWLINE, { NEWLINE } ;
+lyric_label_shorthand_property = LYRIC_LABEL, ":", STRING, NEWLINE, { NEWLINE } ;
+
 track_label = TRACK_LABEL, ":" ;
 lyric_label = LYRIC_LABEL, ":" ;
 
@@ -39,6 +48,11 @@ length = DASH, { DASH } | ( HALF | DOT ), { HALF | DOT } ;
 
 skipped = WS | COMMENT ;
 
+TEXT_KEY = "title" | "subtitle" | "composer" ;
+KEY_SIGNATURE = "C" | "C#" | "#C" | "Db" | "bD" | "D" | "D#" | "#D" | "Eb" | "bE" | "E" | "F" | "F#" | "#F" | "Gb" | "bG" | "G" | "G#" | "#G" | "Ab" | "bA" | "A" | "A#" | "#A" | "Bb" | "bB" | "B" ;
+TIME_SIGNATURE = ("2" | "3" | "4" | "6" | "9" | "12"), "/", ("2" | "4" | "8" | "16") ;
+NUMBER = "positive finite number" ;
+BOOLEAN = "true" | "false" ;
 IDENTIFIER = "[A-Za-z][A-Za-z0-9_]*" ;
 TRACK_LABEL = "T1" | "T2" | "T3" | "T4" | "T5" | "T6" | "T7" | "T8" | "T9" | "T11" | "T12" | "T13" | "T14" | "T15" | "T16" ;
 LYRIC_LABEL = "L", DIGIT, { DIGIT } ;

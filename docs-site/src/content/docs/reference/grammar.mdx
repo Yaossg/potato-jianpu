@@ -19,6 +19,11 @@ The parser recognizes these tokens. Whitespace and comments are skipped between 
 | `WS` | space or tab |
 | `COMMENT` | `;` followed by text up to the line break |
 | `IDENTIFIER` | ASCII letter followed by ASCII letters, digits, or `_` |
+| `TEXT_KEY` | `title`, `subtitle`, or `composer` |
+| `KEY_SIGNATURE` | supported key names such as `C`, `F#`, or `Bb` |
+| `TIME_SIGNATURE` | supported fractions such as `4/4`, `6/8`, or `2/16` |
+| `NUMBER` | positive finite number |
+| `BOOLEAN` | `true` or `false` |
 | `TRACK_LABEL` | `T1` through `T9`, `T11` through `T16` |
 | `LYRIC_LABEL` | `L` followed by one or more digits |
 | `STRING` | double-quoted string on one line |
@@ -53,8 +58,16 @@ These diagrams are generated from `docs/grammar.ebnf`.
 
 <RailroadDiagram rule="file" title="file" caption="Top-level document structure." />
 <RailroadDiagram rule="header" title="header" caption="Header fields followed by one or more separator characters." />
-<RailroadDiagram rule="property" title="property" caption="A header property label, value string, and trailing line break." />
-<RailroadDiagram rule="property_label" title="property_label" caption="A header property name followed by a colon." />
+<RailroadDiagram rule="property" title="property" caption="A closed typed header property." />
+<RailroadDiagram rule="text_property" title="text_property" caption="Title, subtitle, or composer text." />
+<RailroadDiagram rule="key_property" title="key_property" caption="A key signature header value." />
+<RailroadDiagram rule="time_property" title="time_property" caption="A time signature header value." />
+<RailroadDiagram rule="tempo_property" title="tempo_property" caption="A numeric tempo header value." />
+<RailroadDiagram rule="hidden_property" title="hidden_property" caption="A boolean header visibility flag." />
+<RailroadDiagram rule="track_name_property" title="track_name_property" caption="A canonical visible track-name header field." />
+<RailroadDiagram rule="track_name_shorthand_property" title="track_name_shorthand_property" caption="A shorthand visible track-name header field." />
+<RailroadDiagram rule="lyric_label_property" title="lyric_label_property" caption="A canonical visible lyric-label header field." />
+<RailroadDiagram rule="lyric_label_shorthand_property" title="lyric_label_shorthand_property" caption="A shorthand visible lyric-label header field." />
 <RailroadDiagram rule="score" title="score" caption="Score items separated by one or more line breaks." />
 <RailroadDiagram rule="score_item" title="score_item" caption="A score item is either a music line or a lyric line." />
 <RailroadDiagram rule="line" title="line" caption="A score line with optional track label, barlines, endings, and measures." />

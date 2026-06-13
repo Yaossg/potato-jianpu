@@ -16,7 +16,7 @@ import {
 } from "../dist/player/index.js";
 
 test("compiles pitch notes to MIDI notes with key and octave", () => {
-  const result = parse(`key: "D"\n=\n1 2 1'`);
+  const result = parse(`key: D\n=\n1 2 1'`);
   assert.equal(result.ok, true);
   const melody = compileMelody(result.value);
   assert.deepEqual(
@@ -358,7 +358,7 @@ test("omits shared initial arrangement rests only up to the first sounding track
 });
 
 test("exports a standard MIDI header", () => {
-  const result = parse(`tempo: "120"\n=\n1 2 3 4`);
+  const result = parse(`tempo: 120\n=\n1 2 3 4`);
   assert.equal(result.ok, true);
   const bytes = exportMidiBytes(result.value);
   assert.equal(String.fromCharCode(...bytes.slice(0, 4)), "MThd");
@@ -413,7 +413,7 @@ test("omitting initial rests preserves all-rest melodies as empty", () => {
 });
 
 test("exports tempo and time signature MIDI meta events", () => {
-  const result = parse(`tempo: "120"\ntime: "6/8"\n=\n1/ 2/ 3/ 4/ 5/ 6/`);
+  const result = parse(`tempo: 120\ntime: 6/8\n=\n1/ 2/ 3/ 4/ 5/ 6/`);
   assert.equal(result.ok, true);
   const bytes = [...exportMidiBytes(result.value)];
 

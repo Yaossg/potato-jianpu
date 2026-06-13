@@ -96,14 +96,16 @@ divided into voice groups:
 Orders such as `T1 T2 T2 T1`, `T1 T2 T2`, and `T1 T3` are errors.
 
 The track label itself is not rendered in SVG. To render a visible line label,
-define the same label in the header, for example `T1: "Melody"`.
+define the same label in the header, for example `T1.name: "Melody"` or the
+shorthand `T1: "Melody"`.
 
 Lyric lines such as `L1: "text"` or a bare `"text"` line attach to the
 preceding score group for rendering only. They do not create arrangement tracks
 and do not affect playback, MIDI, WAV, or MP3 timing. Header entries such as
-`L1: "Verse"` only control rendered lyric line names. Whitespace-separated
-lyric syllables may be visually aligned to main-voice notes by the renderer, but
-that alignment is not part of playback or export scheduling.
+`L1.name: "Verse"` or the shorthand `L1: "Verse"` only control rendered lyric
+line names. Whitespace-separated lyric syllables may be visually aligned to
+main-voice notes by the renderer, but that alignment is not part of playback or
+export scheduling.
 
 Repeat barlines and repeated endings are expanded independently inside each
 arrangement track.

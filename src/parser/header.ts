@@ -1,11 +1,12 @@
 import type { Diagnostic, Header, KeySignature, SourceRange, TimeSignature } from "../core/index.js";
 
-export interface RawHeaderField {
-  value: string;
+export interface HeaderValue {
+  text: string;
   range: SourceRange;
+  quoted: boolean;
 }
 
-export type RawHeaderInput = Record<string, string | RawHeaderField>;
+export type HeaderPropertyResult = "ok" | "unknown";
 
 const keyMap: Record<string, KeySignature> = {
   C: 0,
@@ -27,6 +28,202 @@ const keyMap: Record<string, KeySignature> = {
   B: 11,
 };
 
+const semanticKeys = new Set(["title", "subtitle", "composer", "key", "time", "tempo", "hidden"]);
+
+export function createDefaultHeader(): Header {
+  return {
+    title: "",
+    subtitle: "",
+    composer: "",
+    keySignature: 0,
+    keySignatureText: "C",
+    timeSignature: { beatsPerMeasure: 4, beatsPerWholeNote: 4 },
+    tempo: 120,
+    hidden: false,
+    trackNames: {},
+    lyricLabels: {},
+  };
+}
+
+export function isTrackLabel(label: string): boolean {
+  return /^T(?:[1-9]|1[1-6])$/.test(label);
+}
+
+export function isMelodicScoreTrackLabel(label: string): boolean {
+  return /^T(?:[1-9]|1[1-6])$/.test(label);
+}
+
+export function isLyricLabel(label: string): boolean {
+  return /^L\d+$/.test(label);
+}
+
+export function applyHeaderProperty(
+  header: Header,
+  seen: Set<string>,
+  key: string,
+  keyRange: SourceRange,
+  value: HeaderValue | null,
+  diagnostics: Diagnostic[],
+): HeaderPropertyResult {
+  const textKey = semanticKeys.has(key) ? key : null;
+  if (textKey === "title" || textKey === "subtitle" || textKey === "composer") {
+    if (!value || !expectQuoted(value, textKey, diagnostics)) {
+      return "ok";
+    }
+    if (!recordKey(seen, textKey, `Duplicate header property '${textKey}'.`, keyRange, diagnostics)) {
+      return "ok";
+    }
+    header[textKey] = value.text;
+    return "ok";
+  }
+
+  if (textKey === "tempo") {
+    if (!value || !recordKey(seen, "tempo", "Duplicate header property 'tempo'.", keyRange, diagnostics)) {
+      return "ok";
+    }
+    parseTempo(header, value, diagnostics);
+    return "ok";
+  }
+
+  if (textKey === "time") {
+    if (!value || !recordKey(seen, "time", "Duplicate header property 'time'.", keyRange, diagnostics)) {
+      return "ok";
+    }
+    parseTime(header, value, diagnostics);
+    return "ok";
+  }
+
+  if (textKey === "key") {
+    if (!value || !recordKey(seen, "key", "Duplicate header property 'key'.", keyRange, diagnostics)) {
+      return "ok";
+    }
+    parseKey(header, value, diagnostics);
+    return "ok";
+  }
+
+  if (textKey === "hidden") {
+    if (!value || !recordKey(seen, "hidden", "Duplicate header property 'hidden'.", keyRange, diagnostics)) {
+      return "ok";
+    }
+    parseHidden(header, value, diagnostics);
+    return "ok";
+  }
+
+  const trackName = key.match(/^(T(?:[1-9]|1[1-6]))\.name$/)?.[1];
+  if (trackName) {
+    applyLabelName(header.trackNames, seen, `track:${trackName}`, "track name", trackName, keyRange, value, diagnostics);
+    return "ok";
+  }
+  if (isTrackLabel(key)) {
+    applyLabelName(header.trackNames, seen, `track:${key}`, "track name", key, keyRange, value, diagnostics);
+    return "ok";
+  }
+
+  const lyricName = key.match(/^(L\d+)\.name$/)?.[1];
+  if (lyricName) {
+    applyLabelName(header.lyricLabels, seen, `lyric:${lyricName}`, "lyric label", lyricName, keyRange, value, diagnostics);
+    return "ok";
+  }
+  if (isLyricLabel(key)) {
+    applyLabelName(header.lyricLabels, seen, `lyric:${key}`, "lyric label", key, keyRange, value, diagnostics);
+    return "ok";
+  }
+
+  return "unknown";
+}
+
+function applyLabelName(
+  labels: Record<string, string>,
+  seen: Set<string>,
+  seenKey: string,
+  labelKind: string,
+  label: string,
+  keyRange: SourceRange,
+  value: HeaderValue | null,
+  diagnostics: Diagnostic[],
+) {
+  if (!value || !expectQuoted(value, labelKind, diagnostics)) {
+    return;
+  }
+  if (!recordKey(seen, seenKey, `Duplicate ${labelKind} definition for '${label}'.`, keyRange, diagnostics)) {
+    return;
+  }
+  labels[label] = value.text;
+}
+
+function recordKey(seen: Set<string>, key: string, message: string, range: SourceRange, diagnostics: Diagnostic[]): boolean {
+  if (seen.has(key)) {
+    diagnostics.push({ severity: "error", message, range });
+    return false;
+  }
+  seen.add(key);
+  return true;
+}
+
+function expectQuoted(value: HeaderValue, label: string, diagnostics: Diagnostic[]): boolean {
+  if (value.quoted) {
+    return true;
+  }
+  diagnostics.push({ severity: "error", message: `Expected quoted string value for ${label}.`, range: value.range });
+  return false;
+}
+
+function parseTempo(header: Header, value: HeaderValue, diagnostics: Diagnostic[]) {
+  if (value.quoted) {
+    diagnostics.push({ severity: "error", message: "Expected numeric tempo value.", range: value.range });
+    return;
+  }
+  const tempo = Number(value.text);
+  if (!Number.isFinite(tempo) || tempo <= 0) {
+    diagnostics.push({ severity: "error", message: `Invalid tempo '${value.text}'.`, range: value.range });
+    return;
+  }
+  header.tempo = tempo;
+}
+
+function parseTime(header: Header, value: HeaderValue, diagnostics: Diagnostic[]) {
+  if (value.quoted) {
+    diagnostics.push({ severity: "error", message: "Expected time signature value.", range: value.range });
+    return;
+  }
+  const timeSignature = parseTimeSignature(value.text);
+  if (timeSignature === null) {
+    diagnostics.push({ severity: "error", message: `Invalid time signature '${value.text}'.`, range: value.range });
+    return;
+  }
+  header.timeSignature = timeSignature;
+}
+
+function parseKey(header: Header, value: HeaderValue, diagnostics: Diagnostic[]) {
+  if (value.quoted) {
+    diagnostics.push({ severity: "error", message: "Expected key signature value.", range: value.range });
+    return;
+  }
+  const keySignature = parseKeySignature(value.text);
+  if (keySignature === null) {
+    diagnostics.push({ severity: "error", message: `Unknown key signature '${value.text}'.`, range: value.range });
+    return;
+  }
+  header.keySignature = keySignature;
+  header.keySignatureText = value.text;
+}
+
+function parseHidden(header: Header, value: HeaderValue, diagnostics: Diagnostic[]) {
+  if (value.quoted) {
+    diagnostics.push({ severity: "error", message: "Expected boolean value for hidden.", range: value.range });
+    return;
+  }
+  if (value.text === "true") {
+    header.hidden = true;
+    return;
+  }
+  if (value.text === "false") {
+    header.hidden = false;
+    return;
+  }
+  diagnostics.push({ severity: "error", message: "Expected boolean value for hidden.", range: value.range });
+}
+
 function parseKeySignature(key: string): KeySignature | null {
   const normalized = key.replace(" ", "");
   if (normalized in keyMap) {
@@ -40,12 +237,12 @@ function parseKeySignature(key: string): KeySignature | null {
 }
 
 function parseTimeSignature(time: string): TimeSignature | null {
-  const [rawBeatsPerMeasure, rawBeatsPerWholeNote] = time
-    .split("/", 2)
-    .map((part) => Number(part.trim()));
-
-  const beatsPerMeasure = rawBeatsPerMeasure as TimeSignature["beatsPerMeasure"];
-  const beatsPerWholeNote = rawBeatsPerWholeNote as TimeSignature["beatsPerWholeNote"];
+  const match = /^(\d+)\/(\d+)$/.exec(time);
+  if (!match) {
+    return null;
+  }
+  const beatsPerMeasure = Number(match[1]) as TimeSignature["beatsPerMeasure"];
+  const beatsPerWholeNote = Number(match[2]) as TimeSignature["beatsPerWholeNote"];
 
   if (![2, 3, 4, 6, 9, 12].includes(beatsPerMeasure)) {
     return null;
@@ -54,55 +251,4 @@ function parseTimeSignature(time: string): TimeSignature | null {
     return null;
   }
   return { beatsPerMeasure, beatsPerWholeNote };
-}
-
-function headerValue(raw: RawHeaderInput, key: string): string | undefined {
-  const field = raw[key];
-  return typeof field === "string" ? field : field?.value;
-}
-
-function headerRange(raw: RawHeaderInput, key: string): SourceRange | undefined {
-  const field = raw[key];
-  return typeof field === "string" ? undefined : field?.range;
-}
-
-function rawHeaderValues(raw: RawHeaderInput): Record<string, string> {
-  return Object.fromEntries(Object.entries(raw).map(([key, field]) => [key, typeof field === "string" ? field : field.value]));
-}
-
-export function normalizeHeader(raw: RawHeaderInput): { header: Header; diagnostics: Diagnostic[] } {
-  const diagnostics: Diagnostic[] = [];
-  const rawValues = rawHeaderValues(raw);
-  const tempoText = headerValue(raw, "tempo") ?? "120";
-  const tempo = Number(tempoText);
-  if (Number.isNaN(tempo) || tempo <= 0) {
-    diagnostics.push({ severity: "error", message: `Invalid tempo '${tempoText}'.`, range: headerRange(raw, "tempo") });
-  }
-
-  const timeText = headerValue(raw, "time") ?? "4/4";
-  const timeSignature = parseTimeSignature(timeText);
-  if (timeSignature === null) {
-    diagnostics.push({ severity: "error", message: `Invalid time signature '${timeText}'.`, range: headerRange(raw, "time") });
-  }
-
-  const keyText = headerValue(raw, "key") ?? "C";
-  const keySignature = parseKeySignature(keyText);
-  if (keySignature === null) {
-    diagnostics.push({ severity: "error", message: `Invalid key signature '${keyText}'.`, range: headerRange(raw, "key") });
-  }
-
-  return {
-    header: {
-      raw: rawValues,
-      title: headerValue(raw, "title") ?? "",
-      subtitle: headerValue(raw, "subtitle") ?? "",
-      composer: headerValue(raw, "composer") ?? "",
-      keySignature: keySignature ?? 0,
-      keySignatureText: keyText,
-      timeSignature: timeSignature ?? { beatsPerMeasure: 4, beatsPerWholeNote: 4 },
-      tempo: Number.isNaN(tempo) || tempo <= 0 ? 120 : tempo,
-      hidden: headerValue(raw, "hidden") ?? "",
-    },
-    diagnostics,
-  };
 }

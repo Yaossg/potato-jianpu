@@ -88,7 +88,7 @@ Responsibilities:
 
 - tokenize source text
 - parse optional header and score notation
-- normalize header values
+- parse closed typed header properties
 - validate tie semantics
 - warn on measure duration mismatches
 - preserve source ranges for diagnostics

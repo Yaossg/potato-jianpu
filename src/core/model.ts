@@ -91,7 +91,6 @@ export interface TimeSignature {
 export type KeySignature = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11;
 
 export interface Header {
-  raw: Record<string, string>;
   title: string;
   subtitle: string;
   composer: string;
@@ -99,7 +98,9 @@ export interface Header {
   keySignatureText: string;
   timeSignature: TimeSignature;
   tempo: number;
-  hidden: string;
+  hidden: boolean;
+  trackNames: Record<string, string>;
+  lyricLabels: Record<string, string>;
 }
 
 export interface Document {

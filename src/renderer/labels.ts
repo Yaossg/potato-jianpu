@@ -5,11 +5,11 @@ const LABEL_RIGHT_PADDING = 10;
 const LABEL_LEFT_X = 8;
 
 export function scoreLineDisplayLabel(document: Document, line: ScoreLine): string {
-  return line.label ? (document.header.raw[line.label] ?? "") : "";
+  return line.label ? (document.header.trackNames[line.label] ?? "") : "";
 }
 
 export function lyricLineDisplayLabel(document: Document, line: LyricLine): string {
-  return document.header.raw[line.label] ?? "";
+  return document.header.lyricLabels[line.label] ?? "";
 }
 
 export function labelOffsetForText(label: string): number {

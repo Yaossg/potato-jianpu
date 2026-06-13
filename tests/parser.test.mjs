@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { parse } from "../dist/parser/index.js";
 
 test("parses a header and unspaced score", () => {
-  const result = parse(`title: "Twinkle"\nkey: "D"\ntime: "4/4"\ntempo: "180"\n=\n1155|665-|\n`);
+  const result = parse(`title: "Twinkle"\nkey: D\ntime: 4/4\ntempo: 180\n=\n1155|665-|\n`);
   assert.equal(result.ok, true);
   assert.equal(result.value.header.title, "Twinkle");
   assert.equal(result.value.header.keySignature, 2);
@@ -330,9 +330,9 @@ test("rejects mixed dash and slash duration marks with a specific diagnostic", (
 });
 
 test("reports invalid score characters at their source position", () => {
-  const result = parse("18");
+  const result = parse("1@");
   assert.equal(result.ok, false);
-  const diagnostic = result.diagnostics.find((item) => item.message.includes("Unexpected character '8'"));
+  const diagnostic = result.diagnostics.find((item) => item.message.includes("Unexpected character '@'"));
   assert.ok(diagnostic?.range);
   assert.equal(diagnostic.range.start.line, 1);
   assert.equal(diagnostic.range.start.column, 2);
@@ -353,45 +353,74 @@ test("reports specific diagnostics for stray duration and chord markers", () => 
 });
 
 
-test("rejects invalid header values", () => {
-  const result = parse(`tempo: "-1"\ntime: "5/4"\nkey: "H"\n=\n1234`);
+test("rejects invalid typed header values", () => {
+  const result = parse(`tempo: -1\ntime: 5/4\nkey: H\nhidden: yes\n=\n1234`);
   assert.equal(result.ok, false);
   assert.match(result.diagnostics.map((d) => d.message).join("\n"), /Invalid tempo/);
   assert.match(result.diagnostics.map((d) => d.message).join("\n"), /Invalid time signature/);
-  assert.match(result.diagnostics.map((d) => d.message).join("\n"), /Invalid key signature/);
+  assert.match(result.diagnostics.map((d) => d.message).join("\n"), /Unknown key signature/);
+  assert.match(result.diagnostics.map((d) => d.message).join("\n"), /Expected boolean value for hidden/);
 
   const tempo = result.diagnostics.find((diagnostic) => diagnostic.message.includes("Invalid tempo"));
   assert.ok(tempo?.range);
   assert.equal(tempo.range.start.line, 1);
   assert.equal(tempo.range.start.column, 8);
-  assert.equal(tempo.range.end.column, 12);
+  assert.equal(tempo.range.end.column, 10);
 
   const time = result.diagnostics.find((diagnostic) => diagnostic.message.includes("Invalid time signature"));
   assert.ok(time?.range);
   assert.equal(time.range.start.line, 2);
   assert.equal(time.range.start.column, 7);
-  assert.equal(time.range.end.column, 12);
+  assert.equal(time.range.end.column, 10);
 
-  const key = result.diagnostics.find((diagnostic) => diagnostic.message.includes("Invalid key signature"));
+  const key = result.diagnostics.find((diagnostic) => diagnostic.message.includes("Unknown key signature"));
   assert.ok(key?.range);
   assert.equal(key.range.start.line, 3);
   assert.equal(key.range.start.column, 6);
-  assert.equal(key.range.end.column, 9);
+  assert.equal(key.range.end.column, 7);
 });
 
 test("accepts accidental-first key spellings", () => {
-  const sharp = parse(`key: "#C"\n=\n1`);
+  const sharp = parse(`key: #C\n=\n1`);
   assert.equal(sharp.ok, true);
   assert.equal(sharp.value.header.keySignature, 1);
   assert.equal(sharp.value.header.keySignatureText, "#C");
 
-  const flat = parse(`key: "bB"\n=\n1`);
+  const flat = parse(`key: bB\n=\n1`);
   assert.equal(flat.ok, true);
   assert.equal(flat.value.header.keySignature, 10);
   assert.equal(flat.value.header.keySignatureText, "bB");
 });
 
-test("keeps raw header string escape text", () => {
+test("rejects old string syntax for typed header values", () => {
+  const result = parse(`tempo: "120"\ntime: "4/4"\nkey: "D"\nhidden: "yes"\n=\n1 2`);
+  assert.equal(result.ok, false);
+  const messages = result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
+  assert.match(messages, /Expected numeric tempo value/);
+  assert.match(messages, /Expected time signature value/);
+  assert.match(messages, /Expected key signature value/);
+  assert.match(messages, /Expected boolean value for hidden/);
+});
+
+test("rejects unknown and case-mismatched header keys", () => {
+  const result = parse(`arranger2_name: "Ada"\nTempo: 120\nT1.Name: "Melody"\n=\n1 2`);
+  assert.equal(result.ok, false);
+  const messages = result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
+  assert.match(messages, /Unknown header key 'arranger2_name'/);
+  assert.match(messages, /Unknown header key 'Tempo'/);
+  assert.match(messages, /Unknown header key 'T1.Name'/);
+});
+
+test("rejects duplicate header properties", () => {
+  const result = parse(`tempo: 120\ntempo: 96\nT1.name: "Melody"\nT1: "Other"\nL1.name: "Verse"\nL1: "Other"\n=\n1 2`);
+  assert.equal(result.ok, false);
+  const messages = result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
+  assert.match(messages, /Duplicate header property 'tempo'/);
+  assert.match(messages, /Duplicate track name definition for 'T1'/);
+  assert.match(messages, /Duplicate lyric label definition for 'L1'/);
+});
+
+test("keeps quoted header string escape text", () => {
   const result = parse(`title: "A \\"quoted\\" title"\n=\n1`);
   assert.equal(result.ok, true);
   assert.equal(result.value.header.title, `A \\"quoted\\" title`);
@@ -402,7 +431,7 @@ test("reports unterminated header strings", () => {
   assert.equal(result.ok, false);
   const messages = result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
   assert.match(messages, /Unterminated string literal/);
-  assert.match(messages, /Expected quoted string header value/);
+  assert.match(messages, /Expected header value/);
   const diagnostic = result.diagnostics.find((item) => item.message === "Unterminated string literal.");
   assert.ok(diagnostic?.range);
   assert.equal(diagnostic.range.start.line, 1);
@@ -413,16 +442,14 @@ test("recovers malformed header lines without score-syntax cascades", () => {
   const result = parse("title: Missing Quotes\ncomposer: \"Ada\"\n=\n1 2 3 4");
   assert.equal(result.ok, false);
   const messages = result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
-  assert.match(messages, /Expected quoted string header value/);
-  assert.match(messages, /Expected newline after header property/);
+  assert.match(messages, /Expected quoted string value for title/);
   assert.doesNotMatch(messages, /Expected note, rest, drum note, chord, or tie/);
 });
 
-test("preserves unknown header fields in raw metadata", () => {
+test("rejects unknown header fields", () => {
   const result = parse(`arranger2_name: "Ada"\ntitle: "Raw Header"\n=\n1 2 3 4`);
-  assert.equal(result.ok, true);
-  assert.equal(result.value.header.raw.arranger2_name, "Ada");
-  assert.equal(result.value.header.title, "Raw Header");
+  assert.equal(result.ok, false);
+  assert.match(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Unknown header key 'arranger2_name'/);
 });
 
 test("requires identifiers to start with a letter", () => {
@@ -472,7 +499,7 @@ test("rejects score line labels outside the supported MIDI track label range", (
 test("accepts T-prefixed header and score line labels", () => {
   const result = parse(`T1: "Drums"\n=\nT1: X X`);
   assert.equal(result.ok, true);
-  assert.equal(result.value.header.raw.T1, "Drums");
+  assert.equal(result.value.header.trackNames.T1, "Drums");
   assert.equal(result.value.score[0].label, "T1");
   assert.equal(result.value.score[0].measures[0].notes[0].kind, "drum");
 
@@ -481,17 +508,12 @@ test("accepts T-prefixed header and score line labels", () => {
   assert.equal(highTrack.value.score.at(-1).label, "T11");
 
   const digitHeader = parse(`T1_name: "Drums"\n=\nT1: X1 X2`);
-  assert.equal(digitHeader.ok, true);
-  assert.equal(digitHeader.value.header.raw.T1_name, "Drums");
-  assert.equal(digitHeader.value.score[0].measures[0].notes[0].kind, "drum");
+  assert.equal(digitHeader.ok, false);
+  assert.match(digitHeader.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Unknown header key 'T1_name'/);
 
   const xHeader = parse(`X_name: "Drums"\n=\nXX`);
-  assert.equal(xHeader.ok, true);
-  assert.equal(xHeader.value.header.raw.X_name, "Drums");
-  assert.deepEqual(
-    xHeader.value.score[0].measures[0].notes.map((note) => note.kind),
-    ["drum", "drum"],
-  );
+  assert.equal(xHeader.ok, false);
+  assert.match(xHeader.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Unknown header key 'X_name'/);
 });
 
 test("treats unlabeled score lines as T1 when any score line has a track label", () => {
@@ -557,16 +579,16 @@ test("requires track label groups to start at T1 and increase", () => {
 });
 
 test("warns when measure duration does not match the time signature", () => {
-  const complete = parse(`time: "4/4"\n=\n1 2 3 4`);
+  const complete = parse(`time: 4/4\n=\n1 2 3 4`);
   assert.equal(complete.ok, true);
   assert.equal(complete.diagnostics.some((diagnostic) => diagnostic.message.includes("Measure duration")), false);
 
-  const short = parse(`time: "4/4"\n=\n1 2`);
+  const short = parse(`time: 4/4\n=\n1 2`);
   assert.equal(short.ok, true);
   assert.equal(short.diagnostics.some((diagnostic) => diagnostic.severity === "warning"), true);
   assert.match(short.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Measure duration 0.5 does not match/);
 
-  const compound = parse(`time: "6/8"\n=\n1/ 2/ 3/ 4/ 5/ 6/`);
+  const compound = parse(`time: 6/8\n=\n1/ 2/ 3/ 4/ 5/ 6/`);
   assert.equal(compound.ok, true);
   assert.equal(compound.diagnostics.some((diagnostic) => diagnostic.message.includes("Measure duration")), false);
 });
