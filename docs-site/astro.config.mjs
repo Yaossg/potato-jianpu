@@ -42,13 +42,6 @@ export default defineConfig({
                 "zh-CN": "概览",
               },
             },
-            {
-              label: "Getting Started",
-              slug: "getting-started",
-              translations: {
-                "zh-CN": "快速开始",
-              },
-            },
           ],
         },
         {

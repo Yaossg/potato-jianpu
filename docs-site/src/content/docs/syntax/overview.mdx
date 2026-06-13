@@ -5,7 +5,6 @@ docId: syntax-overview
 ---
 
 import SyntaxToken from '../../../components/SyntaxToken.astro';
-import SyntaxTokenGrid from '../../../components/SyntaxTokenGrid.astro';
 import JianpuSource from '../../../components/JianpuSource.astro';
 import RelatedLinks from '../../../components/RelatedLinks.astro';
 import ScorePreview from '../../../components/ScorePreview.astro';
@@ -28,19 +27,6 @@ composer: "Traditional"
 time: "4/4"
 =
 1 2 3 4 | 5 - 5 -`}
-/>
-
-<SyntaxTokenGrid
-  title="Common tokens"
-  tokens={[
-    { token: '=', label: 'header separator', description: 'Ends the optional file header and starts score parsing.' },
-    { token: '|', label: 'measure boundary', description: 'Separates measures inside a score line.' },
-    { token: '|:', label: 'repeat start', description: 'Marks the beginning of a repeated span.' },
-    { token: ':|', label: 'repeat end', description: 'Marks the end of a repeated span.' },
-    { token: '[1]', label: 'ending', description: 'Marks the pass number for a repeated ending measure.' },
-    { token: 'L1:', label: 'lyric line', description: 'Attaches lyric syllables to the preceding score line.' },
-    { token: 'T1:', label: 'track line', description: 'Labels a score line as part of a multi-track group.' },
-  ]}
 />
 
 The parser treats spaced and unspaced notation as the same grammar. These two score bodies are equivalent:

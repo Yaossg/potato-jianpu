@@ -4,6 +4,7 @@ description: Write, preview, play, and export Jianpu scores from one text format
 docId: home
 sectionIds:
   - choose-task
+  - first-score
   - writable-syntax
   - read-docs
 ---
@@ -18,9 +19,43 @@ This documentation is the primary user-facing guide for writing `.jpu` scores. S
 
 ## Choose a task
 
-- Write a first score: start with [Getting Started](./getting-started/), then open the same source in the browser app.
+- Write a first score: start with the example below, then open the same source in the browser app.
 - Fix a warning or error: use the [Diagnostics Index](./syntax/validation/) to match the diagnostic to the relevant syntax page.
 - Look up a precise token: use the compact [Grammar Reference](./reference/grammar/) after you know which part of the format you need.
+
+## First Score
+
+Start with a small `.jpu` file. The optional file header comes first, then a line containing `=`, then the score body.
+
+<JianpuSource
+  title="First phrase source"
+  source={`title: "First Phrase"
+key: "C"
+time: "4/4"
+tempo: "88"
+=
+1 2 3 4 | 5 - 5 -`}
+/>
+
+<ScorePreview
+  title="Rendered preview"
+  source={`title: "First Phrase"
+key: "C"
+time: "4/4"
+tempo: "88"
+=
+1 2 3 4 | 5 - 5 -`}
+/>
+
+Use the browser app when you want immediate preview, playback, and downloads. Use the CLI when you want repeatable validation or export commands in a terminal.
+
+```sh
+pnpm run cli -- validate examples/twinkle.jpu
+pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg
+pnpm run cli -- export-midi examples/twinkle.jpu -o twinkle.mid
+```
+
+The score examples in this repository use the `.jpu` extension.
 
 ## What you can write
 
@@ -57,7 +92,7 @@ Examples marked as valid are checked against the project parser so the guide sta
 
 <RelatedLinks
   links={[
-    { href: './getting-started/', label: 'Getting Started', description: 'Write a first score and try basic CLI commands.' },
+    { href: './guide/browser-app/', label: 'Browser App', description: 'Edit, preview, play, and download scores in the browser.' },
     { href: './syntax/validation/', label: 'Diagnostics Index', description: 'Match diagnostics to the syntax page that explains them.' },
     { href: './syntax/overview/', label: 'Syntax Overview', description: 'Learn the shape of a .jpu document.' },
   ]}

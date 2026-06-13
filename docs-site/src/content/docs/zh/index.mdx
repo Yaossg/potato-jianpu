@@ -4,6 +4,7 @@ description: 用同一种文本格式编写、预览、播放并导出简谱。
 docId: home
 sectionIds:
   - choose-task
+  - first-score
   - writable-syntax
   - read-docs
 ---
@@ -18,9 +19,43 @@ Modern Jianpu Markup 是用于简谱的文本格式和工具集。它包含浏�
 
 ## 选择任务
 
-- 写第一份乐谱：从 [快速开始](./getting-started/) 入手，然后在浏览器 App 中打开同一份源码。
+- 写第一份乐谱：从下面的示例入手，然后在浏览器 App 中打开同一份源码。
 - 修复警告或错误：用 [诊断索引](./syntax/validation/) 把诊断对应到相关语法页面。
 - 查找精确记号：知道要查哪一类格式之后，再使用紧凑的 [语法参考](./reference/grammar/)。
+
+## 第一份乐谱
+
+先写一个小的 `.jpu` 文件。可选的文件头放在前面，然后是一行 `=`，最后是乐谱主体。
+
+<JianpuSource
+  title="第一句源码"
+  source={`title: "First Phrase"
+key: "C"
+time: "4/4"
+tempo: "88"
+=
+1 2 3 4 | 5 - 5 -`}
+/>
+
+<ScorePreview
+  title="渲染预览"
+  source={`title: "First Phrase"
+key: "C"
+time: "4/4"
+tempo: "88"
+=
+1 2 3 4 | 5 - 5 -`}
+/>
+
+需要即时预览、播放和下载时，使用浏览器 App。需要在终端里做可重复的校验或导出时，使用 CLI。
+
+```sh
+pnpm run cli -- validate examples/twinkle.jpu
+pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg
+pnpm run cli -- export-midi examples/twinkle.jpu -o twinkle.mid
+```
+
+这个仓库里的乐谱示例使用 `.jpu` 扩展名。
 
 ## 可以编写什么
 
@@ -58,7 +93,7 @@ tempo: "96"
 <RelatedLinks
   title="相关页面"
   links={[
-    { href: './getting-started/', label: '快速开始', description: '写第一份乐谱，并尝试基本 CLI 命令。' },
+    { href: './guide/browser-app/', label: '浏览器 App', description: '在浏览器中编辑、预览、播放并下载乐谱。' },
     { href: './syntax/validation/', label: '诊断索引', description: '把诊断对应到解释它的语法页面。' },
     { href: './syntax/overview/', label: '语法概览', description: '了解 .jpu 文档的整体结构。' },
   ]}

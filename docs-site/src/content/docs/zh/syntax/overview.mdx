@@ -5,7 +5,6 @@ docId: syntax-overview
 ---
 
 import SyntaxToken from '../../../../components/SyntaxToken.astro';
-import SyntaxTokenGrid from '../../../../components/SyntaxTokenGrid.astro';
 import JianpuSource from '../../../../components/JianpuSource.astro';
 import RelatedLinks from '../../../../components/RelatedLinks.astro';
 import ScorePreview from '../../../../components/ScorePreview.astro';
@@ -28,19 +27,6 @@ composer: "Traditional"
 time: "4/4"
 =
 1 2 3 4 | 5 - 5 -`}
-/>
-
-<SyntaxTokenGrid
-  title="常见记号"
-  tokens={[
-    { token: '=', label: '文件头分隔线', description: '结束可选文件头，并开始按乐谱正文解析。' },
-    { token: '|', label: '小节边界', description: '分隔同一乐谱行里的小节。' },
-    { token: '|:', label: '反复开始', description: '标出反复段落的起点。' },
-    { token: ':|', label: '反复结束', description: '标出反复段落的终点。' },
-    { token: '[1]', label: '反复结尾', description: '标出反复结尾小节对应的轮次编号。' },
-    { token: 'L1:', label: '歌词行', description: '把歌词音节附加到前一行乐谱下面。' },
-    { token: 'T1:', label: '轨道行', description: '把乐谱行标记为多轨分组的一部分。' },
-  ]}
 />
 
 解析器把有空格和无空格的写法视为同一套语法。下面两个乐谱主体等价：
