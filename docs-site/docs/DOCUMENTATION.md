@@ -50,10 +50,6 @@ same job:
 - `src/content/docs/` and `src/content/docs/zh/` are the primary user-facing
   explanation layer. They should explain how authors use the syntax, what
   warnings or errors mean, and where to go next.
-- `../../public/grammar.html` and `../../public/grammar.zh.html` are legacy
-  compact references. Keep them aligned when grammar behavior changes, but do
-  not add new docs-site-only guidance there first. They should continue to
-  point readers to the docs-site home for user-facing documentation.
 
 When these sources disagree, inspect parser behavior and tests first, then
 update the grammar source and user-facing docs in the same change.
@@ -68,11 +64,8 @@ playback behavior, or export behavior:
 3. Run `pnpm run grammar:railroad` when `grammar.ebnf` changes so generated
    railroad data stays current.
 4. Update the relevant English and Simplified Chinese MDX pages.
-5. Keep diagnostics close to the syntax topic that causes them. The validation
-   page should stay a short index, not the primary diagnostic taxonomy.
-6. Update legacy grammar HTML pages when compact grammar reference coverage
-   changes.
-7. Run `pnpm run docs:verify` for complete docs-site verification, or the
+5. Keep diagnostics close to the syntax topic that causes them.
+6. Run `pnpm run docs:verify` for complete docs-site verification, or the
    focused checks listed in `docs-site/docs/COMMANDS.md` while iterating.
 
 ## Change-To-Docs Map
@@ -80,9 +73,8 @@ playback behavior, or export behavior:
 Use this map when a code change is user-visible but is not a pure grammar
 change:
 
-- Parser or diagnostic changes: update the relevant syntax page, the grammar
-  reference when quick lookup changes, and the diagnostics index when the
-  lookup workflow changes.
+- Parser or diagnostic changes: update the relevant syntax page and the grammar
+  reference when quick lookup changes.
 - Renderer changes: update the syntax page that explains the affected notation,
   `guide/browser-app.mdx` when the browser preview workflow changes, and
   `../../docs/RENDERER.md` for implementation-facing renderer behavior.
@@ -175,7 +167,5 @@ a specific label is clearer than the default. Keep structural props such as
 
 ## Boundaries
 
-- Do not remove `../../public/grammar.html` or `../../public/grammar.zh.html` unless
-  the user explicitly asks.
 - Do not edit generated output under `../../dist-web/`.
 - Do not add browser automation dependencies for docs checks.

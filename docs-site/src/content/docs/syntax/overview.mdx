@@ -9,7 +9,7 @@ import JianpuSource from '../../../components/JianpuSource.astro';
 import RelatedLinks from '../../../components/RelatedLinks.astro';
 import ScorePreview from '../../../components/ScorePreview.astro';
 
-A document has an optional file header followed by optional score text. A header is only recognized when the file uses a separator line made of one or more `=` characters. Header fields must appear before that separator; score, lyric, and track lines appear after it. Without a separator, the whole file is parsed as score text.
+A document may have leading blank lines, an optional file header, optional score text, and then the end of file. A header is only recognized when the file uses a separator line made of one or more `=` characters. Header fields must appear before that separator; score, lyric, and track lines appear after it. Without a separator, the whole file is parsed as score text.
 
 <JianpuSource
   title="Complete document source"
@@ -29,7 +29,7 @@ time: "4/4"
 1 2 3 4 | 5 - 5 -`}
 />
 
-The parser treats spaced and unspaced notation as the same grammar. These two score bodies are equivalent:
+The parser treats spaced and unspaced notation as the same grammar. Spaces and tabs may appear between score tokens. These two score bodies are equivalent:
 
 <JianpuSource title="Compact score body" source={`1234|5-5-`} />
 
@@ -43,7 +43,7 @@ Comments begin with `;` and continue to the end of the line.
 5 - 5 -`}
 />
 
-Blank lines and leading newlines are ignored. A document may contain only a score body, a header plus separator with no score body, or even be empty. Score-only documents do not need a separator.
+Blank lines and leading newlines are ignored. A document may contain only a score body, a header plus separator with no score body, or even be empty. Empty files are valid and use the default header values. Score-only documents do not need a separator.
 
 <JianpuSource title="Score-only document" source={`1 2 3 4 | 5 - 5 -`} />
 
@@ -64,6 +64,6 @@ Line breaks are meaningful because they separate header fields, score lines, and
   links={[
     { href: '../header/', label: 'File Header', description: 'Add metadata and learn when the separator is required.' },
     { href: '../notes/', label: 'Notes and Rests', description: 'Write pitches, rests, drums, chords, and ties.' },
-    { href: '../validation/', label: 'Diagnostics Index', description: 'Find the syntax topic behind a warning or error.' },
+    { href: '../../guide/cli/', label: 'CLI', description: 'Validate files and inspect warnings or errors.' },
   ]}
 />

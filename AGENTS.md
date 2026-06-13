@@ -25,8 +25,6 @@ Treat this directory as the project root.
 - `docs/ROADMAP.md`: known risks and future work.
 - `docs/RELEASE.md`: build outputs, packaging, and release checklist.
 - `docs-site/src/content/docs/`: Starlight MDX documentation source.
-- `public/grammar.html` and `public/grammar.zh.html`: legacy user-facing
-  grammar references.
 - `docs/grammar.ebnf`: grammar source used for railroad generation.
 
 ## Quick Rules
@@ -43,9 +41,13 @@ Treat this directory as the project root.
   keeping `docId` values aligned.
 - When working in `docs-site/`, read `docs-site/AGENTS.md` as the local
   handoff guide. Docs-site-specific details live under `docs-site/docs/`.
-- When grammar behavior changes, update `public/grammar.html`,
-  `public/grammar.zh.html`, `docs/grammar.ebnf`, and relevant docs-site MDX;
-  follow `docs/DOCUMENTATION.md` and `docs/TRANSLATION.md`, then run
-  `pnpm run grammar:railroad`.
+- When grammar behavior changes, update `docs/grammar.ebnf` and relevant
+  docs-site MDX; when adding, removing, or renaming grammar tokens or railroad
+  rules, keep the docs-site grammar reference token list and
+  `<RailroadDiagram />` entries in
+  `docs-site/src/content/docs/reference/grammar.mdx` and
+  `docs-site/src/content/docs/zh/reference/grammar.mdx` complete and aligned
+  with `docs/grammar.ebnf`. Follow `docs/DOCUMENTATION.md` and
+  `docs/TRANSLATION.md`, then run `pnpm run grammar:railroad`.
 - After each conversation turn, if you made any repository changes, commit them
   inside this repository before finishing the turn.

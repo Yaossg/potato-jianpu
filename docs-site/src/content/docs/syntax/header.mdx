@@ -58,11 +58,13 @@ Known fields include:
 | `tempo` | Playback and MIDI tempo. |
 | `hidden` | Any non-empty value hides the rendered header block. |
 
+Default values are empty for `title`, `subtitle`, `composer`, and `hidden`; `key` defaults to `C`, `time` defaults to `4/4`, and `tempo` defaults to `120`.
+
 Unknown fields are preserved as metadata. They do not change parsing, rendering, playback, or export behavior unless a future version gives them meaning.
 
 ## Strings and Validation
 
-Header values use quoted strings. Escape sequences are kept as source text, so write the visible metadata exactly as you want users to read it.
+Header values use double-quoted strings and must stay on one line. A backslash skips the following character during tokenization, but the backslash is preserved as source text rather than interpreted as an escape sequence. Write the visible metadata exactly as you want users to read it.
 
 <JianpuSource
   title="Quoted header source"
@@ -153,6 +155,6 @@ L1: "do re mi fa"`}
   links={[
     { href: '../lyrics-tracks/', label: 'Lyrics and Tracks', description: 'Use header labels with multi-track and lyric lines.' },
     { href: '../../reference/grammar/', label: 'Grammar Reference', description: 'Look up the compact header grammar.' },
-    { href: '../validation/', label: 'Diagnostics Index', description: 'Use the CLI to inspect diagnostics in context.' },
+    { href: '../../guide/cli/', label: 'CLI', description: 'Use validation output to inspect diagnostics in context.' },
   ]}
 />

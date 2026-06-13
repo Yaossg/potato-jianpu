@@ -20,8 +20,8 @@ This documentation is the primary user-facing guide for writing `.jpu` scores. S
 ## Choose a task
 
 - Write a first score: start with the example below, then open the same source in the browser app.
-- Fix a warning or error: use the [Diagnostics Index](./syntax/validation/) to match the diagnostic to the relevant syntax page.
-- Look up a precise token: use the compact [Grammar Reference](./reference/grammar/) after you know which part of the format you need.
+- Fix a warning or error: start from the relevant syntax page, or use the CLI to inspect diagnostics for a file.
+- Look up a precise token or grammar shape: use the [Grammar Reference](./reference/grammar/) after you know which part of the format you need.
 
 ## First Score
 
@@ -86,14 +86,14 @@ tempo: "96"
 
 ## How to read the docs
 
-The syntax pages explain the format in the same order a score is usually written: file header, notes, rhythm, repeats, lyrics, and tracks. The grammar reference at the end is a compact lookup table, not the only place where the rules are documented.
+The syntax pages explain the format in the same order a score is usually written: file header, notes, rhythm, repeats, lyrics, and tracks. The grammar reference keeps a token list and railroad diagrams for precise lookup, not the only place where the rules are documented.
 
 Examples marked as valid are checked against the project parser so the guide stays aligned with the implementation.
 
 <RelatedLinks
   links={[
     { href: './guide/browser-app/', label: 'Browser App', description: 'Edit, preview, play, and download scores in the browser.' },
-    { href: './syntax/validation/', label: 'Diagnostics Index', description: 'Match diagnostics to the syntax page that explains them.' },
+    { href: './guide/cli/', label: 'CLI', description: 'Validate files and inspect diagnostics from a terminal.' },
     { href: './syntax/overview/', label: 'Syntax Overview', description: 'Learn the shape of a .jpu document.' },
   ]}
 />
