@@ -66,6 +66,7 @@ Parse result shape:
       "tempo": 120,
       "hidden": false,
       "trackNames": {},
+      "trackPrograms": {},
       "lyricLabels": {}
     },
     "score": [],
@@ -146,7 +147,8 @@ pnpm run cli -- export-midi input.jpu -o output.mid --program 0
 
 Options:
 
-- `--program <number>`: integer from `0` to `220`.
+- `--program <number>`: integer from `0` to `220`; used as the default Program
+  for tracks without `Tn.program` headers.
 - `--omit-initial-rest`: remove leading rests before writing note events.
 
 Program behavior:
@@ -154,6 +156,8 @@ Program behavior:
 - `0` to `127`: normal melodic MIDI program.
 - `128` to `220`: drum mode on MIDI channel 10. Drum note `X` maps to
   percussion note `program - 128 + 35`, so `128` maps to bass drum note `35`.
+- `Tn.program` headers can override the default with melodic Programs `0..127`
+  or quoted General MIDI Program names.
 
 The MIDI writer emits:
 
@@ -168,12 +172,13 @@ track name. Score lines are divided into voice groups: every group starts at
 start together; each later group starts after the previous group finishes.
 Unlabeled lines in a labeled score are treated as `T1`.
 Header entries such as `T1.name: "Melody"` or the shorthand `T1: "Melody"` only
-control rendered line names; they do not change MIDI track timing. Labeled
-melodic arrangement tracks use the MIDI channel named by their label, so `T1`
-uses MIDI channel 1 and `T16` uses MIDI channel 16. `T10` is reserved for drums
-and is not accepted as a melodic track label. Unlabeled melodic tracks use the
-next available non-drum MIDI channel by export order. Drum mode uses channel 10
-for every arrangement track.
+control rendered line names; they do not change MIDI track timing. Header
+entries such as `T1.program: 24` or `T2.program: "Violin"` set per-track melodic
+Programs for playback and export. Labeled melodic arrangement tracks use the
+MIDI channel named by their label, so `T1` uses MIDI channel 1 and `T16` uses
+MIDI channel 16. `T10` is reserved for drums and is not accepted as a melodic
+track label. Unlabeled melodic tracks use the next available non-drum MIDI
+channel by export order. Drum mode uses channel 10 for every arrangement track.
 
 Rests advance delta time within their track without emitting note events. Tied
 notes are merged by the arrangement compiler before MIDI writing.
@@ -190,7 +195,8 @@ pnpm run cli -- export-wav input.jpu -o output.wav --program 0 --sample-rate 441
 
 Options:
 
-- `--program <number>`: same range and drum mapping as MIDI export.
+- `--program <number>`: same range and drum mapping as MIDI export; used as the
+  default Program for tracks without `Tn.program` headers.
 - `--sample-rate <hz>`: positive number. Defaults to `44100`.
 - `--amplitude <number>`: number greater than `0` and no more than `1`.
   Defaults to `1`.
@@ -200,7 +206,8 @@ The WAV renderer:
 
 - uses `WebAudioTinySynth` with an offline `RenderingAudioContext`
 - schedules all arrangement tracks against the same offline audio clock
-- uses the same Program and drum-channel behavior as browser preview playback
+- uses the same Program, per-track Program, and drum-channel behavior as browser
+  preview playback
 - uses fixed MIDI velocity `64`
 - treats `--amplitude` as TinySynth master volume
 - rests render as silence
@@ -225,7 +232,8 @@ pnpm run cli -- export-mp3 input.jpu -o output.mp3 --program 0 --sample-rate 441
 
 Options:
 
-- `--program <number>`: same range and drum mapping as MIDI and WAV export.
+- `--program <number>`: same range and drum mapping as MIDI and WAV export; used
+  as the default Program for tracks without `Tn.program` headers.
 - `--sample-rate <hz>`: positive number. Defaults to `44100`.
 - `--amplitude <number>`: number greater than `0` and no more than `1`.
   Defaults to `1`.

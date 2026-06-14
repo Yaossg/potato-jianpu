@@ -391,6 +391,14 @@ test("renders header-defined track labels with reserved horizontal space", () =>
   assert.match(svg, /<g class="note-item" data-note-index="0"><text class="note" x="79"/);
 });
 
+test("renders T1 header label for a single unlabeled score line", () => {
+  const result = parse(`T1.name: "Melody"\n=\n1 2 | 3 4 |`);
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 160 });
+  assert.match(svg, /<text class="line-label" x="8" y="[^"]+" text-anchor="start">Melody<\/text>/);
+  assert.match(svg, /<g class="note-item" data-note-index="0"><text class="note" x="87"/);
+});
+
 test("sizes label space from rendered label text", () => {
   const short = parse(`T1: "A"\n=\nT1: 1 2`);
   const long = parse(`T1: "Extremely Long Track Label For Width"\n=\nT1: 1 2`);

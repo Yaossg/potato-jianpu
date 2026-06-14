@@ -42,6 +42,7 @@ export type TranslationKey =
   | "soundSettings"
   | "editorSettings"
   | "program"
+  | "trackProgramOverrides"
   | "generalMidi"
   | "drums"
   | "volume"
@@ -64,7 +65,7 @@ export type TranslationKey =
   | "event"
   | "events";
 
-const translations: Record<Language, Record<TranslationKey, string>> = {
+const translations: { en: Record<TranslationKey, string>; zh: Partial<Record<TranslationKey, string>> } = {
   en: {
     tagline: "Browser preview for the parser, SVG renderer, and audio exporters.",
     language: "Language",
@@ -105,7 +106,8 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     allLines: "All lines",
     soundSettings: "Sound Settings",
     editorSettings: "Editor Settings",
-    program: "Program",
+    program: "Default Program",
+    trackProgramOverrides: "{count} score-level track Program override(s)",
     generalMidi: "General MIDI",
     drums: "Drums",
     volume: "Volume",
@@ -127,7 +129,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     validWarnings: "Valid, {count} warnings",
     event: "event",
     events: "events",
-  },
+  } satisfies Record<TranslationKey, string>,
   zh: {
     tagline: "用于解析器、SVG 渲染器和音频导出的浏览器预览。",
     language: "语言",
@@ -204,6 +206,6 @@ export const pageWidthModeLabels: Record<PageWidthMode, TranslationKey> = {
 };
 
 export function translate(language: Language, key: TranslationKey, values: Record<string, string | number> = {}): string {
-  return Object.entries(values).reduce((text, [name, value]) => text.replace(`{${name}}`, String(value)), translations[language][key]);
+  return Object.entries(values).reduce((text, [name, value]) => text.replace(`{${name}}`, String(value)), translations[language][key] ?? translations.en[key]);
 }
 

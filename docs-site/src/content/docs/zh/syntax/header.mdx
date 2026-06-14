@@ -9,6 +9,7 @@ sectionIds:
   - musical-defaults
   - hidden-header
   - track-and-lyric-labels
+  - track-programs
 ---
 
 import JianpuExample from '../../../../components/JianpuExample.astro';
@@ -55,8 +56,9 @@ tempo: 72
 | `composer` | 作曲者或来源文本。 |
 | `key` | 用于播放和导出的调号。 |
 | `time` | 用于小节时值校验的拍号。 |
-| `tempo` | 播放和 MIDI 的速度。 |
-| `hidden` | 隐藏渲染出的文件头区域的布尔标记。 |
+| `tempo` | 播放和 MIDI 速度。 |
+| `hidden` | 隐藏渲染出的文件头区块的布尔标记。 |
+| `Tn.program` | 旋律轨道的逐轨道播放和导出 Program 覆盖。 |
 
 `title`、`subtitle` 和 `composer` 的默认值为空；`hidden` 默认为 `false`，`key` 默认为 `C`，`time` 默认为 `4/4`，`tempo` 默认为 `120`。
 
@@ -95,13 +97,13 @@ tempo: 72
 1 2 3 4`}
 />
 
-## 音乐默认值
-
 `key` 字段接受 `C`、`C#`、`Db`、`D`、`D#`、`Eb`、`E`、`F`、`F#`、`Gb`、`G`、`G#`、`Ab`、`A`、`A#`、`Bb` 和 `B`。也可以写成 `#F` 或 `bB` 这样的变音在前形式。它会影响播放和导出的音高；无效调名会产生诊断。
 
-`time` 字段使用 `拍数/拍单位`，例如 `4/4`、`3/4`、`6/8`。允许的分子是 `2`、`3`、`4`、`6`、`9` 和 `12`；允许的分母是 `2`、`4`、`8` 和 `16`。它用于小节时值校验。小节时值和拍号不一致时会产生警告，而不是硬解析失败。
+## 音乐默认值
 
-`tempo` 字段是正数 BPM，可以是 `96`、`120` 或 `132.5` 这样的整数或小数。它用于播放、MIDI 导出和音频导出。
+`time` 字段使用 `拍数/拍单位`，例如 `4/4`、`3/4` 或 `6/8`。允许的分子是 `2`、`3`、`4`、`6`、`9` 和 `12`；允许的分母是 `2`、`4`、`8` 和 `16`。它用于小节时值校验。小节时值和拍号不一致时会产生警告，而不是硬解析失败。
+
+`tempo` 字段是正的 BPM，可以是 `96`、`120` 或 `132.5` 这样的整数或小数。它用于播放、MIDI 导出和音频导出。
 
 ## 隐藏文件头
 
@@ -129,6 +131,8 @@ hidden: true
 
 文件头也可以给轨道和歌词行命名。轨道名称可以写成 `Tn.name` 或简写 `Tn`；歌词标签可以写成 `Ln.name` 或简写 `Ln`。
 
+只有一条未写 `T1:` 的音乐行时，`T1.name` 也会命名这条渲染行。
+
 <JianpuSource
   title="轨道和歌词标签源码"
   source={`T1.name: "Melody"
@@ -151,10 +155,38 @@ T2: 5 5 5 5
 L1: "do re mi fa"`}
 />
 
+## 轨道 Program
+
+在文件头中使用 `Tn.program`，可以为带标签的编排轨道指定旋律 General MIDI Program。值可以是 `0` 到 `127` 的整数，也可以是浏览器 Program 选择器中的带引号 Program 名称。带引号名称会先去掉首尾空白，再按不区分大小写的方式匹配。
+
+浏览器和 CLI 的 Program 控件仍作为没有 `Tn.program` 文件头的轨道默认值。只有一条未写 `T1:` 的音乐行时，`T1.program` 会应用到这条播放/导出轨道。`T10.program` 和鼓 Program 值保留给后续鼓轨道设计。
+
+<JianpuSource
+  title="轨道 Program 源码"
+  source={`T1.name: "Melody"
+T1.program: 0
+T2.name: "Violin"
+T2.program: "Violin"
+=
+T1: 1 2 3 4
+T2: 5, 6, 7, 1`}
+/>
+
+<ScorePreview
+  title="渲染后的轨道 Program 乐谱"
+  source={`T1.name: "Melody"
+T1.program: 0
+T2.name: "Violin"
+T2.program: "Violin"
+=
+T1: 1 2 3 4
+T2: 5, 6, 7, 1`}
+/>
+
 <RelatedLinks
   title="相关页面"
   links={[
-    { href: '../lyrics-tracks/', label: '歌词与多轨', description: '把文件头标签用于多轨和歌词行。' },
+    { href: '../lyrics-tracks/', label: '歌词与轨道', description: '把文件头标签用于多轨和歌词行。' },
     { href: '../../reference/grammar/', label: '语法参考', description: '快速查找文件头语法。' },
     { href: '../../guide/cli/', label: '命令行', description: '用校验输出查看诊断上下文。' },
   ]}

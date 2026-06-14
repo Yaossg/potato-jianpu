@@ -4,8 +4,8 @@ const LABEL_CHARACTER_WIDTH = 8.5;
 const LABEL_RIGHT_PADDING = 10;
 const LABEL_LEFT_X = 8;
 
-export function scoreLineDisplayLabel(document: Document, line: ScoreLine): string {
-  return line.label ? (document.header.trackNames[line.label] ?? "") : "";
+export function scoreLineDisplayLabel(document: Document, line: ScoreLine, defaultLabel = ""): string {
+  return document.header.trackNames[line.label ?? defaultLabel] ?? "";
 }
 
 export function lyricLineDisplayLabel(document: Document, line: LyricLine): string {

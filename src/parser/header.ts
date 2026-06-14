@@ -1,4 +1,4 @@
-import type { Diagnostic, Header, KeySignature, SourceRange, TimeSignature } from "../core/index.js";
+import { resolveMelodicProgramName, type Diagnostic, type Header, type KeySignature, type SourceRange, type TimeSignature } from "../core/index.js";
 
 export interface HeaderValue {
   text: string;
@@ -41,6 +41,7 @@ export function createDefaultHeader(): Header {
     tempo: 120,
     hidden: false,
     trackNames: {},
+    trackPrograms: {},
     lyricLabels: {},
   };
 }
@@ -114,6 +115,11 @@ export function applyHeaderProperty(
     applyLabelName(header.trackNames, seen, `track:${trackName}`, "track name", trackName, keyRange, value, diagnostics);
     return "ok";
   }
+  const trackProgram = key.match(/^(T(?:[1-9]|1[1-6]))\.program$/)?.[1];
+  if (trackProgram) {
+    applyTrackProgram(header.trackPrograms, seen, trackProgram, keyRange, value, diagnostics);
+    return "ok";
+  }
   if (isTrackLabel(key)) {
     applyLabelName(header.trackNames, seen, `track:${key}`, "track name", key, keyRange, value, diagnostics);
     return "ok";
@@ -149,6 +155,27 @@ function applyLabelName(
     return;
   }
   labels[label] = value.text;
+}
+
+function applyTrackProgram(
+  trackPrograms: Record<string, number>,
+  seen: Set<string>,
+  trackName: string,
+  keyRange: SourceRange,
+  value: HeaderValue | null,
+  diagnostics: Diagnostic[],
+) {
+  if (!value) {
+    return;
+  }
+  if (!recordKey(seen, `program:${trackName}`, `Duplicate track program definition for '${trackName}'.`, keyRange, diagnostics)) {
+    return;
+  }
+  const program = parseTrackProgram(value, diagnostics);
+  if (program === null) {
+    return;
+  }
+  trackPrograms[trackName] = program;
 }
 
 function recordKey(seen: Set<string>, key: string, message: string, range: SourceRange, diagnostics: Diagnostic[]): boolean {
@@ -222,6 +249,33 @@ function parseHidden(header: Header, value: HeaderValue, diagnostics: Diagnostic
     return;
   }
   diagnostics.push({ severity: "error", message: "Expected boolean value for hidden.", range: value.range });
+}
+
+function parseTrackProgram(value: HeaderValue, diagnostics: Diagnostic[]): number | null {
+  if (value.quoted) {
+    const resolved = resolveMelodicProgramName(value.text);
+    if (resolved.ok) {
+      return resolved.program;
+    }
+    diagnostics.push({
+      severity: "error",
+      message:
+        resolved.reason === "ambiguous" ? `Ambiguous Program name '${value.text}'.` : `Unknown Program name '${value.text}'.`,
+      range: value.range,
+    });
+    return null;
+  }
+
+  if (!/^\d+$/.test(value.text)) {
+    diagnostics.push({ severity: "error", message: "Expected Program number 0-127 or quoted Program name.", range: value.range });
+    return null;
+  }
+  const program = Number(value.text);
+  if (!Number.isInteger(program) || program < 0 || program > 127) {
+    diagnostics.push({ severity: "error", message: `Invalid Program '${value.text}'. Expected 0-127.`, range: value.range });
+    return null;
+  }
+  return program;
 }
 
 function parseKeySignature(key: string): KeySignature | null {

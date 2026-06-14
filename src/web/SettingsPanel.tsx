@@ -2,7 +2,7 @@ import { DRUM_PROGRAMS, GM_PROGRAMS } from "../index.js";
 import type { JustifyMode, PageWidthMode, TranslationKey } from "./i18n.js";
 
 interface SettingsPanelProps {
-  t: (key: TranslationKey) => string;
+  t: (key: TranslationKey, values?: Record<string, string | number>) => string;
   pageWidthMode: PageWidthMode;
   panelPageWidth: number;
   contentPageWidth: number;
@@ -13,6 +13,7 @@ interface SettingsPanelProps {
   pageBackground: string;
   justifyMode: JustifyMode;
   program: number;
+  trackProgramOverrideCount: number;
   volume: number;
   audioSampleRate: number;
   omitInitialRests: boolean;
@@ -51,6 +52,7 @@ export function SettingsPanel({
   pageBackground,
   justifyMode,
   program,
+  trackProgramOverrideCount,
   volume,
   audioSampleRate,
   omitInitialRests,
@@ -166,6 +168,7 @@ export function SettingsPanel({
                 </optgroup>
               </select>
             </label>
+            {trackProgramOverrideCount > 0 && <p className="settings-note">{t("trackProgramOverrides", { count: trackProgramOverrideCount })}</p>}
             <label className="range-control">
               {t("volume")}
               <input type="range" min={0} max={200} step={1} value={volume} onChange={(event) => onVolumeChange(Number(event.target.value))} />

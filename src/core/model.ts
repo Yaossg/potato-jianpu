@@ -100,6 +100,7 @@ export interface Header {
   tempo: number;
   hidden: boolean;
   trackNames: Record<string, string>;
+  trackPrograms: Record<string, number>;
   lyricLabels: Record<string, string>;
 }
 

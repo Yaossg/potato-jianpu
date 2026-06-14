@@ -53,9 +53,14 @@ key: C
 time: 4/4
 tempo: 96
 hidden: false
+T1.program: "Violin"
 =
-1 1 5 5 | 6 6 5 - |
+T1: 1 1 5 5 | 6 6 5 - |
 ```
+
+Use `Tn.program` to assign a melodic General MIDI Program to a labeled track.
+The CLI and browser Program controls remain the default for tracks without a
+score-level Program.
 
 ## Built Outputs
 

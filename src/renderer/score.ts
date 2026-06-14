@@ -303,6 +303,7 @@ function renderLine(
   visualWidth: number,
   labelOffset: number,
   bracketOffset: number,
+  defaultTrackLabel: string,
   finalBarMeasures: Set<Measure>,
   notesByLine: Map<ScoreLine, Note[]>,
 ): RenderedLine {
@@ -310,7 +311,7 @@ function renderLine(
   const lineEntries: LineEntry[] = [];
   const trackNotes = notesByLine.get(layout.line) ?? notesInLine(layout.line);
   const unit = actualNotePerBeat(document.header.timeSignature);
-  const displayLabel = scoreLineDisplayLabel(document, layout.line);
+  const displayLabel = scoreLineDisplayLabel(document, layout.line, defaultTrackLabel);
   const contentOffset = labelOffset + bracketOffset;
   const justifyX = createLineJustifier(layout, visualWidth - contentOffset - bracketOffset, justifyLine);
   const leftTieEdgeX = contentOffset;
@@ -699,7 +700,7 @@ function scoreLineGroups(document: Document): ScoreLineGroup[] {
   if (!hasLabels) {
     return document.score.map((line) => {
       const lyrics = line.lyrics ?? [];
-      const labelOffset = labelOffsetForTexts(lyrics.map((lyric) => lyricLineDisplayLabel(document, lyric)));
+      const labelOffset = labelOffsetForTexts([scoreLineDisplayLabel(document, line, "T1"), ...lyrics.map((lyric) => lyricLineDisplayLabel(document, lyric))]);
       return { lines: [line], lyrics, bracketed: false, labelOffset, bracketOffset: 0 };
     });
   }
@@ -859,6 +860,7 @@ export function renderScore(document: Document, yStart: number, pageWidth: numbe
       visualWidth,
       item.labelOffset,
       item.bracketOffset,
+      hasLabels ? "" : "T1",
       finalMeasures,
       notesByLine,
     );

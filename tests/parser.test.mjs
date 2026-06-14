@@ -516,6 +516,29 @@ test("accepts T-prefixed header and score line labels", () => {
   assert.match(xHeader.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Unknown header key 'X_name'/);
 });
 
+test("parses per-track header programs", () => {
+  const result = parse(`T1.program: 40\nT2.program: "Violin"\nT3.program: " flute "\n=\nT1: 1\nT2: 2\nT3: 3`);
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.value.header.trackPrograms, {
+    T1: 40,
+    T2: 40,
+    T3: 73,
+  });
+});
+
+test("rejects invalid per-track header programs", () => {
+  const result = parse(`T1.program: "40"\nT2.program: "Not A Program"\nT3.program: -1\nT4.program: 128\nT5.program: piano\nT1.program: 41\nT10.program: 40\n=\nT1: 1`);
+  assert.equal(result.ok, false);
+  const messages = result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
+  assert.match(messages, /Unknown Program name '40'/);
+  assert.match(messages, /Unknown Program name 'Not A Program'/);
+  assert.match(messages, /Expected Program number 0-127 or quoted Program name/);
+  assert.match(messages, /Invalid Program '128'. Expected 0-127/);
+  assert.match(messages, /Expected Program number 0-127 or quoted Program name/);
+  assert.match(messages, /Duplicate track program definition for 'T1'/);
+  assert.match(messages, /Unknown header key 'T10.program'/);
+});
+
 test("treats unlabeled score lines as T1 when any score line has a track label", () => {
   const result = parse("1 2\nT2: 5, 6,\n3 4");
   assert.equal(result.ok, true);

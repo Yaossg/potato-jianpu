@@ -24,6 +24,8 @@ The parser recognizes these tokens. Whitespace and comments are skipped between 
 | `TIME_SIGNATURE` | supported fractions such as `4/4`, `6/8`, or `2/16` |
 | `NUMBER` | positive finite number |
 | `BOOLEAN` | `true` or `false` |
+| `PROGRAM_NUMBER` | integer `0` through `127` |
+| `PROGRAM_NAME` | quoted melodic General MIDI program name |
 | `TRACK_LABEL` | `T1` through `T9`, `T11` through `T16` |
 | `LYRIC_LABEL` | `L` followed by one or more digits |
 | `STRING` | double-quoted string on one line |
@@ -66,6 +68,8 @@ These diagrams are generated from `docs/grammar.ebnf`.
 <RailroadDiagram rule="hidden_property" title="hidden_property" caption="A boolean header visibility flag." />
 <RailroadDiagram rule="track_name_property" title="track_name_property" caption="A canonical visible track-name header field." />
 <RailroadDiagram rule="track_name_shorthand_property" title="track_name_shorthand_property" caption="A shorthand visible track-name header field." />
+<RailroadDiagram rule="track_program_property" title="track_program_property" caption="A per-track playback and export Program header field." />
+<RailroadDiagram rule="program_value" title="program_value" caption="A melodic Program number or quoted Program name." />
 <RailroadDiagram rule="lyric_label_property" title="lyric_label_property" caption="A canonical visible lyric-label header field." />
 <RailroadDiagram rule="lyric_label_shorthand_property" title="lyric_label_shorthand_property" caption="A shorthand visible lyric-label header field." />
 <RailroadDiagram rule="score" title="score" caption="Score items separated by one or more line breaks." />

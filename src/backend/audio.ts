@@ -24,7 +24,7 @@ export const BITS_PER_SAMPLE = 16;
 
 const DEFAULT_VELOCITY = 64;
 const DRUM_CHANNEL = 9;
-const MELODIC_CHANNEL = 0;
+const MELODIC_CHANNELS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15] as const;
 const RENDER_TAIL_SECONDS = 0.25;
 
 function secondsPerWholeNote(arrangement: Arrangement): number {
@@ -51,10 +51,17 @@ function scheduleTrack(synth: WebAudioTinySynth, notes: MelodyNote[], secondsPer
   }
 }
 
-function scheduleTinySynth(synth: WebAudioTinySynth, arrangement: Arrangement, program: number) {
+function scheduleTinySynth(synth: WebAudioTinySynth, arrangement: Arrangement) {
   const secondsPerWhole = secondsPerWholeNote(arrangement);
-  const channel = program >= 128 ? DRUM_CHANNEL : MELODIC_CHANNEL;
+  let melodicChannelIndex = 0;
   for (const track of arrangement.tracks) {
+    const channel = track.program >= 128 ? DRUM_CHANNEL : MELODIC_CHANNELS[melodicChannelIndex++];
+    if (channel === undefined) {
+      throw new Error(`Audio export supports at most ${MELODIC_CHANNELS.length} melodic tracks.`);
+    }
+    if (track.program < 128) {
+      synth.setProgram(channel, track.program);
+    }
     scheduleTrack(synth, track.notes, secondsPerWhole, channel);
   }
 }
@@ -95,10 +102,7 @@ export function renderDocumentPcm(document: Document, options: AudioRenderOption
   synth.setAudioContext(context as unknown as AudioContext);
   synth.reset();
   synth.setMasterVol(amplitude);
-  if (program < 128) {
-    synth.setProgram(MELODIC_CHANNEL, program);
-  }
-  scheduleTinySynth(synth, arrangement, program);
+  scheduleTinySynth(synth, arrangement);
 
   context.processTo(Math.max(0.01, totalSeconds(arrangement) + RENDER_TAIL_SECONDS));
   const audioData = context.exportAsAudioData() as {

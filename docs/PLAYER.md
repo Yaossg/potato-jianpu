@@ -99,6 +99,19 @@ The track label itself is not rendered in SVG. To render a visible line label,
 define the same label in the header, for example `T1.name: "Melody"` or the
 shorthand `T1: "Melody"`.
 
+Header entries such as `T1.program: 40` or `T2.program: "Violin"` assign
+melodic Programs to arrangement tracks. Numeric per-track Programs are limited
+to `0..127`; quoted names resolve through the General MIDI Program list with
+case-insensitive matching after trimming surrounding whitespace. A score with no
+explicit `Tn:` line labels treats its single arrangement track as `T1` for
+`T1.program` and `T1.name` lookup, while preserving the unnamed-track shape when
+those headers are omitted. The `compileArrangement(document, program?)`
+argument remains the default Program for tracks without an explicit
+`Tn.program` header. `Tn.program` entries for tracks that do not appear in the
+score body stay in the parsed header but do not create arrangement tracks.
+`T10.program` and drum Program values are still deferred with the drum-track
+design.
+
 Lyric lines such as `L1: "text"` or a bare `"text"` line attach to the
 preceding score group for rendering only. They do not create arrangement tracks
 and do not affect playback, MIDI, WAV, or MP3 timing. Header entries such as
@@ -238,6 +251,7 @@ Behavior:
 - stops any existing playback before starting a new one
 - resets active synth voices before starting a new play request
 - sets the selected melodic Program for programs `0..127`
+- sets per-track melodic Programs when the score has `Tn.program` headers
 - schedules note-on and note-off events for pitch/chord events
 - uses WebAudioTinySynth percussion channel playback for drum programs
   `128..220`
@@ -246,11 +260,12 @@ Behavior:
 - supports starting from a parsed note index
 - schedules all arrangement tracks against the same audio clock
 
-The frontend exposes a Settings panel with Program, volume, audition, and
-initial-rest controls. Browser playback and MIDI download use the selected
-Program. The browser UI presents it as a grouped selection list with General
-MIDI programs and drum-note programs. Values `128..220` trigger the drum mapping
-described above.
+The frontend exposes a Settings panel with Default Program, volume, audition,
+and initial-rest controls. Browser playback and MIDI download use the selected
+Program as the default for tracks without score-level `Tn.program` headers. The
+browser UI presents it as a grouped selection list with General MIDI programs
+and drum-note programs. Values `128..220` trigger the drum mapping described
+above when no per-track melodic Program overrides that track.
 
 The frontend also exposes playback volume as a `0..200%` slider with a `100%`
 default. This controls browser preview gain only; it does not alter the parsed
@@ -307,6 +322,8 @@ The meta track contains:
 The music track contains:
 
 - optional program change in melodic mode
+- per-track melodic Program Change events when arrangement tracks have different
+  Programs
 - note-on events
 - note-off events
 - end-of-track event

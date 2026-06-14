@@ -28,11 +28,11 @@ core Document
   |
   +--> renderer -> SVG string -> PNG adapters
   |
-  +--> melody compiler -> browser playback / browser audio export
+  +--> arrangement compiler -> browser playback / browser audio export
   |
-  +--> melody compiler -> MIDI writer
+  +--> arrangement compiler -> MIDI writer
   |
-  +--> melody compiler -> backend audio renderer -> WAV writer / MP3 encoder
+  +--> arrangement compiler -> backend audio renderer -> WAV writer / MP3 encoder
 ```
 
 The parser is the only module that understands source text. Renderer, player,
@@ -65,6 +65,7 @@ Responsibilities:
 - result type
 - document model
 - header model
+- shared General MIDI Program option data and melodic Program name resolution
 - score line, measure, note, pitch, and duration models
 - time signature helper functions
 
@@ -89,6 +90,7 @@ Responsibilities:
 - tokenize source text
 - parse optional header and score notation
 - parse closed typed header properties
+- parse per-track melodic Program header properties
 - validate tie semantics
 - warn on measure duration mismatches
 - preserve source ranges for diagnostics

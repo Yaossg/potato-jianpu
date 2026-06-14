@@ -32,7 +32,7 @@ const BITS_PER_SAMPLE = 16;
 const HEADER_SIZE = 44;
 const DEFAULT_VELOCITY = 64;
 const DRUM_CHANNEL = 9;
-const MELODIC_CHANNEL = 0;
+const MELODIC_CHANNELS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15] as const;
 const RENDER_TAIL_SECONDS = 0.25;
 const MP3_FRAME_SAMPLES = 1152;
 
@@ -91,10 +91,17 @@ function scheduleTrack(synth: WebAudioTinySynth, notes: MelodyNote[], secondsPer
   }
 }
 
-function scheduleTinySynth(synth: WebAudioTinySynth, arrangement: Arrangement, program: number) {
+function scheduleTinySynth(synth: WebAudioTinySynth, arrangement: Arrangement) {
   const secondsPerWhole = secondsPerWholeNote(arrangement);
-  const channel = program >= 128 ? DRUM_CHANNEL : MELODIC_CHANNEL;
+  let melodicChannelIndex = 0;
   for (const track of arrangement.tracks) {
+    const channel = track.program >= 128 ? DRUM_CHANNEL : MELODIC_CHANNELS[melodicChannelIndex++];
+    if (channel === undefined) {
+      throw new Error(`Audio export supports at most ${MELODIC_CHANNELS.length} melodic tracks.`);
+    }
+    if (track.program < 128) {
+      synth.setProgram(channel, track.program);
+    }
     scheduleTrack(synth, track.notes, secondsPerWhole, channel);
   }
 }
@@ -115,10 +122,7 @@ async function renderDocumentPcm(document: Document, options: BrowserAudioExport
   await synth.ready();
   synth.reset();
   synth.setMasterVol(amplitude);
-  if (program < 128) {
-    synth.setProgram(MELODIC_CHANNEL, program);
-  }
-  scheduleTinySynth(synth, arrangement, program);
+  scheduleTinySynth(synth, arrangement);
 
   const buffer = await context.startRendering();
   const pcm = new Int16Array(buffer.length * buffer.numberOfChannels);

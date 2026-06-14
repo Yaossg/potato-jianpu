@@ -36,7 +36,9 @@ Rendered score previews in the documentation use the same playback compiler. Whe
 
 Programs `0..127` use melodic TinySynth programs. Programs `128..220` use drum mode. In drum mode, source `X` maps to percussion note `program - 128 + 35`.
 
-The browser app includes program selection, volume, audition, and an initial-rest omission toggle in Sound Settings.
+Use `Tn.program` in the file header to assign a melodic Program to a labeled track. Numeric values are limited to `0..127`, and quoted names resolve through the same General MIDI Program list used by the browser selector. The browser Program selector remains the default for tracks without a score-level Program.
+
+The browser app includes default Program selection, volume, audition, and an initial-rest omission toggle in Sound Settings.
 
 ## Repeats and tracks
 

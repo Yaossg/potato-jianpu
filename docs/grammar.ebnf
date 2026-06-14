@@ -1,7 +1,7 @@
 file = { NEWLINE }, [ header ], [ score ], EOF ;
 
 header = { property }, EQUALS, { EQUALS }, NEWLINE, { NEWLINE } ;
-property = text_property | key_property | time_property | tempo_property | hidden_property | track_name_property | track_name_shorthand_property | lyric_label_property | lyric_label_shorthand_property ;
+property = text_property | key_property | time_property | tempo_property | hidden_property | track_name_property | track_name_shorthand_property | track_program_property | lyric_label_property | lyric_label_shorthand_property ;
 
 text_property = TEXT_KEY, ":", STRING, NEWLINE, { NEWLINE } ;
 key_property = "key", ":", KEY_SIGNATURE, NEWLINE, { NEWLINE } ;
@@ -10,6 +10,8 @@ tempo_property = "tempo", ":", NUMBER, NEWLINE, { NEWLINE } ;
 hidden_property = "hidden", ":", BOOLEAN, NEWLINE, { NEWLINE } ;
 track_name_property = TRACK_LABEL, ".", "name", ":", STRING, NEWLINE, { NEWLINE } ;
 track_name_shorthand_property = TRACK_LABEL, ":", STRING, NEWLINE, { NEWLINE } ;
+track_program_property = TRACK_LABEL, ".", "program", ":", program_value, NEWLINE, { NEWLINE } ;
+program_value = PROGRAM_NUMBER | PROGRAM_NAME ;
 lyric_label_property = LYRIC_LABEL, ".", "name", ":", STRING, NEWLINE, { NEWLINE } ;
 lyric_label_shorthand_property = LYRIC_LABEL, ":", STRING, NEWLINE, { NEWLINE } ;
 
@@ -53,6 +55,8 @@ KEY_SIGNATURE = "C" | "C#" | "#C" | "Db" | "bD" | "D" | "D#" | "#D" | "Eb" | "bE
 TIME_SIGNATURE = ("2" | "3" | "4" | "6" | "9" | "12"), "/", ("2" | "4" | "8" | "16") ;
 NUMBER = "positive finite number" ;
 BOOLEAN = "true" | "false" ;
+PROGRAM_NUMBER = "0" | "1" | "..." | "127" ;
+PROGRAM_NAME = "quoted melodic General MIDI program name" ;
 IDENTIFIER = "[A-Za-z][A-Za-z0-9_]*" ;
 TRACK_LABEL = "T1" | "T2" | "T3" | "T4" | "T5" | "T6" | "T7" | "T8" | "T9" | "T11" | "T12" | "T13" | "T14" | "T15" | "T16" ;
 LYRIC_LABEL = "L", DIGIT, { DIGIT } ;

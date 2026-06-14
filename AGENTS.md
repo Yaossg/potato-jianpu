@@ -32,6 +32,8 @@ Treat this directory as the project root.
 - Use pnpm. The package manager version is pinned in `package.json`.
 - Prefer the existing module boundaries and local helper APIs.
 - Core stays platform-neutral; web code must not import backend modules.
+- General MIDI Program option data and melodic Program name resolution live in
+  core so parser, player, and web UI stay aligned.
 - The parser is hand-written. Nearley/Moo parser generation is not part of this
   architecture.
 - Serverless/API deployment is not a project target.

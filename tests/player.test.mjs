@@ -274,6 +274,40 @@ test("groups labeled score lines into simultaneous arrangement tracks", () => {
   assert.equal(arrangementDuration(arrangement), 1 / 2);
 });
 
+test("uses per-track header programs with global fallback", () => {
+  const result = parse(`T2.program: "Violin"\nT3.program: "Flute"\n=\nT1: 1\nT2: 5,\nT3: 3`);
+  assert.equal(result.ok, true);
+  const arrangement = compileArrangement(result.value, 24);
+  assert.deepEqual(
+    arrangement.tracks.map((track) => [track.name, track.program]),
+    [
+      ["T1", 24],
+      ["T2", 40],
+      ["T3", 73],
+    ],
+  );
+});
+
+test("uses T1 program and name for a single unlabeled arrangement track", () => {
+  const result = parse(`T1.name: "Melody"\nT1.program: "Violin"\n=\n1 2\n3 4`);
+  assert.equal(result.ok, true);
+  const arrangement = compileArrangement(result.value, 24);
+  assert.deepEqual(
+    arrangement.tracks.map((track) => [track.name, track.program]),
+    [["T1", 40]],
+  );
+});
+
+test("ignores unused per-track programs for unlabeled arrangements", () => {
+  const result = parse(`T3.program: "Flute"\n=\n1 2 3`);
+  assert.equal(result.ok, true);
+  const arrangement = compileArrangement(result.value, 24);
+  assert.deepEqual(
+    arrangement.tracks.map((track) => [track.name, track.program]),
+    [["", 24]],
+  );
+});
+
 test("concatenates repeated labels and treats unlabeled lines as T1 in labeled scores", () => {
   const result = parse("T1: 1\nT2: 5,\n3\nT1: 2\nT2: 6,\n4");
   assert.equal(result.ok, true);
@@ -375,6 +409,15 @@ test("exports labeled arrangement tracks as separate MIDI tracks", () => {
   assert.notEqual(bytes.findIndex((byte, index) => byte === 0xc0 && bytes[index + 1] === 0), -1);
   assert.notEqual(bytes.findIndex((byte, index) => byte === 0xc1 && bytes[index + 1] === 0), -1);
   assert.notEqual(bytes.findIndex((byte, index) => byte === 0xc2 && bytes[index + 1] === 0), -1);
+});
+
+test("exports separate MIDI program changes for per-track programs", () => {
+  const result = parse(`T1.program: 24\nT2.program: "Violin"\n=\nT1: 1\nT2: 5,`);
+  assert.equal(result.ok, true);
+  const bytes = [...exportMidiBytes(result.value, 0)];
+  assert.notEqual(bytes.findIndex((byte, index) => byte === 0xc0 && bytes[index + 1] === 24), -1);
+  assert.notEqual(bytes.findIndex((byte, index) => byte === 0xc1 && bytes[index + 1] === 40), -1);
+  assert.equal(bytes.findIndex((byte, index) => byte === 0xc1 && bytes[index + 1] === 0), -1);
 });
 
 test("reserves labeled MIDI channels before assigning unlabeled arrangement tracks", () => {

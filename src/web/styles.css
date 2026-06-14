@@ -397,6 +397,13 @@ button:disabled {
   justify-self: start;
 }
 
+.settings-note {
+  margin: 0;
+  color: var(--muted-text);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
 .examples-grid {
   flex-wrap: wrap;
   padding: 14px;
@@ -724,6 +731,10 @@ textarea {
   max-width: 100%;
   height: auto;
   background: #ffffff;
+}
+
+.score-svg [data-note-index] {
+  pointer-events: auto;
 }
 
 @media (max-width: 980px) {

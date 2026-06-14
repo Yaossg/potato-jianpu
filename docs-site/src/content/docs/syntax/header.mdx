@@ -9,6 +9,7 @@ sectionIds:
   - musical-defaults
   - hidden-header
   - track-and-lyric-labels
+  - track-programs
 ---
 
 import JianpuExample from '../../../components/JianpuExample.astro';
@@ -57,6 +58,7 @@ Known fields include:
 | `time` | Time signature used for measure-duration validation. |
 | `tempo` | Playback and MIDI tempo. |
 | `hidden` | Boolean flag that hides the rendered header block. |
+| `Tn.program` | Per-track playback and export Program override for melodic tracks. |
 
 Default values are empty for `title`, `subtitle`, and `composer`; `hidden` defaults to `false`, `key` defaults to `C`, `time` defaults to `4/4`, and `tempo` defaults to `120`.
 
@@ -129,6 +131,8 @@ hidden: true
 
 Track and lyric labels can also be named in the file header. Use `Tn.name` or shorthand `Tn` for track names, and `Ln.name` or shorthand `Ln` for lyric labels.
 
+For a score with one unlabeled music line, `T1.name` still names that rendered line.
+
 <JianpuSource
   title="Track and lyric label source"
   source={`T1.name: "Melody"
@@ -149,6 +153,34 @@ L1.name: "Verse"
 T1: 1 2 3 4
 T2: 5 5 5 5
 L1: "do re mi fa"`}
+/>
+
+## Track Programs
+
+Use `Tn.program` in the file header to assign a melodic General MIDI Program to a labeled arrangement track. Values can be an integer from `0` to `127`, or a quoted Program name from the browser Program selector. Quoted names are matched case-insensitively after trimming surrounding whitespace.
+
+The browser and CLI Program controls still act as the default for tracks without a `Tn.program` header. For a score with one unlabeled music line, `T1.program` applies to that single playback/export track. `T10.program` and drum Program values are reserved for a later drum-track design.
+
+<JianpuSource
+  title="Track Program source"
+  source={`T1.name: "Melody"
+T1.program: 0
+T2.name: "Violin"
+T2.program: "Violin"
+=
+T1: 1 2 3 4
+T2: 5, 6, 7, 1`}
+/>
+
+<ScorePreview
+  title="Rendered track Program score"
+  source={`T1.name: "Melody"
+T1.program: 0
+T2.name: "Violin"
+T2.program: "Violin"
+=
+T1: 1 2 3 4
+T2: 5, 6, 7, 1`}
 />
 
 <RelatedLinks

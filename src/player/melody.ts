@@ -151,6 +151,14 @@ function compileMeasures(document: Document, measures: Measure[], program: numbe
   };
 }
 
+function programForTrack(document: Document, trackName: string, defaultProgram: number): number {
+  return document.header.trackPrograms[trackName] ?? defaultProgram;
+}
+
+function singleTrackName(document: Document): string {
+  return document.header.trackNames.T1 !== undefined ? "T1" : "";
+}
+
 export function compileMelody(document: Document, program = 0): Melody {
   assertProgram(program);
   return compileMeasures(
@@ -206,8 +214,10 @@ export function compileArrangement(document: Document, program = 0): Arrangement
   const base = melodyBase(document);
   const hasLabels = document.score.some((line) => line.label !== undefined);
   if (!hasLabels) {
+    const name = singleTrackName(document);
+    const trackProgram = programForTrack(document, "T1", program);
     return {
-      tracks: [{ name: "", program, ...compileMelody(document, program) }],
+      tracks: [{ name, program: trackProgram, ...compileMeasures(document, document.score.flatMap((line) => line.measures), trackProgram) }],
       ...base,
     };
   }
@@ -220,7 +230,7 @@ export function compileArrangement(document: Document, program = 0): Arrangement
       name: line.label ?? "",
       measures: line.measures,
     }));
-    const groupDuration = Math.max(0, ...lines.map((line) => noteDuration(compileMeasures(document, line.measures, program).notes)));
+    const groupDuration = Math.max(0, ...lines.map((line) => noteDuration(compileMeasures(document, line.measures, programForTrack(document, line.name, program)).notes)));
     for (const line of lines) {
       segments.push({ ...line, start: groupStart });
     }
@@ -229,7 +239,8 @@ export function compileArrangement(document: Document, program = 0): Arrangement
 
   for (const segment of segments) {
     const measures = trackMeasures.get(segment.name) ?? [];
-    const gap = segment.start - noteDuration(compileMeasures(document, measures, program).notes);
+    const trackProgram = programForTrack(document, segment.name, program);
+    const gap = segment.start - noteDuration(compileMeasures(document, measures, trackProgram).notes);
     const firstMeasure = segment.measures[0];
     if (gap > 1e-9 && firstMeasure) {
       measures.push(restMeasure(gap, firstMeasure.range));
@@ -241,8 +252,8 @@ export function compileArrangement(document: Document, program = 0): Arrangement
   return {
     tracks: [...trackMeasures].map(([name, measures]) => ({
       name,
-      program,
-      notes: compileMeasures(document, measures, program).notes,
+      program: programForTrack(document, name, program),
+      notes: compileMeasures(document, measures, programForTrack(document, name, program)).notes,
       ...base,
     })),
     ...base,

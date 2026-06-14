@@ -24,6 +24,8 @@ import RelatedLinks from '../../../../components/RelatedLinks.astro';
 | `TIME_SIGNATURE` | `4/4`、`6/8` 或 `2/16` 这样的受支持分数 |
 | `NUMBER` | 正的有限数字 |
 | `BOOLEAN` | `true` 或 `false` |
+| `PROGRAM_NUMBER` | 整数 `0` 到 `127` |
+| `PROGRAM_NAME` | 带引号的旋律 General MIDI Program 名称 |
 | `TRACK_LABEL` | `T1` 到 `T9`，以及 `T11` 到 `T16` |
 | `LYRIC_LABEL` | `L` 后接一个或多个数字 |
 | `STRING` | 同一行内的双引号字符串 |
@@ -66,6 +68,8 @@ import RelatedLinks from '../../../../components/RelatedLinks.astro';
 <RailroadDiagram rule="hidden_property" title="hidden_property" caption="布尔文件头显示标记。" />
 <RailroadDiagram rule="track_name_property" title="track_name_property" caption="规范写法的可见轨道名称文件头字段。" />
 <RailroadDiagram rule="track_name_shorthand_property" title="track_name_shorthand_property" caption="简写的可见轨道名称文件头字段。" />
+<RailroadDiagram rule="track_program_property" title="track_program_property" caption="逐轨道播放和导出 Program 文件头字段。" />
+<RailroadDiagram rule="program_value" title="program_value" caption="旋律 Program 编号或带引号的 Program 名称。" />
 <RailroadDiagram rule="lyric_label_property" title="lyric_label_property" caption="规范写法的可见歌词标签文件头字段。" />
 <RailroadDiagram rule="lyric_label_shorthand_property" title="lyric_label_shorthand_property" caption="简写的可见歌词标签文件头字段。" />
 <RailroadDiagram rule="score" title="score" caption="由一个或多个换行分隔的谱面项目。" />
@@ -83,7 +87,7 @@ import RelatedLinks from '../../../../components/RelatedLinks.astro';
 <RailroadDiagram rule="tie" title="tie" caption="写在被延住音符前的延音线标记。" />
 <RailroadDiagram rule="general_note" title="general_note" caption="会发声或占位的项目：音高音符、和弦、休止符或鼓音。" />
 <RailroadDiagram rule="pitch_note" title="pitch_note" caption="带可选变音记号和八度后缀的数字音高。" />
-<RailroadDiagram rule="accidental" title="accidental" caption="写在音高音符前的升号、降号、重升/重降或还原记号。" />
+<RailroadDiagram rule="accidental" title="accidental" caption="写在音高音符前的升号、降号、重升、重降或还原记号。" />
 <RailroadDiagram rule="octave" title="octave" caption="一个或多个逗号或撇号八度标记。" />
 <RailroadDiagram rule="chord" title="chord" caption="单个有音高音符，或用大括号包住的音高音符组。" />
 <RailroadDiagram rule="rest" title="rest" caption="休止符 token。" />

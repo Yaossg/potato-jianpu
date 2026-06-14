@@ -3,7 +3,7 @@ import WebAudioTinySynth from "../player/webaudio-tinysynth.js";
 
 const DEFAULT_VELOCITY = 64;
 const DRUM_CHANNEL = 9;
-const MELODIC_CHANNEL = 0;
+const MELODIC_CHANNELS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15] as const;
 const SCHEDULE_AHEAD_SECONDS = 1;
 const SCHEDULE_PAUSE_SECONDS = 0.5;
 const END_GRACE_SECONDS = 0.08;
@@ -51,7 +51,7 @@ export class PreviewAudioPlayer {
   ) {
     this.stop();
     const generation = this.playGeneration;
-    const synth = await this.getSynth(volume, program);
+    const synth = await this.getSynth(volume, arrangement);
     if (generation !== this.playGeneration) {
       return;
     }
@@ -62,10 +62,8 @@ export class PreviewAudioPlayer {
     }
 
     const secondsPerWholeNote = (60 / arrangement.tempo) * arrangement.beatsPerWholeNote;
-    const channel = program >= 128 ? DRUM_CHANNEL : MELODIC_CHANNEL;
-
     void this.displayNotes(arrangement, secondsPerWholeNote, onNoteStart, generation);
-    await this.scheduleSound(arrangement, secondsPerWholeNote, channel, synth, context, generation);
+    await this.scheduleSound(arrangement, secondsPerWholeNote, synth, context, generation);
     if (generation === this.playGeneration) {
       onEnded();
     }
@@ -110,7 +108,6 @@ export class PreviewAudioPlayer {
   private async scheduleSound(
     arrangement: Arrangement,
     secondsPerWholeNote: number,
-    channel: number,
     synth: WebAudioTinySynth,
     context: AudioContext,
     generation: number,
@@ -126,8 +123,8 @@ export class PreviewAudioPlayer {
       const duration = item.note.duration * secondsPerWholeNote;
       if (item.note.chord !== "rest") {
         for (const midiNote of item.note.chord) {
-          synth.noteOn(channel, midiNote, DEFAULT_VELOCITY, noteStartTime);
-          synth.noteOff(channel, midiNote, noteStartTime + duration);
+          synth.noteOn(item.channel, midiNote, DEFAULT_VELOCITY, noteStartTime);
+          synth.noteOff(item.channel, midiNote, noteStartTime + duration);
         }
       }
       latestEndTime = Math.max(latestEndTime, noteStartTime + duration);
@@ -141,12 +138,14 @@ export class PreviewAudioPlayer {
     }
   }
 
-  private noteSchedule(arrangement: Arrangement): Array<{ note: MelodyNote; offset: number }> {
-    const schedule: Array<{ note: MelodyNote; offset: number }> = [];
-    for (const track of arrangement.tracks) {
+  private noteSchedule(arrangement: Arrangement): Array<{ note: MelodyNote; offset: number; channel: number }> {
+    const schedule: Array<{ note: MelodyNote; offset: number; channel: number }> = [];
+    const trackChannels = this.trackChannels(arrangement);
+    for (const [trackIndex, track] of arrangement.tracks.entries()) {
+      const channel = trackChannels[trackIndex] ?? MELODIC_CHANNELS[0];
       let offset = 0;
       for (const note of track.notes) {
-        schedule.push({ note, offset });
+        schedule.push({ note, offset, channel });
         offset += note.duration;
       }
     }
@@ -169,13 +168,31 @@ export class PreviewAudioPlayer {
     return groups;
   }
 
-  private async getSynth(volume: number, program: number): Promise<WebAudioTinySynth> {
+  private trackChannels(arrangement: Arrangement): number[] {
+    let melodicChannelIndex = 0;
+    return arrangement.tracks.map((track) => {
+      if (track.program >= 128) {
+        return DRUM_CHANNEL;
+      }
+      const channel = MELODIC_CHANNELS[melodicChannelIndex++];
+      if (channel === undefined) {
+        throw new Error(`Preview playback supports at most ${MELODIC_CHANNELS.length} melodic tracks.`);
+      }
+      return channel;
+    });
+  }
+
+  private async getSynth(volume: number, arrangement: Arrangement): Promise<WebAudioTinySynth> {
     this.synth ??= new WebAudioTinySynth();
     await this.synth.ready();
     this.synth.reset();
     this.synth.setMasterVol(Math.max(0, Math.min(2, volume)));
-    if (program < 128) {
-      this.synth.setProgram(MELODIC_CHANNEL, program);
+    const channels = this.trackChannels(arrangement);
+    for (const [trackIndex, track] of arrangement.tracks.entries()) {
+      const channel = channels[trackIndex] ?? MELODIC_CHANNELS[0];
+      if (track.program < 128) {
+        this.synth.setProgram(channel, track.program);
+      }
     }
     return this.synth;
   }

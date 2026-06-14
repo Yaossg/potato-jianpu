@@ -150,6 +150,7 @@ export function App() {
     [previewParsed],
   );
   const pageWidth = pageWidthMode === "panel" ? panelPageWidth : pageWidthMode === "content" ? contentPageWidth : manualPageWidth;
+  const trackProgramOverrideCount = parsed.ok ? Object.keys(parsed.value.header.trackPrograms).length : 0;
   const svg = useMemo(
     () =>
       previewParsed?.ok
@@ -386,7 +387,6 @@ export function App() {
       },
       setActiveNoteIndices,
       volume / 100,
-      program,
     );
   }
 
@@ -505,6 +505,7 @@ export function App() {
           pageBackground={pageBackground}
           justifyMode={justifyMode}
           program={program}
+          trackProgramOverrideCount={trackProgramOverrideCount}
           volume={volume}
           audioSampleRate={audioSampleRate}
           omitInitialRests={omitInitialRests}
