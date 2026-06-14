@@ -26,6 +26,7 @@ The parser recognizes these tokens. Whitespace and comments are skipped between 
 | `BOOLEAN` | `true` or `false` |
 | `PROGRAM_NUMBER` | integer `0` through `127` |
 | `PROGRAM_NAME` | quoted melodic General MIDI program name |
+| `VOLUME_NUMBER` | number from `0` to `2` |
 | `TRACK_LABEL` | `T1` through `T9`, `T11` through `T16` |
 | `LYRIC_LABEL` | `L` followed by one or more digits |
 | `STRING` | double-quoted string on one line |
@@ -70,6 +71,7 @@ These diagrams are generated from `docs/grammar.ebnf`.
 <RailroadDiagram rule="track_name_shorthand_property" title="track_name_shorthand_property" caption="A shorthand visible track-name header field." />
 <RailroadDiagram rule="track_program_property" title="track_program_property" caption="A per-track playback and export Program header field." />
 <RailroadDiagram rule="program_value" title="program_value" caption="A melodic Program number or quoted Program name." />
+<RailroadDiagram rule="track_volume_property" title="track_volume_property" caption="A per-track playback and export volume multiplier header field." />
 <RailroadDiagram rule="lyric_label_property" title="lyric_label_property" caption="A canonical visible lyric-label header field." />
 <RailroadDiagram rule="lyric_label_shorthand_property" title="lyric_label_shorthand_property" caption="A shorthand visible lyric-label header field." />
 <RailroadDiagram rule="score" title="score" caption="Score items separated by one or more line breaks." />

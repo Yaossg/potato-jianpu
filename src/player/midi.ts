@@ -132,7 +132,7 @@ function buildMetaTrack(source: Pick<Melody, "tempo" | "beatsPerMeasure" | "beat
   return track.toBytes();
 }
 
-function buildMusicTrack(melody: Melody, program: number, channel: number): number[] {
+function buildMusicTrack(melody: Melody & { volume?: number }, program: number, channel: number): number[] {
   const drum = program >= 128;
   const track = new MIDITrack(drum ? DRUM_CHANNEL : channel, drum ? null : program);
   let delta = 0;
@@ -142,7 +142,7 @@ function buildMusicTrack(melody: Melody, program: number, channel: number): numb
       continue;
     }
     for (const midiNote of note.chord) {
-      track.noteOn(delta, midiNote, DEFAULT_VELOCITY);
+      track.noteOn(delta, midiNote, velocityForTrack(melody));
       delta = 0;
     }
     delta = note.duration;
@@ -152,6 +152,11 @@ function buildMusicTrack(melody: Melody, program: number, channel: number): numb
     }
   }
   return track.toBytes();
+}
+
+function velocityForTrack(melody: Melody & { volume?: number }): number {
+  const volume = "volume" in melody && typeof melody.volume === "number" ? melody.volume : 1;
+  return Math.max(0, Math.min(127, Math.round(DEFAULT_VELOCITY * volume)));
 }
 
 function labelChannel(trackName: string): number | null {

@@ -1,6 +1,6 @@
 ---
 title: Playback
-description: Understand browser playback, click-to-play, programs, drums, and repeats.
+description: Understand browser playback, click-to-play, programs, volumes, drums, and repeats.
 docId: guide-playback
 sectionIds:
   - browser-playback
@@ -37,6 +37,8 @@ Rendered score previews in the documentation use the same playback compiler. Whe
 Programs `0..127` use melodic TinySynth programs. Programs `128..220` use drum mode. In drum mode, source `X` maps to percussion note `program - 128 + 35`.
 
 Use `Tn.program` in the file header to assign a melodic Program to a labeled track. Numeric values are limited to `0..127`, and quoted names resolve through the same General MIDI Program list used by the browser selector. The browser Program selector remains the default for tracks without a score-level Program.
+
+Use `Tn.volume` to scale one track from `0` to `2`. It multiplies with the browser volume slider, so a quiet track stays quiet when the master volume changes.
 
 The browser app includes default Program selection, volume, audition, and an initial-rest omission toggle in Sound Settings.
 

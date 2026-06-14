@@ -16,6 +16,7 @@ export interface Melody {
 export interface ArrangementTrack extends Melody {
   name: string;
   program: number;
+  volume: number;
 }
 
 export interface Arrangement {
@@ -155,6 +156,10 @@ function programForTrack(document: Document, trackName: string, defaultProgram: 
   return document.header.trackPrograms[trackName] ?? defaultProgram;
 }
 
+function volumeForTrack(document: Document, trackName: string): number {
+  return document.header.trackVolumes[trackName] ?? 1;
+}
+
 function singleTrackName(document: Document): string {
   return document.header.trackNames.T1 !== undefined ? "T1" : "";
 }
@@ -216,8 +221,9 @@ export function compileArrangement(document: Document, program = 0): Arrangement
   if (!hasLabels) {
     const name = singleTrackName(document);
     const trackProgram = programForTrack(document, "T1", program);
+    const trackVolume = volumeForTrack(document, "T1");
     return {
-      tracks: [{ name, program: trackProgram, ...compileMeasures(document, document.score.flatMap((line) => line.measures), trackProgram) }],
+      tracks: [{ name, program: trackProgram, volume: trackVolume, ...compileMeasures(document, document.score.flatMap((line) => line.measures), trackProgram) }],
       ...base,
     };
   }
@@ -253,6 +259,7 @@ export function compileArrangement(document: Document, program = 0): Arrangement
     tracks: [...trackMeasures].map(([name, measures]) => ({
       name,
       program: programForTrack(document, name, program),
+      volume: volumeForTrack(document, name),
       notes: compileMeasures(document, measures, programForTrack(document, name, program)).notes,
       ...base,
     })),

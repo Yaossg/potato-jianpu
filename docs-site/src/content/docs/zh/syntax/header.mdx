@@ -10,6 +10,7 @@ sectionIds:
   - hidden-header
   - track-and-lyric-labels
   - track-programs
+  - track-volumes
 ---
 
 import JianpuExample from '../../../../components/JianpuExample.astro';
@@ -59,6 +60,7 @@ tempo: 72
 | `tempo` | 播放和 MIDI 速度。 |
 | `hidden` | 隐藏渲染出的文件头区块的布尔标记。 |
 | `Tn.program` | 旋律轨道的逐轨道播放和导出 Program 覆盖。 |
+| `Tn.volume` | 逐轨道播放和导出音量倍率。 |
 
 `title`、`subtitle` 和 `composer` 的默认值为空；`hidden` 默认为 `false`，`key` 默认为 `C`，`time` 默认为 `4/4`，`tempo` 默认为 `120`。
 
@@ -178,6 +180,36 @@ T2: 5, 6, 7, 1`}
 T1.program: 0
 T2.name: "Violin"
 T2.program: "Violin"
+=
+T1: 1 2 3 4
+T2: 5, 6, 7, 1`}
+/>
+
+## 轨道音量
+
+在文件头中使用 `Tn.volume`，可以缩放单个播放/导出轨道的音量。值是 `0` 到 `2` 的数字；`1` 表示不变，`0.5` 表示半音量，`0` 表示静音，`2` 表示在限幅前把该轨道的力度/增益加倍。
+
+轨道音量会和浏览器音量滑杆或 CLI 音频 `--amplitude` 叠加使用，而不是替代主音量。MIDI 导出中，`Tn.volume` 会缩放该轨道的音符力度。浏览器播放、WAV 和 MP3 中，主音量/振幅和逐轨道音量都会生效。
+
+只有一条未写 `T1:` 的音乐行时，`T1.volume` 会应用到这条播放/导出轨道。
+
+<JianpuSource
+  title="轨道音量源代码"
+  source={`T1.name: "Melody"
+T1.volume: 1
+T2.name: "Soft Harmony"
+T2.volume: 0.5
+=
+T1: 1 2 3 4
+T2: 5, 6, 7, 1`}
+/>
+
+<ScorePreview
+  title="渲染后的轨道音量乐谱"
+  source={`T1.name: "Melody"
+T1.volume: 1
+T2.name: "Soft Harmony"
+T2.volume: 0.5
 =
 T1: 1 2 3 4
 T2: 5, 6, 7, 1`}

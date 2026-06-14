@@ -67,6 +67,7 @@ flattens score lines in source order.
 interface ArrangementTrack extends Melody {
   name: string;
   program: number;
+  volume: number;
 }
 
 interface Arrangement {
@@ -111,6 +112,13 @@ argument remains the default Program for tracks without an explicit
 score body stay in the parsed header but do not create arrangement tracks.
 `T10.program` and drum Program values are still deferred with the drum-track
 design.
+
+Header entries such as `T1.volume: 0.5` assign per-track volume multipliers for
+playback and export. Values are limited to `0..2`; `1` is neutral. A score with
+no explicit `Tn:` line labels treats its single arrangement track as `T1` for
+`T1.volume` lookup in the same way as `T1.program`. Track volume combines with
+the browser master volume or audio export amplitude; it does not override them.
+MIDI export applies it by scaling note velocity.
 
 Lyric lines such as `L1: "text"` or a bare `"text"` line attach to the
 preceding score group for rendering only. They do not create arrangement tracks
@@ -252,6 +260,7 @@ Behavior:
 - resets active synth voices before starting a new play request
 - sets the selected melodic Program for programs `0..127`
 - sets per-track melodic Programs when the score has `Tn.program` headers
+- scales per-track note velocity when the score has `Tn.volume` headers
 - schedules note-on and note-off events for pitch/chord events
 - uses WebAudioTinySynth percussion channel playback for drum programs
   `128..220`
@@ -268,8 +277,9 @@ and drum-note programs. Values `128..220` trigger the drum mapping described
 above when no per-track melodic Program overrides that track.
 
 The frontend also exposes playback volume as a `0..200%` slider with a `100%`
-default. This controls browser preview gain only; it does not alter the parsed
-score, MIDI note velocity, or exported SVG.
+default. This controls browser preview master gain and combines with
+score-level `Tn.volume` values. It does not alter the parsed score or exported
+SVG.
 
 The Audition button plays a short built-in phrase with the current Program and
 volume. Melodic programs play a scale; drum programs play repeated `X` notes.
@@ -279,8 +289,9 @@ highlight simultaneous notes across arrangement tracks.
 
 Clicking a rendered note starts playback from that note index.
 
-Browser playback velocity is currently fixed at MIDI velocity `64`. Volume is
-applied through WebAudioTinySynth master volume.
+Browser playback base velocity is currently `64`. The browser volume slider is
+applied through WebAudioTinySynth master volume, and `Tn.volume` scales each
+track's note velocity.
 
 Backend WAV and MP3 export use the same WebAudioTinySynth adapter with an
 offline rendering context, so Program and drum timbres are aligned with browser
@@ -324,6 +335,7 @@ The music track contains:
 - optional program change in melodic mode
 - per-track melodic Program Change events when arrangement tracks have different
   Programs
+- per-track note velocities from `Tn.volume`
 - note-on events
 - note-off events
 - end-of-track event
@@ -376,8 +388,10 @@ The WAV synthesizer uses WebAudioTinySynth offline:
 - melodic programs `0..127` set TinySynth channel 1 Program
 - drum programs `128..220` use TinySynth percussion channel 10 and the same
   percussion note mapping as MIDI export
-- note velocity is fixed at `64`
-- `amplitude` is applied as TinySynth master volume
+- base note velocity is fixed at `64`
+- `Tn.volume` scales per-track note velocity
+- `amplitude` is applied as TinySynth master volume, so it combines with
+  per-track volume
 - rest events are silence
 
 Invalid sample rates and amplitudes throw errors.
@@ -425,8 +439,7 @@ The current player/export layer is functional but not a full synthesizer:
   instruments
 - WAV and MP3 export use the same WebAudioTinySynth timbres through an offline
   context
-- no velocity syntax
-- one global Program for all arrangement tracks
-- no per-track volume, velocity, pan, or tempo syntax
+- no per-note velocity syntax
+- no per-track pan or tempo syntax
 
 These limitations keep the core parser, renderer, and export surfaces focused.

@@ -101,6 +101,7 @@ export interface Header {
   hidden: boolean;
   trackNames: Record<string, string>;
   trackPrograms: Record<string, number>;
+  trackVolumes: Record<string, number>;
   lyricLabels: Record<string, string>;
 }
 

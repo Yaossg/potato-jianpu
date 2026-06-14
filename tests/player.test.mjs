@@ -308,6 +308,30 @@ test("ignores unused per-track programs for unlabeled arrangements", () => {
   );
 });
 
+test("uses per-track header volumes with neutral fallback", () => {
+  const result = parse(`T2.volume: 0.5\nT3.volume: 2\n=\nT1: 1\nT2: 5,\nT3: 3`);
+  assert.equal(result.ok, true);
+  const arrangement = compileArrangement(result.value);
+  assert.deepEqual(
+    arrangement.tracks.map((track) => [track.name, track.volume]),
+    [
+      ["T1", 1],
+      ["T2", 0.5],
+      ["T3", 2],
+    ],
+  );
+});
+
+test("uses T1 volume for a single unlabeled arrangement track", () => {
+  const result = parse(`T1.volume: 0.25\n=\n1 2\n3 4`);
+  assert.equal(result.ok, true);
+  const arrangement = compileArrangement(result.value);
+  assert.deepEqual(
+    arrangement.tracks.map((track) => [track.name, track.volume]),
+    [["", 0.25]],
+  );
+});
+
 test("concatenates repeated labels and treats unlabeled lines as T1 in labeled scores", () => {
   const result = parse("T1: 1\nT2: 5,\n3\nT1: 2\nT2: 6,\n4");
   assert.equal(result.ok, true);
@@ -418,6 +442,14 @@ test("exports separate MIDI program changes for per-track programs", () => {
   assert.notEqual(bytes.findIndex((byte, index) => byte === 0xc0 && bytes[index + 1] === 24), -1);
   assert.notEqual(bytes.findIndex((byte, index) => byte === 0xc1 && bytes[index + 1] === 40), -1);
   assert.equal(bytes.findIndex((byte, index) => byte === 0xc1 && bytes[index + 1] === 0), -1);
+});
+
+test("exports per-track MIDI velocities from track volumes", () => {
+  const result = parse(`T1.volume: 0.5\nT2.volume: 2\n=\nT1: 1\nT2: 5,`);
+  assert.equal(result.ok, true);
+  const bytes = [...exportMidiBytes(result.value)];
+  assert.notEqual(bytes.findIndex((byte, index) => byte === 0x90 && bytes[index + 1] === 60 && bytes[index + 2] === 32), -1);
+  assert.notEqual(bytes.findIndex((byte, index) => byte === 0x91 && bytes[index + 1] === 55 && bytes[index + 2] === 127), -1);
 });
 
 test("reserves labeled MIDI channels before assigning unlabeled arrangement tracks", () => {

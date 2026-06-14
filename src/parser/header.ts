@@ -42,6 +42,7 @@ export function createDefaultHeader(): Header {
     hidden: false,
     trackNames: {},
     trackPrograms: {},
+    trackVolumes: {},
     lyricLabels: {},
   };
 }
@@ -120,6 +121,11 @@ export function applyHeaderProperty(
     applyTrackProgram(header.trackPrograms, seen, trackProgram, keyRange, value, diagnostics);
     return "ok";
   }
+  const trackVolume = key.match(/^(T(?:[1-9]|1[1-6]))\.volume$/)?.[1];
+  if (trackVolume) {
+    applyTrackVolume(header.trackVolumes, seen, trackVolume, keyRange, value, diagnostics);
+    return "ok";
+  }
   if (isTrackLabel(key)) {
     applyLabelName(header.trackNames, seen, `track:${key}`, "track name", key, keyRange, value, diagnostics);
     return "ok";
@@ -176,6 +182,27 @@ function applyTrackProgram(
     return;
   }
   trackPrograms[trackName] = program;
+}
+
+function applyTrackVolume(
+  trackVolumes: Record<string, number>,
+  seen: Set<string>,
+  trackName: string,
+  keyRange: SourceRange,
+  value: HeaderValue | null,
+  diagnostics: Diagnostic[],
+) {
+  if (!value) {
+    return;
+  }
+  if (!recordKey(seen, `volume:${trackName}`, `Duplicate track volume definition for '${trackName}'.`, keyRange, diagnostics)) {
+    return;
+  }
+  const volume = parseTrackVolume(value, diagnostics);
+  if (volume === null) {
+    return;
+  }
+  trackVolumes[trackName] = volume;
 }
 
 function recordKey(seen: Set<string>, key: string, message: string, range: SourceRange, diagnostics: Diagnostic[]): boolean {
@@ -276,6 +303,19 @@ function parseTrackProgram(value: HeaderValue, diagnostics: Diagnostic[]): numbe
     return null;
   }
   return program;
+}
+
+function parseTrackVolume(value: HeaderValue, diagnostics: Diagnostic[]): number | null {
+  if (value.quoted) {
+    diagnostics.push({ severity: "error", message: "Expected track volume number 0-2.", range: value.range });
+    return null;
+  }
+  const volume = Number(value.text);
+  if (!Number.isFinite(volume) || volume < 0 || volume > 2) {
+    diagnostics.push({ severity: "error", message: `Invalid track volume '${value.text}'. Expected 0-2.`, range: value.range });
+    return null;
+  }
+  return volume;
 }
 
 function parseKeySignature(key: string): KeySignature | null {

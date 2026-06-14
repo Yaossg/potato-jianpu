@@ -539,6 +539,28 @@ test("rejects invalid per-track header programs", () => {
   assert.match(messages, /Unknown header key 'T10.program'/);
 });
 
+test("parses per-track header volumes", () => {
+  const result = parse(`T1.volume: 0\nT2.volume: 0.5\nT3.volume: 2\n=\nT1: 1\nT2: 2\nT3: 3`);
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.value.header.trackVolumes, {
+    T1: 0,
+    T2: 0.5,
+    T3: 2,
+  });
+});
+
+test("rejects invalid per-track header volumes", () => {
+  const result = parse(`T1.volume: "1"\nT2.volume: -0.1\nT3.volume: 2.1\nT4.volume: loud\nT1.volume: 1\nT10.volume: 1\n=\nT1: 1`);
+  assert.equal(result.ok, false);
+  const messages = result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
+  assert.match(messages, /Expected track volume number 0-2/);
+  assert.match(messages, /Invalid track volume '-0.1'. Expected 0-2/);
+  assert.match(messages, /Invalid track volume '2.1'. Expected 0-2/);
+  assert.match(messages, /Invalid track volume 'loud'. Expected 0-2/);
+  assert.match(messages, /Duplicate track volume definition for 'T1'/);
+  assert.match(messages, /Unknown header key 'T10.volume'/);
+});
+
 test("treats unlabeled score lines as T1 when any score line has a track label", () => {
   const result = parse("1 2\nT2: 5, 6,\n3 4");
   assert.equal(result.ok, true);

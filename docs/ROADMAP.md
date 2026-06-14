@@ -28,7 +28,7 @@ commitment.
 ## Optional Future Features
 
 - Velocity syntax.
-- Per-track program, volume, pan, or tempo controls.
+- Per-track pan or tempo controls.
 - Richer drum controls.
 - Optional npm publication after package policy is decided.
 - Optional favicon/static asset polish.

@@ -29,7 +29,7 @@ The preview updates from the same parser and renderer used by the CLI, so syntax
 
 Use the playback button to audition the current score. Active notes are highlighted in the rendered preview as playback advances. You can also click a rendered note to start playback from that note. Changing source, loading an example, or stopping playback clears the active highlight.
 
-Playback uses the shared arrangement compiler, so notes, rests, chords, ties, repeats, repeated endings, labeled tracks, key signatures, per-track melodic Programs, and drum programs follow the same timing rules used by MIDI, WAV, and MP3 export.
+Playback uses the shared arrangement compiler, so notes, rests, chords, ties, repeats, repeated endings, labeled tracks, key signatures, per-track melodic Programs, per-track volumes, and drum programs follow the same timing rules used by MIDI, WAV, and MP3 export.
 
 ## Examples
 
@@ -37,7 +37,7 @@ The examples panel loads bundled `.jpu` scores into the editor. If the editor al
 
 ## Export
 
-The export menu downloads the current valid score as SVG, PNG, MIDI, WAV, or MP3. SVG and PNG use the current page settings: width, color, background, and justification. MIDI uses the selected default Program, any score-level `Tn.program` headers, and the initial-rest setting. WAV and MP3 are rendered locally in the browser with the same Program resolution, volume, sample rate, and initial-rest setting.
+The export menu downloads the current valid score as SVG, PNG, MIDI, WAV, or MP3. SVG and PNG use the current page settings: width, color, background, and justification. MIDI uses the selected default Program, any score-level `Tn.program` and `Tn.volume` headers, and the initial-rest setting. WAV and MP3 are rendered locally in the browser with the same Program resolution, master volume, per-track volumes, sample rate, and initial-rest setting.
 
 Audio export can take longer than image or MIDI export because the browser renders the full arrangement before downloading. While WAV or MP3 is rendering, the export menu reports the event count and approximate duration.
 

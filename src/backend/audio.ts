@@ -35,15 +35,20 @@ function totalSeconds(arrangement: Arrangement): number {
   return arrangementDuration(arrangement) * secondsPerWholeNote(arrangement);
 }
 
-function scheduleTrack(synth: WebAudioTinySynth, notes: MelodyNote[], secondsPerWhole: number, channel: number) {
+function velocityForVolume(volume: number): number {
+  return Math.max(0, Math.min(127, Math.round(DEFAULT_VELOCITY * volume)));
+}
+
+function scheduleTrack(synth: WebAudioTinySynth, notes: MelodyNote[], secondsPerWhole: number, channel: number, volume: number) {
   const context = synth.getAudioContext();
   let currentTime = context.currentTime;
+  const velocity = velocityForVolume(volume);
 
   for (const note of notes) {
     const duration = note.duration * secondsPerWhole;
     if (note.chord !== "rest") {
       for (const midiNote of note.chord) {
-        synth.noteOn(channel, midiNote, DEFAULT_VELOCITY, currentTime);
+        synth.noteOn(channel, midiNote, velocity, currentTime);
         synth.noteOff(channel, midiNote, currentTime + duration);
       }
     }
@@ -62,7 +67,7 @@ function scheduleTinySynth(synth: WebAudioTinySynth, arrangement: Arrangement) {
     if (track.program < 128) {
       synth.setProgram(channel, track.program);
     }
-    scheduleTrack(synth, track.notes, secondsPerWhole, channel);
+    scheduleTrack(synth, track.notes, secondsPerWhole, channel, track.volume);
   }
 }
 

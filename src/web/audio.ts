@@ -123,7 +123,7 @@ export class PreviewAudioPlayer {
       const duration = item.note.duration * secondsPerWholeNote;
       if (item.note.chord !== "rest") {
         for (const midiNote of item.note.chord) {
-          synth.noteOn(item.channel, midiNote, DEFAULT_VELOCITY, noteStartTime);
+          synth.noteOn(item.channel, midiNote, this.velocityForVolume(item.volume), noteStartTime);
           synth.noteOff(item.channel, midiNote, noteStartTime + duration);
         }
       }
@@ -138,18 +138,22 @@ export class PreviewAudioPlayer {
     }
   }
 
-  private noteSchedule(arrangement: Arrangement): Array<{ note: MelodyNote; offset: number; channel: number }> {
-    const schedule: Array<{ note: MelodyNote; offset: number; channel: number }> = [];
+  private noteSchedule(arrangement: Arrangement): Array<{ note: MelodyNote; offset: number; channel: number; volume: number }> {
+    const schedule: Array<{ note: MelodyNote; offset: number; channel: number; volume: number }> = [];
     const trackChannels = this.trackChannels(arrangement);
     for (const [trackIndex, track] of arrangement.tracks.entries()) {
       const channel = trackChannels[trackIndex] ?? MELODIC_CHANNELS[0];
       let offset = 0;
       for (const note of track.notes) {
-        schedule.push({ note, offset, channel });
+        schedule.push({ note, offset, channel, volume: track.volume });
         offset += note.duration;
       }
     }
     return schedule.sort((left, right) => left.offset - right.offset || left.note.index - right.note.index);
+  }
+
+  private velocityForVolume(volume: number): number {
+    return Math.max(0, Math.min(127, Math.round(DEFAULT_VELOCITY * volume)));
   }
 
   private noteStartGroups(arrangement: Arrangement): Array<{ noteIndices: number[]; offset: number }> {

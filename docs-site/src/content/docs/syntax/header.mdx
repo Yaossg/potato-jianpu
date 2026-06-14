@@ -10,6 +10,7 @@ sectionIds:
   - hidden-header
   - track-and-lyric-labels
   - track-programs
+  - track-volumes
 ---
 
 import JianpuExample from '../../../components/JianpuExample.astro';
@@ -59,6 +60,7 @@ Known fields include:
 | `tempo` | Playback and MIDI tempo. |
 | `hidden` | Boolean flag that hides the rendered header block. |
 | `Tn.program` | Per-track playback and export Program override for melodic tracks. |
+| `Tn.volume` | Per-track playback and export volume multiplier. |
 
 Default values are empty for `title`, `subtitle`, and `composer`; `hidden` defaults to `false`, `key` defaults to `C`, `time` defaults to `4/4`, and `tempo` defaults to `120`.
 
@@ -178,6 +180,36 @@ T2: 5, 6, 7, 1`}
 T1.program: 0
 T2.name: "Violin"
 T2.program: "Violin"
+=
+T1: 1 2 3 4
+T2: 5, 6, 7, 1`}
+/>
+
+## Track Volumes
+
+Use `Tn.volume` in the file header to scale one playback/export track. Values are numbers from `0` to `2`; `1` is neutral, `0.5` is half volume, `0` mutes the track, and `2` doubles the track velocity/gain before clamping.
+
+Track volume combines with the browser volume slider or CLI audio `--amplitude`; it does not replace the master volume. For MIDI export, `Tn.volume` scales that track's note velocity. For browser playback, WAV, and MP3, the master volume/amplitude and per-track volume are both applied.
+
+For a score with one unlabeled music line, `T1.volume` applies to that single playback/export track.
+
+<JianpuSource
+  title="Track volume source"
+  source={`T1.name: "Melody"
+T1.volume: 1
+T2.name: "Soft Harmony"
+T2.volume: 0.5
+=
+T1: 1 2 3 4
+T2: 5, 6, 7, 1`}
+/>
+
+<ScorePreview
+  title="Rendered track volume score"
+  source={`T1.name: "Melody"
+T1.volume: 1
+T2.name: "Soft Harmony"
+T2.volume: 0.5
 =
 T1: 1 2 3 4
 T2: 5, 6, 7, 1`}

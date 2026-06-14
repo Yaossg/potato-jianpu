@@ -67,6 +67,7 @@ Parse result shape:
       "hidden": false,
       "trackNames": {},
       "trackPrograms": {},
+      "trackVolumes": {},
       "lyricLabels": {}
     },
     "score": [],
@@ -174,11 +175,14 @@ Unlabeled lines in a labeled score are treated as `T1`.
 Header entries such as `T1.name: "Melody"` or the shorthand `T1: "Melody"` only
 control rendered line names; they do not change MIDI track timing. Header
 entries such as `T1.program: 24` or `T2.program: "Violin"` set per-track melodic
-Programs for playback and export. Labeled melodic arrangement tracks use the
-MIDI channel named by their label, so `T1` uses MIDI channel 1 and `T16` uses
-MIDI channel 16. `T10` is reserved for drums and is not accepted as a melodic
-track label. Unlabeled melodic tracks use the next available non-drum MIDI
-channel by export order. Drum mode uses channel 10 for every arrangement track.
+Programs for playback and export. Header entries such as `T1.volume: 0.5` set
+per-track MIDI velocity multipliers from `0` to `2`; `1` is neutral, and values
+above `1` are clamped to MIDI's maximum velocity after scaling. Labeled melodic
+arrangement tracks use the MIDI channel named by their label, so `T1` uses MIDI
+channel 1 and `T16` uses MIDI channel 16. `T10` is reserved for drums and is not
+accepted as a melodic track label. Unlabeled melodic tracks use the next
+available non-drum MIDI channel by export order. Drum mode uses channel 10 for
+every arrangement track.
 
 Rests advance delta time within their track without emitting note events. Tied
 notes are merged by the arrangement compiler before MIDI writing.
@@ -208,8 +212,10 @@ The WAV renderer:
 - schedules all arrangement tracks against the same offline audio clock
 - uses the same Program, per-track Program, and drum-channel behavior as browser
   preview playback
-- uses fixed MIDI velocity `64`
-- treats `--amplitude` as TinySynth master volume
+- uses fixed base MIDI velocity `64`
+- scales per-track note velocity with `Tn.volume`
+- treats `--amplitude` as TinySynth master volume, applied together with
+  per-track volume rather than replaced by it
 - rests render as silence
 - writes stereo 16-bit PCM output
 
@@ -242,8 +248,8 @@ Options:
 
 The MP3 renderer:
 
-- shares TinySynth scheduling, Program behavior, drum behavior, velocity, and
-  rest handling with WAV export
+- shares TinySynth scheduling, Program behavior, drum behavior, per-track
+  volume, velocity, and rest handling with WAV export
 - schedules all arrangement tracks against the same offline audio clock
 - renders stereo PCM through the backend offline Web Audio context
 - encodes the resulting samples as MP3 frames through `lamejs`
