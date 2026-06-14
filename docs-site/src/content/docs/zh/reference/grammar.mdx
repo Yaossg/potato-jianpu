@@ -25,6 +25,7 @@ import RelatedLinks from '../../../../components/RelatedLinks.astro';
 | `NUMBER` | 正的有限数字 |
 | `BOOLEAN` | `true` 或 `false` |
 | `PROGRAM_NUMBER` | 整数 `0` 到 `127` |
+| `DEFAULT_PROGRAM_NUMBER` | 整数 `0` 到 `220` |
 | `PROGRAM_NAME` | 带引号的旋律 General MIDI Program 名称 |
 | `VOLUME_NUMBER` | `0` 到 `2` 的数字 |
 | `TRACK_LABEL` | `T1` 到 `T9`，以及 `T11` 到 `T16` |
@@ -67,6 +68,9 @@ import RelatedLinks from '../../../../components/RelatedLinks.astro';
 <RailroadDiagram rule="time_property" title="time_property" caption="拍号文件头值。" />
 <RailroadDiagram rule="tempo_property" title="tempo_property" caption="数字速度文件头值。" />
 <RailroadDiagram rule="hidden_property" title="hidden_property" caption="布尔文件头显示标记。" />
+<RailroadDiagram rule="program_property" title="program_property" caption="乐谱级播放和导出默认 Program 文件头字段。" />
+<RailroadDiagram rule="default_program_value" title="default_program_value" caption="默认 Program 编号或带引号的旋律 Program 名称。" />
+<RailroadDiagram rule="volume_property" title="volume_property" caption="乐谱级播放和导出默认音量文件头字段。" />
 <RailroadDiagram rule="track_name_property" title="track_name_property" caption="规范写法的可见轨道名称文件头字段。" />
 <RailroadDiagram rule="track_name_shorthand_property" title="track_name_shorthand_property" caption="简写的可见轨道名称文件头字段。" />
 <RailroadDiagram rule="track_program_property" title="track_program_property" caption="逐轨道播放和导出 Program 文件头字段。" />

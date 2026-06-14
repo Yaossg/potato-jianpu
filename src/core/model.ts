@@ -99,6 +99,8 @@ export interface Header {
   timeSignature: TimeSignature;
   tempo: number;
   hidden: boolean;
+  program?: number;
+  volume?: number;
   trackNames: Record<string, string>;
   trackPrograms: Record<string, number>;
   trackVolumes: Record<string, number>;

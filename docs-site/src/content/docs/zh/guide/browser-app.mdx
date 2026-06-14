@@ -29,9 +29,9 @@ import RelatedLinks from '../../../../components/RelatedLinks.astro';
 
 使用播放按钮可以试听当前乐谱。播放过程中，正在发声的音符会在渲染预览中高亮。也可以点击渲染出的某个音符，从该音符开始播放。修改源码、加载示例或停止播放都会清除当前高亮。
 
-播放使用共享的编排编译器，因此音符、休止符、和弦、延音线、反复、反复结尾、带标签轨道、调号和鼓音程序都遵循 MIDI、WAV、MP3 导出使用的同一套计时规则。
+播放使用共享的编排编译器，因此音符、休止符、和弦、延音线、反复、反复结尾、带标签轨道、调号、乐谱级与逐轨道 Program、乐谱级与逐轨道音量、鼓音程序都遵循 MIDI、WAV、MP3 导出使用的同一套计时规则。
 
-`Tn.program` 和 `Tn.volume` 这样的乐谱级轨道设置也会进入同一套播放和导出规则。
+`program`、`volume`、`Tn.program` 和 `Tn.volume` 这样的乐谱级轨道设置也会进入同一套播放和导出规则。
 
 ## 示例
 
@@ -41,7 +41,7 @@ import RelatedLinks from '../../../../components/RelatedLinks.astro';
 
 导出菜单可以把当前有效乐谱下载为 SVG、PNG、MIDI、WAV 或 MP3。SVG 和 PNG 使用当前页面设置：宽度、颜色、背景和对齐方式。MIDI 使用当前音色和忽略开头休止符设置。WAV 与 MP3 会在浏览器本地渲染，并使用当前音色、音量、采样率和忽略开头休止符设置。
 
-MIDI 会使用当前默认 Program、乐谱里的 `Tn.program` 和 `Tn.volume`，以及忽略开头休止符设置。WAV 与 MP3 会把浏览器主音量和逐轨道音量一起用于本地渲染。
+MIDI 会使用当前默认 Program、乐谱里的 `program`/`volume` 默认值、`Tn.program`/`Tn.volume` 覆盖值，以及忽略开头休止符设置。WAV 与 MP3 会把浏览器主音量和解析出的轨道音量一起用于本地渲染。
 
 音频导出通常比图片或 MIDI 导出更久，因为浏览器需要先渲染完整编排再下载。渲染 WAV 或 MP3 时，导出菜单会显示事件数量和大致时长。
 

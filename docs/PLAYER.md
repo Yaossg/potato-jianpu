@@ -120,6 +120,12 @@ no explicit `Tn:` line labels treats its single arrangement track as `T1` for
 the browser master volume or audio export amplitude; it does not override them.
 MIDI export applies it by scaling note velocity.
 
+The score-level `program` field can set the default Program for playback and
+export. It accepts melodic Program names or numbers up to `220`, with
+`128..220` enabling drum mode. The score-level `volume` field can set the
+default track volume. Track-level `Tn.program` and `Tn.volume` override those
+defaults rather than stacking on top of them.
+
 Lyric lines such as `L1: "text"` or a bare `"text"` line attach to the
 preceding score group for rendering only. They do not create arrangement tracks
 and do not affect playback, MIDI, WAV, or MP3 timing. Header entries such as
@@ -259,6 +265,7 @@ Behavior:
 - stops any existing playback before starting a new one
 - resets active synth voices before starting a new play request
 - sets the selected melodic Program for programs `0..127`
+- uses the score-level `program` header when present
 - sets per-track melodic Programs when the score has `Tn.program` headers
 - scales per-track note velocity when the score has `Tn.volume` headers
 - schedules note-on and note-off events for pitch/chord events
@@ -271,15 +278,15 @@ Behavior:
 
 The frontend exposes a Settings panel with Default Program, volume, audition,
 and initial-rest controls. Browser playback and MIDI download use the selected
-Program as the default for tracks without score-level `Tn.program` headers. The
+Program as the default when the score omits `program`. The
 browser UI presents it as a grouped selection list with General MIDI programs
 and drum-note programs. Values `128..220` trigger the drum mapping described
-above when no per-track melodic Program overrides that track.
+above when no score-level or per-track melodic Program overrides that track.
 
 The frontend also exposes playback volume as a `0..200%` slider with a `100%`
-default. This controls browser preview master gain and combines with
-score-level `Tn.volume` values. It does not alter the parsed score or exported
-SVG.
+default. This controls browser preview master gain and combines with the
+resolved score-level or per-track `volume` value. It does not alter the parsed
+score or exported SVG.
 
 The Audition button plays a short built-in phrase with the current Program and
 volume. Melodic programs play a scale; drum programs play repeated `X` notes.
@@ -290,8 +297,8 @@ highlight simultaneous notes across arrangement tracks.
 Clicking a rendered note starts playback from that note index.
 
 Browser playback base velocity is currently `64`. The browser volume slider is
-applied through WebAudioTinySynth master volume, and `Tn.volume` scales each
-track's note velocity.
+applied through WebAudioTinySynth master volume, and the resolved track volume
+scales each track's note velocity.
 
 Backend WAV and MP3 export use the same WebAudioTinySynth adapter with an
 offline rendering context, so Program and drum timbres are aligned with browser
@@ -333,9 +340,10 @@ The meta track contains:
 The music track contains:
 
 - optional program change in melodic mode
+- score-level Program default when present
 - per-track melodic Program Change events when arrangement tracks have different
   Programs
-- per-track note velocities from `Tn.volume`
+- score-level or per-track note velocities from `volume`/`Tn.volume`
 - note-on events
 - note-off events
 - end-of-track event
@@ -389,9 +397,9 @@ The WAV synthesizer uses WebAudioTinySynth offline:
 - drum programs `128..220` use TinySynth percussion channel 10 and the same
   percussion note mapping as MIDI export
 - base note velocity is fixed at `64`
-- `Tn.volume` scales per-track note velocity
-- `amplitude` is applied as TinySynth master volume, so it combines with
-  per-track volume
+- resolved track volume scales note velocity
+- `amplitude` is applied as TinySynth master volume, so it combines with the
+  resolved track volume
 - rest events are silence
 
 Invalid sample rates and amplitudes throw errors.
@@ -428,8 +436,9 @@ jianpu export-mp3 input.jpu -o output.mp3 --program 0 --sample-rate 44100 --ampl
 
 The frontend exposes WAV and MP3 download through `src/web/audio-export.ts`.
 Browser audio export uses the current Program, volume, and initial-rest settings
-from the Settings panel. Browser MP3 uses the same `lamejs` encoder bundled into
-the web build.
+from the Settings panel unless the score header supplies its own `program` or
+`volume` defaults. Browser MP3 uses the same `lamejs` encoder bundled into the
+web build.
 
 ## Current Limitations
 

@@ -77,6 +77,9 @@ Parse result shape:
 }
 ```
 
+When present in the source header, score-level `program` and `volume` fields
+also appear in the parsed header JSON.
+
 Validate result shape:
 
 ```json
@@ -157,8 +160,10 @@ Program behavior:
 - `0` to `127`: normal melodic MIDI program.
 - `128` to `220`: drum mode on MIDI channel 10. Drum note `X` maps to
   percussion note `program - 128 + 35`, so `128` maps to bass drum note `35`.
-- `Tn.program` headers can override the default with melodic Programs `0..127`
-  or quoted General MIDI Program names.
+- `program` headers can override the CLI/API default with Programs `0..220` or
+  quoted melodic General MIDI Program names.
+- `Tn.program` headers can override the resolved score-level default with
+  melodic Programs `0..127` or quoted General MIDI Program names.
 
 The MIDI writer emits:
 
@@ -174,15 +179,16 @@ start together; each later group starts after the previous group finishes.
 Unlabeled lines in a labeled score are treated as `T1`.
 Header entries such as `T1.name: "Melody"` or the shorthand `T1: "Melody"` only
 control rendered line names; they do not change MIDI track timing. Header
-entries such as `T1.program: 24` or `T2.program: "Violin"` set per-track melodic
-Programs for playback and export. Header entries such as `T1.volume: 0.5` set
-per-track MIDI velocity multipliers from `0` to `2`; `1` is neutral, and values
-above `1` are clamped to MIDI's maximum velocity after scaling. Labeled melodic
-arrangement tracks use the MIDI channel named by their label, so `T1` uses MIDI
-channel 1 and `T16` uses MIDI channel 16. `T10` is reserved for drums and is not
-accepted as a melodic track label. Unlabeled melodic tracks use the next
-available non-drum MIDI channel by export order. Drum mode uses channel 10 for
-every arrangement track.
+entries such as `program: 24` or `program: "Violin"` set the score-level
+default Program for playback and export. `T1.program: 24` or
+`T2.program: "Violin"` then override that default for the matching melodic
+tracks. Header entries such as `volume: 0.5` set the score-level default track
+volume. `T1.volume: 0.5` and `T2.volume: 1.5` override that default for the
+matching tracks. Labeled melodic arrangement tracks use the MIDI channel named
+by their label, so `T1` uses MIDI channel 1 and `T16` uses MIDI channel 16.
+`T10` is reserved for drums and is not accepted as a melodic track label.
+Unlabeled melodic tracks use the next available non-drum MIDI channel by export
+order. Drum mode uses channel 10 for every arrangement track.
 
 Rests advance delta time within their track without emitting note events. Tied
 notes are merged by the arrangement compiler before MIDI writing.
@@ -213,9 +219,9 @@ The WAV renderer:
 - uses the same Program, per-track Program, and drum-channel behavior as browser
   preview playback
 - uses fixed base MIDI velocity `64`
-- scales per-track note velocity with `Tn.volume`
-- treats `--amplitude` as TinySynth master volume, applied together with
-  per-track volume rather than replaced by it
+- scales note velocity from the resolved score-level or per-track volume
+- treats `--amplitude` as TinySynth master volume, applied together with the
+  resolved track volume rather than replaced by it
 - rests render as silence
 - writes stereo 16-bit PCM output
 
@@ -248,8 +254,8 @@ Options:
 
 The MP3 renderer:
 
-- shares TinySynth scheduling, Program behavior, drum behavior, per-track
-  volume, velocity, and rest handling with WAV export
+- shares TinySynth scheduling, Program behavior, drum behavior, resolved
+  track volume, velocity, and rest handling with WAV export
 - schedules all arrangement tracks against the same offline audio clock
 - renders stereo PCM through the backend offline Web Audio context
 - encodes the resulting samples as MP3 frames through `lamejs`

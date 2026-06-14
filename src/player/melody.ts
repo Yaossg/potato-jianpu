@@ -153,11 +153,11 @@ function compileMeasures(document: Document, measures: Measure[], program: numbe
 }
 
 function programForTrack(document: Document, trackName: string, defaultProgram: number): number {
-  return document.header.trackPrograms[trackName] ?? defaultProgram;
+  return document.header.trackPrograms[trackName] ?? document.header.program ?? defaultProgram;
 }
 
 function volumeForTrack(document: Document, trackName: string): number {
-  return document.header.trackVolumes[trackName] ?? 1;
+  return document.header.trackVolumes[trackName] ?? document.header.volume ?? 1;
 }
 
 function singleTrackName(document: Document): string {
@@ -165,11 +165,12 @@ function singleTrackName(document: Document): string {
 }
 
 export function compileMelody(document: Document, program = 0): Melody {
-  assertProgram(program);
+  const defaultProgram = document.header.program ?? program;
+  assertProgram(defaultProgram);
   return compileMeasures(
     document,
     document.score.flatMap((line) => line.measures),
-    program,
+    defaultProgram,
   );
 }
 
@@ -215,12 +216,13 @@ interface ArrangementSegment {
 }
 
 export function compileArrangement(document: Document, program = 0): Arrangement {
-  assertProgram(program);
+  const defaultProgram = document.header.program ?? program;
+  assertProgram(defaultProgram);
   const base = melodyBase(document);
   const hasLabels = document.score.some((line) => line.label !== undefined);
   if (!hasLabels) {
     const name = singleTrackName(document);
-    const trackProgram = programForTrack(document, "T1", program);
+    const trackProgram = programForTrack(document, "T1", defaultProgram);
     const trackVolume = volumeForTrack(document, "T1");
     return {
       tracks: [{ name, program: trackProgram, volume: trackVolume, ...compileMeasures(document, document.score.flatMap((line) => line.measures), trackProgram) }],
@@ -236,7 +238,7 @@ export function compileArrangement(document: Document, program = 0): Arrangement
       name: line.label ?? "",
       measures: line.measures,
     }));
-    const groupDuration = Math.max(0, ...lines.map((line) => noteDuration(compileMeasures(document, line.measures, programForTrack(document, line.name, program)).notes)));
+    const groupDuration = Math.max(0, ...lines.map((line) => noteDuration(compileMeasures(document, line.measures, programForTrack(document, line.name, defaultProgram)).notes)));
     for (const line of lines) {
       segments.push({ ...line, start: groupStart });
     }
@@ -245,7 +247,7 @@ export function compileArrangement(document: Document, program = 0): Arrangement
 
   for (const segment of segments) {
     const measures = trackMeasures.get(segment.name) ?? [];
-    const trackProgram = programForTrack(document, segment.name, program);
+    const trackProgram = programForTrack(document, segment.name, defaultProgram);
     const gap = segment.start - noteDuration(compileMeasures(document, measures, trackProgram).notes);
     const firstMeasure = segment.measures[0];
     if (gap > 1e-9 && firstMeasure) {
@@ -258,9 +260,9 @@ export function compileArrangement(document: Document, program = 0): Arrangement
   return {
     tracks: [...trackMeasures].map(([name, measures]) => ({
       name,
-      program: programForTrack(document, name, program),
+      program: programForTrack(document, name, defaultProgram),
       volume: volumeForTrack(document, name),
-      notes: compileMeasures(document, measures, programForTrack(document, name, program)).notes,
+      notes: compileMeasures(document, measures, programForTrack(document, name, defaultProgram)).notes,
       ...base,
     })),
     ...base,

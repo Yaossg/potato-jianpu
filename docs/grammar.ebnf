@@ -1,13 +1,16 @@
 file = { NEWLINE }, [ header ], [ score ], EOF ;
 
 header = { property }, EQUALS, { EQUALS }, NEWLINE, { NEWLINE } ;
-property = text_property | key_property | time_property | tempo_property | hidden_property | track_name_property | track_name_shorthand_property | track_program_property | track_volume_property | lyric_label_property | lyric_label_shorthand_property ;
+property = text_property | key_property | time_property | tempo_property | hidden_property | program_property | volume_property | track_name_property | track_name_shorthand_property | track_program_property | track_volume_property | lyric_label_property | lyric_label_shorthand_property ;
 
 text_property = TEXT_KEY, ":", STRING, NEWLINE, { NEWLINE } ;
 key_property = "key", ":", KEY_SIGNATURE, NEWLINE, { NEWLINE } ;
 time_property = "time", ":", TIME_SIGNATURE, NEWLINE, { NEWLINE } ;
 tempo_property = "tempo", ":", NUMBER, NEWLINE, { NEWLINE } ;
 hidden_property = "hidden", ":", BOOLEAN, NEWLINE, { NEWLINE } ;
+program_property = "program", ":", default_program_value, NEWLINE, { NEWLINE } ;
+default_program_value = DEFAULT_PROGRAM_NUMBER | PROGRAM_NAME ;
+volume_property = "volume", ":", VOLUME_NUMBER, NEWLINE, { NEWLINE } ;
 track_name_property = TRACK_LABEL, ".", "name", ":", STRING, NEWLINE, { NEWLINE } ;
 track_name_shorthand_property = TRACK_LABEL, ":", STRING, NEWLINE, { NEWLINE } ;
 track_program_property = TRACK_LABEL, ".", "program", ":", program_value, NEWLINE, { NEWLINE } ;
@@ -57,6 +60,7 @@ TIME_SIGNATURE = ("2" | "3" | "4" | "6" | "9" | "12"), "/", ("2" | "4" | "8" | "
 NUMBER = "positive finite number" ;
 BOOLEAN = "true" | "false" ;
 PROGRAM_NUMBER = "0" | "1" | "..." | "127" ;
+DEFAULT_PROGRAM_NUMBER = "0" | "1" | "..." | "220" ;
 PROGRAM_NAME = "quoted melodic General MIDI program name" ;
 VOLUME_NUMBER = "number from 0 to 2" ;
 IDENTIFIER = "[A-Za-z][A-Za-z0-9_]*" ;

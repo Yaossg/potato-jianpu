@@ -28,7 +28,7 @@ const keyMap: Record<string, KeySignature> = {
   B: 11,
 };
 
-const semanticKeys = new Set(["title", "subtitle", "composer", "key", "time", "tempo", "hidden"]);
+const semanticKeys = new Set(["title", "subtitle", "composer", "key", "time", "tempo", "hidden", "program", "volume"]);
 
 export function createDefaultHeader(): Header {
   return {
@@ -108,6 +108,22 @@ export function applyHeaderProperty(
       return "ok";
     }
     parseHidden(header, value, diagnostics);
+    return "ok";
+  }
+
+  if (textKey === "program") {
+    if (!value || !recordKey(seen, "program", "Duplicate header property 'program'.", keyRange, diagnostics)) {
+      return "ok";
+    }
+    parseProgram(header, value, diagnostics);
+    return "ok";
+  }
+
+  if (textKey === "volume") {
+    if (!value || !recordKey(seen, "volume", "Duplicate header property 'volume'.", keyRange, diagnostics)) {
+      return "ok";
+    }
+    parseVolume(header, value, diagnostics);
     return "ok";
   }
 
@@ -276,6 +292,62 @@ function parseHidden(header: Header, value: HeaderValue, diagnostics: Diagnostic
     return;
   }
   diagnostics.push({ severity: "error", message: "Expected boolean value for hidden.", range: value.range });
+}
+
+function parseProgram(header: Header, value: HeaderValue, diagnostics: Diagnostic[]) {
+  const program = parseDefaultProgram(value, diagnostics);
+  if (program === null) {
+    return;
+  }
+  header.program = program;
+}
+
+function parseVolume(header: Header, value: HeaderValue, diagnostics: Diagnostic[]) {
+  const volume = parseDefaultVolume(value, diagnostics);
+  if (volume === null) {
+    return;
+  }
+  header.volume = volume;
+}
+
+function parseDefaultProgram(value: HeaderValue, diagnostics: Diagnostic[]): number | null {
+  if (value.quoted) {
+    const resolved = resolveMelodicProgramName(value.text);
+    if (resolved.ok) {
+      return resolved.program;
+    }
+    diagnostics.push({
+      severity: "error",
+      message:
+        resolved.reason === "ambiguous" ? `Ambiguous Program name '${value.text}'.` : `Unknown Program name '${value.text}'.`,
+      range: value.range,
+    });
+    return null;
+  }
+
+  if (!/^\d+$/.test(value.text)) {
+    diagnostics.push({ severity: "error", message: "Expected Program number 0-220 or quoted Program name.", range: value.range });
+    return null;
+  }
+  const program = Number(value.text);
+  if (!Number.isInteger(program) || program < 0 || program > 220) {
+    diagnostics.push({ severity: "error", message: `Invalid Program '${value.text}'. Expected 0-220.`, range: value.range });
+    return null;
+  }
+  return program;
+}
+
+function parseDefaultVolume(value: HeaderValue, diagnostics: Diagnostic[]): number | null {
+  if (value.quoted) {
+    diagnostics.push({ severity: "error", message: "Expected volume number 0-2.", range: value.range });
+    return null;
+  }
+  const volume = Number(value.text);
+  if (!Number.isFinite(volume) || volume < 0 || volume > 2) {
+    diagnostics.push({ severity: "error", message: `Invalid volume '${value.text}'. Expected 0-2.`, range: value.range });
+    return null;
+  }
+  return volume;
 }
 
 function parseTrackProgram(value: HeaderValue, diagnostics: Diagnostic[]): number | null {

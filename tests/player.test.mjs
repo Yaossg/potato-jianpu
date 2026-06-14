@@ -288,6 +288,19 @@ test("uses per-track header programs with global fallback", () => {
   );
 });
 
+test("uses default header program before API fallback", () => {
+  const result = parse(`program: 24\nT2.program: "Violin"\n=\nT1: 1\nT2: 5,`);
+  assert.equal(result.ok, true);
+  const arrangement = compileArrangement(result.value, 73);
+  assert.deepEqual(
+    arrangement.tracks.map((track) => [track.name, track.program]),
+    [
+      ["T1", 24],
+      ["T2", 40],
+    ],
+  );
+});
+
 test("uses T1 program and name for a single unlabeled arrangement track", () => {
   const result = parse(`T1.name: "Melody"\nT1.program: "Violin"\n=\n1 2\n3 4`);
   assert.equal(result.ok, true);
@@ -318,6 +331,19 @@ test("uses per-track header volumes with neutral fallback", () => {
       ["T1", 1],
       ["T2", 0.5],
       ["T3", 2],
+    ],
+  );
+});
+
+test("uses default header volume before neutral fallback", () => {
+  const result = parse(`volume: 0.25\nT2.volume: 0.5\n=\nT1: 1\nT2: 5,`);
+  assert.equal(result.ok, true);
+  const arrangement = compileArrangement(result.value);
+  assert.deepEqual(
+    arrangement.tracks.map((track) => [track.name, track.volume]),
+    [
+      ["T1", 0.25],
+      ["T2", 0.5],
     ],
   );
 });

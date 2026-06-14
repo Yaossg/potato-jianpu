@@ -539,6 +539,29 @@ test("rejects invalid per-track header programs", () => {
   assert.match(messages, /Unknown header key 'T10.program'/);
 });
 
+test("parses default header program and volume", () => {
+  const result = parse(`program: 128\nvolume: 0.75\n=\nX 1`);
+  assert.equal(result.ok, true);
+  assert.equal(result.value.header.program, 128);
+  assert.equal(result.value.header.volume, 0.75);
+});
+
+test("parses default header program names", () => {
+  const result = parse(`program: "Violin"\n=\n1`);
+  assert.equal(result.ok, true);
+  assert.equal(result.value.header.program, 40);
+});
+
+test("rejects invalid default header program and volume", () => {
+  const result = parse(`program: -1\nprogram: 0\nvolume: "1"\nvolume: 1\n=\n1`);
+  assert.equal(result.ok, false);
+  const messages = result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
+  assert.match(messages, /Expected Program number 0-220 or quoted Program name/);
+  assert.match(messages, /Duplicate header property 'program'/);
+  assert.match(messages, /Expected volume number 0-2/);
+  assert.match(messages, /Duplicate header property 'volume'/);
+});
+
 test("parses per-track header volumes", () => {
   const result = parse(`T1.volume: 0\nT2.volume: 0.5\nT3.volume: 2\n=\nT1: 1\nT2: 2\nT3: 3`);
   assert.equal(result.ok, true);
