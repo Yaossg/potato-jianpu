@@ -338,16 +338,7 @@ function parseDefaultProgram(value: HeaderValue, diagnostics: Diagnostic[]): num
 }
 
 function parseDefaultVolume(value: HeaderValue, diagnostics: Diagnostic[]): number | null {
-  if (value.quoted) {
-    diagnostics.push({ severity: "error", message: "Expected volume number 0-2.", range: value.range });
-    return null;
-  }
-  const volume = Number(value.text);
-  if (!Number.isFinite(volume) || volume < 0 || volume > 2) {
-    diagnostics.push({ severity: "error", message: `Invalid volume '${value.text}'. Expected 0-2.`, range: value.range });
-    return null;
-  }
-  return volume;
+  return parseVolumeValue(value, "volume", diagnostics);
 }
 
 function parseTrackProgram(value: HeaderValue, diagnostics: Diagnostic[]): number | null {
@@ -378,16 +369,30 @@ function parseTrackProgram(value: HeaderValue, diagnostics: Diagnostic[]): numbe
 }
 
 function parseTrackVolume(value: HeaderValue, diagnostics: Diagnostic[]): number | null {
+  return parseVolumeValue(value, "track volume", diagnostics);
+}
+
+function parseVolumeValue(value: HeaderValue, label: string, diagnostics: Diagnostic[]): number | null {
   if (value.quoted) {
-    diagnostics.push({ severity: "error", message: "Expected track volume number 0-2.", range: value.range });
+    diagnostics.push({ severity: "error", message: `Expected ${label} number 0-2 or percentage 0%-200%.`, range: value.range });
     return null;
   }
-  const volume = Number(value.text);
+  const text = value.text.trim();
+  const percentage = text.endsWith("%");
+  const numberText = percentage ? text.slice(0, -1) : text;
+  if (!/^(?:\d+(?:\.\d+)?|\.\d+)$/.test(numberText)) {
+    diagnostics.push({ severity: "error", message: `Invalid ${label} '${value.text}'. Expected 0-2 or 0%-200%.`, range: value.range });
+    return null;
+  }
+  const volume = Number(numberText);
   if (!Number.isFinite(volume) || volume < 0 || volume > 2) {
-    diagnostics.push({ severity: "error", message: `Invalid track volume '${value.text}'. Expected 0-2.`, range: value.range });
+    if (percentage && volume >= 0 && volume <= 200) {
+      return volume / 100;
+    }
+    diagnostics.push({ severity: "error", message: `Invalid ${label} '${value.text}'. Expected 0-2 or 0%-200%.`, range: value.range });
     return null;
   }
-  return volume;
+  return percentage ? volume / 100 : volume;
 }
 
 function parseKeySignature(key: string): KeySignature | null {

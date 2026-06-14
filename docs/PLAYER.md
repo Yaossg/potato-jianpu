@@ -114,11 +114,12 @@ score body stay in the parsed header but do not create arrangement tracks.
 design.
 
 Header entries such as `T1.volume: 0.5` assign per-track volume multipliers for
-playback and export. Values are limited to `0..2`; `1` is neutral. A score with
-no explicit `Tn:` line labels treats its single arrangement track as `T1` for
-`T1.volume` lookup in the same way as `T1.program`. Track volume combines with
-the browser master volume or audio export amplitude; it does not override them.
-MIDI export applies it by scaling note velocity.
+playback and export. Values are limited to `0..2` or `0%..200%`; `1` and
+`100%` are neutral. A score with no explicit `Tn:` line labels treats its single
+arrangement track as `T1` for `T1.volume` lookup in the same way as
+`T1.program`. Track volume combines with the browser master volume or audio
+export amplitude; it does not override them. MIDI export applies it by scaling
+note velocity.
 
 The score-level `program` field can set the default Program for playback and
 export. It accepts melodic Program names or numbers up to `220`, with

@@ -111,7 +111,7 @@ The `tempo` field is a positive beats-per-minute value. Integer and decimal valu
 
 The `program` field sets the score-level default Program for playback and export. Numeric values can be `0` through `220`; values `128..220` enable the same drum mode used by the browser and CLI Program controls. Quoted melodic Program names are also accepted. The browser and CLI Program controls are used only when the file header omits `program`.
 
-The `volume` field sets the score-level default track volume. Values are numbers from `0` to `2`; `1` is neutral. It is a default for tracks that do not have `Tn.volume`, not a multiplier stacked on top of `Tn.volume`.
+The `volume` field sets the score-level default track volume. Values are numbers from `0` to `2`, or percentages from `0%` to `200%`; `1` and `100%` are neutral. It is a default for tracks that do not have `Tn.volume`, not a multiplier stacked on top of `Tn.volume`.
 
 ## Hidden Header
 
@@ -195,7 +195,7 @@ T2: 5, 6, 7, 1`}
 
 ## Track Volumes
 
-Use `Tn.volume` in the file header to set one playback/export track volume. Values are numbers from `0` to `2`; `1` is neutral, `0.5` is half volume, `0` mutes the track, and `2` doubles the track velocity/gain before clamping.
+Use `Tn.volume` in the file header to set one playback/export track volume. Values are numbers from `0` to `2`, or percentages from `0%` to `200%`; `1` and `100%` are neutral, `0.5` and `50%` are half volume, `0` and `0%` mute the track, and `2` and `200%` double the track velocity/gain before clamping.
 
 `Tn.volume` overrides the score-level `volume` default for that track instead of multiplying by it. The resolved track volume combines with the browser volume slider or CLI audio `--amplitude`; it does not replace the master volume. For MIDI export, the resolved track volume scales that track's note velocity. For browser playback, WAV, and MP3, the master volume/amplitude and resolved per-track volume are both applied.
 
@@ -203,11 +203,11 @@ For a score with one unlabeled music line, `T1.volume` applies to that single pl
 
 <JianpuSource
   title="Track volume source"
-  source={`volume: 0.75
+  source={`volume: 75%
 T1.name: "Melody"
 T1.volume: 1
 T2.name: "Soft Harmony"
-T2.volume: 0.5
+T2.volume: 72.5%
 =
 T1: 1 2 3 4
 T2: 5, 6, 7, 1`}
@@ -215,11 +215,11 @@ T2: 5, 6, 7, 1`}
 
 <ScorePreview
   title="Rendered track volume score"
-  source={`volume: 0.75
+  source={`volume: 75%
 T1.name: "Melody"
 T1.volume: 1
 T2.name: "Soft Harmony"
-T2.volume: 0.5
+T2.volume: 72.5%
 =
 T1: 1 2 3 4
 T2: 5, 6, 7, 1`}

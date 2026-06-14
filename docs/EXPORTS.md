@@ -182,8 +182,8 @@ control rendered line names; they do not change MIDI track timing. Header
 entries such as `program: 24` or `program: "Violin"` set the score-level
 default Program for playback and export. `T1.program: 24` or
 `T2.program: "Violin"` then override that default for the matching melodic
-tracks. Header entries such as `volume: 0.5` set the score-level default track
-volume. `T1.volume: 0.5` and `T2.volume: 1.5` override that default for the
+tracks. Header entries such as `volume: 50%` set the score-level default track
+volume. `T1.volume: 0.5` and `T2.volume: 150%` override that default for the
 matching tracks. Labeled melodic arrangement tracks use the MIDI channel named
 by their label, so `T1` uses MIDI channel 1 and `T16` uses MIDI channel 16.
 `T10` is reserved for drums and is not accepted as a melodic track label.

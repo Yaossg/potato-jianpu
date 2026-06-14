@@ -45,7 +45,7 @@ import RelatedLinks from '../../../../components/RelatedLinks.astro';
 
 使用 `program` 可以设置乐谱级默认 Program；使用 `Tn.program` 可以覆盖某条带标签轨道的旋律 Program。只有乐谱省略 `program` 时，浏览器 Program 选择器才作为 fallback。
 
-使用 `volume` 可以设置乐谱级默认轨道音量；使用 `Tn.volume` 可以把单个轨道覆盖为 `0` 到 `2`。解析出的轨道音量会和浏览器音量滑杆相乘，所以主音量变化时，较轻的轨道仍保持相对较轻。
+使用 `volume` 可以设置乐谱级默认轨道音量；使用 `Tn.volume` 可以把单个轨道覆盖为 `0` 到 `2`，也可以写成 `0%` 到 `200%`。解析出的轨道音量会和浏览器音量滑杆相乘，所以主音量变化时，较轻的轨道仍保持相对较轻。
 
 浏览器 App 的声音设置包含音色选择、音量、试听，以及忽略开头休止符开关。
 

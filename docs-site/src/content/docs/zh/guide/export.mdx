@@ -46,7 +46,7 @@ MIDI 导出会写出 format 1 MIDI 文件，包含元数据、速度、拍号、
 
 `program` 是乐谱级默认 Program，会覆盖 CLI 的 `--program` fallback；`Tn.program` 会继续覆盖对应轨道的乐谱级默认值。
 
-`volume: 0.75` 这样的文件头字段会设置默认 MIDI 音符力度缩放；`T1.volume: 0.5` 会覆盖对应轨道的默认值，而不是和它相乘。解析出的轨道音量会和固定默认力度叠加使用。
+`volume: 75%` 这样的文件头字段会设置默认 MIDI 音符力度缩放；`T1.volume: 72.5%` 会覆盖对应轨道的默认值，而不是和它相乘。解析出的轨道音量会和固定默认力度叠加使用。
 
 ```sh
 pnpm run cli -- export-midi examples/twinkle.jpu -o twinkle.mid --program 0 --omit-initial-rest

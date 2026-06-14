@@ -322,21 +322,21 @@ test("ignores unused per-track programs for unlabeled arrangements", () => {
 });
 
 test("uses per-track header volumes with neutral fallback", () => {
-  const result = parse(`T2.volume: 0.5\nT3.volume: 2\n=\nT1: 1\nT2: 5,\nT3: 3`);
+  const result = parse(`T2.volume: 72.5%\nT3.volume: 2\n=\nT1: 1\nT2: 5,\nT3: 3`);
   assert.equal(result.ok, true);
   const arrangement = compileArrangement(result.value);
   assert.deepEqual(
     arrangement.tracks.map((track) => [track.name, track.volume]),
     [
       ["T1", 1],
-      ["T2", 0.5],
+      ["T2", 0.725],
       ["T3", 2],
     ],
   );
 });
 
 test("uses default header volume before neutral fallback", () => {
-  const result = parse(`volume: 0.25\nT2.volume: 0.5\n=\nT1: 1\nT2: 5,`);
+  const result = parse(`volume: 25%\nT2.volume: 50%\n=\nT1: 1\nT2: 5,`);
   assert.equal(result.ok, true);
   const arrangement = compileArrangement(result.value);
   assert.deepEqual(
@@ -471,7 +471,7 @@ test("exports separate MIDI program changes for per-track programs", () => {
 });
 
 test("exports per-track MIDI velocities from track volumes", () => {
-  const result = parse(`T1.volume: 0.5\nT2.volume: 2\n=\nT1: 1\nT2: 5,`);
+  const result = parse(`T1.volume: 50%\nT2.volume: 2\n=\nT1: 1\nT2: 5,`);
   assert.equal(result.ok, true);
   const bytes = [...exportMidiBytes(result.value)];
   assert.notEqual(bytes.findIndex((byte, index) => byte === 0x90 && bytes[index + 1] === 60 && bytes[index + 2] === 32), -1);

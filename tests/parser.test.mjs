@@ -540,10 +540,10 @@ test("rejects invalid per-track header programs", () => {
 });
 
 test("parses default header program and volume", () => {
-  const result = parse(`program: 128\nvolume: 0.75\n=\nX 1`);
+  const result = parse(`program: 128\nvolume: 72.5%\n=\nX 1`);
   assert.equal(result.ok, true);
   assert.equal(result.value.header.program, 128);
-  assert.equal(result.value.header.volume, 0.75);
+  assert.equal(result.value.header.volume, 0.725);
 });
 
 test("parses default header program names", () => {
@@ -553,33 +553,33 @@ test("parses default header program names", () => {
 });
 
 test("rejects invalid default header program and volume", () => {
-  const result = parse(`program: -1\nprogram: 0\nvolume: "1"\nvolume: 1\n=\n1`);
+  const result = parse(`program: -1\nprogram: 0\nvolume: 201%\n=\n1`);
   assert.equal(result.ok, false);
   const messages = result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
   assert.match(messages, /Expected Program number 0-220 or quoted Program name/);
   assert.match(messages, /Duplicate header property 'program'/);
-  assert.match(messages, /Expected volume number 0-2/);
-  assert.match(messages, /Duplicate header property 'volume'/);
+  assert.match(messages, /Invalid volume '201%'. Expected 0-2 or 0%-200%/);
 });
 
 test("parses per-track header volumes", () => {
-  const result = parse(`T1.volume: 0\nT2.volume: 0.5\nT3.volume: 2\n=\nT1: 1\nT2: 2\nT3: 3`);
+  const result = parse(`T1.volume: 0\nT2.volume: 72.5%\nT3.volume: 2\n=\nT1: 1\nT2: 2\nT3: 3`);
   assert.equal(result.ok, true);
   assert.deepEqual(result.value.header.trackVolumes, {
     T1: 0,
-    T2: 0.5,
+    T2: 0.725,
     T3: 2,
   });
 });
 
 test("rejects invalid per-track header volumes", () => {
-  const result = parse(`T1.volume: "1"\nT2.volume: -0.1\nT3.volume: 2.1\nT4.volume: loud\nT1.volume: 1\nT10.volume: 1\n=\nT1: 1`);
+  const result = parse(`T1.volume: "1"\nT2.volume: -0.1\nT3.volume: 2.1\nT4.volume: loud\nT5.volume: 201%\nT1.volume: 1\nT10.volume: 1\n=\nT1: 1`);
   assert.equal(result.ok, false);
   const messages = result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
-  assert.match(messages, /Expected track volume number 0-2/);
-  assert.match(messages, /Invalid track volume '-0.1'. Expected 0-2/);
-  assert.match(messages, /Invalid track volume '2.1'. Expected 0-2/);
-  assert.match(messages, /Invalid track volume 'loud'. Expected 0-2/);
+  assert.match(messages, /Expected track volume number 0-2 or percentage 0%-200%/);
+  assert.match(messages, /Invalid track volume '-0.1'. Expected 0-2 or 0%-200%/);
+  assert.match(messages, /Invalid track volume '2.1'. Expected 0-2 or 0%-200%/);
+  assert.match(messages, /Invalid track volume 'loud'. Expected 0-2 or 0%-200%/);
+  assert.match(messages, /Invalid track volume '201%'. Expected 0-2 or 0%-200%/);
   assert.match(messages, /Duplicate track volume definition for 'T1'/);
   assert.match(messages, /Unknown header key 'T10.volume'/);
 });
