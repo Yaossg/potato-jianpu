@@ -516,14 +516,54 @@ textarea {
   user-select: none;
 }
 
-.editor-line-numbers span {
-  display: block;
+.editor-line-number-row {
+  display: grid;
+  grid-template-columns: 10px minmax(2ch, 1fr);
+  align-items: start;
+  gap: 7px;
+  min-width: 44px;
+}
+
+.editor-line-number-text {
   min-width: 2ch;
 }
 
-.editor-line-numbers .current {
+.editor-line-number-row.current .editor-line-number-text {
   color: var(--text);
   font-weight: 700;
+}
+
+.editor-gutter-diagnostic,
+.editor-gutter-spacer {
+  display: block;
+  width: 8px;
+  height: 8px;
+  margin-top: 0.55em;
+}
+
+.editor-gutter-diagnostic {
+  border: 0;
+  border-radius: 50%;
+  padding: 0;
+  cursor: pointer;
+}
+
+.editor-gutter-diagnostic.error {
+  color: #b3261e;
+  background: #b3261e;
+  box-shadow: 0 0 0 2px rgba(179, 38, 30, 0.18);
+}
+
+.editor-gutter-diagnostic.warning {
+  color: #8a5b00;
+  background: #8a5b00;
+  box-shadow: 0 0 0 2px rgba(138, 91, 0, 0.18);
+}
+
+.editor-gutter-diagnostic:hover,
+.editor-gutter-diagnostic:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
 }
 
 .editor-source-layer {
@@ -584,7 +624,7 @@ textarea {
 .diagnostic-highlight {
   color: transparent;
   border-radius: 2px;
-  pointer-events: auto;
+  pointer-events: none;
 }
 
 .diagnostic-highlight.error {

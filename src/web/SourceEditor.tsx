@@ -16,6 +16,41 @@ interface SourceEditorProps {
   onFocusEditor: () => void;
 }
 
+interface LineDiagnosticSummary {
+  severity: Diagnostic["severity"];
+  tooltip: string;
+  diagnostic: Diagnostic;
+}
+
+function lineDiagnosticSummaries(diagnostics: Diagnostic[]): Map<number, LineDiagnosticSummary> {
+  const summaries = new Map<number, LineDiagnosticSummary>();
+
+  for (const diagnostic of diagnostics) {
+    if (!diagnostic.range) {
+      continue;
+    }
+
+    const line = diagnostic.range.start.line;
+    const current = summaries.get(line);
+    if (!current) {
+      summaries.set(line, {
+        severity: diagnostic.severity,
+        tooltip: `${line}:${diagnostic.range.start.column} ${diagnostic.message}`,
+        diagnostic,
+      });
+      continue;
+    }
+
+    current.tooltip = `${current.tooltip}\n${line}:${diagnostic.range.start.column} ${diagnostic.message}`;
+    if (current.severity !== "error" && diagnostic.severity === "error") {
+      current.severity = diagnostic.severity;
+      current.diagnostic = diagnostic;
+    }
+  }
+
+  return summaries;
+}
+
 export function SourceEditor({
   source,
   diagnostics,
@@ -37,6 +72,7 @@ export function SourceEditor({
   const diagnosticHighlights = useMemo(() => diagnosticHighlightParts(source, diagnostics), [diagnostics, source]);
   const editorLines = useMemo(() => sourceLines(source), [source]);
   const lineNumbers = useMemo(() => sourceLineNumbers(source), [source]);
+  const diagnosticsByLine = useMemo(() => lineDiagnosticSummaries(diagnostics), [diagnostics]);
 
   useLayoutEffect(() => {
     function updateLineHeights() {
@@ -111,12 +147,28 @@ export function SourceEditor({
         </div>
       </div>
       <div className={`editor-field ${sourceWrap ? "editor-wrap" : "editor-nowrap"}`}>
-        <div className="editor-line-numbers" ref={editorLineNumbersRef} aria-hidden="true">
-          {lineNumbers.map((lineNumber, index) => (
-            <span key={lineNumber} className={lineNumber === currentEditorLine ? "current" : undefined} style={lineHeights[index] ? { height: lineHeights[index] } : undefined}>
-              {lineNumber}
-            </span>
-          ))}
+        <div className="editor-line-numbers" ref={editorLineNumbersRef}>
+          {lineNumbers.map((lineNumber, index) => {
+            const lineDiagnostic = diagnosticsByLine.get(lineNumber);
+            return (
+              <span key={lineNumber} className={`editor-line-number-row${lineNumber === currentEditorLine ? " current" : ""}`} style={lineHeights[index] ? { height: lineHeights[index] } : undefined}>
+                {lineDiagnostic ? (
+                  <button
+                    type="button"
+                    className={`editor-gutter-diagnostic ${lineDiagnostic.severity}`}
+                    title={lineDiagnostic.tooltip}
+                    aria-label={`Line ${lineNumber}: ${lineDiagnostic.tooltip}`}
+                    onClick={() => selectDiagnosticRange(lineDiagnostic.diagnostic)}
+                  />
+                ) : (
+                  <span className="editor-gutter-spacer" aria-hidden="true" />
+                )}
+                <span className="editor-line-number-text" aria-hidden="true">
+                  {lineNumber}
+                </span>
+              </span>
+            );
+          })}
         </div>
         <div className="editor-source-layer">
           <pre className="editor-current-line" ref={editorCurrentLineRef} aria-hidden="true">

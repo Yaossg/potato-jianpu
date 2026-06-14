@@ -19,7 +19,7 @@ Use the browser app when you want immediate feedback while writing a score. The 
 
 The source editor accepts the same `.jpu` text that the CLI reads. It shows line numbers, highlights the current line, and can wrap or preserve long source lines depending on the editor setting. Source text is stored in browser local storage, so reloading the page keeps the draft on the same device.
 
-Diagnostics appear below the editor and are also highlighted in the source. Click a diagnostic to focus the affected range. Errors prevent a fresh render, but the preview keeps the last valid score visible with a stale-preview notice so you can compare while fixing the source. Warnings keep the score usable and mark behavior that deserves review, such as measure-duration mismatches.
+Diagnostics appear below the editor, are highlighted in the source, and add red or yellow markers beside affected line numbers. Click a diagnostic or gutter marker to focus the affected range. Errors prevent a fresh render, but the preview keeps the last valid score visible with a stale-preview notice so you can compare while fixing the source. Warnings keep the score usable and mark behavior that deserves review, such as measure-duration mismatches.
 
 The clear action asks for confirmation before removing the current source.
 
