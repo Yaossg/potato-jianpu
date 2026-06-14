@@ -20,7 +20,10 @@ export function ToolbarIcon({ name }: { name: ToolbarIconName }) {
     ) : name === "dark" ? (
       <path d="M20 15.2A7.7 7.7 0 0 1 8.8 4 8.5 8.5 0 1 0 20 15.2Z" />
     ) : name === "examples" ? (
-      <path d="M5 4.5c2.2 0 4 .5 5.5 1.7v13.3C9 18.3 7.2 17.8 5 17.8H3V4.5h2Zm14 0h2v13.3h-2c-2.2 0-4 .5-5.5 1.7V6.2C15 5 16.8 4.5 19 4.5Z" />
+      <>
+        <path d="M6 3.5h9.2L20 8.3V20a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 20V5A1.5 1.5 0 0 1 5.5 3.5H6Zm8 1.9V9h3.6L14 5.4ZM6 5.5v14h12V11h-6V5.5H6Z" />
+        <path d="M8 9h2v2H8V9Zm0 4h2v2H8v-2Zm4-3h4v1.7h-4V10Zm0 4h4v1.7h-4V14Z" />
+      </>
     ) : name === "export" ? (
       <>
         <path d="M5 8h5V6H5c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2v-5h-2v5H5V8Z" />
