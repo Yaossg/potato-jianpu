@@ -556,6 +556,57 @@ test("exposes lightweight WAV synth constants", () => {
   assert.ok(triangleWave((3 * Math.PI) / 2) < -0.99);
 });
 
+test("compiles per-note velocity into MelodyNote", () => {
+  const result = parse("f 1 p 2");
+  assert.equal(result.ok, true);
+  const melody = compileMelody(result.value);
+  assert.equal(melody.notes[0].velocity, 85);
+  assert.equal(melody.notes[1].velocity, 49);
+});
+
+test("defaults to undefined velocity when no dynamic marker", () => {
+  const result = parse("1 2");
+  assert.equal(result.ok, true);
+  const melody = compileMelody(result.value);
+  assert.equal(melody.notes[0].velocity, undefined);
+  assert.equal(melody.notes[1].velocity, undefined);
+});
+
+test("exports per-note MIDI velocities", () => {
+  const result = parse("f 1 pp 2");
+  assert.equal(result.ok, true);
+  const bytes = [...exportMidiBytes(result.value)];
+  const noteOnIndex = bytes.findIndex((byte, i) => byte === 0x90);
+  assert.notEqual(noteOnIndex, -1);
+  assert.equal(bytes[noteOnIndex + 2], 85);
+  const secondNoteOnIndex = bytes.findIndex((byte, i) => i > noteOnIndex && byte === 0x90);
+  assert.notEqual(secondNoteOnIndex, -1);
+  assert.equal(bytes[secondNoteOnIndex + 2], 33);
+});
+
+test("falls back to track-velocity when no per-note velocity", () => {
+  const result = parse("T1.volume: 50%\n=\nT1: 1");
+  assert.equal(result.ok, true);
+  const bytes = [...exportMidiBytes(result.value)];
+  const noteOnIndex = bytes.findIndex((byte, i) => byte === 0x90);
+  assert.notEqual(noteOnIndex, -1);
+  assert.equal(bytes[noteOnIndex + 2], 32);
+});
+
+test("scales per-note velocity by track volume (multiplicative)", () => {
+  const result = parse("T1.volume: 50%\n=\nT1: f 1 pp 2");
+  assert.equal(result.ok, true);
+  const bytes = [...exportMidiBytes(result.value)];
+  const noteOnIndex = bytes.findIndex((byte, i) => byte === 0x90);
+  assert.notEqual(noteOnIndex, -1);
+  // f (85) * 0.5 = round(42.5) = 43
+  assert.equal(bytes[noteOnIndex + 2], 43);
+  const secondNoteOnIndex = bytes.findIndex((byte, i) => i > noteOnIndex && byte === 0x90);
+  assert.notEqual(secondNoteOnIndex, -1);
+  // pp (33) * 0.5 = round(16.5) = 17
+  assert.equal(bytes[secondNoteOnIndex + 2], 17);
+});
+
 test("maps programs to deterministic synth waveforms", () => {
   assert.equal(waveformForProgram(0), "triangle");
   assert.equal(waveformForProgram(24), "sawtooth");

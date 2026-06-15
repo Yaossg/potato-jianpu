@@ -44,7 +44,23 @@ export interface BaseNote {
   duration: DurationMark;
   index: number;
   range: SourceRange;
+  velocity?: number;
 }
+
+export const VELOCITY_MAP: Record<string, number> = {
+  ppp: 16,
+  pp: 33,
+  p: 49,
+  mp: 61,
+  mf: 73,
+  f: 85,
+  ff: 102,
+  fff: 118,
+};
+
+export const VELOCITY_LABELS: Record<number, string> = Object.fromEntries(
+  Object.entries(VELOCITY_MAP).map(([k, v]) => [v, k]),
+);
 
 export interface PitchNote extends BaseNote {
   kind: "pitch";

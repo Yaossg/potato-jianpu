@@ -1,16 +1,17 @@
-import type {
-  Accidental,
-  Diagnostic,
-  Document,
-  DurationMark,
-  Measure,
-  Note,
-  Pitch,
-  PitchNote,
-  Result,
-  LyricLine,
-  ScoreLine,
-  SourceRange,
+import {
+  VELOCITY_MAP,
+  type Accidental,
+  type Diagnostic,
+  type Document,
+  type DurationMark,
+  type Measure,
+  type Note,
+  type Pitch,
+  type PitchNote,
+  type Result,
+  type LyricLine,
+  type ScoreLine,
+  type SourceRange,
 } from "../core/index.js";
 import { applyHeaderProperty, createDefaultHeader, isLyricLabel, isMelodicScoreTrackLabel, type HeaderValue } from "./header.js";
 import { tokenize, type Token, type TokenType } from "./tokenizer.js";
@@ -416,6 +417,9 @@ class Parser {
     if (this.at("tie")) {
       return true;
     }
+    if (this.at("velocity")) {
+      return true;
+    }
     return this.isGeneralNoteStart();
   }
 
@@ -447,10 +451,11 @@ class Parser {
   private parseDurableNote(measureOctave: number): Note {
     const start = this.current().range;
     const tie = Boolean(this.match("tie"));
+    const velocity = this.parseVelocity();
     const note = this.parseGeneralNote(measureOctave);
     const duration = this.parseDuration();
     const range = mergeRange(start, this.previous().range);
-    return { ...note, tie, duration, index: this.noteIndex++, range } as Note;
+    return { ...note, tie, velocity, duration, index: this.noteIndex++, range } as Note;
   }
 
   private parseGeneralNote(measureOctave: number): DraftNote {
@@ -517,6 +522,12 @@ class Parser {
       return 0;
     }
     return undefined;
+  }
+
+  private parseVelocity(): number | undefined {
+    const token = this.match("velocity");
+    if (!token) return undefined;
+    return VELOCITY_MAP[token.text];
   }
 
   private parseOctaveSuffix(): number {

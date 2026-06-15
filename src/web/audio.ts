@@ -123,7 +123,7 @@ export class PreviewAudioPlayer {
       const duration = item.note.duration * secondsPerWholeNote;
       if (item.note.chord !== "rest") {
         for (const midiNote of item.note.chord) {
-          synth.noteOn(item.channel, midiNote, this.velocityForVolume(item.volume), noteStartTime);
+          synth.noteOn(item.channel, midiNote, Math.max(0, Math.min(127, Math.round((item.note.velocity ?? DEFAULT_VELOCITY) * item.volume))), noteStartTime);
           synth.noteOff(item.channel, midiNote, noteStartTime + duration);
         }
       }
@@ -152,9 +152,6 @@ export class PreviewAudioPlayer {
     return schedule.sort((left, right) => left.offset - right.offset || left.note.index - right.note.index);
   }
 
-  private velocityForVolume(volume: number): number {
-    return Math.max(0, Math.min(127, Math.round(DEFAULT_VELOCITY * volume)));
-  }
 
   private noteStartGroups(arrangement: Arrangement): Array<{ noteIndices: number[]; offset: number }> {
     const groups: Array<{ noteIndices: number[]; offset: number }> = [];

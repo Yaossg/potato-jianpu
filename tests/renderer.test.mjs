@@ -5,7 +5,7 @@ import { parse } from "../dist/parser/index.js";
 import { inferContentPageWidth, renderSvg } from "../dist/renderer/index.js";
 
 function readSnapshot(name) {
-  return readFileSync(new URL(`./fixtures/snapshots/${name}`, import.meta.url), "utf8").replace(/\r?\n$/, "");
+  return readFileSync(new URL(`./fixtures/snapshots/${name}`, import.meta.url), "utf8").replace(/\r\n/g, "\n").replace(/\n$/, "");
 }
 
 const minimalSnapshot = readSnapshot("minimal.svg");
@@ -557,4 +557,12 @@ test("renders explicit export color and background", () => {
   const svg = renderSvg(result.value, { color: "#123456", background: "#f8fafc" });
   assert.match(svg, /<svg[^>]+style="color: #123456"/);
   assert.match(svg, /<rect class="page-background"[^>]+fill="#f8fafc"/);
+});
+
+test("renders velocity text in SVG for notes with dynamic markings", () => {
+  const result = parse("f 1 p 2");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  assert.match(svg, /<text class="velocity"[^>]*>f<\/text>/);
+  assert.match(svg, /<text class="velocity"[^>]*>p<\/text>/);
 });

@@ -27,6 +27,8 @@ export const DIMENSIONS = {
   dotSpacing: 12,
   dashSpacing: 24,
   lineSpacing: 10,
+  velocityFontSize: 14,
+  velocityTextGap: 2,
   octaveDotVerticalOffset: 22,
   octaveDotBelowOffset: 5,
   accidentalVerticalOffset: 8,

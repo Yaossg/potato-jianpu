@@ -4,6 +4,7 @@ export interface MelodyNote {
   chord: number[] | "rest";
   duration: number;
   index: number;
+  velocity?: number;
 }
 
 export interface Melody {
@@ -41,20 +42,23 @@ function pitchToMidi(pitch: Pitch, noteMap: number[]): number {
 }
 
 function compileNote(note: Note, noteMap: number[], program: number): MelodyNote {
+  const velocity = note.velocity;
   switch (note.kind) {
     case "rest":
-      return { chord: "rest", duration: note.duration.value, index: note.index };
+      return { chord: "rest", duration: note.duration.value, index: note.index, velocity };
     case "drum":
       return {
         chord: [program < 128 ? 60 : program - 128 + 35],
         duration: note.duration.value,
         index: note.index,
+        velocity,
       };
     case "pitch":
       return {
         chord: note.chord.map((pitch) => pitchToMidi(pitch, noteMap)),
         duration: note.duration.value,
         index: note.index,
+        velocity,
       };
   }
 }

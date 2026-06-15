@@ -39,6 +39,9 @@ function paddingUpOf(note: Note, tieAfter: boolean, hasEnding: boolean): number 
   }
   height += note.tie || tieAfter ? DIMENSIONS.tieHeight : 0;
   height += hasEnding ? DIMENSIONS.endingHeight : 0;
+  if (note.velocity !== undefined) {
+    height += DIMENSIONS.velocityFontSize + DIMENSIONS.velocityTextGap;
+  }
   return height;
 }
 

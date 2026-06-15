@@ -38,8 +38,9 @@ ending = "[", NOTE, { ",", NOTE }, "]" ;
 measure = [ octave ], { durable_note } ;
 octave = LOWER, { LOWER } | HIGHER, { HIGHER } ;
 
-durable_note = [ tie ], general_note, [ length ] ;
+durable_note = [ tie ], [ velocity ], general_note, [ length ] ;
 tie = TIE ;
+velocity = VELOCITY ;
 
 general_note = chord | rest | drum ;
 chord = pitch_note | "{", [ pitch_note, { pitch_note } ], "}" ;
@@ -88,6 +89,7 @@ DASH = "-" ;
 LOWER = "," ;
 HIGHER = "'" ;
 TIE = "~" ;
+VELOCITY = "ppp" | "pp" | "p" | "mp" | "mf" | "f" | "ff" | "fff" ;
 EQUALS = "=" ;
 NEWLINE = "\n" | "\r\n" | "\r" ;
 WS = "space or tab" ;

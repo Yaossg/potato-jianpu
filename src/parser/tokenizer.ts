@@ -28,6 +28,7 @@ export type TokenType =
   | "rbrace"
   | "lbracket"
   | "rbracket"
+  | "velocity"
   | "newline"
   | "eof";
 
@@ -162,6 +163,12 @@ export function tokenize(source: string): { tokens: Token[]; diagnostics: Diagno
     }
     if (rest.startsWith("X")) {
       push("drum", "X");
+      continue;
+    }
+
+    const velocityMatch = /^(ppp|pp|mp|mf|fff|ff|p|f)/.exec(rest)?.[0];
+    if (velocityMatch) {
+      push("velocity", velocityMatch);
       continue;
     }
 

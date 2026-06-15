@@ -52,6 +52,7 @@ import RelatedLinks from '../../../../components/RelatedLinks.astro';
 | `LOWER` | `,` |
 | `HIGHER` | `'` |
 | `TIE` | `~` |
+| `VELOCITY` | `ppp`、`pp`、`p`、`mp`、`mf`、`f`、`ff` 或 `fff` |
 | `EQUALS` | `=` |
 | `NEWLINE` | `\n`、`\r\n` 或 `\r` |
 | `EOF` | 文件结束 |
@@ -91,6 +92,7 @@ import RelatedLinks from '../../../../components/RelatedLinks.astro';
 <RailroadDiagram rule="measure" title="measure" caption="可选八度前缀后接带时值音符。" />
 <RailroadDiagram rule="durable_note" title="durable_note" caption="带可选延音线和时值后缀的音符类项目。" />
 <RailroadDiagram rule="tie" title="tie" caption="写在被延住音符前的延音线标记。" />
+<RailroadDiagram rule="velocity" title="velocity" caption="可选的力度标记，写在带时值音符之前。" />
 <RailroadDiagram rule="general_note" title="general_note" caption="会发声或占位的项目：音高音符、和弦、休止符或鼓音。" />
 <RailroadDiagram rule="pitch_note" title="pitch_note" caption="带可选变音记号和八度后缀的数字音高。" />
 <RailroadDiagram rule="accidental" title="accidental" caption="写在音高音符前的升号、降号、重升、重降或还原记号。" />

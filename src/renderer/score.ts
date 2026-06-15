@@ -1,4 +1,4 @@
-import { actualNotePerBeat, type Document, type LyricLine, type Measure, type Note, type Pitch, type PitchNote, type ScoreLine } from "../core/index.js";
+import { actualNotePerBeat, VELOCITY_LABELS, type Document, type LyricLine, type Measure, type Note, type Pitch, type PitchNote, type ScoreLine } from "../core/index.js";
 import { DIMENSIONS } from "./dimensions.js";
 import { labelOffsetForTexts, lyricLineDisplayLabel, scoreLineDisplayLabel } from "./labels.js";
 import { flattenNotes, layoutLine, lineWidth, measureXOffset, type LineLayout, type MeasureLayout } from "./layout.js";
@@ -414,6 +414,19 @@ function renderLine(
 
     const className = activeNoteIndices.has(entry.note.index) ? "note-item active" : "note-item";
     const noteParts: string[] = [];
+    if (entry.note.velocity !== undefined) {
+      const label = VELOCITY_LABELS[entry.note.velocity];
+      if (label) {
+        const chordH = entry.note.kind === "pitch" ? chordHeight(entry.note) : DIMENSIONS.baseNoteHeight;
+        const nextTrackNote = nextNoteInSequence(trackNotes, entry.note);
+        const noteInTie = entry.note.tie || (nextTrackNote?.tie ?? false);
+        let velocityY = entry.y - chordH - DIMENSIONS.velocityTextGap;
+        if (noteInTie) {
+          velocityY -= DIMENSIONS.tieHeight;
+        }
+        noteParts.push(`<text class="velocity" x="${entry.x}" y="${velocityY}" text-anchor="middle">${escapeXml(label)}</text>`);
+      }
+    }
     if (entry.note.kind === "pitch") {
       noteParts.push(renderPitchNote(entry.note, entry.x, entry.y));
     } else {

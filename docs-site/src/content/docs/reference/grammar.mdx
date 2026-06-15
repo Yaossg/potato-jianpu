@@ -52,6 +52,7 @@ The parser recognizes these tokens. Whitespace and comments are skipped between 
 | `LOWER` | `,` |
 | `HIGHER` | `'` |
 | `TIE` | `~` |
+| `VELOCITY` | `ppp`, `pp`, `p`, `mp`, `mf`, `f`, `ff`, or `fff` |
 | `EQUALS` | `=` |
 | `NEWLINE` | `\n`, `\r\n`, or `\r` |
 | `EOF` | end of file |
@@ -91,6 +92,7 @@ These diagrams are generated from `docs/grammar.ebnf`.
 <RailroadDiagram rule="measure" title="measure" caption="An optional octave prefix followed by durable notes." />
 <RailroadDiagram rule="durable_note" title="durable_note" caption="A note-like item with optional tie and duration suffix." />
 <RailroadDiagram rule="tie" title="tie" caption="A tie marker before the tied note." />
+<RailroadDiagram rule="velocity" title="velocity" caption="An optional dynamic velocity marker before a durable note." />
 <RailroadDiagram rule="general_note" title="general_note" caption="A sounding item: pitch note, chord, rest, or drum note." />
 <RailroadDiagram rule="pitch_note" title="pitch_note" caption="A numbered pitch with optional accidental and octave suffix." />
 <RailroadDiagram rule="accidental" title="accidental" caption="Sharp, flat, double accidental, or natural mark before a pitch note." />

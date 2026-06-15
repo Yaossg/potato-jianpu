@@ -661,6 +661,64 @@ test("warns when measure duration does not match the time signature", () => {
   assert.equal(compound.diagnostics.some((diagnostic) => diagnostic.message.includes("Measure duration")), false);
 });
 
+test("parses per-note velocity markers before pitch notes", () => {
+  const result = parse("f 1");
+  assert.equal(result.ok, true);
+  assert.equal(result.value.score[0].measures[0].notes[0].kind, "pitch");
+  assert.equal(result.value.score[0].measures[0].notes[0].velocity, 85);
+});
+
+test("parses all velocity markers as correct MIDI values", () => {
+  const result = parse("ppp 1 pp 2 p 3 mp 4 mf 5 f 6 ff 7 fff 1'");
+  assert.equal(result.ok, true);
+  const velocities = result.value.score[0].measures[0].notes.map((note) => note.velocity);
+  assert.deepEqual(velocities, [16, 33, 49, 61, 73, 85, 102, 118]);
+});
+
+test("parses velocity before chords", () => {
+  const result = parse("f {1 3 5} -");
+  assert.equal(result.ok, true);
+  assert.equal(result.value.score[0].measures[0].notes[0].kind, "pitch");
+  assert.equal(result.value.score[0].measures[0].notes[0].velocity, 85);
+});
+
+test("parses tie followed by velocity", () => {
+  const result = parse("1 - - - | ~f 1 - - -");
+  assert.equal(result.ok, true);
+  const notes = result.value.score[0].measures[1].notes;
+  assert.equal(notes[0].kind, "pitch");
+  assert.equal(notes[0].tie, true);
+  assert.equal(notes[0].velocity, 85);
+});
+
+test("accepts velocity before rest notes", () => {
+  const result = parse("f 0");
+  assert.equal(result.ok, true);
+  assert.equal(result.value.score[0].measures[0].notes[0].kind, "rest");
+  assert.equal(result.value.score[0].measures[0].notes[0].velocity, 85);
+});
+
+test("parses velocity without space before pitch note", () => {
+  const result = parse("f1 p2 mf3");
+  assert.equal(result.ok, true);
+  const notes = result.value.score[0].measures[0].notes;
+  assert.equal(notes[0].velocity, 85);
+  assert.equal(notes[1].velocity, 49);
+  assert.equal(notes[2].velocity, 73);
+});
+
+test("parses velocity without space before chord", () => {
+  const result = parse("f{1 3 5}");
+  assert.equal(result.ok, true);
+  assert.equal(result.value.score[0].measures[0].notes[0].velocity, 85);
+});
+
+test("rejects velocity before tie (wrong order)", () => {
+  const result = parse("1 f~1");
+  assert.equal(result.ok, false);
+  assert.ok(result.diagnostics.some((diagnostic) => diagnostic.message.includes("Expected")));
+});
+
 test("reports source ranges for parser diagnostics", () => {
   const result = parse("1 2\n@");
   assert.equal(result.ok, false);

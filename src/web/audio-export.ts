@@ -75,18 +75,14 @@ function normalizeBitRate(bitRate: number | undefined): number {
   return normalized;
 }
 
-function velocityForVolume(volume: number): number {
-  return Math.max(0, Math.min(127, Math.round(DEFAULT_VELOCITY * volume)));
-}
-
 function scheduleTrack(synth: WebAudioTinySynth, notes: MelodyNote[], secondsPerWhole: number, channel: number, volume: number) {
   const context = synth.getAudioContext();
   let currentTime = context.currentTime;
-  const velocity = velocityForVolume(volume);
 
   for (const note of notes) {
     const duration = note.duration * secondsPerWhole;
     if (note.chord !== "rest") {
+      const velocity = Math.max(0, Math.min(127, Math.round((note.velocity ?? DEFAULT_VELOCITY) * volume)));
       for (const midiNote of note.chord) {
         synth.noteOn(channel, midiNote, velocity, currentTime);
         synth.noteOff(channel, midiNote, currentTime + duration);

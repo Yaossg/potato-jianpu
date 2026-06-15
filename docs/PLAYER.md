@@ -36,6 +36,7 @@ interface MelodyNote {
   chord: number[] | "rest";
   duration: number;
   index: number;
+  velocity?: number;
 }
 
 interface Melody {
@@ -449,7 +450,7 @@ The current player/export layer is functional but not a full synthesizer:
   instruments
 - WAV and MP3 export use the same WebAudioTinySynth timbres through an offline
   context
-- no per-note velocity syntax
+- per-note velocity syntax via Italian dynamic markings (`ppp`–`fff`)
 - no per-track pan or tempo syntax
 
 These limitations keep the core parser, renderer, and export surfaces focused.

@@ -218,8 +218,10 @@ The WAV renderer:
 - schedules all arrangement tracks against the same offline audio clock
 - uses the same Program, per-track Program, and drum-channel behavior as browser
   preview playback
-- uses fixed base MIDI velocity `64`
-- scales note velocity from the resolved score-level or per-track volume
+- uses base MIDI velocity `64`, overridden by per-note velocity when dynamic
+  markings are present
+- scales note velocity from the resolved score-level or per-track volume when
+  no per-note dynamic is written
 - treats `--amplitude` as TinySynth master volume, applied together with the
   resolved track volume rather than replaced by it
 - rests render as silence
