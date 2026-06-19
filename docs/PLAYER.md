@@ -442,15 +442,3 @@ from the Settings panel unless the score header supplies its own `program` or
 `volume` defaults. Browser MP3 uses the same `lamejs` encoder bundled into the
 web build.
 
-## Current Limitations
-
-The current player/export layer is functional but not a full synthesizer:
-
-- browser playback uses WebAudioTinySynth timbres rather than sampled
-  instruments
-- WAV and MP3 export use the same WebAudioTinySynth timbres through an offline
-  context
-- per-note velocity syntax via Italian dynamic markings (`ppp`–`fff`)
-- no per-track pan or tempo syntax
-
-These limitations keep the core parser, renderer, and export surfaces focused.

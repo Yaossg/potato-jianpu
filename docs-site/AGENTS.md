@@ -10,7 +10,6 @@ Use this file together with:
 - `docs/COMMANDS.md` for docs-site command references.
 - `docs/TRANSLATION.md` for docs-site bilingual terminology and alignment
   rules.
-- `../docs/DOCUMENTATION.md` for project-level documentation boundaries.
 
 If a docs-site convention changes, update the relevant file under
 `docs-site/docs/`. Root `docs/` should usually keep only a mention or pointer.

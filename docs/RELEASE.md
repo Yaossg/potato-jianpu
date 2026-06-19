@@ -30,6 +30,17 @@ site into the `docs/` subdirectory of the frontend output. Use
 `pnpm run web:app` only when intentionally building the browser app without the
 documentation subsite.
 
+The documentation site can also be built standalone:
+
+```sh
+pnpm run docs:build
+```
+
+This builds the Starlight site to `dist-web/docs/`. Use `pnpm run docs:dev`
+for the docs-site development server, and `pnpm run docs:verify` for the full
+verification suite including the production build. See
+`docs-site/docs/COMMANDS.md` for the complete command list.
+
 The full verification command is:
 
 ```sh
@@ -111,5 +122,4 @@ Before cutting a release:
 - Smoke test the CLI with at least one example input.
 - Smoke test the static frontend build in a browser.
 
-Browser-level frontend automation is still a remaining task. Until that exists,
-the final browser smoke test is manual.
+The final browser smoke test is currently manual.

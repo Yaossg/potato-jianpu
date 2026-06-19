@@ -91,6 +91,7 @@ Responsibilities:
 - parse optional header and score notation
 - parse closed typed header properties
 - parse score-level default Program/volume and per-track melodic Program/volume header properties
+- parse per-note velocity markers
 - validate tie semantics
 - warn on measure duration mismatches
 - preserve source ranges for diagnostics
@@ -288,17 +289,3 @@ Practical rules:
 - Web must not import backend modules.
 - CLI coordinates modules but should keep logic thin.
 
-## Current Known Architecture Debt
-
-- The renderer is split into focused modules, but note-level spacing and
-  collision handling still have room to grow for dense notation.
-- There is no formal theme object yet; dimensions and styles are internal.
-- Melody timing and note events are still named `Melody`, not a richer
-  `TimedNote` model.
-- Browser playback lives outside `src/player`, so the player package is not yet
-  a complete runtime playback abstraction.
-- Backend audio export now has a shared render helper, but the WAV and MP3
-  writers still own format-specific byte generation directly.
-
-These are acceptable for the current development stage but should guide later
-refactors.

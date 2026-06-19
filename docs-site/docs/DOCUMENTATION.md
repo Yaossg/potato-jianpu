@@ -1,8 +1,8 @@
 # Docs Site Documentation
 
 This document describes how to maintain the Astro Starlight documentation site
-under `docs-site/`. Project-level documentation policy stays in
-`../../docs/DOCUMENTATION.md`.
+under `docs-site/`. Project-level documentation policy is covered by root
+`AGENTS.md`, `docs/WORKFLOW.md`, and `docs/TRANSLATION.md`.
 
 ## Content Locations
 

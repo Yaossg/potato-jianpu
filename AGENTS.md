@@ -5,25 +5,31 @@ Treat this directory as the project root.
 
 ## Read First
 
-- `docs/AGENT_WORKFLOW.md`: agent workflow and change rules.
+### Process
+
+- `docs/WORKFLOW.md`: agent workflow and change rules.
 - `docs/COMMANDS.md`: development, verification, CLI, grammar, docs-site, and
   release commands.
-- `docs/DOCUMENTATION.md`: documentation maintenance rules, including grammar
-  reference and docs-site updates.
-- `docs-site/AGENTS.md`: local rules for Astro Starlight docs-site work.
-- `docs-site/docs/`: local docs-site maintenance, command, and translation
-  references.
-- `README.md`: user-facing overview and common usage.
+- `docs/QUALITY.md`: testing policy, frontend quality policy, and known test
+  gaps.
+- `docs/TRANSLATION.md`: bilingual documentation and terminology rules.
+- `docs/RELEASE.md`: build outputs, packaging, and release checklist.
+
+### Architecture & Behavior
+
 - `docs/ARCHITECTURE.md`: product targets, module boundaries, source map, and
   dependency direction.
 - `docs/RENDERER.md`: SVG renderer behavior and options.
 - `docs/PLAYER.md`: playback, arrangement, MIDI, and synth-facing behavior.
 - `docs/EXPORTS.md`: backend and frontend export behavior.
-- `docs/QUALITY.md`: testing policy, frontend quality policy, and known test
-  gaps.
-- `docs/TRANSLATION.md`: bilingual documentation and terminology rules.
+
+### Project & Docs Site
+
+- `README.md`: user-facing overview and common usage.
 - `docs/ROADMAP.md`: known risks and future work.
-- `docs/RELEASE.md`: build outputs, packaging, and release checklist.
+- `docs-site/AGENTS.md`: local rules for Astro Starlight docs-site work.
+- `docs-site/docs/`: local docs-site maintenance, command, and translation
+  references.
 - `docs-site/src/content/docs/`: Starlight MDX documentation source.
 - `docs/grammar.ebnf`: grammar source used for railroad generation.
 
@@ -49,7 +55,6 @@ Treat this directory as the project root.
   `<RailroadDiagram />` entries in
   `docs-site/src/content/docs/reference/grammar.mdx` and
   `docs-site/src/content/docs/zh/reference/grammar.mdx` complete and aligned
-  with `docs/grammar.ebnf`. Follow `docs/DOCUMENTATION.md` and
-  `docs/TRANSLATION.md`, then run `pnpm run grammar:railroad`.
+  with `docs/grammar.ebnf`. Follow `docs/TRANSLATION.md`, then run `pnpm run grammar:railroad`.
 - After each conversation turn, if you made any repository changes, commit them
   inside this repository before finishing the turn.

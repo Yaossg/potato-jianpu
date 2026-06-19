@@ -17,11 +17,13 @@ pnpm install
 pnpm run dev
 pnpm run build
 pnpm run web:build
+pnpm run web:app
 ```
 
 `pnpm run build` emits backend CLI and shared library modules in `dist/`.
 `pnpm run web:build` emits the browser application and builds the documentation
-site under `dist-web/docs/`.
+site under `dist-web/docs/`. `pnpm run web:app` builds only the browser
+application without the documentation subsite.
 
 ## Verification
 

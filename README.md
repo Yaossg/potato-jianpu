@@ -78,6 +78,5 @@ full command reference. User-facing syntax documentation lives in
 `docs/grammar.ebnf`. Module boundaries are documented in
 `docs/ARCHITECTURE.md`, renderer behavior in `docs/RENDERER.md`, player
 behavior in `docs/PLAYER.md`, export behavior in `docs/EXPORTS.md`, quality
-policy in `docs/QUALITY.md`, documentation maintenance in
-`docs/DOCUMENTATION.md`, translation rules in `docs/TRANSLATION.md`, future
+policy in `docs/QUALITY.md`, translation rules in `docs/TRANSLATION.md`, future
 work in `docs/ROADMAP.md`, and release shape in `docs/RELEASE.md`.
