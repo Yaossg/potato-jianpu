@@ -45,6 +45,8 @@ import RelatedLinks from '../../../../components/RelatedLinks.astro';
 
 使用 `program` 可以设置乐谱级默认 Program；使用 `Tn.program` 可以覆盖某条带标签轨道的旋律 Program。只有乐谱省略 `program` 时，浏览器 Program 选择器才作为 fallback。
 
+在打击乐轨道（标有 `P1:`、`P2:` 等的行）上使用 `Pn.program`（`128`–`220`）来指定打击乐 Program。每条 P 轨道演奏自己的 GM 打击乐音色，并与其它 P 轨道共享 MIDI 通道 10。多条 P 轨道可以让你在同一个乐谱里编写完整的架子鼓编排。浏览器 App 中有一个完整的鼓组示例。
+
 使用 `volume` 可以设置乐谱级默认轨道音量；使用 `Tn.volume` 可以把单个轨道覆盖为 `0` 到 `2`，也可以写成 `0%` 到 `200%`。解析出的轨道音量会和浏览器音量滑杆相乘，所以主音量变化时，较轻的轨道仍保持相对较轻。
 
 浏览器 App 的声音设置包含音色选择、音量、试听，以及忽略开头休止符开关。

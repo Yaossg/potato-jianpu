@@ -1,4 +1,5 @@
 import type { Document, Measure, Note, Pitch, ScoreLine } from "../core/index.js";
+import { isPercussionTrackLabel } from "../parser/header.js";
 
 export interface MelodyNote {
   chord: number[] | "rest";
@@ -157,7 +158,11 @@ function compileMeasures(document: Document, measures: Measure[], program: numbe
 }
 
 function programForTrack(document: Document, trackName: string, defaultProgram: number): number {
-  return document.header.trackPrograms[trackName] ?? document.header.program ?? defaultProgram;
+  const program = document.header.trackPrograms[trackName] ?? document.header.program ?? defaultProgram;
+  if (isPercussionTrackLabel(trackName) && program < 128) {
+    return 128;
+  }
+  return program;
 }
 
 function volumeForTrack(document: Document, trackName: string): number {

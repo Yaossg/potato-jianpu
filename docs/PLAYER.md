@@ -80,10 +80,12 @@ interface Arrangement {
 ```
 
 If no score line has a track label, the arrangement contains one unnamed track
-and matches `compileMelody()` timing. Track labels are `T1:` through `T9:` and
-`T11:` through `T16:`. `T10:` is reserved for MIDI drums and is not accepted as
-a melodic track label. If any score line has a track label, score lines are
-divided into voice groups:
+and matches `compileMelody()` timing. Melodic track labels are `T1:` through
+`T9:` and `T11:` through `T16:`, each mapped to the corresponding MIDI channel.
+`T10:` is reserved for MIDI channel 10 (the drum channel) and is not accepted as
+a score-line label. Percussion track labels `P1:`, `P2:`, etc. write drum parts
+that share MIDI channel 10, each with its own percussion Program. If any score
+line has a track label, score lines are divided into voice groups:
 
 - every group starts at `T1` and increases by track number
 - a group may stop early, so `T1 T2 T3 T1 T2` is valid
@@ -111,8 +113,9 @@ those headers are omitted. The `compileArrangement(document, program?)`
 argument remains the default Program for tracks without an explicit
 `Tn.program` header. `Tn.program` entries for tracks that do not appear in the
 score body stay in the parsed header but do not create arrangement tracks.
-`T10.program` and drum Program values are still deferred with the drum-track
-design.
+Percussion tracks use `Pn.program` headers with the range `128..220`
+(Percussion Program numbers). `Pn.name` and `Pn.volume` work the same way as
+their T-track equivalents.
 
 Header entries such as `T1.volume: 0.5` assign per-track volume multipliers for
 playback and export. Values are limited to `0..2` or `0%..200%`; `1` and
@@ -254,6 +257,29 @@ Examples:
 | `220` | `127` |
 
 The CLI rejects programs outside `0..220` before calling the player APIs.
+
+### Percussion Tracks (P-labels)
+
+Percussion track labels `P1:`, `P2:`, etc. create drum parts that share MIDI
+channel 10. Each P-track can have its own Percussion Program (`Pn.program:
+128..220`) so different tracks play different GM percussion sounds in the same
+arrangement.
+
+P-track programs default to `128` when omitted. Like T-tracks, `Pn.name` and
+`Pn.volume` headers are supported. P-track labels do not participate in T-label
+ordering — they can appear alongside T-tracks in any order.
+
+Example:
+
+```
+P1.name: "Kick"    P1.program: 128
+P2.name: "Snare"   P2.program: 130
+P3.name: "Hi-Hat"  P3.program: 133
+=
+P1: X/ 0/ 0/ 0/ | X/ 0/ 0/ 0/ |
+P2: 0/ 0/ X/ 0/ | 0/ 0/ X/ 0/ |
+P3: X/ X/ X/ X/ | X/ X/ X/ X/ |
+```
 
 ## Browser Preview Playback
 

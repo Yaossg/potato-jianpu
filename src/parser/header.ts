@@ -55,6 +55,10 @@ export function isMelodicScoreTrackLabel(label: string): boolean {
   return /^T(?:[1-9]|1[1-6])$/.test(label);
 }
 
+export function isPercussionTrackLabel(label: string): boolean {
+  return /^P\d+$/.test(label);
+}
+
 export function isLyricLabel(label: string): boolean {
   return /^L\d+$/.test(label);
 }
@@ -147,6 +151,26 @@ export function applyHeaderProperty(
     return "ok";
   }
 
+  const percussionProgram = key.match(/^(P\d+)\.program$/)?.[1];
+  if (percussionProgram) {
+    applyPercussionProgram(header.trackPrograms, seen, percussionProgram, keyRange, value, diagnostics);
+    return "ok";
+  }
+  const percussionName = key.match(/^(P\d+)\.name$/)?.[1];
+  if (percussionName) {
+    applyLabelName(header.trackNames, seen, `track:${percussionName}`, "track name", percussionName, keyRange, value, diagnostics);
+    return "ok";
+  }
+  const percussionVolume = key.match(/^(P\d+)\.volume$/)?.[1];
+  if (percussionVolume) {
+    applyTrackVolume(header.trackVolumes, seen, percussionVolume, keyRange, value, diagnostics);
+    return "ok";
+  }
+  if (isPercussionTrackLabel(key)) {
+    applyLabelName(header.trackNames, seen, `track:${key}`, "track name", key, keyRange, value, diagnostics);
+    return "ok";
+  }
+
   const lyricName = key.match(/^(L\d+)\.name$/)?.[1];
   if (lyricName) {
     applyLabelName(header.lyricLabels, seen, `lyric:${lyricName}`, "lyric label", lyricName, keyRange, value, diagnostics);
@@ -219,6 +243,27 @@ function applyTrackVolume(
     return;
   }
   trackVolumes[trackName] = volume;
+}
+
+function applyPercussionProgram(
+  trackPrograms: Record<string, number>,
+  seen: Set<string>,
+  trackName: string,
+  keyRange: SourceRange,
+  value: HeaderValue | null,
+  diagnostics: Diagnostic[],
+) {
+  if (!value) {
+    return;
+  }
+  if (!recordKey(seen, `program:${trackName}`, `Duplicate track program definition for '${trackName}'.`, keyRange, diagnostics)) {
+    return;
+  }
+  const program = parsePercussionProgram(value, diagnostics);
+  if (program === null) {
+    return;
+  }
+  trackPrograms[trackName] = program;
 }
 
 function recordKey(seen: Set<string>, key: string, message: string, range: SourceRange, diagnostics: Diagnostic[]): boolean {
@@ -363,6 +408,23 @@ function parseTrackProgram(value: HeaderValue, diagnostics: Diagnostic[]): numbe
   const program = Number(value.text);
   if (!Number.isInteger(program) || program < 0 || program > 127) {
     diagnostics.push({ severity: "error", message: `Invalid Program '${value.text}'. Expected 0-127.`, range: value.range });
+    return null;
+  }
+  return program;
+}
+
+function parsePercussionProgram(value: HeaderValue, diagnostics: Diagnostic[]): number | null {
+  if (value.quoted) {
+    diagnostics.push({ severity: "error", message: "Expected Percussion Program number 128-220.", range: value.range });
+    return null;
+  }
+  if (!/^\d+$/.test(value.text)) {
+    diagnostics.push({ severity: "error", message: "Expected Percussion Program number 128-220.", range: value.range });
+    return null;
+  }
+  const program = Number(value.text);
+  if (!Number.isInteger(program) || program < 128 || program > 220) {
+    diagnostics.push({ severity: "error", message: `Invalid Percussion Program '${value.text}'. Expected 128-220.`, range: value.range });
     return null;
   }
   return program;

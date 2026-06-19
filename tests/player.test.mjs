@@ -617,3 +617,59 @@ test("maps programs to deterministic synth waveforms", () => {
   assert.equal(sampleWave(Math.PI / 2, "sine"), 1);
   assert.equal(sampleWave(Math.PI / 2, "square"), 1);
 });
+
+test("compiles multi-P-track arrangement to percussion notes", () => {
+  const result = parse(`P1.program: 128\nP2.program: 130\n=\nP1: X X\nP2: X X`);
+  assert.equal(result.ok, true);
+  const arrangement = compileArrangement(result.value);
+  assert.equal(arrangement.tracks.length, 2);
+
+  const kick = arrangement.tracks.find((t) => t.name === "P1");
+  const snare = arrangement.tracks.find((t) => t.name === "P2");
+  assert.ok(kick);
+  assert.ok(snare);
+  assert.equal(kick.program, 128);
+  assert.equal(snare.program, 130);
+  assert.deepEqual(kick.notes.map((n) => n.chord), [[35], [35]]);
+  assert.deepEqual(snare.notes.map((n) => n.chord), [[37], [37]]);
+});
+
+test("P track defaults to drum program 128 when no program is specified", () => {
+  const result = parse(`P1.name: "Drums"\n=\nP1: X X`);
+  assert.equal(result.ok, true);
+  const arrangement = compileArrangement(result.value);
+  assert.equal(arrangement.tracks.length, 1);
+  assert.equal(arrangement.tracks[0].program, 128);
+  assert.deepEqual(arrangement.tracks[0].notes.map((n) => n.chord), [[35], [35]]);
+});
+
+test("mixed T and P arrangement routes P tracks to drum channel", () => {
+  const result = parse(`T1.program: 0\nP1.program: 128\n=\nT1: 1 2\nP1: X X`);
+  assert.equal(result.ok, true);
+  const arrangement = compileArrangement(result.value);
+  assert.equal(arrangement.tracks.length, 2);
+
+  const melodic = arrangement.tracks.find((t) => t.name === "T1");
+  const drum = arrangement.tracks.find((t) => t.name === "P1");
+  assert.ok(melodic);
+  assert.ok(drum);
+  assert.equal(melodic.program, 0);
+  assert.equal(drum.program, 128);
+});
+
+test("exports MIDI with P tracks on drum channel", () => {
+  const result = parse(`P1.program: 128\nP2.program: 130\n=\nP1: X\nP2: X`);
+  assert.equal(result.ok, true);
+  const bytes = [...exportMidiBytes(result.value)];
+
+  // P1 program 128 → MIDI note 35 on channel 9 (0x99)
+  const kickIndex = bytes.findIndex((b, i) => b === 0x99 && bytes[i + 1] === 35);
+  assert.notEqual(kickIndex, -1);
+
+  // P2 program 130 → MIDI note 37 on channel 9 (0x99)
+  const snareIndex = bytes.findIndex((b, i) => b === 0x99 && bytes[i + 1] === 37);
+  assert.notEqual(snareIndex, -1);
+
+  // No program change on drum channel (0xc9 should not appear)
+  assert.equal(bytes.includes(0xc9), false);
+});

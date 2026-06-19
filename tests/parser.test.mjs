@@ -489,11 +489,11 @@ test("validates ties independently for labeled tracks", () => {
 test("rejects score line labels outside the supported MIDI track label range", () => {
   const result = parse("melody: 1 2");
   assert.equal(result.ok, false);
-  assert.match(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Score line labels must be T1-T9 or T11-T16/);
+  assert.match(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Score line labels must be T1-T9, T11-T16, or P followed by digits/);
 
   const reservedChannel = parse("T10: 1 2");
   assert.equal(reservedChannel.ok, false);
-  assert.match(reservedChannel.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Score line labels must be T1-T9 or T11-T16/);
+  assert.match(reservedChannel.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Score line labels must be T1-T9, T11-T16, or P followed by digits/);
 });
 
 test("accepts T-prefixed header and score line labels", () => {
@@ -728,4 +728,64 @@ test("reports source ranges for parser diagnostics", () => {
   assert.equal(diagnostic.range.start.column, 1);
   assert.equal(diagnostic.range.end.line, 2);
   assert.equal(diagnostic.range.end.column, 2);
+});
+
+test("accepts P-prefixed percussion track labels in score lines", () => {
+  const result = parse("P1: X X X X");
+  assert.equal(result.ok, true);
+  assert.equal(result.value.score[0].label, "P1");
+  assert.equal(result.value.score[0].measures[0].notes[0].kind, "drum");
+
+  const multiP = parse("P1: X X\nP2: X X\nP3: X X");
+  assert.equal(multiP.ok, true);
+  assert.equal(multiP.value.score[0].label, "P1");
+  assert.equal(multiP.value.score[1].label, "P2");
+  assert.equal(multiP.value.score[2].label, "P3");
+});
+
+test("rejects P without digits as a score line label", () => {
+  const result = parse("P: X X");
+  assert.equal(result.ok, false);
+  assert.match(result.diagnostics.map((d) => d.message).join("\n"), /Score line labels must be T1-T9, T11-T16, or P followed by digits/);
+});
+
+test("parses P-track header name, program, and volume", () => {
+  const result = parse(`P1.name: "Kick"\nP1.program: 128\nP1.volume: 0.8\nP2.name: "Snare"\nP2.program: 130\n=\nP1: X X\nP2: X X`);
+  assert.equal(result.ok, true);
+  assert.equal(result.value.header.trackNames.P1, "Kick");
+  assert.equal(result.value.header.trackPrograms.P1, 128);
+  assert.equal(result.value.header.trackVolumes.P1, 0.8);
+  assert.equal(result.value.header.trackNames.P2, "Snare");
+  assert.equal(result.value.header.trackPrograms.P2, 130);
+});
+
+test("rejects invalid P-track percussion programs", () => {
+  const result = parse(`P1.program: 50\nP2.program: 300\nP3.program: "Bass"\n=\nP1: X`);
+  assert.equal(result.ok, false);
+  const messages = result.diagnostics.map((d) => d.message).join("\n");
+  assert.match(messages, /Invalid Percussion Program '50'. Expected 128-220/);
+  assert.match(messages, /Invalid Percussion Program '300'. Expected 128-220/);
+  assert.match(messages, /Expected Percussion Program number 128-220/);
+});
+
+test("P tracks do not interfere with T label ordering", () => {
+  const result = parse("T1: 1 2\nP1: X X\nT2: 3 4\nP5: X X");
+  assert.equal(result.ok, true);
+  assert.equal(result.value.score[0].label, "T1");
+  assert.equal(result.value.score[1].label, "P1");
+  assert.equal(result.value.score[2].label, "T2");
+  assert.equal(result.value.score[3].label, "P5");
+});
+
+test("P tracks can be used without T tracks", () => {
+  const result = parse("P1: X X X X | X X X X |");
+  assert.equal(result.ok, true);
+  assert.equal(result.value.score[0].label, "P1");
+  assert.equal(result.value.score[0].measures.length, 2);
+});
+
+test("rejects duplicate P-track program definition", () => {
+  const result = parse(`P1.program: 128\nP1.program: 130\n=\nP1: X`);
+  assert.equal(result.ok, false);
+  assert.match(result.diagnostics.map((d) => d.message).join("\n"), /Duplicate track program definition for 'P1'/);
 });

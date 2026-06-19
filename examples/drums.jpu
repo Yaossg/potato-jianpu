@@ -1,10 +1,16 @@
-title: "Drum Pattern"
-subtitle: "Percussion note example"
+title: "Drum Kit"
+subtitle: "P-track percussion example"
 composer: "Modern Jianpu Markup"
 key: C
 time: 4/4
 tempo: 120
+P1.name: "Kick"
+P1.program: 128
+P2.name: "Snare"
+P2.program: 130
+P3.name: "Hi-Hat"
+P3.program: 133
 =
-X/ X// X// X/ X/ X/ X/ X/ X/ |
-X// X// X/ X// X// X/ X// X// X/ X// X// X/ |
-X/ X/ X/ X/ X/ X/ X/ 0/ |
+P1: X/ 0/ 0/ 0/ X/ 0/ 0/ 0/ | X/ 0/ 0/ 0/ X/ 0/ 0/ 0/ |
+P2: 0/ 0/ X/ 0/ 0/ 0/ X/ 0/ | 0/ 0/ X/ 0/ 0/ 0/ X/ 0/ |
+P3: X/ X/ X/ X/ X/ X/ X/ X/ | X/ X/ X/ X/ X/ X/ X/ X/ |

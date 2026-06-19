@@ -13,7 +13,7 @@ import {
   type ScoreLine,
   type SourceRange,
 } from "../core/index.js";
-import { applyHeaderProperty, createDefaultHeader, isLyricLabel, isMelodicScoreTrackLabel, type HeaderValue } from "./header.js";
+import { applyHeaderProperty, createDefaultHeader, isLyricLabel, isMelodicScoreTrackLabel, isPercussionTrackLabel, type HeaderValue } from "./header.js";
 import { tokenize, type Token, type TokenType } from "./tokenizer.js";
 
 type DraftNote =
@@ -274,8 +274,8 @@ class Parser {
     let label: string | undefined;
     if (this.at("identifier") && this.tokens[this.index + 1]?.type === "colon") {
       label = this.current().value ?? this.current().text;
-      if (!isMelodicScoreTrackLabel(label)) {
-        this.error("Score line labels must be T1-T9 or T11-T16.", this.current().range);
+      if (!isMelodicScoreTrackLabel(label) && !isPercussionTrackLabel(label)) {
+        this.error("Score line labels must be T1-T9, T11-T16, or P followed by digits.", this.current().range);
       }
       this.index += 2;
     } else if (this.labeledScoreMode) {
@@ -622,7 +622,7 @@ class Parser {
       const token = this.tokens[index]!;
       const next = this.tokens[index + 1]!;
       const label = token.value ?? token.text;
-      if (token.type === "identifier" && next.type === "colon" && isMelodicScoreTrackLabel(label)) {
+      if (token.type === "identifier" && next.type === "colon" && (isMelodicScoreTrackLabel(label) || isPercussionTrackLabel(label))) {
         return true;
       }
     }
@@ -640,6 +640,9 @@ class Parser {
       const label = line.label ?? "";
       if (label === "") {
         sawDefaultInGroup = true;
+        continue;
+      }
+      if (isPercussionTrackLabel(label)) {
         continue;
       }
       if (label === "T1") {

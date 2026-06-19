@@ -60,7 +60,13 @@ An unlabeled quoted lyric line is also accepted.
 
 ## Track Labels
 
-Track labels `T1:` through `T9:` and `T11:` through `T16:` write multi-track arrangements. `T10:` is reserved for MIDI drums and is not accepted as a score-line label.
+Track labels `T1:` through `T9:` and `T11:` through `T16:` write multi-track
+arrangements, each mapped to the corresponding MIDI channel. `T10:` is reserved
+for MIDI channel 10 (the drum channel) and is not accepted as a score-line label.
+
+Percussion track labels `P1:`, `P2:`, etc. write drum parts that share MIDI
+channel 10. Each P-track can have its own percussion Program so different tracks
+play different drum sounds.
 
 <JianpuSource
   title="Two-track source"
