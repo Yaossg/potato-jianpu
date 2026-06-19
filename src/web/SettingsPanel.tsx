@@ -147,7 +147,7 @@ export function SettingsPanel({
                 value={program}
                 onChange={(event) => {
                   const value = Number(event.target.value);
-                  if (Number.isInteger(value) && value >= 0 && value <= 220) {
+                  if (Number.isInteger(value) && value >= 0 && value <= 174) {
                     onProgramChange(value);
                   }
                 }}

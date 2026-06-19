@@ -34,11 +34,11 @@ Rendered score previews in the documentation use the same playback compiler. Whe
 
 ## Programs and drums
 
-Programs `0..127` use melodic TinySynth programs. Programs `128..220` use drum mode. In drum mode, source `X` maps to percussion note `program - 128 + 35`.
+Programs `0..127` use melodic TinySynth programs. Programs `128..174` use drum mode. In drum mode, source `X` maps to percussion note `program - 128 + 35`.
 
 Use `program` in the file header to set the score-level default Program. Use `Tn.program` to assign a melodic Program to a labeled track; it overrides `program` for that track. Melodic per-track numeric values are limited to `0..127`, and quoted names resolve through the same General MIDI Program list used by the browser selector.
 
-Use `Pn.program` (`128`–`220`) on percussion tracks (lines labeled `P1:`, `P2:`, etc.) to assign a Percussion Program. Each P track plays its own GM percussion sound and shares MIDI channel 10 with other P tracks. Multiple P tracks let you write a full drum kit in one score. See the drum kit example in the browser app for a complete rock beat.
+Use `Pn.program` (`128`–`174`) on percussion tracks (lines labeled `P1:`, `P2:`, etc.) to assign a Percussion Program. Each P track plays its own GM percussion sound and shares MIDI channel 10 with other P tracks. Multiple P tracks let you write a full drum kit in one score. See the drum kit example in the browser app for a complete rock beat.
 
 Use `volume` to set the score-level default track volume, and `Tn.volume` to override one track from `0` to `2` or `0%` to `200%`. The resolved track volume multiplies with the browser volume slider, so a quiet track stays quiet when the master volume changes.
 

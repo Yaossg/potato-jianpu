@@ -188,10 +188,9 @@ const DRUM_NAMES = new Map<number, string>([
   [81, "Open Triangle"],
 ]);
 
-export const DRUM_PROGRAMS: ProgramOption[] = Array.from({ length: 93 }, (_, index) => {
-  const midiNote = index + 35;
-  const value = index + 128;
-  return { value, label: `${value} - Drum ${midiNote} ${DRUM_NAMES.get(midiNote) ?? "Percussion"}` };
+export const DRUM_PROGRAMS: ProgramOption[] = [...DRUM_NAMES].map(([midiNote, name]) => {
+  const value = midiNote - 35 + 128;
+  return { value, label: `${value} - Drum ${midiNote} ${name}` };
 });
 
 function canonicalProgramName(name: string): string {

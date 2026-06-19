@@ -371,12 +371,12 @@ function parseDefaultProgram(value: HeaderValue, diagnostics: Diagnostic[]): num
   }
 
   if (!/^\d+$/.test(value.text)) {
-    diagnostics.push({ severity: "error", message: "Expected Program number 0-220 or quoted Program name.", range: value.range });
+    diagnostics.push({ severity: "error", message: "Expected Program number 0-174 or quoted Program name.", range: value.range });
     return null;
   }
   const program = Number(value.text);
-  if (!Number.isInteger(program) || program < 0 || program > 220) {
-    diagnostics.push({ severity: "error", message: `Invalid Program '${value.text}'. Expected 0-220.`, range: value.range });
+  if (!Number.isInteger(program) || program < 0 || program > 174) {
+    diagnostics.push({ severity: "error", message: `Invalid Program '${value.text}'. Expected 0-174.`, range: value.range });
     return null;
   }
   return program;
@@ -415,16 +415,16 @@ function parseTrackProgram(value: HeaderValue, diagnostics: Diagnostic[]): numbe
 
 function parsePercussionProgram(value: HeaderValue, diagnostics: Diagnostic[]): number | null {
   if (value.quoted) {
-    diagnostics.push({ severity: "error", message: "Expected Percussion Program number 128-220.", range: value.range });
+    diagnostics.push({ severity: "error", message: "Expected Percussion Program number 128-174.", range: value.range });
     return null;
   }
   if (!/^\d+$/.test(value.text)) {
-    diagnostics.push({ severity: "error", message: "Expected Percussion Program number 128-220.", range: value.range });
+    diagnostics.push({ severity: "error", message: "Expected Percussion Program number 128-174.", range: value.range });
     return null;
   }
   const program = Number(value.text);
-  if (!Number.isInteger(program) || program < 128 || program > 220) {
-    diagnostics.push({ severity: "error", message: `Invalid Percussion Program '${value.text}'. Expected 128-220.`, range: value.range });
+  if (!Number.isInteger(program) || program < 128 || program > 174) {
+    diagnostics.push({ severity: "error", message: `Invalid Percussion Program '${value.text}'. Expected 128-174.`, range: value.range });
     return null;
   }
   return program;

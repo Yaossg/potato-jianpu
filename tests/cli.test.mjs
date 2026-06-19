@@ -337,16 +337,16 @@ test("CLI rejects out-of-range MIDI programs", async () => {
   await writeFile(input, "X", "utf8");
 
   await assert.rejects(
-    execFileAsync(process.execPath, ["dist/cli/main.js", "export-midi", input, "-o", output, "--program", "221"], {
+    execFileAsync(process.execPath, ["dist/cli/main.js", "export-midi", input, "-o", output, "--program", "175"], {
       cwd: repoDir,
     }),
-    /--program must be an integer from 0 to 220/,
+    /--program must be an integer from 0 to 174/,
   );
 
   await assert.rejects(
     execFileAsync(process.execPath, ["dist/cli/main.js", "export-midi", input, "-o", output, "--program", "-1"], {
       cwd: repoDir,
     }),
-    /--program must be an integer from 0 to 220/,
+    /--program must be an integer from 0 to 174/,
   );
 });

@@ -556,7 +556,7 @@ test("rejects invalid default header program and volume", () => {
   const result = parse(`program: -1\nprogram: 0\nvolume: 201%\n=\n1`);
   assert.equal(result.ok, false);
   const messages = result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
-  assert.match(messages, /Expected Program number 0-220 or quoted Program name/);
+  assert.match(messages, /Expected Program number 0-174 or quoted Program name/);
   assert.match(messages, /Duplicate header property 'program'/);
   assert.match(messages, /Invalid volume '201%'. Expected 0-2 or 0%-200%/);
 });
@@ -763,9 +763,9 @@ test("rejects invalid P-track percussion programs", () => {
   const result = parse(`P1.program: 50\nP2.program: 300\nP3.program: "Bass"\n=\nP1: X`);
   assert.equal(result.ok, false);
   const messages = result.diagnostics.map((d) => d.message).join("\n");
-  assert.match(messages, /Invalid Percussion Program '50'. Expected 128-220/);
-  assert.match(messages, /Invalid Percussion Program '300'. Expected 128-220/);
-  assert.match(messages, /Expected Percussion Program number 128-220/);
+  assert.match(messages, /Invalid Percussion Program '50'. Expected 128-174/);
+  assert.match(messages, /Invalid Percussion Program '300'. Expected 128-174/);
+  assert.match(messages, /Expected Percussion Program number 128-174/);
 });
 
 test("P tracks do not interfere with T label ordering", () => {

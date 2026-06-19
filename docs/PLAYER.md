@@ -113,7 +113,7 @@ those headers are omitted. The `compileArrangement(document, program?)`
 argument remains the default Program for tracks without an explicit
 `Tn.program` header. `Tn.program` entries for tracks that do not appear in the
 score body stay in the parsed header but do not create arrangement tracks.
-Percussion tracks use `Pn.program` headers with the range `128..220`
+Percussion tracks use `Pn.program` headers with the range `128..174`
 (Percussion Program numbers). `Pn.name` and `Pn.volume` work the same way as
 their T-track equivalents.
 
@@ -126,8 +126,8 @@ export amplitude; it does not override them. MIDI export applies it by scaling
 note velocity.
 
 The score-level `program` field can set the default Program for playback and
-export. It accepts melodic Program names or numbers up to `220`, with
-`128..220` enabling drum mode. The score-level `volume` field can set the
+export. It accepts melodic Program names or numbers up to `174`, with
+`128..174` enabling drum mode. The score-level `volume` field can set the
 default track volume. Track-level `Tn.program` and `Tn.volume` override those
 defaults rather than stacking on top of them.
 
@@ -239,10 +239,10 @@ Drum notes use the `X` syntax.
 Program behavior:
 
 - `0` to `127`: normal melodic mode. Drum note `X` maps to MIDI note `60`.
-- `128` to `220`: drum mode. Drum note `X` maps to percussion note
+- `128` to `174`: drum mode. Drum note `X` maps to percussion note
   `program - 128 + 35`.
 
-Player APIs reject programs outside `0..220`.
+Player APIs reject programs outside `0..174`.
 
 In MIDI export, drum mode uses channel 10, which is zero-based channel `9` in
 the MIDI bytes. Drum mode does not write a program-change event because
@@ -254,15 +254,15 @@ Examples:
 | ---: | ---: |
 | `128` | `35` |
 | `129` | `36` |
-| `220` | `127` |
+| `174` | `127` |
 
-The CLI rejects programs outside `0..220` before calling the player APIs.
+The CLI rejects programs outside `0..174` before calling the player APIs.
 
 ### Percussion Tracks (P-labels)
 
 Percussion track labels `P1:`, `P2:`, etc. create drum parts that share MIDI
 channel 10. Each P-track can have its own Percussion Program (`Pn.program:
-128..220`) so different tracks play different GM percussion sounds in the same
+128..174`) so different tracks play different GM percussion sounds in the same
 arrangement.
 
 P-track programs default to `128` when omitted. Like T-tracks, `Pn.name` and
@@ -298,7 +298,7 @@ Behavior:
 - scales per-track note velocity when the score has `Tn.volume` headers
 - schedules note-on and note-off events for pitch/chord events
 - uses WebAudioTinySynth percussion channel playback for drum programs
-  `128..220`
+  `128..174`
 - skips sound generation for rests
 - schedules note-start timers for frontend highlighting
 - supports starting from a parsed note index
@@ -308,7 +308,7 @@ The frontend exposes a Settings panel with Default Program, volume, audition,
 and initial-rest controls. Browser playback and MIDI download use the selected
 Program as the default when the score omits `program`. The
 browser UI presents it as a grouped selection list with General MIDI programs
-and drum-note programs. Values `128..220` trigger the drum mapping described
+and drum-note programs. Values `128..174` trigger the drum mapping described
 above when no score-level or per-track melodic Program overrides that track.
 
 The frontend also exposes playback volume as a `0..200%` slider with a `100%`
@@ -422,7 +422,7 @@ The WAV synthesizer uses WebAudioTinySynth offline:
 - `@descript/web-audio-js` provides the backend `RenderingAudioContext`
 - the shared melody compiler provides note timing and MIDI note numbers
 - melodic programs `0..127` set TinySynth channel 1 Program
-- drum programs `128..220` use TinySynth percussion channel 10 and the same
+- drum programs `128..174` use TinySynth percussion channel 10 and the same
   percussion note mapping as MIDI export
 - base note velocity is fixed at `64`
 - resolved track volume scales note velocity

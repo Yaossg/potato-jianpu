@@ -62,7 +62,7 @@ tempo: 72
 | `program` | 播放和导出的乐谱级默认 Program。 |
 | `volume` | 播放和导出的乐谱级默认轨道音量。 |
 | `Tn.program` | 旋律轨道的逐轨道播放和导出 Program 覆盖。 |
-| `Pn.program` | P 标签鼓轨道的逐轨道打击乐 Program（`128`–`220`）。 |
+| `Pn.program` | P 标签鼓轨道的逐轨道打击乐 Program（`128`–`174`）。 |
 | `Tn.volume` | 逐轨道播放和导出音量倍率。 |
 
 `title`、`subtitle` 和 `composer` 的默认值为空；`hidden` 默认为 `false`，`key` 默认为 `C`，`time` 默认为 `4/4`，`tempo` 默认为 `120`，`program` 会回退到浏览器或 CLI 的 Program 设置，`volume` 默认为 `1`。
@@ -110,7 +110,7 @@ tempo: 72
 
 `tempo` 字段是正的 BPM，可以是 `96`、`120` 或 `132.5` 这样的整数或小数。它用于播放、MIDI 导出和音频导出。
 
-`program` 字段设置播放和导出的乐谱级默认 Program。数字值可以是 `0` 到 `220`；`128..220` 会启用和浏览器、CLI Program 控件相同的鼓模式。也可以使用带引号的旋律 Program 名称。只有文件头省略 `program` 时，才会使用浏览器或 CLI 的 Program 控件。
+`program` 字段设置播放和导出的乐谱级默认 Program。数字值可以是 `0` 到 `174`；`128..174` 会启用和浏览器、CLI Program 控件相同的鼓模式。也可以使用带引号的旋律 Program 名称。只有文件头省略 `program` 时，才会使用浏览器或 CLI 的 Program 控件。
 
 `volume` 字段设置乐谱级默认轨道音量。值可以是 `0` 到 `2` 的数字，也可以是 `0%` 到 `200%` 的百分数；`1` 和 `100%` 都表示不变。它是没有 `Tn.volume` 的轨道默认值，不会和 `Tn.volume` 叠加相乘。
 
@@ -170,7 +170,7 @@ L1: "do re mi fa"`}
 
 `Tn.program` 会覆盖该轨道的乐谱级 `program` 默认值。只有文件头省略 `program` 时，浏览器和 CLI 的 Program 控件才作为默认值。只有一条未写 `T1:` 的音乐行时，`T1.program` 会应用到这条播放/导出轨道。
 
-`Pn.program` 为 P 标签打击乐轨道指定打击乐 Program（`128`–`220`）。每条 P 轨道演奏自己的 GM 打击乐音色，所有 P 轨道共享 MIDI 通道 10。如果未指定 `Pn.program`，则默认值为 `128`。`T10.program` 不允许使用，因为 T10 是保留的 MIDI 鼓通道。
+`Pn.program` 为 P 标签打击乐轨道指定打击乐 Program（`128`–`174`）。每条 P 轨道演奏自己的 GM 打击乐音色，所有 P 轨道共享 MIDI 通道 10。如果未指定 `Pn.program`，则默认值为 `128`。`T10.program` 不允许使用，因为 T10 是保留的 MIDI 鼓通道。
 
 <JianpuSource
   title="轨道 Program 源码"

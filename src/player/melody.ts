@@ -30,7 +30,7 @@ export interface Arrangement {
 
 const C_MAJOR_NOTE_MAP = [60, 62, 64, 65, 67, 69, 71] as const;
 const MIN_PROGRAM = 0;
-const MAX_PROGRAM = 220;
+const MAX_PROGRAM = 174;
 
 function assertProgram(program: number) {
   if (!Number.isInteger(program) || program < MIN_PROGRAM || program > MAX_PROGRAM) {

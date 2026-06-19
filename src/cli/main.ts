@@ -97,7 +97,7 @@ function readPositiveNumberFlag(flags: string[], name: string): number | undefin
 
 function readProgram(flags: string[]): number | null {
   const program = Number(readFlag(flags, "--program") ?? "0");
-  if (!Number.isInteger(program) || program < 0 || program > 220) {
+  if (!Number.isInteger(program) || program < 0 || program > 174) {
     return null;
   }
   return program;
@@ -221,7 +221,7 @@ async function main(argv: string[]): Promise<number> {
     }
     const program = readProgram(flags);
     if (program === null) {
-      console.error("error: --program must be an integer from 0 to 220");
+      console.error("error: --program must be an integer from 0 to 174");
       return 2;
     }
     await writeFile(output, exportMidiBytes(result.value, program, { omitInitialRests: flags.includes("--omit-initial-rest") }));
@@ -236,7 +236,7 @@ async function main(argv: string[]): Promise<number> {
     }
     const program = readProgram(flags);
     if (program === null) {
-      console.error("error: --program must be an integer from 0 to 220");
+      console.error("error: --program must be an integer from 0 to 174");
       return 2;
     }
     const sampleRate = readPositiveNumberFlag(flags, "--sample-rate");
@@ -261,7 +261,7 @@ async function main(argv: string[]): Promise<number> {
     }
     const program = readProgram(flags);
     if (program === null) {
-      console.error("error: --program must be an integer from 0 to 220");
+      console.error("error: --program must be an integer from 0 to 174");
       return 2;
     }
     const sampleRate = readPositiveNumberFlag(flags, "--sample-rate");

@@ -62,7 +62,7 @@ Known fields include:
 | `program` | Score-level default Program for playback and export. |
 | `volume` | Score-level default track volume for playback and export. |
 | `Tn.program` | Per-track playback and export Program override for melodic tracks. |
-| `Pn.program` | Per-track Percussion Program (`128`–`220`) for P-labeled drum tracks. |
+| `Pn.program` | Per-track Percussion Program (`128`–`174`) for P-labeled drum tracks. |
 | `Tn.volume` | Per-track playback and export volume multiplier. |
 
 Default values are empty for `title`, `subtitle`, and `composer`; `hidden` defaults to `false`, `key` defaults to `C`, `time` defaults to `4/4`, `tempo` defaults to `120`, `program` falls back to the browser or CLI Program setting, and `volume` defaults to `1`.
@@ -110,7 +110,7 @@ The `time` field uses `beats/beat-unit`, such as `4/4`, `3/4`, or `6/8`. Allowed
 
 The `tempo` field is a positive beats-per-minute value. Integer and decimal values such as `96`, `120`, and `132.5` are accepted. It is used by playback, MIDI export, and audio export.
 
-The `program` field sets the score-level default Program for playback and export. Numeric values can be `0` through `220`; values `128..220` enable the same drum mode used by the browser and CLI Program controls. Quoted melodic Program names are also accepted. The browser and CLI Program controls are used only when the file header omits `program`.
+The `program` field sets the score-level default Program for playback and export. Numeric values can be `0` through `174`; values `128..174` enable the same drum mode used by the browser and CLI Program controls. Quoted melodic Program names are also accepted. The browser and CLI Program controls are used only when the file header omits `program`.
 
 The `volume` field sets the score-level default track volume. Values are numbers from `0` to `2`, or percentages from `0%` to `200%`; `1` and `100%` are neutral. It is a default for tracks that do not have `Tn.volume`, not a multiplier stacked on top of `Tn.volume`.
 
@@ -170,7 +170,7 @@ Use `Tn.program` in the file header to assign a melodic General MIDI Program to 
 
 `Tn.program` overrides the score-level `program` default for that track. The browser and CLI Program controls act as the default only when the file header omits `program`. For a score with one unlabeled music line, `T1.program` applies to that single playback/export track.
 
-`Pn.program` assigns a Percussion Program (`128`–`220`) to a P-labeled percussion track. Each P track plays its own GM percussion sound, with all P tracks sharing MIDI channel 10. When a P track has no explicit `Pn.program`, it defaults to `128`. `T10.program` is not accepted because T10 is the reserved MIDI drum channel.
+`Pn.program` assigns a Percussion Program (`128`–`174`) to a P-labeled percussion track. Each P track plays its own GM percussion sound, with all P tracks sharing MIDI channel 10. When a P track has no explicit `Pn.program`, it defaults to `128`. `T10.program` is not accepted because T10 is the reserved MIDI drum channel.
 
 <JianpuSource
   title="Track Program source"

@@ -677,7 +677,7 @@ class Parser {
       for (const measure of line.measures) {
         for (const note of measure.notes) {
           if (note.kind === "drum" && !drumMode) {
-            this.warning("Drum note 'X' used on a melodic track. Set a drum Program (128-220) to enable drum mode.", note.range);
+            this.warning("Drum note 'X' used on a melodic track. Set a drum Program (128-174) to enable drum mode.", note.range);
           }
           if (note.kind === "pitch" && drumMode) {
             this.warning("Pitch note used on a drum track. Drum tracks should only contain 'X' notes and rests.", note.range);

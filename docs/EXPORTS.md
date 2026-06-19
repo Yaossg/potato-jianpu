@@ -151,7 +151,7 @@ pnpm run cli -- export-midi input.jpu -o output.mid --program 0
 
 Options:
 
-- `--program <number>`: integer from `0` to `220`; used as the default Program
+- `--program <number>`: integer from `0` to `174`; used as the default Program
   for tracks without `Tn.program` headers.
 - `--omit-initial-rest`: remove leading rests before writing note events.
 

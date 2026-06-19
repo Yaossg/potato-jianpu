@@ -544,8 +544,8 @@ test("maps drum programs to percussion channel notes", () => {
 test("rejects out-of-range programs in player APIs", () => {
   const result = parse("X");
   assert.equal(result.ok, true);
-  assert.throws(() => compileMelody(result.value, 221), /Program must be an integer from 0 to 220/);
-  assert.throws(() => exportMidiBytes(result.value, -1), /Program must be an integer from 0 to 220/);
+  assert.throws(() => compileMelody(result.value, 175), /Program must be an integer from 0 to 174/);
+  assert.throws(() => exportMidiBytes(result.value, -1), /Program must be an integer from 0 to 174/);
 });
 
 test("exposes lightweight WAV synth constants", () => {
