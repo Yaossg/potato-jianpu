@@ -4,6 +4,7 @@ import {
   type Diagnostic,
   type Document,
   type DurationMark,
+  type Header,
   type Measure,
   type Note,
   type Pitch,
@@ -62,6 +63,7 @@ class Parser {
     this.labeledScoreMode = this.scoreHasTrackLabelsAhead();
     const score = this.at("eof") ? [] : this.parseScore();
     this.validateTrackLabelOrder(score);
+    this.validateNoteKinds(score, header);
     this.validateLyrics(score);
     this.normalizeFinalEnding(score);
     this.validateTies(score);
@@ -656,6 +658,32 @@ class Parser {
         return;
       }
       expected = this.nextTrackLabel(label);
+    }
+  }
+
+  private resolveTrackProgram(header: Header, label: string): number | undefined {
+    if (isPercussionTrackLabel(label)) {
+      return header.trackPrograms[label] ?? header.program ?? 128;
+    }
+    return header.trackPrograms[label] ?? header.program;
+  }
+
+  private validateNoteKinds(lines: ScoreLine[], header: Header) {
+    for (const line of lines) {
+      const label = line.label ?? "";
+      const program = this.resolveTrackProgram(header, label);
+      if (program === undefined) continue;
+      const drumMode = program >= 128;
+      for (const measure of line.measures) {
+        for (const note of measure.notes) {
+          if (note.kind === "drum" && !drumMode) {
+            this.warning("Drum note 'X' used on a melodic track. Set a drum Program (128-220) to enable drum mode.", note.range);
+          }
+          if (note.kind === "pitch" && drumMode) {
+            this.warning("Pitch note used on a drum track. Drum tracks should only contain 'X' notes and rests.", note.range);
+          }
+        }
+      }
     }
   }
 

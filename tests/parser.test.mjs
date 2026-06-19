@@ -789,3 +789,79 @@ test("rejects duplicate P-track program definition", () => {
   assert.equal(result.ok, false);
   assert.match(result.diagnostics.map((d) => d.message).join("\n"), /Duplicate track program definition for 'P1'/);
 });
+
+test("warns when drum note is used on a melodic track", () => {
+  const result = parse("T1.program: 0\n=\nT1: X 1");
+  assert.equal(result.ok, true);
+  const warnings = result.diagnostics.filter((d) => d.severity === "warning");
+  assert.ok(warnings.some((d) => d.message.includes("Drum note 'X' used on a melodic track")));
+
+  const scoreLevel = parse("program: 40\n=\nX 1");
+  assert.equal(scoreLevel.ok, true);
+  const scoreWarnings = scoreLevel.diagnostics.filter((d) => d.severity === "warning");
+  assert.ok(scoreWarnings.some((d) => d.message.includes("Drum note 'X' used on a melodic track")));
+});
+
+test("does not warn for drum notes when no program is set", () => {
+  const result = parse("X 1 0");
+  assert.equal(result.ok, true);
+  const warnings = result.diagnostics.filter((d) => d.severity === "warning");
+  assert.ok(!warnings.some((d) => d.message.includes("Drum note")));
+  assert.ok(!warnings.some((d) => d.message.includes("drum track")));
+});
+
+test("does not warn for drum notes on a drum-mode track", () => {
+  const drumProgram = parse("program: 128\n=\nX X");
+  assert.equal(drumProgram.ok, true);
+  const warnings = drumProgram.diagnostics.filter((d) => d.severity === "warning");
+  assert.ok(!warnings.some((d) => d.message.includes("Drum note 'X' used on a melodic track")));
+
+  const pTrack = parse("P1.program: 128\n=\nP1: X X");
+  assert.equal(pTrack.ok, true);
+  const pWarnings = pTrack.diagnostics.filter((d) => d.severity === "warning");
+  assert.ok(!pWarnings.some((d) => d.message.includes("Drum note 'X' used on a melodic track")));
+});
+
+test("warns when pitch note is used on a drum track", () => {
+  const drumProgram = parse("program: 128\n=\n1 2");
+  assert.equal(drumProgram.ok, true);
+  const warnings = drumProgram.diagnostics.filter((d) => d.severity === "warning");
+  assert.ok(warnings.some((d) => d.message.includes("Pitch note used on a drum track")));
+
+  const pTrack = parse("P1.program: 130\n=\nP1: 1 X");
+  assert.equal(pTrack.ok, true);
+  const pWarnings = pTrack.diagnostics.filter((d) => d.severity === "warning");
+  assert.ok(pWarnings.some((d) => d.message.includes("Pitch note used on a drum track")));
+});
+
+test("does not warn for pitch notes on a melodic track", () => {
+  const noProgram = parse("1 2 3");
+  assert.equal(noProgram.ok, true);
+  const noWarnings = noProgram.diagnostics.filter((d) => d.severity === "warning");
+  assert.ok(!noWarnings.some((d) => d.message.includes("Pitch note used on a drum track")));
+
+  const withProgram = parse("T1.program: 0\n=\nT1: 1 2 3");
+  assert.equal(withProgram.ok, true);
+  const withWarnings = withProgram.diagnostics.filter((d) => d.severity === "warning");
+  assert.ok(!withWarnings.some((d) => d.message.includes("Pitch note used on a drum track")));
+});
+
+test("rests never trigger note-kind warnings on any track", () => {
+  const melodic = parse("T1.program: 0\n=\nT1: 0 0");
+  assert.equal(melodic.ok, true);
+  const melodicWarnings = melodic.diagnostics.filter((d) => d.severity === "warning");
+  assert.ok(!melodicWarnings.some((d) => d.message.includes("rest")));
+
+  const drum = parse("program: 128\n=\n0 0 X");
+  assert.equal(drum.ok, true);
+  const drumWarnings = drum.diagnostics.filter((d) => d.severity === "warning");
+  assert.ok(!drumWarnings.some((d) => d.message.includes("rest")));
+});
+
+test("P track without explicit program warns on pitch notes (drum mode default)", () => {
+  const result = parse("P1: 1 X");
+  assert.equal(result.ok, true);
+  const warnings = result.diagnostics.filter((d) => d.severity === "warning");
+  assert.ok(warnings.some((d) => d.message.includes("Pitch note used on a drum track")));
+  assert.ok(!warnings.some((d) => d.message.includes("Drum note")));
+});
