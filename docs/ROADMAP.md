@@ -10,5 +10,3 @@ commitment.
 ## Future Features
 
 - Pagination and multi-page output.
-- Richer drum controls.
-- favicon/static asset polish.

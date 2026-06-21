@@ -1,0 +1,16 @@
+{
+  "name": "Modern Jianpu Markup Docs",
+  "short_name": "Jianpu Docs",
+  "description": "Documentation for writing, rendering, playing, and exporting Jianpu scores.",
+  "icons": [
+    {
+      "src": "/docs/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "theme_color": "#13251f",
+  "background_color": "#fff8e7",
+  "display": "standalone"
+}

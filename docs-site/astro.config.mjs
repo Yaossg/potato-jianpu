@@ -9,6 +9,11 @@ export default defineConfig({
     starlight({
       title: "Modern Jianpu Markup",
       description: "Documentation for writing, rendering, playing, and exporting Jianpu scores.",
+      favicon: "/favicon.svg",
+      head: [
+        { tag: "meta", attrs: { name: "theme-color", content: "#13251f" } },
+        { tag: "link", attrs: { rel: "manifest", href: "/docs/site.webmanifest" } },
+      ],
       defaultLocale: "root",
       expressiveCode: {
         shiki: {
