@@ -1,6 +1,6 @@
 ---
 title: 导出
-description: 将乐谱导出为 SVG、PNG、MIDI、WAV 和 MP3。
+description: 将乐谱导出为 SVG、PNG、PDF、MIDI、WAV 和 MP3。
 docId: guide-export
 sectionIds:
   - visual-exports
@@ -25,6 +25,7 @@ Modern Jianpu Markup 可以从浏览器 App 和 CLI 把同一个解析后的乐�
   features={[
     { id: 'svg-export', feature: 'SVG 导出', parser: true, render: true, playback: false, export: true, cli: true },
     { id: 'png-export', feature: 'PNG 导出', parser: true, render: true, playback: false, export: true, cli: true },
+    { id: 'pdf-export', feature: 'PDF 导出', parser: true, render: true, playback: false, export: true, cli: true },
     { id: 'midi-export', feature: 'MIDI 导出', parser: true, render: false, playback: true, export: true, cli: true },
     { id: 'wav-export', feature: 'WAV 导出', parser: true, render: false, playback: true, export: true, cli: true },
     { id: 'mp3-export', feature: 'MP3 导出', parser: true, render: false, playback: true, export: true, cli: true },
@@ -33,11 +34,12 @@ Modern Jianpu Markup 可以从浏览器 App 和 CLI 把同一个解析后的乐�
 
 ## 视觉导出
 
-SVG 是渲染器输出的确定性文本。PNG 会栅格化同一份渲染后的 SVG。两者都支持页面宽度、颜色和背景选项。
+SVG 是渲染器输出的确定性文本。PNG 会栅格化同一份渲染后的 SVG。PDF 会把渲染后的 SVG 页面转换为矢量 PDF 页面。所有视觉导出都支持页面宽度、颜色和背景选项。
 
 ```sh
 pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --page-width 1000 --color "#111827" --background "#ffffff"
 pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --page-width 1000 --color "#111827" --background "#ffffff"
+pnpm run cli -- export-pdf examples/twinkle.jpu -o twinkle.pdf --page-width 1000 --color "#111827" --background "#ffffff"
 ```
 
 ## MIDI 导出

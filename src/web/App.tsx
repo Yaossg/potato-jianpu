@@ -10,7 +10,7 @@ import {
   skipInitialArrangementRests,
   trimArrangementAtNote,
 } from "../index.js";
-import { inferContentPageWidth, renderSvg } from "../renderer/index.js";
+import { inferContentPageWidth, renderSvg, renderSvgPages } from "../renderer/index.js";
 import { exportBrowserMp3Bytes, exportBrowserWavBytes } from "./audio-export.js";
 import { PreviewAudioPlayer } from "./audio.js";
 import { waitForNextFrame } from "./browser-utils.js";
@@ -18,6 +18,7 @@ import { downloadBlob, downloadBytes, svgToPngBlob } from "./downloads.js";
 import { ExamplesPanel } from "./ExamplesPanel.js";
 import { exportFilename } from "./export-filename.js";
 import { isLanguage, pageWidthModeLabels, translate } from "./i18n.js";
+import { svgPagesToPdfBuffer } from "./pdf-export.js";
 import { PreviewPanel } from "./PreviewPanel.js";
 import { SettingsPanel } from "./SettingsPanel.js";
 import { SourceEditor } from "./SourceEditor.js";
@@ -215,6 +216,21 @@ export function App() {
         : null,
     [activeNoteIndices, justifyMode, pageBackground, pageHeight, pageWidth, paginate, parsed.ok, previewParsed, scoreColor],
   );
+  const svgPages = useMemo(
+    () =>
+      previewParsed?.ok
+        ? renderSvgPages(previewParsed.value, {
+            pageWidth,
+            paginate,
+            pageHeight,
+            justifyMode,
+            activeNoteIndices: parsed.ok ? activeNoteIndices : [],
+            color: scoreColor,
+            background: pageBackground,
+          })
+        : null,
+    [activeNoteIndices, justifyMode, pageBackground, pageHeight, pageWidth, paginate, parsed.ok, previewParsed, scoreColor],
+  );
   const previewPageCount = useMemo(() => (svg ? Math.max(1, svg.match(/<g class="page" /g)?.length ?? 1) : 0), [svg]);
 
   useEffect(() => {
@@ -367,6 +383,18 @@ export function App() {
       downloadBlob(await svgToPngBlob(svg), exportFilename(parsed.value.header.title, "png"));
     } catch (error) {
       window.alert(error instanceof Error ? error.message : "Failed to export PNG.");
+    }
+  }
+
+  async function exportPdf() {
+    if (!parsed.ok || !svgPages) {
+      return;
+    }
+    try {
+      const buffer = await svgPagesToPdfBuffer(svgPages);
+      downloadBytes(buffer, exportFilename(parsed.value.header.title, "pdf"), "application/pdf");
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "Failed to export PDF.");
     }
   }
 
@@ -578,6 +606,7 @@ export function App() {
           onStop={stop}
           onExportSvg={exportSvg}
           onExportPng={() => void exportPng()}
+          onExportPdf={() => void exportPdf()}
           onExportMidi={exportMidi}
           onExportWav={() => void exportWav()}
           onExportMp3={() => void exportMp3()}

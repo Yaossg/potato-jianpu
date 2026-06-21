@@ -22,6 +22,7 @@ interface ToolbarProps {
   onStop: () => void;
   onExportSvg: () => void;
   onExportPng: () => void;
+  onExportPdf: () => void;
   onExportMidi: () => void;
   onExportWav: () => void;
   onExportMp3: () => void;
@@ -45,6 +46,7 @@ export function Toolbar({
   onStop,
   onExportSvg,
   onExportPng,
+  onExportPdf,
   onExportMidi,
   onExportWav,
   onExportMp3,
@@ -83,6 +85,7 @@ export function Toolbar({
         t={t}
         onExportSvg={onExportSvg}
         onExportPng={onExportPng}
+        onExportPdf={onExportPdf}
         onExportMidi={onExportMidi}
         onExportWav={onExportWav}
         onExportMp3={onExportMp3}

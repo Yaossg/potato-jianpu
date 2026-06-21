@@ -7,13 +7,14 @@ const docsRoot = path.join(root, "docs-site", "src", "content", "docs");
 const commands = {
   parse: new Set(["--json"]),
   validate: new Set(["--json"]),
-  "export-svg": new Set(["-o", "--page-width", "--color", "--background"]),
-  "export-png": new Set(["-o", "--page-width", "--color", "--background"]),
+  "export-svg": new Set(["-o", "--page-width", "--paginate", "--page-height", "--color", "--background"]),
+  "export-png": new Set(["-o", "--page-width", "--paginate", "--page-height", "--color", "--background"]),
+  "export-pdf": new Set(["-o", "--page-width", "--paginate", "--page-height", "--color", "--background"]),
   "export-midi": new Set(["-o", "--program", "--omit-initial-rest"]),
   "export-wav": new Set(["-o", "--program", "--sample-rate", "--amplitude", "--omit-initial-rest"]),
   "export-mp3": new Set(["-o", "--program", "--sample-rate", "--amplitude", "--bit-rate", "--omit-initial-rest"]),
 };
-const valueFlags = new Set(["-o", "--page-width", "--color", "--background", "--program", "--sample-rate", "--amplitude", "--bit-rate"]);
+const valueFlags = new Set(["-o", "--page-width", "--page-height", "--color", "--background", "--program", "--sample-rate", "--amplitude", "--bit-rate"]);
 
 async function listMdxFiles(dir) {
   const entries = await readdir(dir, { withFileTypes: true });

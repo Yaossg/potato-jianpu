@@ -7,14 +7,16 @@ CLI and frontend application.
 
 The project has two product targets:
 
-- Backend CLI: supports validation, parsing, SVG, PNG, MIDI, WAV, and MP3 export.
+- Backend CLI: supports validation, parsing, SVG, PNG, PDF, MIDI, WAV, and MP3
+  export.
 - Frontend web app: supports editing, preview, playback, SVG export, PNG
-  export, MIDI export, WAV export, and MP3 export.
+  export, PDF export, MIDI export, WAV export, and MP3 export.
 
 The backend and frontend use different adapters for binary exports. Backend PNG
-uses `@resvg/resvg-js`, while frontend PNG uses SVG-to-canvas. Backend WAV/MP3
-use a Node offline Web Audio adapter, while frontend WAV/MP3 use browser
-`OfflineAudioContext` and local JavaScript MP3 encoding.
+uses `@resvg/resvg-js`, while frontend PNG uses SVG-to-canvas. Backend PDF uses
+PDFKit with SVG-to-PDFKit, while frontend PDF uses jsPDF with svg2pdf.js.
+Backend WAV/MP3 use a Node offline Web Audio adapter, while frontend WAV/MP3
+use browser `OfflineAudioContext` and local JavaScript MP3 encoding.
 
 ## CLI Commands
 
@@ -27,6 +29,7 @@ pnpm run cli -- validate examples/twinkle.jpu --json
 pnpm run cli -- parse examples/twinkle.jpu --json
 pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --page-width 1000 --paginate --page-height 1400 --color "#111827" --background "#ffffff"
 pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --page-width 1000 --paginate --page-height 1400 --color "#111827" --background "#ffffff"
+pnpm run cli -- export-pdf examples/twinkle.jpu -o twinkle.pdf --page-width 1000 --paginate --page-height 1400 --color "#111827" --background "#ffffff"
 pnpm run cli -- export-midi examples/twinkle.jpu -o twinkle.mid --program 0 --omit-initial-rest
 pnpm run cli -- export-wav examples/twinkle.jpu -o twinkle.wav --sample-rate 44100 --amplitude 1 --omit-initial-rest
 pnpm run cli -- export-mp3 examples/twinkle.jpu -o twinkle.mp3 --sample-rate 44100 --amplitude 1 --bit-rate 128 --omit-initial-rest
@@ -151,6 +154,32 @@ adapter: it turns the current SVG string into an SVG `Blob`, loads it into an
 `Image`, draws that image to a canvas, and downloads the canvas result as
 `jianpu-score.png`. It uses the same preview/export color, background, page
 width, pagination, and page height settings as SVG download.
+
+## PDF Export
+
+PDF export uses the shared renderer's SVG page output and writes vector PDF
+pages:
+
+```sh
+pnpm run cli -- export-pdf input.jpu -o output.pdf --page-width 1000 --paginate --page-height 1400
+```
+
+Options:
+
+- `--page-width <px>`: same behavior as SVG export.
+- `--paginate`: same behavior as SVG export.
+- `--page-height <px>`: same behavior and validation as SVG export.
+- `--color <css>`: same behavior as SVG export.
+- `--background <css>`: same behavior as SVG export.
+
+When pagination is enabled, each rendered SVG page becomes a separate PDF page
+with the configured width and height. Without pagination, the adaptive-height
+SVG render becomes one PDF page.
+
+The backend CLI converts rendered SVG pages through PDFKit and SVG-to-PDFKit.
+The frontend exposes PDF download through jsPDF and svg2pdf.js, using the same
+preview/export color, background, page width, pagination, page height, and
+justification settings as SVG and PNG download.
 
 ## MIDI Export
 

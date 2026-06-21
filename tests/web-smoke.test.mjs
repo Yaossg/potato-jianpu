@@ -49,6 +49,7 @@ test("frontend production build emits the expected app shell", async () => {
 
   assert.match(script, /Modern Jianpu Markup/);
   assert.match(script, /Export/);
+  assert.match(script, /PDF/);
   assert.doesNotMatch(script, /Export SVG/);
   assert.doesNotMatch(script, /Export PNG/);
   assert.doesNotMatch(script, /Export MIDI/);
@@ -56,6 +57,7 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(script, /header\.title/);
   assert.match(script, /replace\(\s*\/\[<>\:"/);
   assert.match(script, /image\/png/);
+  assert.match(script, /application\/pdf/);
   assert.match(script, /audio\/wav/);
   assert.match(script, /audio\/mpeg/);
   assert.match(script, /Rendering locally/);

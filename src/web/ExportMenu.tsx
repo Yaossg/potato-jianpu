@@ -9,6 +9,7 @@ interface ExportMenuProps {
   t: (key: TranslationKey) => string;
   onExportSvg: () => void;
   onExportPng: () => void;
+  onExportPdf: () => void;
   onExportMidi: () => void;
   onExportWav: () => void;
   onExportMp3: () => void;
@@ -22,6 +23,7 @@ export function ExportMenu({
   t,
   onExportSvg,
   onExportPng,
+  onExportPdf,
   onExportMidi,
   onExportWav,
   onExportMp3,
@@ -37,6 +39,9 @@ export function ExportMenu({
         </button>
         <button type="button" onClick={onExportPng} disabled={!canExportImage}>
           PNG
+        </button>
+        <button type="button" onClick={onExportPdf} disabled={!canExportImage}>
+          PDF
         </button>
         <button type="button" onClick={onExportMidi} disabled={!canExportScore}>
           MIDI

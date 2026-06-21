@@ -20,6 +20,7 @@ The renderer exports:
 
 ```ts
 renderSvg(document: Document, options?: RenderOptions): string
+renderSvgPages(document: Document, options?: RenderOptions): RenderedSvgPage[]
 ```
 
 `document` must already be parsed. The renderer does not parse source text.
@@ -59,8 +60,9 @@ interface RenderOptions {
   output there is one adaptive-height rectangle; in paginated output there is
   one fixed-height rectangle per page. Default: no SVG background rectangle.
 
-The return value is a complete SVG string with XML declaration, `<svg>`, inline
-`<style>`, header graphics, and score graphics.
+`renderSvg()` returns a complete SVG string with XML declaration, `<svg>`,
+inline `<style>`, header graphics, and score graphics. `renderSvgPages()`
+returns complete per-page SVG documents for target-specific PDF adapters.
 
 ## Backend And Frontend Use
 
@@ -68,11 +70,15 @@ The same SVG renderer is used by:
 
 - backend `export-svg`
 - backend `export-png`
+- backend `export-pdf`
 - frontend preview
 - frontend SVG download
+- frontend PDF download
 
-PNG export is not part of the renderer itself. PNG export calls `renderSvg()`
-and passes the string to the backend PNG adapter in `src/backend/png.ts`.
+PNG and PDF export are not part of the renderer itself. PNG export calls
+`renderSvg()` and passes the string to the backend PNG adapter in
+`src/backend/png.ts`. PDF export calls `renderSvgPages()` and passes the pages
+to target-specific vector PDF adapters.
 
 ## Layout Pipeline
 
@@ -186,6 +192,7 @@ The CLI exposes this through:
 ```sh
 pnpm run cli -- export-svg input.jpu -o output.svg --page-width 800
 pnpm run cli -- export-png input.jpu -o output.png --page-width 800
+pnpm run cli -- export-pdf input.jpu -o output.pdf --page-width 800
 ```
 
 The frontend exposes this through the Settings panel. Panel width mode measures
@@ -235,6 +242,7 @@ The CLI exposes pagination through:
 ```sh
 pnpm run cli -- export-svg input.jpu -o output.svg --paginate --page-height 1400
 pnpm run cli -- export-png input.jpu -o output.png --paginate --page-height 1400
+pnpm run cli -- export-pdf input.jpu -o output.pdf --paginate --page-height 1400
 ```
 
 ## Header Rendering

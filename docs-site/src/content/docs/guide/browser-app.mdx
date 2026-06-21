@@ -37,7 +37,7 @@ The examples panel loads bundled `.jpu` scores into the editor. If the editor al
 
 ## Export
 
-The export menu downloads the current valid score as SVG, PNG, MIDI, WAV, or MP3. SVG and PNG use the current page settings: width, color, background, and justification. MIDI uses the selected default Program, any score-level `program`/`volume` defaults, any per-track `Tn.program`/`Tn.volume` overrides, and the initial-rest setting. WAV and MP3 are rendered locally in the browser with the same Program resolution, master volume, resolved track volumes, sample rate, and initial-rest setting.
+The export menu downloads the current valid score as SVG, PNG, PDF, MIDI, WAV, or MP3. SVG, PNG, and PDF use the current page settings: width, color, background, and justification. MIDI uses the selected default Program, any score-level `program`/`volume` defaults, any per-track `Tn.program`/`Tn.volume` overrides, and the initial-rest setting. WAV and MP3 are rendered locally in the browser with the same Program resolution, master volume, resolved track volumes, sample rate, and initial-rest setting.
 
 Audio export can take longer than image or MIDI export because the browser renders the full arrangement before downloading. While WAV or MP3 is rendering, the export menu reports the event count and approximate duration.
 
@@ -46,7 +46,7 @@ Audio export can take longer than image or MIDI export because the browser rende
 Page settings control visual output:
 
 - Width mode: match the preview panel, infer width from score content, or use a manual pixel width.
-- Color and page: set notation color and SVG/PNG background.
+- Color and page: set notation color and SVG/PNG/PDF background.
 - Justify: leave natural spacing, justify all but the last line, or justify every line.
 
 Editor settings control source editing preferences:
@@ -74,7 +74,7 @@ The help button opens the localized documentation home: `/docs/` in English and 
 <RelatedLinks
   links={[
     { href: '../playback/', label: 'Playback', description: 'Understand audition, note highlighting, programs, drums, and repeats.' },
-    { href: '../export/', label: 'Export', description: 'Compare SVG, PNG, MIDI, WAV, and MP3 behavior.' },
+    { href: '../export/', label: 'Export', description: 'Compare SVG, PNG, PDF, MIDI, WAV, and MP3 behavior.' },
     { href: '../../syntax/overview/', label: 'Syntax Overview', description: 'Start from document structure and follow syntax topics from there.' },
   ]}
 />

@@ -9,11 +9,12 @@ The repository builds two targets from shared TypeScript source:
 - Backend CLI
 - Frontend web app
 
-The backend CLI provides parse, validate, SVG, PNG, MIDI, WAV, and MP3 export.
+The backend CLI provides parse, validate, SVG, PNG, PDF, MIDI, WAV, and MP3
+export.
 
 The frontend web app provides editing, SVG preview, playback, note highlighting,
-SVG download, PNG download, MIDI download, WAV download, MP3 download, examples,
-and diagnostics.
+SVG download, PNG download, PDF download, MIDI download, WAV download, MP3
+download, examples, and diagnostics.
 
 ## Data Flow
 
@@ -26,7 +27,7 @@ parser/tokenizer
   v
 core Document
   |
-  +--> renderer -> SVG string -> PNG adapters
+  +--> renderer -> SVG string/pages -> PNG/PDF adapters
   |
   +--> arrangement compiler -> browser playback / browser audio export
   |
@@ -49,7 +50,8 @@ export * from "./player/index.js";
 export * from "./renderer/index.js";
 ```
 
-Backend-only exports such as WAV and MP3 are exported from `src/backend`.
+Backend-only exports such as PNG, PDF, WAV, and MP3 are exported from
+`src/backend`.
 
 ## Core
 
@@ -120,16 +122,17 @@ Responsibilities:
 - accept parsed `Document`
 - measure notes and measures
 - wrap measures according to `pageWidth`
-- render header and score as a deterministic SVG string
+- render header and score as deterministic SVG output
 - attach note metadata for frontend interaction
 - apply active-note highlighting
 - support export color/background options
 
 The renderer does not parse source text and does not use browser-only APIs.
 
-PNG export is not part of the renderer. Backend PNG export uses a Node-capable
-adapter that consumes the SVG string. Frontend PNG export uses a browser adapter
-that loads the SVG string into an image and draws it to canvas.
+PNG and PDF export are not part of the renderer. Backend PNG export uses a
+Node-capable adapter that consumes the SVG string. Frontend PNG export uses a
+browser adapter that loads the SVG string into an image and draws it to canvas.
+PDF export uses rendered SVG pages through target-specific vector PDF adapters.
 
 ## Player
 
@@ -167,6 +170,7 @@ src/backend/
 Responsibilities:
 
 - PNG export from SVG using `@resvg/resvg-js`
+- PDF export from rendered SVG pages using PDFKit and SVG-to-PDFKit
 - WAV and MP3 export from parsed document using the shared melody compiler
 
 Backend modules may use Node-capable dependencies and binary export formats.
@@ -194,6 +198,7 @@ Implemented commands:
 - `parse`
 - `export-svg`
 - `export-png`
+- `export-pdf`
 - `export-midi`
 - `export-wav`
 - `export-mp3`
@@ -226,15 +231,16 @@ Responsibilities:
 - click-to-play-from-note
 - SVG download
 - PNG download
+- PDF download
 - MIDI download
 - WAV download
 - MP3 download
 - preview/export page width and theme controls
 
 The frontend imports shared parser, renderer, and player code. It does not
-import backend PNG, WAV, or MP3 modules. Browser PNG and audio export adapters
-stay in `src/web` and use DOM canvas APIs, `OfflineAudioContext`, and browser
-bundled encoders.
+import backend PNG, PDF, WAV, or MP3 modules. Browser PNG, PDF, and audio
+export adapters stay in `src/web` and use DOM canvas APIs, browser PDF
+generation, `OfflineAudioContext`, and browser bundled encoders.
 
 ## Tests
 

@@ -67,8 +67,10 @@
   },
   "devDependencies": {
     "@types/node": "^22.15.0",
+    "@types/pdfkit": "^0.17.6",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "@types/svg-to-pdfkit": "^0.1.4",
     "@vitejs/plugin-react": "^6.0.1",
     "ebnf2railroad": "^1.14.2",
     "typescript": "^5.8.3",
@@ -77,8 +79,12 @@
   "dependencies": {
     "@descript/web-audio-js": "0.15.3-patched.6",
     "@resvg/resvg-js": "^2.6.2",
+    "jspdf": "^4.2.1",
     "lamejs": "^1.2.1",
+    "pdfkit": "^0.19.1",
     "react": "^19.2.5",
-    "react-dom": "^19.2.5"
+    "react-dom": "^19.2.5",
+    "svg-to-pdfkit": "^0.1.8",
+    "svg2pdf.js": "^2.7.0"
   }
 }

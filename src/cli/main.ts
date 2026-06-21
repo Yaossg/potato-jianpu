@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 import { readFile, writeFile } from "node:fs/promises";
-import { exportMp3Bytes, exportWavBytes, renderPngBytes } from "../backend/index.js";
+import { exportMp3Bytes, exportWavBytes, renderPdfBytes, renderPngBytes } from "../backend/index.js";
 import { parse } from "../parser/index.js";
 import { exportMidiBytes } from "../player/index.js";
-import { renderSvg } from "../renderer/index.js";
+import { renderSvg, renderSvgPages } from "../renderer/index.js";
 
 function usage(): string {
   return [
@@ -12,11 +12,12 @@ function usage(): string {
     "  jianpu parse <file> [--json]",
     "  jianpu export-svg <file> -o <output.svg> [--page-width <px>] [--paginate] [--page-height <px>] [--color <css>] [--background <css>]",
     "  jianpu export-png <file> -o <output.png> [--page-width <px>] [--paginate] [--page-height <px>] [--color <css>] [--background <css>]",
+    "  jianpu export-pdf <file> -o <output.pdf> [--page-width <px>] [--paginate] [--page-height <px>] [--color <css>] [--background <css>]",
     "  jianpu export-midi <file> -o <output.mid> [--program <number>] [--omit-initial-rest]",
     "  jianpu export-wav <file> -o <output.wav> [--program <number>] [--sample-rate <hz>] [--amplitude <0-1>] [--omit-initial-rest]",
     "  jianpu export-mp3 <file> -o <output.mp3> [--program <number>] [--sample-rate <hz>] [--amplitude <0-1>] [--bit-rate <kbps>] [--omit-initial-rest]",
     "",
-    "Implemented commands: parse, validate, export-svg, export-png, export-midi, export-wav, and export-mp3.",
+    "Implemented commands: parse, validate, export-svg, export-png, export-pdf, export-midi, export-wav, and export-mp3.",
   ].join("\n");
 }
 
@@ -54,6 +55,7 @@ function commandFlags(command: string): Set<string> {
       return new Set(["--json"]);
     case "export-svg":
     case "export-png":
+    case "export-pdf":
       return new Set(["-o", "--page-width", "--paginate", "--page-height", "--color", "--background"]);
     case "export-midi":
       return new Set(["-o", "--program", "--omit-initial-rest"]);
@@ -114,7 +116,7 @@ async function main(argv: string[]): Promise<number> {
     console.log(usage());
     return 0;
   }
-  if (!file || !["validate", "parse", "export-svg", "export-png", "export-midi", "export-wav", "export-mp3"].includes(command)) {
+  if (!file || !["validate", "parse", "export-svg", "export-png", "export-pdf", "export-midi", "export-wav", "export-mp3"].includes(command)) {
     console.error(usage());
     return 2;
   }
@@ -225,6 +227,33 @@ async function main(argv: string[]): Promise<number> {
       background,
     });
     await writeFile(output, renderPngBytes(svg, { background }));
+    console.log(output);
+  }
+
+  if (command === "export-pdf") {
+    const output = readFlag(flags, "-o");
+    if (!output) {
+      console.error("error: export-pdf requires -o <output.pdf>");
+      return 2;
+    }
+    const pageWidth = readPositiveNumberFlag(flags, "--page-width");
+    if (Number.isNaN(pageWidth)) {
+      console.error("error: --page-width must be a positive number");
+      return 2;
+    }
+    const pageHeight = readPositiveNumberFlag(flags, "--page-height");
+    if (Number.isNaN(pageHeight)) {
+      console.error("error: --page-height must be a positive number");
+      return 2;
+    }
+    const pages = renderSvgPages(result.value, {
+      pageWidth,
+      paginate: flags.includes("--paginate"),
+      pageHeight,
+      color: readFlag(flags, "--color"),
+      background: readFlag(flags, "--background"),
+    });
+    await writeFile(output, await renderPdfBytes(pages, { title: result.value.header.title || undefined }));
     console.log(output);
   }
 

@@ -1,6 +1,6 @@
 ---
 title: Export
-description: Export scores as SVG, PNG, MIDI, WAV, and MP3.
+description: Export scores as SVG, PNG, PDF, MIDI, WAV, and MP3.
 docId: guide-export
 sectionIds:
   - visual-exports
@@ -18,6 +18,7 @@ Modern Jianpu Markup can export the same parsed score to visual, MIDI, and audio
   features={[
     { id: 'svg-export', feature: 'SVG export', parser: true, render: true, playback: false, export: true, cli: true },
     { id: 'png-export', feature: 'PNG export', parser: true, render: true, playback: false, export: true, cli: true },
+    { id: 'pdf-export', feature: 'PDF export', parser: true, render: true, playback: false, export: true, cli: true },
     { id: 'midi-export', feature: 'MIDI export', parser: true, render: false, playback: true, export: true, cli: true },
     { id: 'wav-export', feature: 'WAV export', parser: true, render: false, playback: true, export: true, cli: true },
     { id: 'mp3-export', feature: 'MP3 export', parser: true, render: false, playback: true, export: true, cli: true },
@@ -26,11 +27,12 @@ Modern Jianpu Markup can export the same parsed score to visual, MIDI, and audio
 
 ## Visual exports
 
-SVG is deterministic text output from the renderer. PNG rasterizes the same rendered SVG. Both support page width, color, and background options.
+SVG is deterministic text output from the renderer. PNG rasterizes the same rendered SVG. PDF converts rendered SVG pages to vector PDF pages. All visual exports support page width, color, and background options.
 
 ```sh
 pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --page-width 1000 --color "#111827" --background "#ffffff"
 pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --page-width 1000 --color "#111827" --background "#ffffff"
+pnpm run cli -- export-pdf examples/twinkle.jpu -o twinkle.pdf --page-width 1000 --color "#111827" --background "#ffffff"
 ```
 
 ## MIDI export
