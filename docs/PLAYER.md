@@ -319,6 +319,9 @@ score or exported SVG.
 The Audition button plays a short built-in phrase with the current Program and
 volume. Melodic programs play a scale; drum programs play repeated `X` notes.
 
+The frontend Settings panel also has an Export Settings section. Its audio
+sample rate control applies only to browser WAV and MP3 downloads.
+
 The frontend passes active note indexes back into `renderSvg()` so the SVG can
 highlight simultaneous notes across arrangement tracks.
 

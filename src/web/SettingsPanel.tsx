@@ -251,6 +251,19 @@ export function SettingsPanel({
               <input type="range" min={0} max={200} step={1} value={volume} onChange={(event) => onVolumeChange(Number(event.target.value))} />
               <span>{Math.round(volume)}%</span>
             </label>
+            <label className="checkbox-control">
+              <input type="checkbox" checked={omitInitialRests} onChange={(event) => onOmitInitialRestsChange(event.target.checked)} />
+              {t("omitInitialRests")}
+            </label>
+            <button type="button" onClick={onAuditionProgram}>
+              {t("audition")}
+            </button>
+          </div>
+        </section>
+
+        <section className="settings-section">
+          <h3>{t("exportSettings")}</h3>
+          <div className="settings-grid">
             <label className="number-control">
               {t("audioSampleRate")}
               <input
@@ -267,13 +280,6 @@ export function SettingsPanel({
                 }}
               />
             </label>
-            <label className="checkbox-control">
-              <input type="checkbox" checked={omitInitialRests} onChange={(event) => onOmitInitialRestsChange(event.target.checked)} />
-              {t("omitInitialRests")}
-            </label>
-            <button type="button" onClick={onAuditionProgram}>
-              {t("audition")}
-            </button>
           </div>
         </section>
       </div>

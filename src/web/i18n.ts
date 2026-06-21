@@ -28,6 +28,7 @@ export type TranslationKey =
   | "overwriteScoreMessage"
   | "overwriteScoreConfirm"
   | "pageSettings"
+  | "exportSettings"
   | "widthMode"
   | "panel"
   | "content"
@@ -97,6 +98,7 @@ const translations: { en: Record<TranslationKey, string>; zh: Partial<Record<Tra
     overwriteScoreMessage: "Loading an example will replace the score currently in the editor.",
     overwriteScoreConfirm: "Replace score",
     pageSettings: "Page Settings",
+    exportSettings: "Export Settings",
     widthMode: "Width mode",
     panel: "Panel",
     content: "Content",
@@ -165,6 +167,7 @@ const translations: { en: Record<TranslationKey, string>; zh: Partial<Record<Tra
     overwriteScoreMessage: "加载示例会替换编辑器中当前的乐谱。",
     overwriteScoreConfirm: "覆盖乐谱",
     pageSettings: "页面设置",
+    exportSettings: "导出设置",
     widthMode: "宽度模式",
     panel: "面板",
     content: "内容",
