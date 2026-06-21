@@ -385,12 +385,8 @@ button:disabled {
   align-items: center;
 }
 
-.settings-grid .select-control {
-  grid-column: span 2;
-}
-
 .settings-grid .select-control select {
-  width: min(420px, 100%);
+  width: min(280px, 100%);
 }
 
 .settings-grid button {
@@ -499,6 +495,11 @@ button:disabled {
   grid-template-columns: minmax(44px, max-content) minmax(0, 1fr);
   min-height: 520px;
   background: var(--panel-bg);
+  --editor-font-size: 14px;
+}
+
+.editor-hide-line-numbers {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .editor-line-numbers,
@@ -506,6 +507,7 @@ button:disabled {
 .editor-highlights,
 textarea {
   font-family: "Cascadia Code", "Fira Code", Consolas, monospace;
+  font-size: var(--editor-font-size);
   font-variant-ligatures: none;
   font-feature-settings:
     "liga" 0,
@@ -616,6 +618,10 @@ textarea {
 
 .editor-current-line .current {
   background: rgba(96, 165, 250, 0.12);
+}
+
+.editor-hide-current-line .editor-current-line .current {
+  background: transparent;
 }
 
 .editor-highlights {
@@ -749,10 +755,6 @@ textarea {
 
   .workspace-resizer {
     display: none;
-  }
-
-  .settings-grid .select-control {
-    grid-column: auto;
   }
 
   .editor-field,

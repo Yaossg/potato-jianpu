@@ -1,5 +1,5 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
-import type { UIEvent } from "react";
+import type { CSSProperties, UIEvent } from "react";
 import type { Diagnostic } from "../core/model.js";
 import { diagnosticHighlightParts, sourceLineAtOffset, sourceLineNumbers, sourceLines } from "./diagnostics.js";
 import type { TranslationKey } from "./i18n.js";
@@ -10,6 +10,10 @@ interface SourceEditorProps {
   ok: boolean;
   summary: string;
   sourceWrap: boolean;
+  editorFontSize: number;
+  showLineNumbers: boolean;
+  highlightCurrentLine: boolean;
+  highlightDiagnostics: boolean;
   t: (key: TranslationKey) => string;
   onSourceChange: (source: string) => void;
   onClearRequest: () => void;
@@ -57,6 +61,10 @@ export function SourceEditor({
   ok,
   summary,
   sourceWrap,
+  editorFontSize,
+  showLineNumbers,
+  highlightCurrentLine,
+  highlightDiagnostics,
   t,
   onSourceChange,
   onClearRequest,
@@ -69,7 +77,7 @@ export function SourceEditor({
   const editorHighlightRef = useRef<HTMLPreElement | null>(null);
   const editorLineNumbersRef = useRef<HTMLDivElement | null>(null);
   const [lineHeights, setLineHeights] = useState<number[]>([]);
-  const diagnosticHighlights = useMemo(() => diagnosticHighlightParts(source, diagnostics), [diagnostics, source]);
+  const diagnosticHighlights = useMemo(() => diagnosticHighlightParts(source, highlightDiagnostics ? diagnostics : []), [diagnostics, highlightDiagnostics, source]);
   const editorLines = useMemo(() => sourceLines(source), [source]);
   const lineNumbers = useMemo(() => sourceLineNumbers(source), [source]);
   const diagnosticsByLine = useMemo(() => lineDiagnosticSummaries(diagnostics), [diagnostics]);
@@ -88,7 +96,7 @@ export function SourceEditor({
     const observer = new ResizeObserver(updateLineHeights);
     observer.observe(layer);
     return () => observer.disconnect();
-  }, [editorLines, sourceWrap]);
+  }, [editorLines, sourceWrap, editorFontSize, showLineNumbers]);
 
   function updateSource(nextSource: string, selectionStart: number) {
     setCurrentEditorLine(sourceLineAtOffset(nextSource, selectionStart));
@@ -146,30 +154,35 @@ export function SourceEditor({
           </button>
         </div>
       </div>
-      <div className={`editor-field ${sourceWrap ? "editor-wrap" : "editor-nowrap"}`}>
-        <div className="editor-line-numbers" ref={editorLineNumbersRef}>
-          {lineNumbers.map((lineNumber, index) => {
-            const lineDiagnostic = diagnosticsByLine.get(lineNumber);
-            return (
-              <span key={lineNumber} className={`editor-line-number-row${lineNumber === currentEditorLine ? " current" : ""}`} style={lineHeights[index] ? { height: lineHeights[index] } : undefined}>
-                {lineDiagnostic ? (
-                  <button
-                    type="button"
-                    className={`editor-gutter-diagnostic ${lineDiagnostic.severity}`}
-                    title={lineDiagnostic.tooltip}
-                    aria-label={`Line ${lineNumber}: ${lineDiagnostic.tooltip}`}
-                    onClick={() => selectDiagnosticRange(lineDiagnostic.diagnostic)}
-                  />
-                ) : (
-                  <span className="editor-gutter-spacer" aria-hidden="true" />
-                )}
-                <span className="editor-line-number-text" aria-hidden="true">
-                  {lineNumber}
+      <div
+        className={`editor-field ${sourceWrap ? "editor-wrap" : "editor-nowrap"}${showLineNumbers ? "" : " editor-hide-line-numbers"}${highlightCurrentLine ? "" : " editor-hide-current-line"}`}
+        style={{ "--editor-font-size": `${editorFontSize}px` } as CSSProperties}
+      >
+        {showLineNumbers && (
+          <div className="editor-line-numbers" ref={editorLineNumbersRef}>
+            {lineNumbers.map((lineNumber, index) => {
+              const lineDiagnostic = diagnosticsByLine.get(lineNumber);
+              return (
+                <span key={lineNumber} className={`editor-line-number-row${lineNumber === currentEditorLine ? " current" : ""}`} style={lineHeights[index] ? { height: lineHeights[index] } : undefined}>
+                  {lineDiagnostic ? (
+                    <button
+                      type="button"
+                      className={`editor-gutter-diagnostic ${lineDiagnostic.severity}`}
+                      title={lineDiagnostic.tooltip}
+                      aria-label={`Line ${lineNumber}: ${lineDiagnostic.tooltip}`}
+                      onClick={() => selectDiagnosticRange(lineDiagnostic.diagnostic)}
+                    />
+                  ) : (
+                    <span className="editor-gutter-spacer" aria-hidden="true" />
+                  )}
+                  <span className="editor-line-number-text" aria-hidden="true">
+                    {lineNumber}
+                  </span>
                 </span>
-              </span>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
         <div className="editor-source-layer">
           <pre className="editor-current-line" ref={editorCurrentLineRef} aria-hidden="true">
             {editorLines.map((line, index) => (

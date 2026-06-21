@@ -49,6 +49,10 @@ export type TranslationKey =
   | "audioSampleRate"
   | "omitInitialRests"
   | "sourceWrap"
+  | "editorFontSize"
+  | "showLineNumbers"
+  | "highlightCurrentLine"
+  | "highlightDiagnostics"
   | "audition"
   | "source"
   | "sourcePlaceholder"
@@ -113,7 +117,11 @@ const translations: { en: Record<TranslationKey, string>; zh: Partial<Record<Tra
     volume: "Volume",
     audioSampleRate: "Audio sample rate",
     omitInitialRests: "Omit initial rests",
-    sourceWrap: "Source editor word wrap",
+    sourceWrap: "Wrap source lines",
+    editorFontSize: "Editor font size",
+    showLineNumbers: "Show line numbers",
+    highlightCurrentLine: "Highlight current line",
+    highlightDiagnostics: "Highlight diagnostics",
     audition: "Audition",
     source: "Source",
     sourcePlaceholder: "Enter your Jianpu here...",
@@ -177,6 +185,10 @@ const translations: { en: Record<TranslationKey, string>; zh: Partial<Record<Tra
     audioSampleRate: "音频采样率",
     omitInitialRests: "忽略开头休止符",
     sourceWrap: "源码自动换行",
+    editorFontSize: "编辑器字号",
+    showLineNumbers: "显示行号",
+    highlightCurrentLine: "高亮当前行",
+    highlightDiagnostics: "高亮诊断",
     audition: "试听",
     source: "源码",
     sourcePlaceholder: "在这里输入简谱...",

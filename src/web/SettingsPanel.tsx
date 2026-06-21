@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { DRUM_PROGRAMS, GM_PROGRAMS } from "../index.js";
 import type { JustifyMode, PageWidthMode, TranslationKey } from "./i18n.js";
 
@@ -18,6 +19,12 @@ interface SettingsPanelProps {
   audioSampleRate: number;
   omitInitialRests: boolean;
   sourceWrap: boolean;
+  editorFontSize: number;
+  minEditorFontSize: number;
+  maxEditorFontSize: number;
+  showLineNumbers: boolean;
+  highlightCurrentLine: boolean;
+  highlightDiagnostics: boolean;
   onClose: () => void;
   onPageWidthModeChange: (mode: PageWidthMode) => void;
   onManualPageWidthChange: (width: number) => void;
@@ -29,6 +36,10 @@ interface SettingsPanelProps {
   onAudioSampleRateChange: (sampleRate: number) => void;
   onOmitInitialRestsChange: (omit: boolean) => void;
   onSourceWrapChange: (wrap: boolean) => void;
+  onEditorFontSizeChange: (fontSize: number) => void;
+  onShowLineNumbersChange: (show: boolean) => void;
+  onHighlightCurrentLineChange: (highlight: boolean) => void;
+  onHighlightDiagnosticsChange: (highlight: boolean) => void;
   onAuditionProgram: () => void;
 }
 
@@ -38,6 +49,10 @@ function toPageWidthMode(value: string): PageWidthMode {
 
 function toJustifyMode(value: string): JustifyMode {
   return value === "except-last" || value === "all" ? value : "none";
+}
+
+function clampRounded(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, Math.round(value)));
 }
 
 export function SettingsPanel({
@@ -57,6 +72,12 @@ export function SettingsPanel({
   audioSampleRate,
   omitInitialRests,
   sourceWrap,
+  editorFontSize,
+  minEditorFontSize,
+  maxEditorFontSize,
+  showLineNumbers,
+  highlightCurrentLine,
+  highlightDiagnostics,
   onClose,
   onPageWidthModeChange,
   onManualPageWidthChange,
@@ -68,9 +89,29 @@ export function SettingsPanel({
   onAudioSampleRateChange,
   onOmitInitialRestsChange,
   onSourceWrapChange,
+  onEditorFontSizeChange,
+  onShowLineNumbersChange,
+  onHighlightCurrentLineChange,
+  onHighlightDiagnosticsChange,
   onAuditionProgram,
 }: SettingsPanelProps) {
   const displayedPageWidth = pageWidthMode === "panel" ? panelPageWidth : pageWidthMode === "content" ? contentPageWidth : manualPageWidth;
+  const [editorFontSizeDraft, setEditorFontSizeDraft] = useState(() => String(editorFontSize));
+
+  useEffect(() => {
+    setEditorFontSizeDraft(String(editorFontSize));
+  }, [editorFontSize]);
+
+  function commitEditorFontSizeDraft() {
+    const value = Number(editorFontSizeDraft);
+    if (!Number.isFinite(value)) {
+      setEditorFontSizeDraft(String(editorFontSize));
+      return;
+    }
+    const nextFontSize = clampRounded(value, minEditorFontSize, maxEditorFontSize);
+    setEditorFontSizeDraft(String(nextFontSize));
+    onEditorFontSizeChange(nextFontSize);
+  }
 
   return (
     <section className="settings-panel">
@@ -134,6 +175,42 @@ export function SettingsPanel({
             <label className="checkbox-control">
               <input type="checkbox" checked={sourceWrap} onChange={(event) => onSourceWrapChange(event.target.checked)} />
               {t("sourceWrap")}
+            </label>
+            <label className="number-control">
+              {t("editorFontSize")}
+              <input
+                type="number"
+                min={minEditorFontSize}
+                max={maxEditorFontSize}
+                step={1}
+                value={editorFontSizeDraft}
+                onChange={(event) => {
+                  const draft = event.target.value;
+                  setEditorFontSizeDraft(draft);
+                  const value = Number(draft);
+                  if (Number.isFinite(value) && value >= minEditorFontSize && value <= maxEditorFontSize) {
+                    onEditorFontSizeChange(Math.round(value));
+                  }
+                }}
+                onBlur={commitEditorFontSizeDraft}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.currentTarget.blur();
+                  }
+                }}
+              />
+            </label>
+            <label className="checkbox-control">
+              <input type="checkbox" checked={showLineNumbers} onChange={(event) => onShowLineNumbersChange(event.target.checked)} />
+              {t("showLineNumbers")}
+            </label>
+            <label className="checkbox-control">
+              <input type="checkbox" checked={highlightCurrentLine} onChange={(event) => onHighlightCurrentLineChange(event.target.checked)} />
+              {t("highlightCurrentLine")}
+            </label>
+            <label className="checkbox-control">
+              <input type="checkbox" checked={highlightDiagnostics} onChange={(event) => onHighlightDiagnosticsChange(event.target.checked)} />
+              {t("highlightDiagnostics")}
             </label>
           </div>
         </section>

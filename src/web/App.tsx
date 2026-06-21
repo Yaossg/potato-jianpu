@@ -31,12 +31,20 @@ const DRUM_AUDITION_SOURCE = "X X X X";
 const LANGUAGE_STORAGE_KEY = "modern-jianpu-markup-language";
 const SOURCE_STORAGE_KEY = "modern-jianpu-markup-source";
 const SOURCE_WRAP_STORAGE_KEY = "modern-jianpu-markup-source-wrap";
+const EDITOR_FONT_SIZE_STORAGE_KEY = "modern-jianpu-markup-editor-font-size";
+const SHOW_LINE_NUMBERS_STORAGE_KEY = "modern-jianpu-markup-show-line-numbers";
+const HIGHLIGHT_CURRENT_LINE_STORAGE_KEY = "modern-jianpu-markup-highlight-current-line";
+const HIGHLIGHT_DIAGNOSTICS_STORAGE_KEY = "modern-jianpu-markup-highlight-diagnostics";
+const EDITOR_PANE_PERCENT_STORAGE_KEY = "modern-jianpu-markup-editor-pane-percent";
 const DEFAULT_PAGE_WIDTH = 1000;
 const MIN_PAGE_WIDTH = 240;
 const MAX_PAGE_WIDTH = 2000;
 const PREVIEW_HORIZONTAL_PADDING = 32;
 const MIN_WORKSPACE_PANE_WIDTH = 280;
 const DEFAULT_EDITOR_PANE_PERCENT = 45;
+const DEFAULT_EDITOR_FONT_SIZE = 14;
+const MIN_EDITOR_FONT_SIZE = 11;
+const MAX_EDITOR_FONT_SIZE = 22;
 
 function storedLanguage(): Language | null {
   try {
@@ -67,6 +75,24 @@ function storedSourceWrap(): boolean {
   }
 }
 
+function storedBoolean(key: string, fallback: boolean): boolean {
+  try {
+    const value = window.localStorage.getItem(key);
+    return value === null ? fallback : value !== "false";
+  } catch {
+    return fallback;
+  }
+}
+
+function storedNumber(key: string, fallback: number, min: number, max: number): number {
+  try {
+    const value = Number(window.localStorage.getItem(key));
+    return Number.isFinite(value) ? Math.min(max, Math.max(min, Math.round(value))) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 function initialLanguage(): Language {
   if (typeof window === "undefined") {
     return "en";
@@ -86,6 +112,20 @@ function initialSourceWrap(): boolean {
     return true;
   }
   return storedSourceWrap();
+}
+
+function initialEditorFontSize(): number {
+  if (typeof window === "undefined") {
+    return DEFAULT_EDITOR_FONT_SIZE;
+  }
+  return storedNumber(EDITOR_FONT_SIZE_STORAGE_KEY, DEFAULT_EDITOR_FONT_SIZE, MIN_EDITOR_FONT_SIZE, MAX_EDITOR_FONT_SIZE);
+}
+
+function initialEditorPanePercent(): number {
+  if (typeof window === "undefined") {
+    return DEFAULT_EDITOR_PANE_PERCENT;
+  }
+  return storedNumber(EDITOR_PANE_PERCENT_STORAGE_KEY, DEFAULT_EDITOR_PANE_PERCENT, 1, 99);
 }
 
 function diagnosticSummary(language: Language, ok: boolean, diagnostics: Array<{ severity: "error" | "warning" }>): string {
@@ -113,6 +153,10 @@ function audioExportSummary(language: Language, noteCount: number, seconds: numb
 export function App() {
   const [source, setSource] = useState(() => initialSource());
   const [sourceWrap, setSourceWrap] = useState(() => initialSourceWrap());
+  const [editorFontSize, setEditorFontSize] = useState(() => initialEditorFontSize());
+  const [showLineNumbers, setShowLineNumbers] = useState(() => storedBoolean(SHOW_LINE_NUMBERS_STORAGE_KEY, true));
+  const [highlightCurrentLine, setHighlightCurrentLine] = useState(() => storedBoolean(HIGHLIGHT_CURRENT_LINE_STORAGE_KEY, true));
+  const [highlightDiagnostics, setHighlightDiagnostics] = useState(() => storedBoolean(HIGHLIGHT_DIAGNOSTICS_STORAGE_KEY, true));
   const [language, setLanguage] = useState<Language>(() => initialLanguage());
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeNoteIndices, setActiveNoteIndices] = useState<number[]>([]);
@@ -133,7 +177,7 @@ export function App() {
   const [showExamples, setShowExamples] = useState(false);
   const [pendingExampleSource, setPendingExampleSource] = useState<string | null>(null);
   const [confirmClearSource, setConfirmClearSource] = useState(false);
-  const [editorPanePercent, setEditorPanePercent] = useState(DEFAULT_EDITOR_PANE_PERCENT);
+  const [editorPanePercent, setEditorPanePercent] = useState(() => initialEditorPanePercent());
   const playerRef = useRef<PreviewAudioPlayer | null>(null);
   const workspaceRef = useRef<HTMLElement | null>(null);
   const previewPanelRef = useRef<HTMLElement | null>(null);
@@ -184,6 +228,46 @@ export function App() {
       // Editor preference persistence is optional.
     }
   }, [sourceWrap]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(EDITOR_FONT_SIZE_STORAGE_KEY, String(editorFontSize));
+    } catch {
+      // Editor preference persistence is optional.
+    }
+  }, [editorFontSize]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(SHOW_LINE_NUMBERS_STORAGE_KEY, String(showLineNumbers));
+    } catch {
+      // Editor preference persistence is optional.
+    }
+  }, [showLineNumbers]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(HIGHLIGHT_CURRENT_LINE_STORAGE_KEY, String(highlightCurrentLine));
+    } catch {
+      // Editor preference persistence is optional.
+    }
+  }, [highlightCurrentLine]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(HIGHLIGHT_DIAGNOSTICS_STORAGE_KEY, String(highlightDiagnostics));
+    } catch {
+      // Editor preference persistence is optional.
+    }
+  }, [highlightDiagnostics]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(EDITOR_PANE_PERCENT_STORAGE_KEY, String(Math.round(editorPanePercent * 10) / 10));
+    } catch {
+      // Editor preference persistence is optional.
+    }
+  }, [editorPanePercent]);
 
   useEffect(() => {
     const element = previewPanelRef.current;
@@ -510,6 +594,12 @@ export function App() {
           audioSampleRate={audioSampleRate}
           omitInitialRests={omitInitialRests}
           sourceWrap={sourceWrap}
+          editorFontSize={editorFontSize}
+          minEditorFontSize={MIN_EDITOR_FONT_SIZE}
+          maxEditorFontSize={MAX_EDITOR_FONT_SIZE}
+          showLineNumbers={showLineNumbers}
+          highlightCurrentLine={highlightCurrentLine}
+          highlightDiagnostics={highlightDiagnostics}
           onClose={() => setShowSettings(false)}
           onPageWidthModeChange={setPageWidthMode}
           onManualPageWidthChange={setManualPageWidth}
@@ -521,6 +611,10 @@ export function App() {
           onAudioSampleRateChange={setAudioSampleRate}
           onOmitInitialRestsChange={setOmitInitialRests}
           onSourceWrapChange={setSourceWrap}
+          onEditorFontSizeChange={setEditorFontSize}
+          onShowLineNumbersChange={setShowLineNumbers}
+          onHighlightCurrentLineChange={setHighlightCurrentLine}
+          onHighlightDiagnosticsChange={setHighlightDiagnostics}
           onAuditionProgram={() => void auditionProgram()}
         />
       )}
@@ -572,6 +666,10 @@ export function App() {
           ok={parsed.ok}
           summary={diagnosticSummary(language, parsed.ok, parsed.diagnostics)}
           sourceWrap={sourceWrap}
+          editorFontSize={editorFontSize}
+          showLineNumbers={showLineNumbers}
+          highlightCurrentLine={highlightCurrentLine}
+          highlightDiagnostics={highlightDiagnostics}
           t={t}
           onSourceChange={updateSource}
           onClearRequest={() => setConfirmClearSource(true)}
