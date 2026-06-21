@@ -43,6 +43,7 @@ test("frontend production build emits the expected app shell", async () => {
   const docsRepeats = await readFile(new URL("../dist-web/docs/syntax/repeats/index.html", import.meta.url), "utf8");
   const docsRhythm = await readFile(new URL("../dist-web/docs/syntax/rhythm/index.html", import.meta.url), "utf8");
   const appSource = await readFile(new URL("../src/web/App.tsx", import.meta.url), "utf8");
+  const settingsPanelSource = await readFile(new URL("../src/web/SettingsPanel.tsx", import.meta.url), "utf8");
   const sourceEditorSource = await readFile(new URL("../src/web/SourceEditor.tsx", import.meta.url), "utf8");
   const audioSource = await readFile(new URL("../src/web/audio.ts", import.meta.url), "utf8");
 
@@ -63,8 +64,11 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(script, /Settings/);
   assert.match(script, /Page Settings/);
   assert.match(script, /Width mode/);
+  assert.match(script, /Paginate/);
+  assert.match(script, /Page height/);
   assert.match(script, /Content/);
   assert.match(script, /Justify/);
+  assert.match(script, /page\(s\)/);
   assert.match(script, /Except last line/);
   assert.match(script, /All lines/);
   assert.match(script, /ResizeObserver/);
@@ -107,11 +111,14 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(style, /\.settings-panel/);
   assert.match(style, /\.settings-section\s*\+\s*\.settings-section/);
   assert.match(style, /\.settings-grid/);
+  assert.match(style, /\.page-settings-grid/);
+  assert.match(style, /flex-wrap:wrap/);
   assert.match(style, /\.examples-panel/);
   assert.match(style, /\.examples-grid/);
   assert.doesNotMatch(style, /\.grammar-panel/);
   assert.match(style, /--app-bg:/);
   assert.match(style, /\.score-svg svg\{/);
+  assert.doesNotMatch(style, /\.score-svg svg:has\(\.page\)/);
   assert.match(style, /max-width:100%/);
   assert.match(style, /height:auto/);
   assert.match(style, /\.preview-panel/);
@@ -148,6 +155,8 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(docsRhythm, /Dash duration marks/);
   assert.match(appSource, /function updateSource/);
   assert.match(appSource, /<SourceEditor/);
+  assert.match(settingsPanelSource, /\{paginate && \(/);
+  assert.match(settingsPanelSource, /t\("pageHeight"\)/);
   assert.match(sourceEditorSource, /onChange=\{\(event\) => updateSource\(event\.target\.value, event\.target\.selectionStart\)\}/);
   assert.match(sourceEditorSource, /selectDiagnosticRange/);
   assert.match(sourceEditorSource, /title=\{part\.tooltip\}/);

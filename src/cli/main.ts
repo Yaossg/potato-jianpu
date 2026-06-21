@@ -10,8 +10,8 @@ function usage(): string {
     "Usage:",
     "  jianpu validate <file> [--json]",
     "  jianpu parse <file> [--json]",
-    "  jianpu export-svg <file> -o <output.svg> [--page-width <px>] [--color <css>] [--background <css>]",
-    "  jianpu export-png <file> -o <output.png> [--page-width <px>] [--color <css>] [--background <css>]",
+    "  jianpu export-svg <file> -o <output.svg> [--page-width <px>] [--paginate] [--page-height <px>] [--color <css>] [--background <css>]",
+    "  jianpu export-png <file> -o <output.png> [--page-width <px>] [--paginate] [--page-height <px>] [--color <css>] [--background <css>]",
     "  jianpu export-midi <file> -o <output.mid> [--program <number>] [--omit-initial-rest]",
     "  jianpu export-wav <file> -o <output.wav> [--program <number>] [--sample-rate <hz>] [--amplitude <0-1>] [--omit-initial-rest]",
     "  jianpu export-mp3 <file> -o <output.mp3> [--program <number>] [--sample-rate <hz>] [--amplitude <0-1>] [--bit-rate <kbps>] [--omit-initial-rest]",
@@ -25,7 +25,7 @@ function readFlag(flags: string[], name: string): string | undefined {
   return index >= 0 ? flags[index + 1] : undefined;
 }
 
-const VALUE_FLAGS = new Set(["-o", "--page-width", "--color", "--background", "--program", "--sample-rate", "--amplitude", "--bit-rate"]);
+const VALUE_FLAGS = new Set(["-o", "--page-width", "--page-height", "--color", "--background", "--program", "--sample-rate", "--amplitude", "--bit-rate"]);
 const NEGATIVE_NUMBER_PATTERN = /^-\d+(?:\.\d+)?$/;
 
 function looksLikeFlag(value: string): boolean {
@@ -54,7 +54,7 @@ function commandFlags(command: string): Set<string> {
       return new Set(["--json"]);
     case "export-svg":
     case "export-png":
-      return new Set(["-o", "--page-width", "--color", "--background"]);
+      return new Set(["-o", "--page-width", "--paginate", "--page-height", "--color", "--background"]);
     case "export-midi":
       return new Set(["-o", "--program", "--omit-initial-rest"]);
     case "export-wav":
@@ -127,6 +127,7 @@ async function main(argv: string[]): Promise<number> {
   const missingFlagValue = validateFlagValues(flags, [
     "-o",
     "--page-width",
+    "--page-height",
     "--color",
     "--background",
     "--program",
@@ -180,10 +181,17 @@ async function main(argv: string[]): Promise<number> {
       console.error("error: --page-width must be a positive number");
       return 2;
     }
+    const pageHeight = readPositiveNumberFlag(flags, "--page-height");
+    if (Number.isNaN(pageHeight)) {
+      console.error("error: --page-height must be a positive number");
+      return 2;
+    }
     await writeFile(
       output,
       renderSvg(result.value, {
         pageWidth,
+        paginate: flags.includes("--paginate"),
+        pageHeight,
         color: readFlag(flags, "--color"),
         background: readFlag(flags, "--background"),
       }),
@@ -203,9 +211,16 @@ async function main(argv: string[]): Promise<number> {
       console.error("error: --page-width must be a positive number");
       return 2;
     }
+    const pageHeight = readPositiveNumberFlag(flags, "--page-height");
+    if (Number.isNaN(pageHeight)) {
+      console.error("error: --page-height must be a positive number");
+      return 2;
+    }
     const background = readFlag(flags, "--background");
     const svg = renderSvg(result.value, {
       pageWidth,
+      paginate: flags.includes("--paginate"),
+      pageHeight,
       color: readFlag(flags, "--color"),
       background,
     });

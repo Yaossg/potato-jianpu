@@ -46,6 +46,37 @@ test("CLI export-svg accepts page width", async () => {
   assert.match(svg, /<svg[^>]+width="120"/);
 });
 
+test("CLI export-svg can paginate with explicit page height", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
+  const input = join(dir, "score.jpu");
+  const output = join(dir, "score.svg");
+  await writeFile(input, "1 2 | 3 4 | 5 6 | 7 1' |\n1 2 | 3 4 | 5 6 | 7 1' |", "utf8");
+
+  await execFileAsync(process.execPath, ["dist/cli/main.js", "export-svg", input, "-o", output, "--page-width", "120", "--paginate", "--page-height", "160"], {
+    cwd: repoDir,
+  });
+
+  const svg = await readFile(output, "utf8");
+  const pageCount = [...svg.matchAll(/<g class="page" data-page="/g)].length;
+  assert.ok(pageCount > 1);
+  assert.match(svg, new RegExp(`<svg[^>]+height="${pageCount * 160}"`));
+  assert.equal([...svg.matchAll(/<rect class="page-boundary"/g)].length, pageCount);
+});
+
+test("CLI export-png accepts pagination options", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
+  const input = join(dir, "score.jpu");
+  const output = join(dir, "score.png");
+  await writeFile(input, "1 2 | 3 4 | 5 6 | 7 1' |\n1 2 | 3 4 | 5 6 | 7 1' |", "utf8");
+
+  await execFileAsync(process.execPath, ["dist/cli/main.js", "export-png", input, "-o", output, "--page-width", "120", "--paginate", "--page-height", "160"], {
+    cwd: repoDir,
+  });
+
+  const png = await readFile(output);
+  assert.equal(String.fromCharCode(...png.slice(1, 4)), "PNG");
+});
+
 test("CLI export-svg accepts explicit color and background", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
   const input = join(dir, "score.jpu");
@@ -101,6 +132,35 @@ test("CLI rejects invalid page width", async () => {
       cwd: repoDir,
     }),
     /--page-width must be a positive number/,
+  );
+});
+
+test("CLI rejects invalid and missing page height", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
+  const input = join(dir, "score.jpu");
+  const output = join(dir, "score.svg");
+  await writeFile(input, "1 2 3 4", "utf8");
+
+  await assert.rejects(
+    execFileAsync(process.execPath, ["dist/cli/main.js", "export-svg", input, "-o", output, "--page-height", "0"], {
+      cwd: repoDir,
+    }),
+    (error) => {
+      assert.equal(error.code, 2);
+      assert.match(String(error.stderr), /--page-height must be a positive number/);
+      return true;
+    },
+  );
+
+  await assert.rejects(
+    execFileAsync(process.execPath, ["dist/cli/main.js", "export-svg", input, "-o", output, "--page-height"], {
+      cwd: repoDir,
+    }),
+    (error) => {
+      assert.equal(error.code, 2);
+      assert.match(String(error.stderr), /--page-height requires a value/);
+      return true;
+    },
   );
 });
 

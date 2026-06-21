@@ -37,8 +37,11 @@ const HIGHLIGHT_CURRENT_LINE_STORAGE_KEY = "modern-jianpu-markup-highlight-curre
 const HIGHLIGHT_DIAGNOSTICS_STORAGE_KEY = "modern-jianpu-markup-highlight-diagnostics";
 const EDITOR_PANE_PERCENT_STORAGE_KEY = "modern-jianpu-markup-editor-pane-percent";
 const DEFAULT_PAGE_WIDTH = 1000;
+const DEFAULT_PAGE_HEIGHT = 1400;
 const MIN_PAGE_WIDTH = 240;
 const MAX_PAGE_WIDTH = 2000;
+const MIN_PAGE_HEIGHT = 320;
+const MAX_PAGE_HEIGHT = 4000;
 const PREVIEW_HORIZONTAL_PADDING = 32;
 const MIN_WORKSPACE_PANE_WIDTH = 280;
 const DEFAULT_EDITOR_PANE_PERCENT = 45;
@@ -163,6 +166,8 @@ export function App() {
   const [pageWidthMode, setPageWidthMode] = useState<PageWidthMode>("panel");
   const [manualPageWidth, setManualPageWidth] = useState(DEFAULT_PAGE_WIDTH);
   const [panelPageWidth, setPanelPageWidth] = useState(DEFAULT_PAGE_WIDTH);
+  const [paginate, setPaginate] = useState(false);
+  const [pageHeight, setPageHeight] = useState(DEFAULT_PAGE_HEIGHT);
   const [justifyMode, setJustifyMode] = useState<JustifyMode>("none");
   const [theme, setTheme] = useState<ThemeName>(() => initialTheme());
   const [scoreColor, setScoreColor] = useState(() => themeColors(initialTheme()).scoreColor);
@@ -200,14 +205,17 @@ export function App() {
       previewParsed?.ok
         ? renderSvg(previewParsed.value, {
             pageWidth,
+            paginate,
+            pageHeight,
             justifyMode,
             activeNoteIndices: parsed.ok ? activeNoteIndices : [],
             color: scoreColor,
             background: pageBackground,
           })
         : null,
-    [activeNoteIndices, justifyMode, pageBackground, pageWidth, parsed.ok, previewParsed, scoreColor],
+    [activeNoteIndices, justifyMode, pageBackground, pageHeight, pageWidth, paginate, parsed.ok, previewParsed, scoreColor],
   );
+  const previewPageCount = useMemo(() => (svg ? Math.max(1, svg.match(/<g class="page" /g)?.length ?? 1) : 0), [svg]);
 
   useEffect(() => {
     document.documentElement.lang = language === "zh" ? "zh-Hans" : "en";
@@ -585,6 +593,10 @@ export function App() {
           manualPageWidth={manualPageWidth}
           minPageWidth={MIN_PAGE_WIDTH}
           maxPageWidth={MAX_PAGE_WIDTH}
+          paginate={paginate}
+          pageHeight={pageHeight}
+          minPageHeight={MIN_PAGE_HEIGHT}
+          maxPageHeight={MAX_PAGE_HEIGHT}
           scoreColor={scoreColor}
           pageBackground={pageBackground}
           justifyMode={justifyMode}
@@ -603,6 +615,8 @@ export function App() {
           onClose={() => setShowSettings(false)}
           onPageWidthModeChange={setPageWidthMode}
           onManualPageWidthChange={setManualPageWidth}
+          onPaginateChange={setPaginate}
+          onPageHeightChange={setPageHeight}
           onScoreColorChange={setScoreColor}
           onPageBackgroundChange={setPageBackground}
           onJustifyModeChange={setJustifyMode}
@@ -696,6 +710,7 @@ export function App() {
           previewDocument={previewParsed?.ok ? previewParsed.value : null}
           pageWidth={pageWidth}
           pageWidthModeLabel={t(pageWidthModeLabels[pageWidthMode])}
+          pageCount={previewPageCount}
           svg={svg}
           stale={previewIsStale}
           t={t}

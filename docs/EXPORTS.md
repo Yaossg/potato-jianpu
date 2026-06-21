@@ -25,8 +25,8 @@ pnpm run cli -- validate examples/twinkle.jpu
 pnpm run cli -- --version
 pnpm run cli -- validate examples/twinkle.jpu --json
 pnpm run cli -- parse examples/twinkle.jpu --json
-pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --page-width 1000 --color "#111827" --background "#ffffff"
-pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --page-width 1000 --color "#111827" --background "#ffffff"
+pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --page-width 1000 --paginate --page-height 1400 --color "#111827" --background "#ffffff"
+pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --page-width 1000 --paginate --page-height 1400 --color "#111827" --background "#ffffff"
 pnpm run cli -- export-midi examples/twinkle.jpu -o twinkle.mid --program 0 --omit-initial-rest
 pnpm run cli -- export-wav examples/twinkle.jpu -o twinkle.wav --sample-rate 44100 --amplitude 1 --omit-initial-rest
 pnpm run cli -- export-mp3 examples/twinkle.jpu -o twinkle.mp3 --sample-rate 44100 --amplitude 1 --bit-rate 128 --omit-initial-rest
@@ -90,8 +90,8 @@ Validate result shape:
 ```
 
 Fatal parse or validation errors return exit code `1`. Usage errors, such as a
-missing `-o`, invalid `--page-width`, invalid `--sample-rate`, or invalid
-`--program`, return exit code `2`.
+missing `-o`, invalid `--page-width`, invalid `--page-height`, invalid
+`--sample-rate`, or invalid `--program`, return exit code `2`.
 
 Unknown options and options missing their required value are rejected with exit
 code `2`.
@@ -101,32 +101,44 @@ code `2`.
 SVG export uses the shared renderer:
 
 ```sh
-pnpm run cli -- export-svg input.jpu -o output.svg --page-width 1000
+pnpm run cli -- export-svg input.jpu -o output.svg --page-width 1000 --paginate --page-height 1400
 ```
 
 Options:
 
 - `--page-width <px>`: positive number. Defaults to the renderer default when
   omitted.
+- `--paginate`: render one fixed-height multi-page SVG instead of the default
+  adaptive-height SVG.
+- `--page-height <px>`: positive number. Defaults to `1400` when pagination is
+  enabled. The value is validated even when `--paginate` is omitted, but it
+  does not change non-paginated output by itself.
 - `--color <css>`: CSS color used for `currentColor` SVG notation elements.
-- `--background <css>`: CSS color used for an SVG background rectangle.
+- `--background <css>`: CSS color used for SVG page background rectangles.
 
 The renderer uses `pageWidth` for both the SVG viewport width and measure
 wrapping. Measures are wrapped between measures when the next measure would
 exceed the page width. A single measure wider than the page width is kept on its
 own line rather than split internally.
 
+Paginated SVG export keeps one SVG file. The root height is the page height
+multiplied by the page count, each page is emitted as a `.page` group, and the
+header appears only on the first page. Each page also includes an exported
+`.page-boundary` rectangle so page edges are visible in both SVG and PNG output.
+
 ## PNG Export
 
 The backend CLI renders the same SVG output through the backend PNG adapter:
 
 ```sh
-pnpm run cli -- export-png input.jpu -o output.png --page-width 1000
+pnpm run cli -- export-png input.jpu -o output.png --page-width 1000 --paginate --page-height 1400
 ```
 
 Options:
 
 - `--page-width <px>`: same behavior as SVG export.
+- `--paginate`: same behavior as SVG export.
+- `--page-height <px>`: same behavior and validation as SVG export.
 - `--color <css>`: same behavior as SVG export.
 - `--background <css>`: sets both the SVG background rectangle and the PNG
   renderer background.
@@ -137,8 +149,8 @@ intended to match the SVG preview by using the same SVG text and style output.
 The frontend also exposes PNG download. Browser PNG export uses a different
 adapter: it turns the current SVG string into an SVG `Blob`, loads it into an
 `Image`, draws that image to a canvas, and downloads the canvas result as
-`jianpu-score.png`. It uses the same preview/export color, background, and page
-width settings as SVG download.
+`jianpu-score.png`. It uses the same preview/export color, background, page
+width, pagination, and page height settings as SVG download.
 
 ## MIDI Export
 

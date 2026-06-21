@@ -136,6 +136,27 @@ test("matches the wrapped tie SVG snapshot", () => {
   assert.equal(svg, wrappedTieSnapshot);
 });
 
+test("paginates visual lines into fixed-height page groups", () => {
+  const result = parse(`title: "Paged"\n=\n1 2 | 3 4 | 5 6 | 7 1' |\n1 2 | 3 4 | 5 6 | 7 1' |\n1 2 | 3 4 | 5 6 | 7 1' |`);
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 120, paginate: true, pageHeight: 160, background: "#ffffff" });
+  const pageCount = [...svg.matchAll(/<g class="page" data-page="(\d+)"/g)].length;
+  assert.ok(pageCount > 1);
+  assert.match(svg, new RegExp(`<svg[^>]+height="${pageCount * 160}"[^>]+viewBox="0 0 120 ${pageCount * 160}"`));
+  assert.equal([...svg.matchAll(/<rect class="page-background"/g)].length, pageCount);
+  assert.equal([...svg.matchAll(/<rect class="page-boundary"/g)].length, pageCount);
+  assert.match(svg, /<rect class="page-background" x="0" y="0" width="120" height="160" fill="#ffffff"\/>/);
+  assert.match(svg, /<rect class="page-background" x="0" y="160" width="120" height="160" fill="#ffffff"\/>/);
+  assert.match(svg, /<rect class="page-boundary" x="0\.5" y="0\.5" width="119" height="159" fill="none" stroke="#cbd5e1" stroke-width="1"\/>/);
+  assert.match(svg, /<rect class="page-boundary" x="0\.5" y="160\.5" width="119" height="159" fill="none" stroke="#cbd5e1" stroke-width="1"\/>/);
+  const page2 = svg.match(/<g class="page" data-page="2"[\s\S]*?(?=<g class="page" data-page="3"|<\/svg>)/)?.[0] ?? "";
+  assert.match(page2, /<line class="bar-thin" x1="[^"]+" y1="12"/);
+  assert.match(page2, /<text class="note" x="[^"]+" y="36"/);
+  assert.equal([...svg.matchAll(/Paged/g)].length, 1);
+  assert.match(svg, /<g class="page" data-page="1" transform="translate\(0, 0\)">[\s\S]*Paged/);
+  assert.doesNotMatch(svg, /<g class="page" data-page="2"[^>]*>[\s\S]*Paged/);
+});
+
 test("renders cross-line ties as cut halves after justification", () => {
   const result = parse("1 2 | 3 - | ~3 4 |");
   assert.equal(result.ok, true);

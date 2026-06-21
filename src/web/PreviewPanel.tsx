@@ -7,13 +7,14 @@ interface PreviewPanelProps {
   previewDocument: Document | null;
   pageWidth: number;
   pageWidthModeLabel: string;
+  pageCount: number;
   svg: string | null;
   stale: boolean;
   t: (key: TranslationKey, values?: Record<string, string | number>) => string;
   onClickPreview: (event: MouseEvent<HTMLDivElement>) => void;
 }
 
-export function PreviewPanel({ panelRef, previewDocument, pageWidth, pageWidthModeLabel, svg, stale, t, onClickPreview }: PreviewPanelProps) {
+export function PreviewPanel({ panelRef, previewDocument, pageWidth, pageWidthModeLabel, pageCount, svg, stale, t, onClickPreview }: PreviewPanelProps) {
   return (
     <section className="preview-panel" ref={panelRef}>
       <div className="panel-title">
@@ -24,6 +25,7 @@ export function PreviewPanel({ panelRef, previewDocument, pageWidth, pageWidthMo
                 lines: previewDocument.score.length,
                 width: pageWidth,
                 mode: pageWidthModeLabel,
+                pages: pageCount,
               })
             : t("noPreview")}
         </span>

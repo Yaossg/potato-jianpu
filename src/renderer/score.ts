@@ -14,6 +14,7 @@ const accidentalMap = new Map([
   [-2, "&#119083;"],
 ]);
 const LYRIC_CHARACTER_WIDTH = 9;
+const PAGINATED_PAGE_CONTENT_TOP = 12;
 
 interface RenderedLine {
   svg: string;
@@ -458,6 +459,35 @@ interface RenderLineLayout {
   groupVisualWidth: number;
 }
 
+interface ScoreLayoutContext {
+  groups: ScoreLineGroup[];
+  layouts: RenderLineLayout[];
+  hasLabels: boolean;
+  finalMeasures: Set<Measure>;
+  notesByLine: Map<ScoreLine, Note[]>;
+}
+
+interface ScoreVisualBlock {
+  item: RenderLineLayout;
+  index: number;
+  height: number;
+  lineHeight: number;
+  hasLyrics: boolean;
+}
+
+interface ScoreRenderPlacement {
+  block: ScoreVisualBlock;
+  y: number;
+  pageIndex?: number;
+}
+
+interface ScoreRenderResult {
+  svg: string;
+  height: number;
+  width: number;
+  pages?: string[];
+}
+
 function timelineKey(value: number): string {
   return value.toFixed(9);
 }
@@ -831,10 +861,9 @@ function isPrimaryLyricLine(line: ScoreLine, hasLabels: boolean): boolean {
   return !hasLabels || line.label === undefined || line.label === "T1";
 }
 
-export function renderScore(document: Document, yStart: number, pageWidth: number, activeNoteIndices: number[], justifyMode: JustifyMode): { svg: string; height: number; width: number } {
+function layoutScore(document: Document, pageWidth: number): ScoreLayoutContext {
   const allNotes = flattenNotes(document);
   const unit = actualNotePerBeat(document.header.timeSignature);
-  const activeNoteIndexSet = new Set(activeNoteIndices);
   const groups = scoreLineGroups(document);
   const hasLabels = document.score.some((line) => line.label !== undefined);
   const notesByLine = lineNotesByTrack(document);
@@ -853,17 +882,57 @@ export function renderScore(document: Document, yStart: number, pageWidth: numbe
       groupVisualWidth,
     }));
   });
-  let y = yStart;
-  const parts: string[] = [];
-  const groupBounds = new Map<number, { y1: number; y2: number; x2: number }>();
-  const lyricAnchorLinesByGroup = new Map<number, number[][]>();
-  for (const [index, item] of layouts.entries()) {
+
+  return { groups, layouts, hasLabels, finalMeasures, notesByLine };
+}
+
+function visualBlocks(context: ScoreLayoutContext): ScoreVisualBlock[] {
+  return context.layouts.map((item, index) => {
+    const next = context.layouts[index + 1];
+    const group = context.groups[item.groupIndex]!;
+    const hasLyrics = Boolean((!next || next.groupIndex !== item.groupIndex) && group.lyrics.length > 0);
+    const lyricHeight = hasLyrics ? DIMENSIONS.lyricTopPadding + group.lyrics.length * DIMENSIONS.lyricLineHeight : 0;
+    return {
+      item,
+      index,
+      lineHeight: item.layout.height + DIMENSIONS.lineSpacing,
+      height: item.layout.height + DIMENSIONS.lineSpacing + lyricHeight,
+      hasLyrics,
+    };
+  });
+}
+
+function renderScorePlacements(
+  document: Document,
+  context: ScoreLayoutContext,
+  placements: ScoreRenderPlacement[],
+  pageWidth: number,
+  activeNoteIndices: number[],
+  justifyMode: JustifyMode,
+): string[] {
+  const activeNoteIndexSet = new Set(activeNoteIndices);
+  let y = 0;
+  const pageParts = new Map<number, string[]>();
+  const partsFor = (pageIndex = 0) => {
+    const current = pageParts.get(pageIndex) ?? [];
+    pageParts.set(pageIndex, current);
+    return current;
+  };
+  const groupBounds = new Map<string, { y1: number; y2: number; x2: number; groupIndex: number; pageIndex: number }>();
+  const lyricAnchorLinesByGroup = new Map<string, number[][]>();
+
+  for (const placement of placements) {
+    const { block } = placement;
+    const { item } = block;
+    const pageIndex = placement.pageIndex ?? 0;
+    y = placement.y;
+    const parts = partsFor(pageIndex);
     const lineWidth = lineVisualWidth(item);
     const scaleX = lineWidth > pageWidth ? pageWidth / lineWidth : 1;
     const scaled = scaleX < 1;
     const visualWidth = scaleX < 1 ? lineWidth : pageWidth;
     const groupScaled = item.groupVisualWidth > pageWidth;
-    const shouldJustify = shouldJustifyGroup(justifyMode, item.groupIndex, groups.length);
+    const shouldJustify = shouldJustifyGroup(justifyMode, item.groupIndex, context.groups.length);
     const renderedLine = renderLine(
       item.layout,
       y,
@@ -873,55 +942,109 @@ export function renderScore(document: Document, yStart: number, pageWidth: numbe
       visualWidth,
       item.labelOffset,
       item.bracketOffset,
-      hasLabels ? "" : "T1",
-      finalMeasures,
-      notesByLine,
+      context.hasLabels ? "" : "T1",
+      context.finalMeasures,
+      context.notesByLine,
     );
     parts.push(scaled ? `<g class="score-line scaled" transform="scale(${scaleX},1)">${renderedLine.svg}</g>` : renderedLine.svg);
-    if (isPrimaryLyricLine(item.layout.line, hasLabels)) {
+    const groupPageKey = `${pageIndex}:${item.groupIndex}`;
+    if (isPrimaryLyricLine(item.layout.line, context.hasLabels)) {
       const lyricAnchors = scaled ? renderedLine.lyricAnchors.map((anchor) => anchor * scaleX) : renderedLine.lyricAnchors;
-      lyricAnchorLinesByGroup.set(item.groupIndex, [...(lyricAnchorLinesByGroup.get(item.groupIndex) ?? []), lyricAnchors]);
+      lyricAnchorLinesByGroup.set(groupPageKey, [...(lyricAnchorLinesByGroup.get(groupPageKey) ?? []), lyricAnchors]);
     }
 
-    if (groups[item.groupIndex]?.bracketed) {
+    if (context.groups[item.groupIndex]?.bracketed) {
       const y1 = y + Math.max(0, item.layout.maxPaddingUp - DIMENSIONS.baseNoteHeight - 4);
       const y2 = y + item.layout.height;
       const rightEdge = renderedItemRightEdge(item, pageWidth, shouldJustify, scaled);
-      const current = groupBounds.get(item.groupIndex);
-      groupBounds.set(item.groupIndex, {
+      const current = groupBounds.get(groupPageKey);
+      groupBounds.set(groupPageKey, {
         y1: Math.min(current?.y1 ?? y1, y1),
         y2: Math.max(current?.y2 ?? y2, y2),
         x2: Math.max(current?.x2 ?? 0, rightEdge - item.bracketOffset / 2),
+        groupIndex: item.groupIndex,
+        pageIndex,
       });
     }
 
-    y += item.layout.height + DIMENSIONS.lineSpacing;
-    const next = layouts[index + 1];
-    if (!next || next.groupIndex !== item.groupIndex) {
-      const group = groups[item.groupIndex]!;
-      if (group.lyrics.length > 0) {
-        const contentX = group.labelOffset + group.bracketOffset + DIMENSIONS.leftPadding;
-        const lyricRightEdge = renderedLineRightEdge(item.groupVisualWidth, pageWidth, shouldJustify, groupScaled);
-        const targetTextWidth = shouldJustify && !groupScaled ? Math.max(0, lyricRightEdge - contentX - group.bracketOffset) : undefined;
-        const anchorLines = lyricAnchorLinesByGroup.get(item.groupIndex) ?? [];
-        const lyricAnchors = anchorLines.length === 1 ? anchorLines[0]! : [];
-        parts.push(renderAlignedLyrics(document, group.lyrics, contentX, y + DIMENSIONS.lyricTopPadding, targetTextWidth, lyricAnchors));
-        y += DIMENSIONS.lyricTopPadding + group.lyrics.length * DIMENSIONS.lyricLineHeight;
-      }
+    if (block.hasLyrics) {
+      const group = context.groups[item.groupIndex]!;
+      const contentX = group.labelOffset + group.bracketOffset + DIMENSIONS.leftPadding;
+      const lyricRightEdge = renderedLineRightEdge(item.groupVisualWidth, pageWidth, shouldJustify, groupScaled);
+      const targetTextWidth = shouldJustify && !groupScaled ? Math.max(0, lyricRightEdge - contentX - group.bracketOffset) : undefined;
+      const anchorLines = lyricAnchorLinesByGroup.get(groupPageKey) ?? [];
+      const lyricAnchors = anchorLines.length === 1 ? anchorLines[0]! : [];
+      parts.push(renderAlignedLyrics(document, group.lyrics, contentX, y + block.lineHeight + DIMENSIONS.lyricTopPadding, targetTextWidth, lyricAnchors));
     }
   }
 
-  for (const [groupIndex, bounds] of groupBounds) {
-    const group = groups[groupIndex]!;
+  for (const bounds of groupBounds.values()) {
+    const group = context.groups[bounds.groupIndex]!;
     const leftX = group.labelOffset + group.bracketOffset / 2;
     const yShift = -4;
+    const parts = partsFor(bounds.pageIndex);
     parts.push(renderVoiceBracket(leftX, bounds.y1 + yShift, bounds.y2 + yShift, "left"));
     parts.push(renderVoiceBracket(bounds.x2, bounds.y1 + yShift, bounds.y2 + yShift, "right"));
   }
 
+  const pageCount = Math.max(0, ...placements.map((placement) => placement.pageIndex ?? 0)) + 1;
+  return Array.from({ length: pageCount }, (_, pageIndex) => pageParts.get(pageIndex)?.join("\n") ?? "");
+}
+
+function paginateBlocks(blocks: ScoreVisualBlock[], yStart: number, pageHeight: number): ScoreRenderPlacement[] {
+  const placements: ScoreRenderPlacement[] = [];
+  let pageIndex = 0;
+  let y = Math.max(yStart, PAGINATED_PAGE_CONTENT_TOP);
+  let pageHasScore = false;
+
+  for (const block of blocks) {
+    const pageTop = pageIndex === 0 ? Math.max(yStart, PAGINATED_PAGE_CONTENT_TOP) : PAGINATED_PAGE_CONTENT_TOP;
+    const available = pageHeight - y;
+    if (block.height > available && (pageHasScore || (pageIndex === 0 && yStart > 0))) {
+      pageIndex += 1;
+      y = PAGINATED_PAGE_CONTENT_TOP;
+      pageHasScore = false;
+    }
+    placements.push({ block, y, pageIndex });
+    y += block.height;
+    pageHasScore = true;
+    if (y <= pageTop && pageHasScore) {
+      y = block.height;
+    }
+  }
+
+  return placements;
+}
+
+export function renderScore(
+  document: Document,
+  yStart: number,
+  pageWidth: number,
+  activeNoteIndices: number[],
+  justifyMode: JustifyMode,
+  pagination?: { enabled: boolean; pageHeight: number },
+): ScoreRenderResult {
+  const context = layoutScore(document, pageWidth);
+  const blocks = visualBlocks(context);
+  const placements: ScoreRenderPlacement[] =
+    pagination?.enabled === true
+      ? paginateBlocks(blocks, yStart, pagination.pageHeight)
+      : blocks.map((block) => ({
+          block,
+          y: yStart + blocks.slice(0, block.index).reduce((sum, previous) => sum + previous.height, 0),
+        }));
+  const pages = renderScorePlacements(document, context, placements, pageWidth, activeNoteIndices, justifyMode);
+  const height =
+    placements.length === 0
+      ? 0
+      : pagination?.enabled === true
+        ? Math.max(...placements.map((placement) => (placement.pageIndex ?? 0) * pagination.pageHeight + placement.y + placement.block.height)) - yStart
+        : Math.max(...placements.map((placement) => placement.y + placement.block.height)) - yStart;
+
   return {
-    svg: parts.join("\n"),
-    width: Math.min(pageWidth, Math.max(0, ...layouts.map((layout) => layout.groupVisualWidth))),
-    height: Math.max(0, y - yStart),
+    svg: pages.join("\n"),
+    width: Math.min(pageWidth, Math.max(0, ...context.layouts.map((layout) => layout.groupVisualWidth))),
+    height,
+    pages: pagination?.enabled === true ? pages : undefined,
   };
 }

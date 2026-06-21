@@ -29,6 +29,8 @@ Options:
 ```ts
 interface RenderOptions {
   pageWidth?: number;
+  paginate?: boolean;
+  pageHeight?: number;
   justifyMode?: "none" | "except-last" | "all";
   activeNoteIndex?: number;
   activeNoteIndices?: number[];
@@ -39,6 +41,10 @@ interface RenderOptions {
 
 - `pageWidth` controls the SVG `width`, `viewBox` width, header layout, measure
   wrapping, and maximum visual line width. Default: `1000`.
+- `paginate` switches from one adaptive-height SVG page to a fixed-height
+  multi-page SVG. Default: `false`.
+- `pageHeight` controls each page box height when `paginate` is `true`.
+  Default: `1400`.
 - `justifyMode` controls horizontal score justification. `"none"` keeps natural
   spacing, `"except-last"` justifies every visual line except the final score
   line, and `"all"` justifies every visual line. Default: `"none"`.
@@ -49,8 +55,9 @@ interface RenderOptions {
   `activeNoteIndex`. Default: no active notes.
 - `color` sets the root SVG `color` style used by `currentColor` notation
   elements. Default: `currentColor`.
-- `background` draws a full-page background rectangle when non-empty. Default:
-  no SVG background rectangle.
+- `background` draws page background rectangles when non-empty. In unpaginated
+  output there is one adaptive-height rectangle; in paginated output there is
+  one fixed-height rectangle per page. Default: no SVG background rectangle.
 
 The return value is a complete SVG string with XML declaration, `<svg>`, inline
 `<style>`, header graphics, and score graphics.
@@ -77,8 +84,10 @@ The renderer follows a measurement-first pipeline:
 4. Wrap measure layouts into visual lines based on `pageWidth`.
 5. Horizontally scale any single visual line that still exceeds `pageWidth`.
 6. Optionally justify line coordinates when `justifyMode` enables it.
-7. Draw bars, ties, notes, duration marks, and attached lyric lines or syllables.
-8. Compute final SVG height from header height and rendered score lines.
+7. Optionally paginate completed visual lines into fixed-height page boxes.
+8. Draw bars, ties, notes, duration marks, and attached lyric lines or syllables.
+9. Compute final SVG height from either the adaptive content height or the fixed
+   page height multiplied by page count.
 
 The main internal layout records are:
 
@@ -196,6 +205,37 @@ ties, dashes, underlines, and duration dots together. It is independent of
 whether the line was created by source line breaks or automatic wrapping.
 Overwide lines still use line-level scaling instead of additional position
 stretching.
+
+## Pagination
+
+By default the renderer keeps the original adaptive-height SVG behavior. When
+`paginate` is `true`, output becomes one SVG containing vertically stacked page
+groups:
+
+```svg
+<g class="page" data-page="1" transform="translate(0, 0)">...</g>
+<g class="page" data-page="2" transform="translate(0, 1400)">...</g>
+```
+
+Each page uses the fixed `pageWidth x pageHeight` page box, and the root SVG
+height is `pageHeight * pageCount`. Pagination only occurs between completed
+visual lines; it does not split measures, wrapped visual lines, lyrics attached
+to a score group, or simultaneous voice groups within one visual line. The
+header renders only on the first page and consumes first-page vertical space.
+If a visual line is taller than the available page height, it is placed at the
+top content inset of a new page without vertical compression.
+
+Paginated output draws one `.page-boundary` rectangle per page so the exported
+SVG and PNG visibly show page edges. When a background color is provided, it
+also draws one `.page-background` rectangle per page at the page's root SVG y
+coordinate.
+
+The CLI exposes pagination through:
+
+```sh
+pnpm run cli -- export-svg input.jpu -o output.svg --paginate --page-height 1400
+pnpm run cli -- export-png input.jpu -o output.png --paginate --page-height 1400
+```
 
 ## Header Rendering
 
@@ -358,7 +398,7 @@ The renderer is deterministic but still intentionally simple:
 - measure wrapping only occurs between measures
 - overwide lines use line-level scaling instead of note re-spacing
 - no full collision avoidance for dense chords and ties
-- no pagination
+- no separate per-page SVG or PNG file generation
 - no staff or engraving model beyond the current Jianpu notation
 
 These limits keep the renderer focused on its current notation targets.

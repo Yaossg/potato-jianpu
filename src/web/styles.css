@@ -379,10 +379,19 @@ button:disabled {
 }
 
 .settings-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 12px;
-  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 18px;
+  row-gap: 12px;
+  justify-content: flex-start;
+}
+
+.settings-grid.page-settings-grid .select-control select {
+  width: 180px;
+}
+
+.settings-grid.page-settings-grid .number-control input {
+  width: 96px;
 }
 
 .settings-grid .select-control select {

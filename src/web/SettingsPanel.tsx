@@ -10,6 +10,10 @@ interface SettingsPanelProps {
   manualPageWidth: number;
   minPageWidth: number;
   maxPageWidth: number;
+  paginate: boolean;
+  pageHeight: number;
+  minPageHeight: number;
+  maxPageHeight: number;
   scoreColor: string;
   pageBackground: string;
   justifyMode: JustifyMode;
@@ -28,6 +32,8 @@ interface SettingsPanelProps {
   onClose: () => void;
   onPageWidthModeChange: (mode: PageWidthMode) => void;
   onManualPageWidthChange: (width: number) => void;
+  onPaginateChange: (paginate: boolean) => void;
+  onPageHeightChange: (height: number) => void;
   onScoreColorChange: (color: string) => void;
   onPageBackgroundChange: (color: string) => void;
   onJustifyModeChange: (mode: JustifyMode) => void;
@@ -63,6 +69,10 @@ export function SettingsPanel({
   manualPageWidth,
   minPageWidth,
   maxPageWidth,
+  paginate,
+  pageHeight,
+  minPageHeight,
+  maxPageHeight,
   scoreColor,
   pageBackground,
   justifyMode,
@@ -81,6 +91,8 @@ export function SettingsPanel({
   onClose,
   onPageWidthModeChange,
   onManualPageWidthChange,
+  onPaginateChange,
+  onPageHeightChange,
   onScoreColorChange,
   onPageBackgroundChange,
   onJustifyModeChange,
@@ -150,6 +162,28 @@ export function SettingsPanel({
                 }}
               />
             </label>
+            <label className="checkbox-control">
+              <input type="checkbox" checked={paginate} onChange={(event) => onPaginateChange(event.target.checked)} />
+              {t("paginate")}
+            </label>
+            {paginate && (
+              <label className="number-control">
+                {t("pageHeight")}
+                <input
+                  type="number"
+                  min={minPageHeight}
+                  max={maxPageHeight}
+                  step={20}
+                  value={pageHeight}
+                  onChange={(event) => {
+                    const value = Number(event.target.value);
+                    if (Number.isFinite(value) && value > 0) {
+                      onPageHeightChange(Math.min(maxPageHeight, Math.max(minPageHeight, Math.round(value))));
+                    }
+                  }}
+                />
+              </label>
+            )}
             <label className="color-control">
               {t("color")}
               <input type="color" value={scoreColor} onChange={(event) => onScoreColorChange(event.target.value)} />
@@ -263,7 +297,7 @@ export function SettingsPanel({
 
         <section className="settings-section">
           <h3>{t("exportSettings")}</h3>
-          <div className="settings-grid">
+          <div className="settings-grid page-settings-grid">
             <label className="number-control">
               {t("audioSampleRate")}
               <input

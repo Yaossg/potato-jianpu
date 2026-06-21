@@ -34,6 +34,8 @@ export type TranslationKey =
   | "content"
   | "manual"
   | "width"
+  | "paginate"
+  | "pageHeight"
   | "color"
   | "page"
   | "justify"
@@ -104,6 +106,8 @@ const translations: { en: Record<TranslationKey, string>; zh: Partial<Record<Tra
     content: "Content",
     manual: "Manual",
     width: "Width",
+    paginate: "Paginate",
+    pageHeight: "Page height",
     color: "Color",
     page: "Page",
     justify: "Justify",
@@ -129,7 +133,7 @@ const translations: { en: Record<TranslationKey, string>; zh: Partial<Record<Tra
     sourcePlaceholder: "Enter your Jianpu here...",
     preview: "Preview",
     noPreview: "No preview",
-    previewSummary: "{lines} source line(s), {width}px {mode}",
+    previewSummary: "{lines} source line(s), {width}px {mode}, {pages} page(s)",
     stalePreview: "Current source has parse errors. Preview is showing the last valid render and has not updated.",
     fixParseErrors: "Fix parse errors to preview.",
     valid: "Valid",
@@ -173,6 +177,8 @@ const translations: { en: Record<TranslationKey, string>; zh: Partial<Record<Tra
     content: "内容",
     manual: "手动",
     width: "宽度",
+    paginate: "分页",
+    pageHeight: "页高",
     color: "谱面颜色",
     page: "页面",
     justify: "对齐",
@@ -197,7 +203,7 @@ const translations: { en: Record<TranslationKey, string>; zh: Partial<Record<Tra
     sourcePlaceholder: "在这里输入简谱...",
     preview: "预览",
     noPreview: "无预览",
-    previewSummary: "{lines} 行源码，{width}px，{mode}",
+    previewSummary: "{lines} 行源码，{width}px，{mode}，{pages} 页",
     stalePreview: "当前源码有解析错误，预览正在显示上一次有效的渲染结果，尚未更新。",
     fixParseErrors: "修复解析错误后显示预览。",
     valid: "有效",
