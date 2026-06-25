@@ -16,12 +16,25 @@ type SvgToPdf = (
     height: number;
     assumePt: boolean;
     preserveAspectRatio: string;
+    fontCallback?: (family: string, bold: boolean, italic: boolean, fontOptions: { fauxItalic: boolean; fauxBold: boolean }) => string;
   },
 ) => void;
 
 const require = createRequire(import.meta.url);
 const PDFDocument = require("pdfkit") as PdfDocumentConstructor;
 const SVGtoPDF = require("svg-to-pdfkit") as SvgToPdf;
+const PDF_FONT_FAMILY = "NotoSansSC";
+const regularFontPath = require.resolve("@expo-google-fonts/noto-sans-sc/400Regular/NotoSansSC_400Regular.ttf");
+const boldFontPath = require.resolve("@expo-google-fonts/noto-sans-sc/700Bold/NotoSansSC_700Bold.ttf");
+
+function registerPdfFonts(document: PDFKit.PDFDocument) {
+  document.registerFont(PDF_FONT_FAMILY, regularFontPath);
+  document.registerFont(`${PDF_FONT_FAMILY}-Bold`, boldFontPath);
+}
+
+function pdfFontName(_family: string, bold: boolean): string {
+  return bold ? `${PDF_FONT_FAMILY}-Bold` : PDF_FONT_FAMILY;
+}
 
 export async function renderPdfBytes(pages: RenderedSvgPage[], options: PdfExportOptions = {}): Promise<Uint8Array> {
   if (pages.length === 0) {
@@ -38,6 +51,7 @@ export async function renderPdfBytes(pages: RenderedSvgPage[], options: PdfExpor
     margin: 0,
     info: options.title ? { Title: options.title } : undefined,
   });
+  registerPdfFonts(document);
   const chunks: Buffer[] = [];
   const complete = new Promise<Uint8Array>((resolve, reject) => {
     document.on("data", (chunk: Buffer) => chunks.push(chunk));
@@ -52,6 +66,7 @@ export async function renderPdfBytes(pages: RenderedSvgPage[], options: PdfExpor
       height: page.height,
       assumePt: true,
       preserveAspectRatio: "none",
+      fontCallback: pdfFontName,
     });
   }
 

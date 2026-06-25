@@ -34,7 +34,7 @@ Modern Jianpu Markup 可以从浏览器 App 和 CLI 把同一个解析后的乐�
 
 ## 视觉导出
 
-SVG 是渲染器输出的确定性文本。PNG 会栅格化同一份渲染后的 SVG。PDF 会把渲染后的 SVG 页面转换为矢量 PDF 页面。所有视觉导出都支持页面宽度、颜色和背景选项。
+SVG 是渲染器输出的确定性文本。PNG 会栅格化同一份渲染后的 SVG。PDF 会把渲染后的 SVG 页面转换为矢量 PDF 页面，并嵌入 Noto Sans SC，让中文标题和歌词等 Unicode 文本正确显示。所有视觉导出都支持页面宽度、颜色和背景选项。
 
 ```sh
 pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --page-width 1000 --color "#111827" --background "#ffffff"

@@ -11,6 +11,9 @@ importers:
       '@descript/web-audio-js':
         specifier: 0.15.3-patched.6
         version: 0.15.3-patched.6
+      '@expo-google-fonts/noto-sans-sc':
+        specifier: ^0.4.3
+        version: 0.4.3
       '@resvg/resvg-js':
         specifier: ^2.6.2
         version: 2.6.2
@@ -850,6 +853,10 @@ packages:
     requiresBuild: true
     dev: false
     optional: true
+
+  /@expo-google-fonts/noto-sans-sc@0.4.3:
+    resolution: {integrity: sha512-9rAwdFTFHbO/u6Cs0gj2jZbW74TGIiaFNQnXYH2s5wA1bzVkwbaviL4t8YUV642eGYjg86eH6DkAEQmfNHDncQ==}
+    dev: false
 
   /@expressive-code/core@0.41.7:
     resolution: {integrity: sha512-ck92uZYZ9Wba2zxkiZLsZGi9N54pMSAVdrI9uW3Oo9AtLglD5RmrdTwbYPCT2S/jC36JGB2i+pnQtBm/Ib2+dg==}

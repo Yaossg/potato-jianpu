@@ -27,7 +27,7 @@ Modern Jianpu Markup can export the same parsed score to visual, MIDI, and audio
 
 ## Visual exports
 
-SVG is deterministic text output from the renderer. PNG rasterizes the same rendered SVG. PDF converts rendered SVG pages to vector PDF pages. All visual exports support page width, color, and background options.
+SVG is deterministic text output from the renderer. PNG rasterizes the same rendered SVG. PDF converts rendered SVG pages to vector PDF pages and embeds Noto Sans SC so Unicode text such as Chinese titles and lyrics renders correctly. All visual exports support page width, color, and background options.
 
 ```sh
 pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --page-width 1000 --color "#111827" --background "#ffffff"

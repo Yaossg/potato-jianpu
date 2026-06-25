@@ -20,6 +20,16 @@ test("renders SVG pages to PDF bytes", async () => {
   assert.ok(pdf.length > 100);
 });
 
+test("renders Unicode text to PDF with an embedded Unicode font", async () => {
+  const result = parse(`title: "茉莉花"\ncomposer: "中国民歌"\n=\n1 2 3 4 | 5 - |\nL1: "茉 莉 花"`);
+  assert.equal(result.ok, true);
+  const pdf = await renderPdfBytes(renderSvgPages(result.value), { title: result.value.header.title });
+  const text = Buffer.from(pdf).toString("latin1");
+  assert.equal(String.fromCharCode(...pdf.slice(0, 4)), "%PDF");
+  assert.match(text, /NotoSansSC/);
+  assert.match(text, /\/ToUnicode\b/);
+});
+
 test("renders paginated SVG pages to a multi-page PDF", async () => {
   const result = parse(`title: "PDF"\n=\n1 2 | 3 4 | 5 6 | 7 1' |\n1 2 | 3 4 | 5 6 | 7 1' |`);
   assert.equal(result.ok, true);

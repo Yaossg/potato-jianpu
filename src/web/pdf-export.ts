@@ -1,9 +1,66 @@
 import { jsPDF } from "jspdf";
 import { svg2pdf } from "svg2pdf.js";
+import notoSansScBoldUrl from "@expo-google-fonts/noto-sans-sc/700Bold/NotoSansSC_700Bold.ttf?url";
+import notoSansScRegularUrl from "@expo-google-fonts/noto-sans-sc/400Regular/NotoSansSC_400Regular.ttf?url";
 import type { RenderedSvgPage } from "../renderer/index.js";
+
+const PDF_FONT_FAMILY = "NotoSansSC";
+const PDF_TEXT_FONT_OVERRIDE = `
+text,
+.title,
+.subtitle,
+.metadata,
+.line-label,
+.lyric-line,
+.lyric-syllable,
+.note,
+.accidental,
+.ending-label,
+.tempo-mark,
+.velocity {
+  font-family: ${PDF_FONT_FAMILY}, sans-serif !important;
+}`;
+
+let pdfFontsPromise: Promise<{ regular: string; bold: string }> | null = null;
 
 function orientation(width: number, height: number): "landscape" | "portrait" {
   return width > height ? "landscape" : "portrait";
+}
+
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let index = 0; index < bytes.length; index += chunkSize) {
+    const chunk = bytes.subarray(index, index + chunkSize);
+    binary += String.fromCharCode(...chunk);
+  }
+  return btoa(binary);
+}
+
+async function fetchFontBase64(url: string): Promise<string> {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Could not load PDF font asset: ${response.status}`);
+  }
+  return arrayBufferToBase64(await response.arrayBuffer());
+}
+
+async function pdfFonts(): Promise<{ regular: string; bold: string }> {
+  pdfFontsPromise ??= Promise.all([fetchFontBase64(notoSansScRegularUrl), fetchFontBase64(notoSansScBoldUrl)]).then(([regular, bold]) => ({
+    regular,
+    bold,
+  }));
+  return pdfFontsPromise;
+}
+
+async function registerPdfFonts(pdf: jsPDF): Promise<void> {
+  const fonts = await pdfFonts();
+  pdf.addFileToVFS("NotoSansSC-Regular.ttf", fonts.regular);
+  pdf.addFont("NotoSansSC-Regular.ttf", PDF_FONT_FAMILY, "normal");
+  pdf.addFileToVFS("NotoSansSC-Bold.ttf", fonts.bold);
+  pdf.addFont("NotoSansSC-Bold.ttf", PDF_FONT_FAMILY, "bold");
+  pdf.setFont(PDF_FONT_FAMILY, "normal");
 }
 
 function svgElement(svg: string): SVGSVGElement {
@@ -12,6 +69,14 @@ function svgElement(svg: string): SVGSVGElement {
   if (error) {
     throw new Error("Could not parse SVG for PDF export.");
   }
+  const root = document.documentElement;
+  const defs = root.querySelector("defs") ?? document.createElementNS("http://www.w3.org/2000/svg", "defs");
+  if (!defs.parentElement) {
+    root.prepend(defs);
+  }
+  const style = document.createElementNS("http://www.w3.org/2000/svg", "style");
+  style.textContent = PDF_TEXT_FONT_OVERRIDE;
+  defs.append(style);
   return document.documentElement as unknown as SVGSVGElement;
 }
 
@@ -32,6 +97,7 @@ export async function svgPagesToPdfBuffer(pages: RenderedSvgPage[]): Promise<Arr
     format: [firstPage.width, firstPage.height],
     compress: true,
   });
+  await registerPdfFonts(pdf);
 
   for (const [index, page] of pages.entries()) {
     if (index > 0) {

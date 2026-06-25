@@ -179,7 +179,8 @@ SVG render becomes one PDF page.
 The backend CLI converts rendered SVG pages through PDFKit and SVG-to-PDFKit.
 The frontend exposes PDF download through jsPDF and svg2pdf.js, using the same
 preview/export color, background, page width, pagination, page height, and
-justification settings as SVG and PNG download.
+justification settings as SVG and PNG download. Both PDF paths embed Noto Sans
+SC for Unicode text such as Chinese titles, composer names, and lyrics.
 
 ## MIDI Export
 

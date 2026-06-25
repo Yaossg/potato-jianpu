@@ -78,7 +78,8 @@ The same SVG renderer is used by:
 PNG and PDF export are not part of the renderer itself. PNG export calls
 `renderSvg()` and passes the string to the backend PNG adapter in
 `src/backend/png.ts`. PDF export calls `renderSvgPages()` and passes the pages
-to target-specific vector PDF adapters.
+to target-specific vector PDF adapters. PDF adapters embed Noto Sans SC for
+Unicode text, but the SVG renderer's normal font stacks remain unchanged.
 
 ## Layout Pipeline
 

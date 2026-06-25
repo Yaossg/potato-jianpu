@@ -78,6 +78,7 @@
   },
   "dependencies": {
     "@descript/web-audio-js": "0.15.3-patched.6",
+    "@expo-google-fonts/noto-sans-sc": "^0.4.3",
     "@resvg/resvg-js": "^2.6.2",
     "jspdf": "^4.2.1",
     "lamejs": "^1.2.1",
