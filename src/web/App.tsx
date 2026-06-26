@@ -39,10 +39,12 @@ const HIGHLIGHT_DIAGNOSTICS_STORAGE_KEY = "modern-jianpu-markup-highlight-diagno
 const EDITOR_PANE_PERCENT_STORAGE_KEY = "modern-jianpu-markup-editor-pane-percent";
 const DEFAULT_PAGE_WIDTH = 1000;
 const DEFAULT_PAGE_HEIGHT = 1400;
+const DEFAULT_PAGE_MARGIN = 0;
 const MIN_PAGE_WIDTH = 240;
 const MAX_PAGE_WIDTH = 2000;
 const MIN_PAGE_HEIGHT = 320;
 const MAX_PAGE_HEIGHT = 4000;
+const MIN_PAGE_MARGIN = 0;
 const PREVIEW_HORIZONTAL_PADDING = 32;
 const MIN_WORKSPACE_PANE_WIDTH = 280;
 const DEFAULT_EDITOR_PANE_PERCENT = 45;
@@ -169,6 +171,7 @@ export function App() {
   const [panelPageWidth, setPanelPageWidth] = useState(DEFAULT_PAGE_WIDTH);
   const [paginate, setPaginate] = useState(false);
   const [pageHeight, setPageHeight] = useState(DEFAULT_PAGE_HEIGHT);
+  const [pageMargin, setPageMargin] = useState(DEFAULT_PAGE_MARGIN);
   const [justifyMode, setJustifyMode] = useState<JustifyMode>("none");
   const [theme, setTheme] = useState<ThemeName>(() => initialTheme());
   const [scoreColor, setScoreColor] = useState(() => themeColors(initialTheme()).scoreColor);
@@ -200,6 +203,7 @@ export function App() {
     [previewParsed],
   );
   const pageWidth = pageWidthMode === "panel" ? panelPageWidth : pageWidthMode === "content" ? contentPageWidth : manualPageWidth;
+  const maxPageMargin = Math.max(MIN_PAGE_MARGIN, Math.floor((Math.min(pageWidth, paginate ? pageHeight : pageWidth) - 1) / 2));
   const trackProgramOverrideCount = parsed.ok ? Object.keys(parsed.value.header.trackPrograms).length : 0;
   const svg = useMemo(
     () =>
@@ -208,13 +212,14 @@ export function App() {
             pageWidth,
             paginate,
             pageHeight,
+            pageMargin,
             justifyMode,
             activeNoteIndices: parsed.ok ? activeNoteIndices : [],
             color: scoreColor,
             background: pageBackground,
           })
         : null,
-    [activeNoteIndices, justifyMode, pageBackground, pageHeight, pageWidth, paginate, parsed.ok, previewParsed, scoreColor],
+    [activeNoteIndices, justifyMode, pageBackground, pageHeight, pageMargin, pageWidth, paginate, parsed.ok, previewParsed, scoreColor],
   );
   const svgPages = useMemo(
     () =>
@@ -223,13 +228,14 @@ export function App() {
             pageWidth,
             paginate,
             pageHeight,
+            pageMargin,
             justifyMode,
             activeNoteIndices: parsed.ok ? activeNoteIndices : [],
             color: scoreColor,
             background: pageBackground,
           })
         : null,
-    [activeNoteIndices, justifyMode, pageBackground, pageHeight, pageWidth, paginate, parsed.ok, previewParsed, scoreColor],
+    [activeNoteIndices, justifyMode, pageBackground, pageHeight, pageMargin, pageWidth, paginate, parsed.ok, previewParsed, scoreColor],
   );
   const previewPageCount = useMemo(() => (svg ? Math.max(1, svg.match(/<g class="page" /g)?.length ?? 1) : 0), [svg]);
 
@@ -252,6 +258,10 @@ export function App() {
       // Editor preference persistence is optional.
     }
   }, [sourceWrap]);
+
+  useEffect(() => {
+    setPageMargin((current) => Math.min(current, maxPageMargin));
+  }, [maxPageMargin]);
 
   useEffect(() => {
     try {
@@ -626,6 +636,9 @@ export function App() {
           pageHeight={pageHeight}
           minPageHeight={MIN_PAGE_HEIGHT}
           maxPageHeight={MAX_PAGE_HEIGHT}
+          pageMargin={pageMargin}
+          minPageMargin={MIN_PAGE_MARGIN}
+          maxPageMargin={maxPageMargin}
           scoreColor={scoreColor}
           pageBackground={pageBackground}
           justifyMode={justifyMode}
@@ -646,6 +659,7 @@ export function App() {
           onManualPageWidthChange={setManualPageWidth}
           onPaginateChange={setPaginate}
           onPageHeightChange={setPageHeight}
+          onPageMarginChange={setPageMargin}
           onScoreColorChange={setScoreColor}
           onPageBackgroundChange={setPageBackground}
           onJustifyModeChange={setJustifyMode}

@@ -14,6 +14,9 @@ interface SettingsPanelProps {
   pageHeight: number;
   minPageHeight: number;
   maxPageHeight: number;
+  pageMargin: number;
+  minPageMargin: number;
+  maxPageMargin: number;
   scoreColor: string;
   pageBackground: string;
   justifyMode: JustifyMode;
@@ -34,6 +37,7 @@ interface SettingsPanelProps {
   onManualPageWidthChange: (width: number) => void;
   onPaginateChange: (paginate: boolean) => void;
   onPageHeightChange: (height: number) => void;
+  onPageMarginChange: (margin: number) => void;
   onScoreColorChange: (color: string) => void;
   onPageBackgroundChange: (color: string) => void;
   onJustifyModeChange: (mode: JustifyMode) => void;
@@ -73,6 +77,9 @@ export function SettingsPanel({
   pageHeight,
   minPageHeight,
   maxPageHeight,
+  pageMargin,
+  minPageMargin,
+  maxPageMargin,
   scoreColor,
   pageBackground,
   justifyMode,
@@ -93,6 +100,7 @@ export function SettingsPanel({
   onManualPageWidthChange,
   onPaginateChange,
   onPageHeightChange,
+  onPageMarginChange,
   onScoreColorChange,
   onPageBackgroundChange,
   onJustifyModeChange,
@@ -184,6 +192,22 @@ export function SettingsPanel({
                 />
               </label>
             )}
+            <label className="number-control">
+              {t("pageMargin")}
+              <input
+                type="number"
+                min={minPageMargin}
+                max={maxPageMargin}
+                step={10}
+                value={pageMargin}
+                onChange={(event) => {
+                  const value = Number(event.target.value);
+                  if (Number.isFinite(value) && value >= 0) {
+                    onPageMarginChange(Math.min(maxPageMargin, Math.max(minPageMargin, Math.round(value))));
+                  }
+                }}
+              />
+            </label>
             <label className="color-control">
               {t("color")}
               <input type="color" value={scoreColor} onChange={(event) => onScoreColorChange(event.target.value)} />

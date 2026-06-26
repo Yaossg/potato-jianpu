@@ -159,6 +159,7 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(appSource, /<SourceEditor/);
   assert.match(settingsPanelSource, /\{paginate && \(/);
   assert.match(settingsPanelSource, /t\("pageHeight"\)/);
+  assert.match(settingsPanelSource, /t\("pageMargin"\)/);
   assert.match(sourceEditorSource, /onChange=\{\(event\) => updateSource\(event\.target\.value, event\.target\.selectionStart\)\}/);
   assert.match(sourceEditorSource, /selectDiagnosticRange/);
   assert.match(sourceEditorSource, /title=\{part\.tooltip\}/);

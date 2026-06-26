@@ -36,6 +36,7 @@ export type TranslationKey =
   | "width"
   | "paginate"
   | "pageHeight"
+  | "pageMargin"
   | "color"
   | "page"
   | "justify"
@@ -108,6 +109,7 @@ const translations: { en: Record<TranslationKey, string>; zh: Partial<Record<Tra
     width: "Width",
     paginate: "Paginate",
     pageHeight: "Page height",
+    pageMargin: "Page margin",
     color: "Color",
     page: "Page",
     justify: "Justify",
@@ -179,6 +181,7 @@ const translations: { en: Record<TranslationKey, string>; zh: Partial<Record<Tra
     width: "宽度",
     paginate: "分页",
     pageHeight: "页高",
+    pageMargin: "页边距",
     color: "谱面颜色",
     page: "页面",
     justify: "对齐",

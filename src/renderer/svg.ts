@@ -12,16 +12,33 @@ export interface RenderedSvgPage {
 }
 
 function resolvedRenderOptions(options: RenderOptions): Required<RenderOptions> {
+  const pageMargin = Math.max(0, options.pageMargin ?? DEFAULT_OPTIONS.pageMargin);
   return {
     pageWidth: options.pageWidth ?? DEFAULT_OPTIONS.pageWidth,
     paginate: options.paginate ?? DEFAULT_OPTIONS.paginate,
     pageHeight: options.pageHeight ?? DEFAULT_OPTIONS.pageHeight,
+    pageMargin,
     justifyMode: options.justifyMode ?? DEFAULT_OPTIONS.justifyMode,
     activeNoteIndex: options.activeNoteIndex ?? DEFAULT_OPTIONS.activeNoteIndex,
     activeNoteIndices: options.activeNoteIndices ?? DEFAULT_OPTIONS.activeNoteIndices,
     color: options.color ?? DEFAULT_OPTIONS.color,
     background: options.background ?? DEFAULT_OPTIONS.background,
   };
+}
+
+function contentWidth(pageWidth: number, pageMargin: number): number {
+  return Math.max(1, pageWidth - pageMargin * 2);
+}
+
+function contentHeight(pageHeight: number, pageMargin: number): number {
+  return Math.max(1, pageHeight - pageMargin * 2);
+}
+
+function contentGroup(body: string, pageMargin: number): string {
+  if (!body || pageMargin <= 0) {
+    return body;
+  }
+  return `<g class="page-content" transform="translate(${pageMargin}, ${pageMargin})">\n${body}\n</g>`;
 }
 
 function svgDocument(width: number, height: number, body: string, color: string): string {
@@ -41,11 +58,13 @@ export function renderSvgPages(document: Document, options: RenderOptions = {}):
   const resolved: Required<RenderOptions> = {
     ...resolvedRenderOptions(options),
   };
-  const header = renderHeader(document, resolved.pageWidth);
+  const pageContentWidth = contentWidth(resolved.pageWidth, resolved.pageMargin);
+  const pageContentHeight = contentHeight(resolved.pageHeight, resolved.pageMargin);
+  const header = renderHeader(document, pageContentWidth);
   const activeNoteIndices = resolved.activeNoteIndices.length > 0 ? resolved.activeNoteIndices : [resolved.activeNoteIndex];
-  const score = renderScore(document, header.height, resolved.pageWidth, activeNoteIndices, resolved.justifyMode, {
+  const score = renderScore(document, header.height, pageContentWidth, activeNoteIndices, resolved.justifyMode, {
     enabled: resolved.paginate,
-    pageHeight: resolved.pageHeight,
+    pageHeight: pageContentHeight,
   });
   if (resolved.paginate) {
     const pageCount = Math.max(1, score.pages?.length ?? 0);
@@ -55,7 +74,7 @@ export function renderSvgPages(document: Document, options: RenderOptions = {}):
         ? `<rect class="page-background" x="0" y="0" width="${resolved.pageWidth}" height="${resolved.pageHeight}" fill="${escapeXml(resolved.background)}"/>`
         : "";
       const boundary = `<rect class="page-boundary" x="0.5" y="0.5" width="${Math.max(0, resolved.pageWidth - 1)}" height="${Math.max(0, resolved.pageHeight - 1)}" fill="none" stroke="#cbd5e1" stroke-width="1"/>`;
-      const page = `<g class="page" data-page="${index + 1}">${pageContent ? `\n${pageContent}\n` : ""}</g>`;
+      const page = `<g class="page" data-page="${index + 1}">${pageContent ? `\n${contentGroup(pageContent, resolved.pageMargin)}\n` : ""}</g>`;
       return {
         svg: svgDocument(resolved.pageWidth, resolved.pageHeight, [background, boundary, page].filter(Boolean).join("\n"), resolved.color),
         width: resolved.pageWidth,
@@ -63,13 +82,17 @@ export function renderSvgPages(document: Document, options: RenderOptions = {}):
       };
     });
   }
-  const height = Math.max(1, header.height + score.height);
+  const height = Math.max(1, header.height + score.height + resolved.pageMargin * 2);
   const background = resolved.background
     ? `<rect class="page-background" x="0" y="0" width="${resolved.pageWidth}" height="${height}" fill="${escapeXml(resolved.background)}"/>`
     : "";
+  const body =
+    resolved.pageMargin > 0
+      ? [background, contentGroup([header.svg, score.svg].filter(Boolean).join("\n"), resolved.pageMargin)].filter(Boolean).join("\n")
+      : [background, header.svg, score.svg].filter(Boolean).join("\n");
   return [
     {
-      svg: svgDocument(resolved.pageWidth, height, [background, header.svg, score.svg].filter(Boolean).join("\n"), resolved.color),
+      svg: svgDocument(resolved.pageWidth, height, body, resolved.color),
       width: resolved.pageWidth,
       height,
     },
@@ -78,11 +101,13 @@ export function renderSvgPages(document: Document, options: RenderOptions = {}):
 
 export function renderSvg(document: Document, options: RenderOptions = {}): string {
   const resolved = resolvedRenderOptions(options);
-  const header = renderHeader(document, resolved.pageWidth);
+  const pageContentWidth = contentWidth(resolved.pageWidth, resolved.pageMargin);
+  const pageContentHeight = contentHeight(resolved.pageHeight, resolved.pageMargin);
+  const header = renderHeader(document, pageContentWidth);
   const activeNoteIndices = resolved.activeNoteIndices.length > 0 ? resolved.activeNoteIndices : [resolved.activeNoteIndex];
-  const score = renderScore(document, header.height, resolved.pageWidth, activeNoteIndices, resolved.justifyMode, {
+  const score = renderScore(document, header.height, pageContentWidth, activeNoteIndices, resolved.justifyMode, {
     enabled: resolved.paginate,
-    pageHeight: resolved.pageHeight,
+    pageHeight: pageContentHeight,
   });
   if (resolved.paginate) {
     const pageCount = Math.max(1, score.pages?.length ?? 0);
@@ -102,7 +127,7 @@ export function renderSvg(document: Document, options: RenderOptions = {}): stri
     ).join("\n");
     const pages = Array.from({ length: pageCount }, (_, index) => {
       const pageContent = `${index === 0 ? header.svg : ""}${score.pages?.[index] ? `${index === 0 && header.svg ? "\n" : ""}${score.pages[index]}` : ""}`;
-      return `<g class="page" data-page="${index + 1}" transform="translate(0, ${index * resolved.pageHeight})">${pageContent ? `\n${pageContent}\n` : ""}</g>`;
+      return `<g class="page" data-page="${index + 1}" transform="translate(0, ${index * resolved.pageHeight})">${pageContent ? `\n${contentGroup(pageContent, resolved.pageMargin)}\n` : ""}</g>`;
     }).join("\n");
     return `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${resolved.pageWidth}" height="${height}" viewBox="0 0 ${resolved.pageWidth} ${height}"${rootStyle}>
@@ -116,11 +141,15 @@ ${boundaries}
 ${pages}
 </svg>`;
   }
-  const height = Math.max(1, header.height + score.height);
+  const height = Math.max(1, header.height + score.height + resolved.pageMargin * 2);
   const rootStyle = resolved.color ? ` style="color: ${escapeXml(resolved.color)}"` : "";
   const background = resolved.background
     ? `<rect class="page-background" x="0" y="0" width="${resolved.pageWidth}" height="${height}" fill="${escapeXml(resolved.background)}"/>`
     : "";
+  const body =
+    resolved.pageMargin > 0
+      ? `${background}\n${contentGroup([header.svg, score.svg].filter(Boolean).join("\n"), resolved.pageMargin)}`
+      : `${background}\n${header.svg}\n${score.svg}`;
   return `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${resolved.pageWidth}" height="${height}" viewBox="0 0 ${resolved.pageWidth} ${height}"${rootStyle}>
 <defs>
@@ -128,8 +157,6 @@ ${pages}
 ${SVG_STYLE}
 </style>
 </defs>
-${background}
-${header.svg}
-${score.svg}
+${body}
 </svg>`;
 }

@@ -32,6 +32,7 @@ interface RenderOptions {
   pageWidth?: number;
   paginate?: boolean;
   pageHeight?: number;
+  pageMargin?: number;
   justifyMode?: "none" | "except-last" | "all";
   activeNoteIndex?: number;
   activeNoteIndices?: number[];
@@ -46,6 +47,9 @@ interface RenderOptions {
   multi-page SVG. Default: `false`.
 - `pageHeight` controls each page box height when `paginate` is `true`.
   Default: `1400`.
+- `pageMargin` adds an equal margin on all four page sides. The SVG viewport
+  and PDF page size stay unchanged, while header layout, measure wrapping, score
+  justification, and pagination use the reduced content box. Default: `0`.
 - `justifyMode` controls horizontal score justification. `"none"` keeps natural
   spacing, `"except-last"` justifies every visual line except the final score
   line, and `"all"` justifies every visual line. Default: `"none"`.
@@ -88,12 +92,14 @@ The renderer follows a measurement-first pipeline:
 1. Flatten all notes in document order.
 2. Measure each note.
 3. Build measure layouts.
-4. Wrap measure layouts into visual lines based on `pageWidth`.
-5. Horizontally scale any single visual line that still exceeds `pageWidth`.
-6. Optionally justify line coordinates when `justifyMode` enables it.
-7. Optionally paginate completed visual lines into fixed-height page boxes.
-8. Draw bars, ties, notes, duration marks, and attached lyric lines or syllables.
-9. Compute final SVG height from either the adaptive content height or the fixed
+4. Resolve the content box from `pageWidth`, `pageHeight`, and `pageMargin`.
+5. Wrap measure layouts into visual lines based on the content width.
+6. Horizontally scale any single visual line that still exceeds the content
+   width.
+7. Optionally justify line coordinates when `justifyMode` enables it.
+8. Optionally paginate completed visual lines into fixed-height page boxes.
+9. Draw bars, ties, notes, duration marks, and attached lyric lines or syllables.
+10. Compute final SVG height from either the adaptive content height or the fixed
    page height multiplied by page count.
 
 The main internal layout records are:
@@ -178,22 +184,25 @@ These constants are not yet exposed as a public theme API.
 ## Page Width And Wrapping
 
 The renderer wraps between measures. A visual line accumulates measures until
-adding the next measure would exceed `pageWidth`.
+adding the next measure would exceed the content width, which is `pageWidth`
+minus the left and right page margins.
 
 Important details:
 
 - wrapping never splits a measure internally
 - source line breaks are preserved as natural line boundaries
-- a single measure wider than `pageWidth` remains on its own line and is
-  horizontally scaled to fit the SVG viewport
+- a single measure wider than the content width remains on its own line and is
+  horizontally scaled to fit the content box
 - `pageWidth` also sets the SVG viewport width
+- `pageMargin` shifts rendered header and score content inward without changing
+  the SVG viewport width
 
 The CLI exposes this through:
 
 ```sh
-pnpm run cli -- export-svg input.jpu -o output.svg --page-width 800
-pnpm run cli -- export-png input.jpu -o output.png --page-width 800
-pnpm run cli -- export-pdf input.jpu -o output.pdf --page-width 800
+pnpm run cli -- export-svg input.jpu -o output.svg --page-width 800 --page-margin 40
+pnpm run cli -- export-png input.jpu -o output.png --page-width 800 --page-margin 40
+pnpm run cli -- export-pdf input.jpu -o output.pdf --page-width 800 --page-margin 40
 ```
 
 The frontend exposes this through the Settings panel. Panel width mode measures
@@ -205,7 +214,7 @@ also uses responsive CSS so a wide exported page scales down visually instead
 of forcing horizontal page overflow.
 
 When score justification is enabled, selected visual lines are stretched to the
-available page width by remapping horizontal coordinates. The `"except-last"`
+available content width by remapping horizontal coordinates. The `"except-last"`
 mode skips the final score line; `"all"` includes it. The remapping uses beat
 groups: notes inside one beat group, such as a continuous underlined run, keep
 their natural internal spacing and move as one unit. This affects notes, bars,
@@ -226,12 +235,15 @@ groups:
 ```
 
 Each page uses the fixed `pageWidth x pageHeight` page box, and the root SVG
-height is `pageHeight * pageCount`. Pagination only occurs between completed
-visual lines; it does not split measures, wrapped visual lines, lyrics attached
-to a score group, or simultaneous voice groups within one visual line. The
-header renders only on the first page and consumes first-page vertical space.
-If a visual line is taller than the available page height, it is placed at the
-top content inset of a new page without vertical compression.
+height is `pageHeight * pageCount`. When `pageMargin` is non-zero, content is
+drawn inside a translated `.page-content` group and pagination uses
+`pageHeight - pageMargin * 2` as the usable page height. Pagination only occurs
+between completed visual lines; it does not split measures, wrapped visual
+lines, lyrics attached to a score group, or simultaneous voice groups within
+one visual line. The header renders only on the first page and consumes
+first-page vertical space. If a visual line is taller than the available page
+height, it is placed at the top content inset of a new page without vertical
+compression.
 
 Paginated output draws one `.page-boundary` rectangle per page so the exported
 SVG and PNG visibly show page edges. When a background color is provided, it

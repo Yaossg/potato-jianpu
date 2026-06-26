@@ -64,6 +64,21 @@ test("CLI export-svg can paginate with explicit page height", async () => {
   assert.equal([...svg.matchAll(/<rect class="page-boundary"/g)].length, pageCount);
 });
 
+test("CLI export-svg accepts page margin", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
+  const input = join(dir, "score.jpu");
+  const output = join(dir, "score.svg");
+  await writeFile(input, "1 2 | 3 4 |", "utf8");
+
+  await execFileAsync(process.execPath, ["dist/cli/main.js", "export-svg", input, "-o", output, "--page-width", "160", "--page-margin", "20"], {
+    cwd: repoDir,
+  });
+
+  const svg = await readFile(output, "utf8");
+  assert.match(svg, /<svg[^>]+width="160"/);
+  assert.match(svg, /<g class="page-content" transform="translate\(20, 20\)">/);
+});
+
 test("CLI export-png accepts pagination options", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
   const input = join(dir, "score.jpu");
@@ -149,6 +164,20 @@ test("CLI rejects invalid page width", async () => {
       cwd: repoDir,
     }),
     /--page-width must be a positive number/,
+  );
+});
+
+test("CLI rejects invalid page margin", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
+  const input = join(dir, "score.jpu");
+  const output = join(dir, "score.svg");
+  await writeFile(input, "1 2 3 4", "utf8");
+
+  await assert.rejects(
+    execFileAsync(process.execPath, ["dist/cli/main.js", "export-svg", input, "-o", output, "--page-margin", "-1"], {
+      cwd: repoDir,
+    }),
+    /--page-margin must be a non-negative number/,
   );
 });
 

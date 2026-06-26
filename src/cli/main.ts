@@ -10,9 +10,9 @@ function usage(): string {
     "Usage:",
     "  jianpu validate <file> [--json]",
     "  jianpu parse <file> [--json]",
-    "  jianpu export-svg <file> -o <output.svg> [--page-width <px>] [--paginate] [--page-height <px>] [--color <css>] [--background <css>]",
-    "  jianpu export-png <file> -o <output.png> [--page-width <px>] [--paginate] [--page-height <px>] [--color <css>] [--background <css>]",
-    "  jianpu export-pdf <file> -o <output.pdf> [--page-width <px>] [--paginate] [--page-height <px>] [--color <css>] [--background <css>]",
+    "  jianpu export-svg <file> -o <output.svg> [--page-width <px>] [--paginate] [--page-height <px>] [--page-margin <px>] [--color <css>] [--background <css>]",
+    "  jianpu export-png <file> -o <output.png> [--page-width <px>] [--paginate] [--page-height <px>] [--page-margin <px>] [--color <css>] [--background <css>]",
+    "  jianpu export-pdf <file> -o <output.pdf> [--page-width <px>] [--paginate] [--page-height <px>] [--page-margin <px>] [--color <css>] [--background <css>]",
     "  jianpu export-midi <file> -o <output.mid> [--program <number>] [--omit-initial-rest]",
     "  jianpu export-wav <file> -o <output.wav> [--program <number>] [--sample-rate <hz>] [--amplitude <0-1>] [--omit-initial-rest]",
     "  jianpu export-mp3 <file> -o <output.mp3> [--program <number>] [--sample-rate <hz>] [--amplitude <0-1>] [--bit-rate <kbps>] [--omit-initial-rest]",
@@ -26,7 +26,7 @@ function readFlag(flags: string[], name: string): string | undefined {
   return index >= 0 ? flags[index + 1] : undefined;
 }
 
-const VALUE_FLAGS = new Set(["-o", "--page-width", "--page-height", "--color", "--background", "--program", "--sample-rate", "--amplitude", "--bit-rate"]);
+const VALUE_FLAGS = new Set(["-o", "--page-width", "--page-height", "--page-margin", "--color", "--background", "--program", "--sample-rate", "--amplitude", "--bit-rate"]);
 const NEGATIVE_NUMBER_PATTERN = /^-\d+(?:\.\d+)?$/;
 
 function looksLikeFlag(value: string): boolean {
@@ -56,7 +56,7 @@ function commandFlags(command: string): Set<string> {
     case "export-svg":
     case "export-png":
     case "export-pdf":
-      return new Set(["-o", "--page-width", "--paginate", "--page-height", "--color", "--background"]);
+      return new Set(["-o", "--page-width", "--paginate", "--page-height", "--page-margin", "--color", "--background"]);
     case "export-midi":
       return new Set(["-o", "--program", "--omit-initial-rest"]);
     case "export-wav":
@@ -97,6 +97,15 @@ function readPositiveNumberFlag(flags: string[], name: string): number | undefin
   return Number.isFinite(value) && value > 0 ? value : Number.NaN;
 }
 
+function readNonNegativeNumberFlag(flags: string[], name: string): number | undefined {
+  const raw = readFlag(flags, name);
+  if (raw === undefined) {
+    return undefined;
+  }
+  const value = Number(raw);
+  return Number.isFinite(value) && value >= 0 ? value : Number.NaN;
+}
+
 function readProgram(flags: string[]): number | null {
   const program = Number(readFlag(flags, "--program") ?? "0");
   if (!Number.isInteger(program) || program < 0 || program > 174) {
@@ -130,6 +139,7 @@ async function main(argv: string[]): Promise<number> {
     "-o",
     "--page-width",
     "--page-height",
+    "--page-margin",
     "--color",
     "--background",
     "--program",
@@ -188,12 +198,18 @@ async function main(argv: string[]): Promise<number> {
       console.error("error: --page-height must be a positive number");
       return 2;
     }
+    const pageMargin = readNonNegativeNumberFlag(flags, "--page-margin");
+    if (Number.isNaN(pageMargin)) {
+      console.error("error: --page-margin must be a non-negative number");
+      return 2;
+    }
     await writeFile(
       output,
       renderSvg(result.value, {
         pageWidth,
         paginate: flags.includes("--paginate"),
         pageHeight,
+        pageMargin,
         color: readFlag(flags, "--color"),
         background: readFlag(flags, "--background"),
       }),
@@ -218,11 +234,17 @@ async function main(argv: string[]): Promise<number> {
       console.error("error: --page-height must be a positive number");
       return 2;
     }
+    const pageMargin = readNonNegativeNumberFlag(flags, "--page-margin");
+    if (Number.isNaN(pageMargin)) {
+      console.error("error: --page-margin must be a non-negative number");
+      return 2;
+    }
     const background = readFlag(flags, "--background");
     const svg = renderSvg(result.value, {
       pageWidth,
       paginate: flags.includes("--paginate"),
       pageHeight,
+      pageMargin,
       color: readFlag(flags, "--color"),
       background,
     });
@@ -246,10 +268,16 @@ async function main(argv: string[]): Promise<number> {
       console.error("error: --page-height must be a positive number");
       return 2;
     }
+    const pageMargin = readNonNegativeNumberFlag(flags, "--page-margin");
+    if (Number.isNaN(pageMargin)) {
+      console.error("error: --page-margin must be a non-negative number");
+      return 2;
+    }
     const pages = renderSvgPages(result.value, {
       pageWidth,
       paginate: flags.includes("--paginate"),
       pageHeight,
+      pageMargin,
       color: readFlag(flags, "--color"),
       background: readFlag(flags, "--background"),
     });

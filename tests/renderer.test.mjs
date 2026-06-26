@@ -157,6 +157,21 @@ test("paginates visual lines into fixed-height page groups", () => {
   assert.doesNotMatch(svg, /<g class="page" data-page="2"[^>]*>[\s\S]*Paged/);
 });
 
+test("renders score content inside page margins", () => {
+  const result = parse(`hidden: true\n=\n1 2 | 3 4 | 5 6 |`);
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 160, pageMargin: 20, background: "#ffffff" });
+  assert.match(svg, /<svg[^>]+width="160"/);
+  assert.match(svg, /<rect class="page-background" x="0" y="0" width="160" height="[^"]+" fill="#ffffff"\/>/);
+  assert.match(svg, /<g class="page-content" transform="translate\(20, 20\)">/);
+  assert.match(svg, /<text class="note" x="18" y="24"/);
+
+  const withoutMargin = renderSvg(result.value, { pageWidth: 120, background: "#ffffff" });
+  const marginLines = [...svg.matchAll(/<line class="bar-(?:thin|final)"/g)].length;
+  const sameContentWidthLines = [...withoutMargin.matchAll(/<line class="bar-(?:thin|final)"/g)].length;
+  assert.equal(marginLines, sameContentWidthLines);
+});
+
 test("renders cross-line ties as cut halves after justification", () => {
   const result = parse("1 2 | 3 - | ~3 4 |");
   assert.equal(result.ok, true);
