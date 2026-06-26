@@ -19,6 +19,7 @@ const KEY_EQUALS_WIDTH = 10;
 const KEY_SPACE_WIDTH = 6;
 const KEY_TEXT_WIDTH = 10;
 const TIME_SIGNATURE_WIDTH = 20;
+const TIME_SIGNATURE_DIGIT_Y_OFFSET = 10;
 const TEMPO_SPACE_WIDTH = 6;
 const TEMPO_TEXT_WIDTH = 10;
 
@@ -82,9 +83,9 @@ function renderKeySignature(key: string, x: number, centerY: number): string {
 function renderTimeSignature(beatsPerMeasure: number, beatsPerWholeNote: number, x: number, centerY: number): string {
   return [
     `<g class="time-signature">`,
-    `<text x="${x}" y="${centerY - 8}" text-anchor="middle" dominant-baseline="central">${beatsPerMeasure}</text>`,
+    `<text x="${x}" y="${centerY - TIME_SIGNATURE_DIGIT_Y_OFFSET}" text-anchor="middle" dominant-baseline="central">${beatsPerMeasure}</text>`,
     `<line x1="${x - 8}" y1="${centerY}" x2="${x + 8}" y2="${centerY}"/>`,
-    `<text x="${x}" y="${centerY + 8}" text-anchor="middle" dominant-baseline="central">${beatsPerWholeNote}</text>`,
+    `<text x="${x}" y="${centerY + TIME_SIGNATURE_DIGIT_Y_OFFSET}" text-anchor="middle" dominant-baseline="central">${beatsPerWholeNote}</text>`,
     `</g>`,
   ].join("\n");
 }

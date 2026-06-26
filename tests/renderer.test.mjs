@@ -71,9 +71,9 @@ test("renders time signatures as stacked digits", () => {
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 360, color: "#111827", background: "#ffffff" });
   assert.match(svg, /<g class="time-signature">/);
-  assert.match(svg, /<text x="\d+" y="32" text-anchor="middle" dominant-baseline="central">4<\/text>/);
+  assert.match(svg, /<text x="\d+" y="30" text-anchor="middle" dominant-baseline="central">4<\/text>/);
   assert.match(svg, /<line x1="\d+" y1="40" x2="\d+" y2="40"\/>/);
-  assert.match(svg, /<text x="\d+" y="48" text-anchor="middle" dominant-baseline="central">4<\/text>/);
+  assert.match(svg, /<text x="\d+" y="50" text-anchor="middle" dominant-baseline="central">4<\/text>/);
   assert.match(svg, /<text class="tempo-mark" x="\d+" y="40" dominant-baseline="central">/);
   assert.doesNotMatch(svg, />4\/4<\/text>/);
 });
@@ -83,7 +83,7 @@ test("keeps key, time, and tempo metadata gaps equal as key text changes", () =>
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 360, color: "#111827", background: "#ffffff" });
   const keyMatch = svg.match(/<text class="metadata" x="(?<x>\d+)" y="40" dominant-baseline="central"> = F&#9839;<\/text>/);
-  const timeMatch = svg.match(/<text x="(?<x>\d+)" y="32" text-anchor="middle" dominant-baseline="central">6<\/text>/);
+  const timeMatch = svg.match(/<text x="(?<x>\d+)" y="30" text-anchor="middle" dominant-baseline="central">6<\/text>/);
   const tempoMatch = svg.match(/<text class="tempo-mark" x="(?<x>\d+)" y="40" dominant-baseline="central">[^<]+ = 96<\/text>/);
   assert.ok(keyMatch?.groups);
   assert.ok(timeMatch?.groups);

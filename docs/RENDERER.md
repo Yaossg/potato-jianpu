@@ -255,7 +255,7 @@ When visible, the header may render:
 - centered title
 - centered subtitle
 - key metadata as `1=<key>`
-- time signature as text, for example `4/4`
+- time signature as stacked digits with a square-ended fraction line
 - tempo mark and tempo number
 - right-aligned composer
 
