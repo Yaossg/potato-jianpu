@@ -5,6 +5,7 @@ import notoSansScRegularUrl from "@expo-google-fonts/noto-sans-sc/400Regular/Not
 import type { RenderedSvgPage } from "../renderer/index.js";
 
 const PDF_FONT_FAMILY = "NotoSansSC";
+const PDF_TIME_SIGNATURE_LINE_Y_OFFSET = -6.84;
 const PDF_TEXT_FONT_OVERRIDE = `
 text,
 .title,
@@ -77,6 +78,14 @@ function svgElement(svg: string): SVGSVGElement {
   const style = document.createElementNS("http://www.w3.org/2000/svg", "style");
   style.textContent = PDF_TEXT_FONT_OVERRIDE;
   defs.append(style);
+  for (const line of root.querySelectorAll(".time-signature line")) {
+    for (const attribute of ["y1", "y2"]) {
+      const value = Number(line.getAttribute(attribute));
+      if (Number.isFinite(value)) {
+        line.setAttribute(attribute, String(value + PDF_TIME_SIGNATURE_LINE_Y_OFFSET));
+      }
+    }
+  }
   return document.documentElement as unknown as SVGSVGElement;
 }
 

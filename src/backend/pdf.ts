@@ -24,6 +24,7 @@ const require = createRequire(import.meta.url);
 const PDFDocument = require("pdfkit") as PdfDocumentConstructor;
 const SVGtoPDF = require("svg-to-pdfkit") as SvgToPdf;
 const PDF_FONT_FAMILY = "NotoSansSC";
+const PDF_TIME_SIGNATURE_LINE_Y_OFFSET = -6.84;
 const regularFontPath = require.resolve("@expo-google-fonts/noto-sans-sc/400Regular/NotoSansSC_400Regular.ttf");
 const boldFontPath = require.resolve("@expo-google-fonts/noto-sans-sc/700Bold/NotoSansSC_700Bold.ttf");
 
@@ -34,6 +35,20 @@ function registerPdfFonts(document: PDFKit.PDFDocument) {
 
 function pdfFontName(_family: string, bold: boolean): string {
   return bold ? `${PDF_FONT_FAMILY}-Bold` : PDF_FONT_FAMILY;
+}
+
+function svgForPdf(svg: string): string {
+  return svg.replace(/<g class="time-signature">[\s\S]*?<\/g>/g, (group) => normalizeTimeSignatureForPdf(group));
+}
+
+function formatPdfNumber(value: number): string {
+  return Number.isInteger(value) ? String(value) : value.toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
+}
+
+function normalizeTimeSignatureForPdf(group: string): string {
+  return group.replace(/\b(y[12])="([^"]+)"/g, (_match, attribute: string, value: string) => {
+    return `${attribute}="${formatPdfNumber(Number(value) + PDF_TIME_SIGNATURE_LINE_Y_OFFSET)}"`;
+  });
 }
 
 export async function renderPdfBytes(pages: RenderedSvgPage[], options: PdfExportOptions = {}): Promise<Uint8Array> {
@@ -61,7 +76,7 @@ export async function renderPdfBytes(pages: RenderedSvgPage[], options: PdfExpor
 
   for (const page of pages) {
     document.addPage({ size: [page.width, page.height], margin: 0 });
-    SVGtoPDF(document, page.svg, 0, 0, {
+    SVGtoPDF(document, svgForPdf(page.svg), 0, 0, {
       width: page.width,
       height: page.height,
       assumePt: true,

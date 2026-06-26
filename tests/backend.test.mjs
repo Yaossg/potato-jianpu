@@ -1,8 +1,31 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { inflateSync } from "node:zlib";
 import { parse } from "../dist/parser/index.js";
 import { renderSvg, renderSvgPages } from "../dist/renderer/index.js";
 import { exportMp3Bytes, exportWavBytes, renderPdfBytes, renderPngBytes } from "../dist/backend/index.js";
+
+function pdfContentStreams(pdf) {
+  const buffer = Buffer.from(pdf);
+  const startMarker = Buffer.from("stream\n", "latin1");
+  const endMarker = Buffer.from("\nendstream", "latin1");
+  const streams = [];
+  let offset = 0;
+  while ((offset = buffer.indexOf(startMarker, offset)) !== -1) {
+    const start = offset + startMarker.length;
+    const end = buffer.indexOf(endMarker, start);
+    if (end === -1) {
+      break;
+    }
+    try {
+      streams.push(inflateSync(buffer.subarray(start, end)).toString("latin1"));
+    } catch {
+      // Font streams are not Flate-compressed content streams.
+    }
+    offset = end + endMarker.length;
+  }
+  return streams.join("\n");
+}
 
 test("renders SVG output to PNG bytes", () => {
   const result = parse(`title: "PNG"\n=\n1 2 3 4 | 5 - |`);
@@ -28,6 +51,13 @@ test("renders Unicode text to PDF with an embedded Unicode font", async () => {
   assert.equal(String.fromCharCode(...pdf.slice(0, 4)), "%PDF");
   assert.match(text, /NotoSansSC/);
   assert.match(text, /\/ToUnicode\b/);
+});
+
+test("raises the PDF time signature fraction line", async () => {
+  const result = parse(`time: 6/8\n=\n1 2 3`);
+  assert.equal(result.ok, true);
+  const pdf = await renderPdfBytes(renderSvgPages(result.value), { title: result.value.header.title });
+  assert.match(pdfContentStreams(pdf), /\b86 33\.16 m\s+102 33\.16 l\b/);
 });
 
 test("renders paginated SVG pages to a multi-page PDF", async () => {
