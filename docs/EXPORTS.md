@@ -28,7 +28,9 @@ pnpm run cli -- --version
 pnpm run cli -- validate examples/twinkle.jpu --json
 pnpm run cli -- parse examples/twinkle.jpu --json
 pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --page-width 1000 --paginate --page-height 1400 --page-margin 40 --page-footer "modern-jianpu" --page-numbers --color "#111827" --background "#ffffff"
+pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --page-width 1000 --paginate --page-height 1400 --split-pages
 pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --page-width 1000 --paginate --page-height 1400 --page-margin 40 --page-footer "modern-jianpu" --page-numbers --color "#111827" --background "#ffffff"
+pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --page-width 1000 --paginate --page-height 1400 --split-pages
 pnpm run cli -- export-pdf examples/twinkle.jpu -o twinkle.pdf --page-width 1000 --paginate --page-height 1400 --page-margin 40 --page-footer "modern-jianpu" --page-numbers --color "#111827" --background "#ffffff"
 pnpm run cli -- export-midi examples/twinkle.jpu -o twinkle.mid --program 0 --omit-initial-rest
 pnpm run cli -- export-wav examples/twinkle.jpu -o twinkle.wav --sample-rate 44100 --amplitude 1 --omit-initial-rest
@@ -95,10 +97,10 @@ Validate result shape:
 }
 ```
 
-Fatal parse or validation errors return exit code `1`. Usage errors, such as a
-missing `-o`, invalid `--page-width`, invalid `--page-height`, invalid
-`--page-margin`, invalid `--sample-rate`, or invalid `--program`, return exit
-code `2`.
+Fatal parse, validation, or export errors return exit code `1`. Usage errors,
+such as a missing `-o`, invalid `--page-width`, invalid `--page-height`,
+invalid `--page-margin`, invalid `--sample-rate`, or invalid `--program`,
+return exit code `2`.
 
 Unknown options and options missing their required value are rejected with exit
 code `2`.
@@ -109,6 +111,7 @@ SVG export uses the shared renderer:
 
 ```sh
 pnpm run cli -- export-svg input.jpu -o output.svg --page-width 1000 --paginate --page-height 1400 --page-margin 40
+pnpm run cli -- export-svg input.jpu -o output.svg --page-width 1000 --paginate --page-height 1400 --split-pages
 ```
 
 Options:
@@ -129,22 +132,32 @@ Options:
   omitted, the renderer uses the parsed `numbering` header value.
 - `--color <css>`: CSS color used for `currentColor` SVG notation elements.
 - `--background <css>`: CSS color used for SVG page background rectangles.
+- `--split-pages`: write one SVG file per rendered page instead of one combined
+  SVG file.
 
 The renderer uses `pageWidth` for the SVG viewport width. Measures are wrapped
 between measures when the next measure would exceed the content width, which is
 `pageWidth` minus the left and right page margins. A single measure wider than
 the content width is kept on its own line rather than split internally.
 
-Paginated SVG export keeps one SVG file. The root height is the page height
-multiplied by the page count, each page is emitted as a `.page` group, and the
-header appears only on the first page. When `--page-margin` is non-zero, page
-content is shifted into a `.page-content` group while backgrounds and page
-boundaries still use the full page size. Each page also includes an exported
-`.page-boundary` rectangle so page edges are visible in both SVG and PNG output.
-Optional pagination, page footer, and page-number text can be set in the file
-header or CLI options. They render inside the page groups, use the same export
-color as notation, and reserve vertical content space so they do not overlap
-score content.
+Paginated SVG export keeps one SVG file unless `--split-pages` is set. The root
+height is the page height multiplied by the page count, each page is emitted as
+a `.page` group, and the header appears only on the first page. When
+`--page-margin` is non-zero, page content is shifted into a `.page-content`
+group while backgrounds and page boundaries still use the full page size. Each
+page also includes an exported `.page-boundary` rectangle so page edges are
+visible in both SVG and PNG output. Optional pagination, page footer, and
+page-number text can be set in the file header or CLI options. They render
+inside the page groups, use the same export color as notation, and reserve
+vertical content space so they do not overlap score content.
+
+With `--split-pages`, `-o` is interpreted as an output stem. For example,
+`-o score.svg` writes `score-01.svg`, `score-02.svg`, and so on. The page
+number is zero-padded to at least two digits, or wider when the page count
+requires it. Existing target files are not overwritten; if any generated page
+path already exists, the command reports an export error before writing new
+page files. Without pagination, split SVG export still writes one adaptive
+page file.
 
 ## PNG Export
 
@@ -152,6 +165,7 @@ The backend CLI renders the same SVG output through the backend PNG adapter:
 
 ```sh
 pnpm run cli -- export-png input.jpu -o output.png --page-width 1000 --paginate --page-height 1400 --page-margin 40
+pnpm run cli -- export-png input.jpu -o output.png --page-width 1000 --paginate --page-height 1400 --split-pages
 ```
 
 Options:
@@ -165,6 +179,8 @@ Options:
 - `--color <css>`: same behavior as SVG export.
 - `--background <css>`: sets both the SVG background rectangle and the PNG
   renderer background.
+- `--split-pages`: write one PNG file per rendered page. `-o` uses the same
+  stem, zero-padding, and no-overwrite behavior as split SVG export.
 
 PNG export uses the backend dependency `@resvg/resvg-js`. Font behavior is
 intended to match the SVG preview by using the same SVG text and style output.
@@ -173,7 +189,10 @@ The frontend also exposes PNG download. Browser PNG export uses a different
 adapter: it turns the current SVG string into an SVG `Blob`, loads it into an
 `Image`, draws that image to a canvas, and downloads the canvas result as
 `jianpu-score.png`. It uses the same preview/export color, background, page
-width, pagination, page height, and page margin settings as SVG download.
+width, pagination, page height, and page margin settings as SVG download. When
+Split pages is enabled in Export Settings, SVG and PNG downloads use the same
+per-page naming pattern as CLI split output and trigger one browser download
+per rendered page.
 
 ## PDF Export
 

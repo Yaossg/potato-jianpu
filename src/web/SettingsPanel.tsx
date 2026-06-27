@@ -27,6 +27,7 @@ interface SettingsPanelProps {
   trackProgramOverrideCount: number;
   volume: number;
   audioSampleRate: number;
+  splitPages: boolean;
   omitInitialRests: boolean;
   sourceWrap: boolean;
   editorFontSize: number;
@@ -48,6 +49,7 @@ interface SettingsPanelProps {
   onProgramChange: (program: number) => void;
   onVolumeChange: (volume: number) => void;
   onAudioSampleRateChange: (sampleRate: number) => void;
+  onSplitPagesChange: (split: boolean) => void;
   onOmitInitialRestsChange: (omit: boolean) => void;
   onSourceWrapChange: (wrap: boolean) => void;
   onEditorFontSizeChange: (fontSize: number) => void;
@@ -131,6 +133,7 @@ export function SettingsPanel({
   trackProgramOverrideCount,
   volume,
   audioSampleRate,
+  splitPages,
   omitInitialRests,
   sourceWrap,
   editorFontSize,
@@ -152,6 +155,7 @@ export function SettingsPanel({
   onProgramChange,
   onVolumeChange,
   onAudioSampleRateChange,
+  onSplitPagesChange,
   onOmitInitialRestsChange,
   onSourceWrapChange,
   onEditorFontSizeChange,
@@ -348,6 +352,10 @@ export function SettingsPanel({
         <section className="settings-section">
           <h3>{t("exportSettings")}</h3>
           <div className="settings-grid page-settings-grid">
+            <label className="checkbox-control">
+              <input type="checkbox" checked={splitPages} onChange={(event) => onSplitPagesChange(event.target.checked)} />
+              {t("splitPages")}
+            </label>
             <label className="number-control">
               {t("audioSampleRate")}
               <input

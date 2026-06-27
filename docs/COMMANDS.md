@@ -43,9 +43,10 @@ Docs-site-specific commands live in `docs-site/docs/COMMANDS.md`.
 ```sh
 pnpm run cli -- --version
 pnpm run cli -- validate examples/twinkle.jpu
-pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg
-pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png
-pnpm run cli -- export-pdf examples/twinkle.jpu -o twinkle.pdf
+pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --paginate
+pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --paginate --split-pages
+pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --paginate
+pnpm run cli -- export-pdf examples/twinkle.jpu -o twinkle.pdf --paginate
 pnpm run cli -- export-midi examples/twinkle.jpu -o twinkle.mid
 pnpm run cli -- export-wav examples/twinkle.jpu -o twinkle.wav
 pnpm run cli -- export-mp3 examples/twinkle.jpu -o twinkle.mp3

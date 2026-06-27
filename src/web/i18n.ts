@@ -52,6 +52,7 @@ export type TranslationKey =
   | "drums"
   | "volume"
   | "audioSampleRate"
+  | "splitPages"
   | "omitInitialRests"
   | "sourceWrap"
   | "editorFontSize"
@@ -125,7 +126,8 @@ const translations: { en: Record<TranslationKey, string>; zh: Record<Translation
     generalMidi: "General MIDI",
     drums: "Drums",
     volume: "Volume",
-    audioSampleRate: "Audio sample rate",
+    audioSampleRate: "Audio sample rate (WAV/MP3)",
+    splitPages: "Split pages (SVG/PNG)",
     omitInitialRests: "Omit initial rests",
     sourceWrap: "Wrap source lines",
     editorFontSize: "Editor font size",
@@ -198,7 +200,8 @@ const translations: { en: Record<TranslationKey, string>; zh: Record<Translation
     generalMidi: "通用 MIDI",
     drums: "鼓组",
     volume: "音量",
-    audioSampleRate: "音频采样率",
+    audioSampleRate: "音频采样率（WAV/MP3）",
+    splitPages: "拆分页（SVG/PNG）",
     omitInitialRests: "忽略开头休止符",
     sourceWrap: "源码自动换行",
     editorFontSize: "编辑器字号",

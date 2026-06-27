@@ -27,6 +27,7 @@ pnpm run cli -- validate path/to/score.jpu
 pnpm run cli -- validate path/to/score.jpu --json
 pnpm run cli -- parse path/to/score.jpu --json
 pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --page-width 1000 --paginate --page-height 1400 --color "#111827" --background "#ffffff"
+pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --page-width 1000 --paginate --page-height 1400 --split-pages
 pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --page-width 1000 --paginate --page-height 1400 --color "#111827" --background "#ffffff"
 pnpm run cli -- export-pdf examples/twinkle.jpu -o twinkle.pdf --page-width 1000 --paginate --page-height 1400 --color "#111827" --background "#ffffff"
 pnpm run cli -- export-midi examples/twinkle.jpu -o twinkle.mid --program 0

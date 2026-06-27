@@ -1,6 +1,15 @@
 #!/usr/bin/env node
-import { readFile, writeFile } from "node:fs/promises";
-import { exportMp3Bytes, exportWavBytes, renderPdfBytes, renderPngBytes } from "../backend/index.js";
+import { constants } from "node:fs";
+import { access, readFile, writeFile } from "node:fs/promises";
+import {
+  exportMp3Bytes,
+  exportWavBytes,
+  renderPdfBytes,
+  renderPngBytes,
+  splitPngPageOutputs,
+  splitSvgPageOutputs,
+  type SplitPageOutput,
+} from "../backend/index.js";
 import { parse } from "../parser/index.js";
 import { exportMidiBytes } from "../player/index.js";
 import { renderSvg, renderSvgPages } from "../renderer/index.js";
@@ -11,8 +20,8 @@ function usage(): string {
     "Usage:",
     "  jianpu validate <file> [--json]",
     "  jianpu parse <file> [--json]",
-    "  jianpu export-svg <file> -o <output.svg> [--page-width <px>] [--paginate] [--page-height <px>] [--page-margin <px>] [--page-footer <text>] [--page-numbers] [--color <css>] [--background <css>]",
-    "  jianpu export-png <file> -o <output.png> [--page-width <px>] [--paginate] [--page-height <px>] [--page-margin <px>] [--page-footer <text>] [--page-numbers] [--color <css>] [--background <css>]",
+    "  jianpu export-svg <file> -o <output.svg> [--page-width <px>] [--paginate] [--page-height <px>] [--page-margin <px>] [--page-footer <text>] [--page-numbers] [--color <css>] [--background <css>] [--split-pages]",
+    "  jianpu export-png <file> -o <output.png> [--page-width <px>] [--paginate] [--page-height <px>] [--page-margin <px>] [--page-footer <text>] [--page-numbers] [--color <css>] [--background <css>] [--split-pages]",
     "  jianpu export-pdf <file> -o <output.pdf> [--page-width <px>] [--paginate] [--page-height <px>] [--page-margin <px>] [--page-footer <text>] [--page-numbers] [--color <css>] [--background <css>]",
     "  jianpu export-midi <file> -o <output.mid> [--program <number>] [--omit-initial-rest]",
     "  jianpu export-wav <file> -o <output.wav> [--program <number>] [--sample-rate <hz>] [--amplitude <0-1>] [--omit-initial-rest]",
@@ -68,6 +77,18 @@ function commandFlags(command: string): Set<string> {
       return new Set(["--json"]);
     case "export-svg":
     case "export-png":
+      return new Set([
+        "-o",
+        "--page-width",
+        "--paginate",
+        "--page-height",
+        "--page-margin",
+        "--page-footer",
+        "--page-numbers",
+        "--color",
+        "--background",
+        "--split-pages",
+      ]);
     case "export-pdf":
       return new Set([
         "-o",
@@ -165,6 +186,41 @@ function readProgram(flags: string[]): number | null {
   return program;
 }
 
+function errorCode(error: unknown): string | undefined {
+  return typeof error === "object" && error !== null && "code" in error ? String(error.code) : undefined;
+}
+
+async function outputExists(path: string): Promise<boolean> {
+  try {
+    await access(path, constants.F_OK);
+    return true;
+  } catch (error) {
+    if (errorCode(error) === "ENOENT") {
+      return false;
+    }
+    throw error;
+  }
+}
+
+async function writeSplitPageOutputs(outputs: SplitPageOutput<string | Uint8Array>[]): Promise<boolean> {
+  for (const output of outputs) {
+    if (await outputExists(output.path)) {
+      console.error(`error: output file already exists: ${output.path}`);
+      return false;
+    }
+  }
+
+  for (const output of outputs) {
+    if (typeof output.data === "string") {
+      await writeFile(output.path, output.data, { encoding: "utf8", flag: "wx" });
+    } else {
+      await writeFile(output.path, output.data, { flag: "wx" });
+    }
+  }
+  console.log(outputs.map((output) => output.path).join("\n"));
+  return true;
+}
+
 async function main(argv: string[]): Promise<number> {
   const [command, file, ...flags] = argv;
   if (command === "--version" || command === "-v") {
@@ -244,6 +300,10 @@ async function main(argv: string[]): Promise<number> {
     if (!renderOptions) {
       return 2;
     }
+    if (flags.includes("--split-pages")) {
+      const pages = renderSvgPages(result.value, renderOptions);
+      return (await writeSplitPageOutputs(splitSvgPageOutputs(pages, output))) ? 0 : 1;
+    }
     await writeFile(output, renderSvg(result.value, renderOptions), "utf8");
     console.log(output);
   }
@@ -259,6 +319,10 @@ async function main(argv: string[]): Promise<number> {
       return 2;
     }
     const background = readFlag(flags, "--background");
+    if (flags.includes("--split-pages")) {
+      const pages = renderSvgPages(result.value, renderOptions);
+      return (await writeSplitPageOutputs(splitPngPageOutputs(pages, output, { background }))) ? 0 : 1;
+    }
     const svg = renderSvg(result.value, renderOptions);
     await writeFile(output, renderPngBytes(svg, { background }));
     console.log(output);

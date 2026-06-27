@@ -79,6 +79,7 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(script, /ResizeObserver/);
   assert.match(script, /Sound Settings/);
   assert.match(script, /Export Settings/);
+  assert.match(script, /Split pages \(SVG\/PNG\)/);
   assert.match(script, /modern-jianpu-markup-theme/);
   assert.match(script, /modern-jianpu-markup-source/);
   assert.match(script, /prefers-color-scheme: dark/);
@@ -99,7 +100,7 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(script, /General MIDI/);
   assert.match(script, /Volume/);
   assert.match(script, /max:200/);
-  assert.match(script, /Audio sample rate/);
+  assert.match(script, /Audio sample rate \(WAV\/MP3\)/);
   assert.match(script, /Audition/);
   assert.match(script, /internalcontext/);
   assert.match(script, /Omit initial rests/);
@@ -160,8 +161,11 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(docsRepeats, /related-links/);
   assert.match(docsRhythm, /Dash duration marks/);
   assert.match(appSource, /function updateSource/);
+  assert.match(appSource, /splitPageExportFilename/);
   assert.match(appSource, /<SourceEditor/);
   assert.match(settingsPanelSource, /\{paginate && \(/);
+  assert.match(settingsPanelSource, /onSplitPagesChange/);
+  assert.match(settingsPanelSource, /t\("splitPages"\)/);
   assert.match(settingsPanelSource, /t\("pageHeight"\)/);
   assert.match(settingsPanelSource, /t\("pageMargin"\)/);
   assert.match(settingsPanelSource, /function useClampedNumberDraft/);

@@ -9,12 +9,13 @@ The repository builds two targets from shared TypeScript source:
 - Backend CLI
 - Frontend web app
 
-The backend CLI provides parse, validate, SVG, PNG, PDF, MIDI, WAV, and MP3
-export.
+The backend CLI provides parse, validate, SVG, split-page SVG, PNG, split-page
+PNG, PDF, MIDI, WAV, and MP3 export.
 
 The frontend web app provides editing, SVG preview, playback, note highlighting,
-SVG download, PNG download, PDF download, MIDI download, WAV download, MP3
-download, examples, and diagnostics.
+SVG download, split-page SVG download, PNG download, split-page PNG download,
+PDF download, MIDI download, WAV download, MP3 download, examples, and
+diagnostics.
 
 ## Data Flow
 
@@ -170,6 +171,7 @@ src/backend/
 Responsibilities:
 
 - PNG export from SVG using `@resvg/resvg-js`
+- split-page SVG and PNG output helpers for CLI export
 - PDF export from rendered SVG pages using PDFKit and SVG-to-PDFKit
 - WAV and MP3 export from parsed document using the shared melody compiler
 
@@ -236,6 +238,7 @@ Responsibilities:
 - WAV download
 - MP3 download
 - preview/export page width and theme controls
+- split-page controls for SVG and PNG visual exports
 
 The frontend imports shared parser, renderer, and player code. It does not
 import backend PNG, PDF, WAV, or MP3 modules. Browser PNG, PDF, and audio

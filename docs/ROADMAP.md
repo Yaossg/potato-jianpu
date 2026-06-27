@@ -37,15 +37,6 @@ commitment.
     - Define fallback behavior for groups taller than a single page.
     - Verify multi-voice and lyric-heavy examples do not split attached content
       across page boundaries unless unavoidable.
-  - Optional split per-page SVG or PNG export:
-    - Add backend export helpers that can emit one file per rendered page.
-    - Define output naming for page files, including zero-padding and collision
-      behavior.
-    - Add CLI options for split output and document how `-o` is interpreted.
-    - Consider frontend download behavior, such as a zip file or sequential
-      downloads, before exposing the browser UI.
-    - Verify page count, filenames, and per-page dimensions for SVG and PNG
-      outputs.
   - Print-friendly HTML output or browser print view:
     - Decide whether this is a generated export target or a frontend-only print
       mode.

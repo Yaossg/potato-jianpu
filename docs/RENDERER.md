@@ -207,7 +207,7 @@ Important details:
 - `pageMargin` shifts rendered header and score content inward without changing
   the SVG viewport width
 
-The CLI exposes this through:
+The CLI exposes direct dimensions through:
 
 ```sh
 pnpm run cli -- export-svg input.jpu -o output.svg --page-width 800 --page-margin 40
@@ -444,7 +444,7 @@ The renderer is deterministic but still intentionally simple:
 - measure wrapping only occurs between measures
 - overwide lines use line-level scaling instead of note re-spacing
 - no full collision avoidance for dense chords and ties
-- no separate per-page SVG or PNG file generation
+- no zip packaging for split per-page browser downloads
 - no staff or engraving model beyond the current Jianpu notation
 
 These limits keep the renderer focused on its current notation targets.

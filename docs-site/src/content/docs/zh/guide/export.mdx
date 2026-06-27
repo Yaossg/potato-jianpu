@@ -34,13 +34,16 @@ Modern Jianpu Markup 可以从浏览器 App 和 CLI 把同一个解析后的乐�
 
 ## 视觉导出
 
-SVG 是渲染器输出的确定性文本。PNG 会栅格化同一份渲染后的 SVG。PDF 会把渲染后的 SVG 页面转换为矢量 PDF 页面，并嵌入 Noto Sans SC，让中文标题和歌词等 Unicode 文本正确显示。所有视觉导出都支持页面宽度、颜色和背景选项。
+SVG 是渲染器输出的确定性文本。PNG 会栅格化同一份渲染后的 SVG。PDF 会把渲染后的 SVG 页面转换为矢量 PDF 页面，并嵌入 Noto Sans SC，让中文标题和歌词等 Unicode 文本正确显示。所有视觉导出都支持页面宽度、页高、颜色和背景选项。
 
 ```sh
-pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --page-width 1000 --color "#111827" --background "#ffffff"
-pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --page-width 1000 --color "#111827" --background "#ffffff"
-pnpm run cli -- export-pdf examples/twinkle.jpu -o twinkle.pdf --page-width 1000 --color "#111827" --background "#ffffff"
+pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --page-width 1000 --paginate --page-height 1400 --color "#111827" --background "#ffffff"
+pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --page-width 1000 --paginate --page-height 1400 --color "#111827" --background "#ffffff"
+pnpm run cli -- export-pdf examples/twinkle.jpu -o twinkle.pdf --page-width 1000 --paginate --page-height 1400 --color "#111827" --background "#ffffff"
+pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --page-width 1000 --paginate --page-height 1400 --split-pages
 ```
+
+SVG 和 PNG 导出也支持 `--split-pages`，此时 `-o score.svg` 或 `-o score.png` 会被当作输出文件名前缀，写出 `score-01.svg` 或 `score-01.png` 这样的文件，并且不会覆盖已有分页文件。在浏览器 App 中，导出设置里的“拆分页”会对 SVG 和 PNG 下载使用同样的分页命名方式。
 
 ## MIDI 导出
 

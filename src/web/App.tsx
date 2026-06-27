@@ -17,7 +17,7 @@ import { PreviewAudioPlayer } from "./audio.js";
 import { waitForNextFrame } from "./browser-utils.js";
 import { downloadBlob, downloadBytes, svgToPngBlob } from "./downloads.js";
 import { ExamplesPanel } from "./ExamplesPanel.js";
-import { exportFilename } from "./export-filename.js";
+import { exportFilename, splitPageExportFilename } from "./export-filename.js";
 import { isLanguage, pageWidthModeLabels, translate } from "./i18n.js";
 import { pageLayoutWarnings } from "./page-warnings.js";
 import type { PageLayoutWarning } from "./page-warnings.js";
@@ -40,6 +40,7 @@ const SHOW_LINE_NUMBERS_STORAGE_KEY = "modern-jianpu-markup-show-line-numbers";
 const HIGHLIGHT_CURRENT_LINE_STORAGE_KEY = "modern-jianpu-markup-highlight-current-line";
 const HIGHLIGHT_DIAGNOSTICS_STORAGE_KEY = "modern-jianpu-markup-highlight-diagnostics";
 const EDITOR_PANE_PERCENT_STORAGE_KEY = "modern-jianpu-markup-editor-pane-percent";
+
 const DEFAULT_PAGE_WIDTH = 1000;
 const DEFAULT_PAGE_HEIGHT = 1400;
 const DEFAULT_PAGE_MARGIN = 0;
@@ -200,6 +201,7 @@ export function App() {
   const [program, setProgram] = useState(0);
   const [volume, setVolume] = useState(100);
   const [audioSampleRate, setAudioSampleRate] = useState(44100);
+  const [splitPages, setSplitPages] = useState(false);
   const [omitInitialRests, setOmitInitialRests] = useState(true);
   const [exportingAudio, setExportingAudio] = useState<"wav" | "mp3" | null>(null);
   const [audioExportDetails, setAudioExportDetails] = useState("");
@@ -467,9 +469,16 @@ export function App() {
   }
 
   function exportSvg() {
-    if (parsed.ok && svg) {
-      downloadBytes(svg, exportFilename(parsed.value.header.title, "svg"), "image/svg+xml");
+    if (!parsed.ok || !svg) {
+      return;
     }
+    if (splitPages && svgPages) {
+      for (const [index, page] of svgPages.entries()) {
+        downloadBytes(page.svg, splitPageExportFilename(parsed.value.header.title, "svg", index + 1, svgPages.length), "image/svg+xml");
+      }
+      return;
+    }
+    downloadBytes(svg, exportFilename(parsed.value.header.title, "svg"), "image/svg+xml");
   }
 
   async function exportPng() {
@@ -477,6 +486,13 @@ export function App() {
       return;
     }
     try {
+      if (splitPages && svgPages) {
+        for (const [index, page] of svgPages.entries()) {
+          downloadBlob(await svgToPngBlob(page.svg), splitPageExportFilename(parsed.value.header.title, "png", index + 1, svgPages.length));
+          await waitForNextFrame();
+        }
+        return;
+      }
       downloadBlob(await svgToPngBlob(svg), exportFilename(parsed.value.header.title, "png"));
     } catch (error) {
       window.alert(error instanceof Error ? error.message : "Failed to export PNG.");
@@ -735,6 +751,7 @@ export function App() {
           trackProgramOverrideCount={trackProgramOverrideCount}
           volume={volume}
           audioSampleRate={audioSampleRate}
+          splitPages={splitPages}
           omitInitialRests={omitInitialRests}
           sourceWrap={sourceWrap}
           editorFontSize={editorFontSize}
@@ -756,6 +773,7 @@ export function App() {
           onProgramChange={setProgram}
           onVolumeChange={setVolume}
           onAudioSampleRateChange={setAudioSampleRate}
+          onSplitPagesChange={setSplitPages}
           onOmitInitialRestsChange={setOmitInitialRests}
           onSourceWrapChange={setSourceWrap}
           onEditorFontSizeChange={setEditorFontSize}

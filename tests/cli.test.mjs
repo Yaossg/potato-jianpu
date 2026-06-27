@@ -10,6 +10,13 @@ import { promisify } from "node:util";
 const execFileAsync = promisify(execFile);
 const repoDir = fileURLToPath(new URL("../", import.meta.url));
 
+function pngDimensions(png) {
+  return {
+    width: png.readUInt32BE(16),
+    height: png.readUInt32BE(20),
+  };
+}
+
 test("CLI prints package version", async () => {
   const manifest = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
   const { stdout, stderr } = await execFileAsync(process.execPath, ["dist/cli/main.js", "--version"], {
@@ -107,6 +114,51 @@ test("CLI export-png accepts pagination options", async () => {
 
   const png = await readFile(output);
   assert.equal(String.fromCharCode(...png.slice(1, 4)), "PNG");
+});
+
+test("CLI export-svg can split rendered pages", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
+  const input = join(dir, "score.jpu");
+  const output = join(dir, "score.svg");
+  await writeFile(input, "1 2 | 3 4 |\n---\n5 6 | 7 1' |", "utf8");
+
+  const { stdout } = await execFileAsync(
+    process.execPath,
+    ["dist/cli/main.js", "export-svg", input, "-o", output, "--paginate", "--page-width", "160", "--page-height", "180", "--split-pages"],
+    {
+      cwd: repoDir,
+    },
+  );
+
+  const paths = stdout.trim().split(/\r?\n/);
+  assert.deepEqual(paths, [join(dir, "score-01.svg"), join(dir, "score-02.svg")]);
+  await assert.rejects(readFile(output, "utf8"), /ENOENT/);
+  const firstPage = await readFile(paths[0], "utf8");
+  const secondPage = await readFile(paths[1], "utf8");
+  assert.match(firstPage, /<svg[^>]+width="160" height="180"/);
+  assert.match(firstPage, /data-page="1"/);
+  assert.doesNotMatch(firstPage, /data-page="2"/);
+  assert.match(secondPage, /data-page="2"/);
+});
+
+test("CLI export-png can split rendered pages", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
+  const input = join(dir, "score.jpu");
+  const output = join(dir, "score.png");
+  await writeFile(input, "1 2 | 3 4 |\n---\n5 6 | 7 1' |", "utf8");
+
+  const { stdout } = await execFileAsync(
+    process.execPath,
+    ["dist/cli/main.js", "export-png", input, "-o", output, "--page-width", "160", "--paginate", "--page-height", "180", "--split-pages"],
+    {
+      cwd: repoDir,
+    },
+  );
+
+  const paths = stdout.trim().split(/\r?\n/);
+  assert.deepEqual(paths, [join(dir, "score-01.png"), join(dir, "score-02.png")]);
+  assert.deepEqual(pngDimensions(await readFile(paths[0])), { width: 160, height: 180 });
+  assert.deepEqual(pngDimensions(await readFile(paths[1])), { width: 160, height: 180 });
 });
 
 test("CLI export-pdf accepts pagination options", async () => {
@@ -237,6 +289,28 @@ test("CLI rejects invalid page width", async () => {
   );
 });
 
+test("CLI split page export does not overwrite existing page files", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
+  const input = join(dir, "score.jpu");
+  const output = join(dir, "score.svg");
+  const existingPage = join(dir, "score-01.svg");
+  await writeFile(input, "1 2 | 3 4 |\n---\n5 6 | 7 1' |", "utf8");
+  await writeFile(existingPage, "existing", "utf8");
+
+  await assert.rejects(
+    execFileAsync(process.execPath, ["dist/cli/main.js", "export-svg", input, "-o", output, "--paginate", "--split-pages"], {
+      cwd: repoDir,
+    }),
+    (error) => {
+      assert.equal(error.code, 1);
+      assert.match(String(error.stderr), /output file already exists: .*score-01\.svg/);
+      return true;
+    },
+  );
+
+  assert.equal(await readFile(existingPage, "utf8"), "existing");
+});
+
 test("CLI rejects invalid page margin", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
   const input = join(dir, "score.jpu");
@@ -347,6 +421,13 @@ test("CLI rejects unknown options", async () => {
       cwd: repoDir,
     }),
     /unknown option --json/,
+  );
+
+  await assert.rejects(
+    execFileAsync(process.execPath, ["dist/cli/main.js", "export-pdf", input, "-o", join(dir, "score.pdf"), "--split-pages"], {
+      cwd: repoDir,
+    }),
+    /unknown option --split-pages/,
   );
 });
 

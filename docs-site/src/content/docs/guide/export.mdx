@@ -27,13 +27,16 @@ Modern Jianpu Markup can export the same parsed score to visual, MIDI, and audio
 
 ## Visual exports
 
-SVG is deterministic text output from the renderer. PNG rasterizes the same rendered SVG. PDF converts rendered SVG pages to vector PDF pages and embeds Noto Sans SC so Unicode text such as Chinese titles and lyrics renders correctly. All visual exports support page width, color, and background options.
+SVG is deterministic text output from the renderer. PNG rasterizes the same rendered SVG. PDF converts rendered SVG pages to vector PDF pages and embeds Noto Sans SC so Unicode text such as Chinese titles and lyrics renders correctly. All visual exports support page width, page height, color, and background options.
 
 ```sh
-pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --page-width 1000 --color "#111827" --background "#ffffff"
-pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --page-width 1000 --color "#111827" --background "#ffffff"
-pnpm run cli -- export-pdf examples/twinkle.jpu -o twinkle.pdf --page-width 1000 --color "#111827" --background "#ffffff"
+pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --page-width 1000 --paginate --page-height 1400 --color "#111827" --background "#ffffff"
+pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --page-width 1000 --paginate --page-height 1400 --color "#111827" --background "#ffffff"
+pnpm run cli -- export-pdf examples/twinkle.jpu -o twinkle.pdf --page-width 1000 --paginate --page-height 1400 --color "#111827" --background "#ffffff"
+pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --page-width 1000 --paginate --page-height 1400 --split-pages
 ```
+
+SVG and PNG export also accept `--split-pages`, which interprets `-o score.svg` or `-o score.png` as a stem and writes files such as `score-01.svg` or `score-01.png` without overwriting existing page files. In the browser app, the Split pages export setting applies the same per-page naming pattern to SVG and PNG downloads.
 
 ## MIDI export
 

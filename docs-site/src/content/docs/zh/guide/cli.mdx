@@ -29,7 +29,7 @@ pnpm run cli -- export-wav examples/twinkle.jpu -o twinkle.wav
 pnpm run cli -- export-mp3 examples/twinkle.jpu -o twinkle.mp3
 ```
 
-SVG、PNG 和 PDF 导出支持 `--page-width <px>`、`--color <css>` 和 `--background <css>`。
+SVG、PNG 和 PDF 导出支持 `--page-width <px>`、`--page-height <px>`、`--page-margin <px>`、`--page-footer <text>`、`--page-numbers`、`--color <css>` 和 `--background <css>`。SVG 和 PNG 导出还支持 `--split-pages`；使用 `-o score.svg` 时，拆页输出会写出 `score-01.svg`、`score-02.svg` 等文件，并且不会覆盖已有分页文件。
 
 MIDI、WAV 和 MP3 导出支持 `--program <number>` 和 `--omit-initial-rest`。`--program` 是没有乐谱级 `Tn.program` 文件头的轨道所使用的默认 Program。WAV 和 MP3 还支持 `--sample-rate <hz>` 与 `--amplitude <0-1>`。MP3 另外支持 `--bit-rate <kbps>`。
 
