@@ -28,7 +28,7 @@ const keyMap: Record<string, KeySignature> = {
   B: 11,
 };
 
-const semanticKeys = new Set(["title", "subtitle", "composer", "key", "time", "tempo", "hidden", "program", "volume"]);
+const semanticKeys = new Set(["title", "subtitle", "composer", "key", "time", "tempo", "hidden", "footer", "numbering", "program", "volume"]);
 
 export function createDefaultHeader(): Header {
   return {
@@ -40,6 +40,8 @@ export function createDefaultHeader(): Header {
     timeSignature: { beatsPerMeasure: 4, beatsPerWholeNote: 4 },
     tempo: 120,
     hidden: false,
+    footer: "",
+    numbering: false,
     trackNames: {},
     trackPrograms: {},
     trackVolumes: {},
@@ -112,6 +114,25 @@ export function applyHeaderProperty(
       return "ok";
     }
     parseHidden(header, value, diagnostics);
+    return "ok";
+  }
+
+  if (textKey === "footer") {
+    if (!value || !expectQuoted(value, "footer", diagnostics)) {
+      return "ok";
+    }
+    if (!recordKey(seen, "footer", "Duplicate header property 'footer'.", keyRange, diagnostics)) {
+      return "ok";
+    }
+    header.footer = value.text;
+    return "ok";
+  }
+
+  if (textKey === "numbering") {
+    if (!value || !recordKey(seen, "numbering", "Duplicate header property 'numbering'.", keyRange, diagnostics)) {
+      return "ok";
+    }
+    parseNumbering(header, value, diagnostics);
     return "ok";
   }
 
@@ -337,6 +358,22 @@ function parseHidden(header: Header, value: HeaderValue, diagnostics: Diagnostic
     return;
   }
   diagnostics.push({ severity: "error", message: "Expected boolean value for hidden.", range: value.range });
+}
+
+function parseNumbering(header: Header, value: HeaderValue, diagnostics: Diagnostic[]) {
+  if (value.quoted) {
+    diagnostics.push({ severity: "error", message: "Expected boolean value for numbering.", range: value.range });
+    return;
+  }
+  if (value.text === "true") {
+    header.numbering = true;
+    return;
+  }
+  if (value.text === "false") {
+    header.numbering = false;
+    return;
+  }
+  diagnostics.push({ severity: "error", message: "Expected boolean value for numbering.", range: value.range });
 }
 
 function parseProgram(header: Header, value: HeaderValue, diagnostics: Diagnostic[]) {

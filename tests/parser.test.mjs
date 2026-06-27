@@ -26,6 +26,15 @@ test("parses empty files with default header values", () => {
   assert.equal(result.value.score.length, 0);
   assert.equal(result.value.header.keySignatureText, "C");
   assert.equal(result.value.header.tempo, 120);
+  assert.equal(result.value.header.footer, "");
+  assert.equal(result.value.header.numbering, false);
+});
+
+test("parses page adornment header fields", () => {
+  const result = parse(`footer: "modern-jianpu"\nnumbering: true\n=\n1 2`);
+  assert.equal(result.ok, true);
+  assert.equal(result.value.header.footer, "modern-jianpu");
+  assert.equal(result.value.header.numbering, true);
 });
 
 test("accepts multiple header separator characters", () => {

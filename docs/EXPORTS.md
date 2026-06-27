@@ -67,7 +67,9 @@ Parse result shape:
         "beatsPerWholeNote": 4
       },
       "tempo": 120,
-      "hidden": false,
+  "hidden": false,
+  "footer": "",
+  "numbering": false,
       "trackNames": {},
       "trackPrograms": {},
       "trackVolumes": {},
@@ -119,8 +121,10 @@ Options:
   does not change non-paginated output by itself.
 - `--page-margin <px>`: non-negative number. Defaults to `0`. The same margin
   is applied to all four sides of the page.
-- `--page-footer <text>`: optional bottom-left page-level footer text.
-- `--page-numbers`: renders centered page numbers as `current / total`.
+- `--page-footer <text>`: optional bottom-left page-level footer text. When
+  omitted, the renderer uses the parsed `footer` header value.
+- `--page-numbers`: renders centered page numbers as `current / total`. When
+  omitted, the renderer uses the parsed `numbering` header value.
 - `--color <css>`: CSS color used for `currentColor` SVG notation elements.
 - `--background <css>`: CSS color used for SVG page background rectangles.
 
@@ -135,9 +139,10 @@ header appears only on the first page. When `--page-margin` is non-zero, page
 content is shifted into a `.page-content` group while backgrounds and page
 boundaries still use the full page size. Each page also includes an exported
 `.page-boundary` rectangle so page edges are visible in both SVG and PNG output.
-Optional page footer and page-number text is rendered inside the page groups,
-uses the same export color as notation, and reserves vertical content space so
-it does not overlap score content.
+Optional page footer and page-number text can be set in the file header or CLI
+options. They render inside the page groups, use the same export color as
+notation, and reserve vertical content space so they do not overlap score
+content.
 
 ## PNG Export
 

@@ -206,6 +206,19 @@ test("renders page footers and page numbers", () => {
   assert.match(svg, /<g class="page-content" transform="translate\(20, 20\)">/);
 });
 
+test("uses page adornments from the header", () => {
+  const result = parse(`hidden: true\nfooter: "from-header"\nnumbering: true\n=\n1 2 | 3 4 | 5 6 | 7 1' |\n1 2 | 3 4 | 5 6 | 7 1' |`);
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, {
+    pageWidth: 140,
+    paginate: true,
+    pageHeight: 160,
+    pageMargin: 20,
+  });
+  assert.match(svg, /<text class="page-footer"[^>]*>from-header<\/text>/);
+  assert.match(svg, /<text class="page-number"[^>]*>1 \/ \d+<\/text>/);
+});
+
 test("renders cross-line ties as cut halves after justification", () => {
   const result = parse("1 2 | 3 - | ~3 4 |");
   assert.equal(result.ok, true);

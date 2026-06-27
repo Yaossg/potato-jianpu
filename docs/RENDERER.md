@@ -52,9 +52,10 @@ interface RenderOptions {
 - `pageMargin` adds an equal margin on all four page sides. The SVG viewport
   and PDF page size stay unchanged, while header layout, measure wrapping, score
   justification, and pagination use the reduced content box. Default: `0`.
-- `pageFooter` sets optional page-level footer text. Default: empty.
+- `pageFooter` sets optional page-level footer text. Default: the parsed
+  `footer` header value, or empty when omitted.
 - `pageNumbers` renders centered page numbers as `current / total`. Default:
-  `false`.
+  the parsed `numbering` header value, or `false` when omitted.
 - `justifyMode` controls horizontal score justification. `"none"` keeps natural
   spacing, `"except-last"` justifies every visual line except the final score
   line, and `"all"` justifies every visual line. Default: `"none"`.
@@ -264,11 +265,12 @@ SVG and PNG visibly show page edges. When a background color is provided, it
 also draws one `.page-background` rectangle per page at the page's root SVG y
 coordinate.
 
-Page-level adornments are separate from the score header. `pageFooter` draws
-footer text at the bottom-left page margin, and `pageNumbers` draws centered
-`current / total` numbering. When page adornments are enabled, the renderer
-reserves vertical content space so notation does not overlap them; their text
-still uses `currentColor`.
+Page-level adornments can come from parsed header fields or render options.
+`pageFooter` draws footer text at the bottom-left page margin, and
+`pageNumbers` draws centered `current / total` numbering. Render options
+override header values for one render. When page adornments are enabled, the
+renderer reserves vertical content space so notation does not overlap them;
+their text still uses `currentColor`.
 
 The CLI exposes pagination through:
 

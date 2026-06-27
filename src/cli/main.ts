@@ -151,7 +151,7 @@ function readRenderOptions(flags: string[]): RenderOptions | null {
     pageHeight,
     pageMargin,
     pageFooter: readFlag(flags, "--page-footer"),
-    pageNumbers: flags.includes("--page-numbers"),
+    pageNumbers: flags.includes("--page-numbers") ? true : undefined,
     color: readFlag(flags, "--color"),
     background: readFlag(flags, "--background"),
   };

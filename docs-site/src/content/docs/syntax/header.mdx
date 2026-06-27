@@ -8,6 +8,7 @@ sectionIds:
   - strings-and-validation
   - musical-defaults
   - hidden-header
+  - page-adornments
   - track-and-lyric-labels
   - track-programs
   - track-volumes
@@ -59,13 +60,15 @@ Known fields include:
 | `time` | Time signature used for measure-duration validation. |
 | `tempo` | Playback and MIDI tempo. |
 | `hidden` | Boolean flag that hides the rendered header block. |
+| `footer` | Page-level footer text for SVG, PNG, and PDF rendering. |
+| `numbering` | Boolean flag that renders page numbers. |
 | `program` | Score-level default Program for playback and export. |
 | `volume` | Score-level default track volume for playback and export. |
 | `Tn.program` | Per-track playback and export Program override for melodic tracks. |
 | `Pn.program` | Per-track Percussion Program (`128`–`174`) for P-labeled drum tracks. |
 | `Tn.volume` | Per-track playback and export volume multiplier. |
 
-Default values are empty for `title`, `subtitle`, and `composer`; `hidden` defaults to `false`, `key` defaults to `C`, `time` defaults to `4/4`, `tempo` defaults to `120`, `program` falls back to the browser or CLI Program setting, and `volume` defaults to `1`.
+Default values are empty for `title`, `subtitle`, `composer`, and `footer`; `hidden` and `numbering` default to `false`, `key` defaults to `C`, `time` defaults to `4/4`, `tempo` defaults to `120`, `program` falls back to the browser or CLI Program setting, and `volume` defaults to `1`.
 
 Only documented header fields are accepted. Unknown fields such as `arranger` or misspelled fields such as `temop` are parse errors.
 
@@ -134,6 +137,20 @@ composer: "Anonymous"
 hidden: true
 =
 1 2 3 4`}
+/>
+
+## Page Adornments
+
+Use `footer` to set footer text rendered at the bottom-left of each page. Use `numbering: true` to render centered page numbers as `current / total`. These fields affect SVG, PNG, and PDF rendering; browser and CLI render options can still override them for a specific export.
+
+<JianpuSource
+  title="Page adornment header source"
+  source={`footer: "modern-jianpu"
+numbering: true
+=
+1 2 3 4
+---
+5 6 7 1'`}
 />
 
 ## Track and Lyric Labels

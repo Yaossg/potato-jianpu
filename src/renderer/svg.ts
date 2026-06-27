@@ -11,15 +11,15 @@ export interface RenderedSvgPage {
   height: number;
 }
 
-function resolvedRenderOptions(options: RenderOptions): Required<RenderOptions> {
+function resolvedRenderOptions(document: Document, options: RenderOptions): Required<RenderOptions> {
   const pageMargin = Math.max(0, options.pageMargin ?? DEFAULT_OPTIONS.pageMargin);
   return {
     pageWidth: options.pageWidth ?? DEFAULT_OPTIONS.pageWidth,
     paginate: options.paginate ?? DEFAULT_OPTIONS.paginate,
     pageHeight: options.pageHeight ?? DEFAULT_OPTIONS.pageHeight,
     pageMargin,
-    pageFooter: options.pageFooter ?? DEFAULT_OPTIONS.pageFooter,
-    pageNumbers: options.pageNumbers ?? DEFAULT_OPTIONS.pageNumbers,
+    pageFooter: options.pageFooter ?? document.header.footer,
+    pageNumbers: options.pageNumbers ?? document.header.numbering,
     justifyMode: options.justifyMode ?? DEFAULT_OPTIONS.justifyMode,
     activeNoteIndex: options.activeNoteIndex ?? DEFAULT_OPTIONS.activeNoteIndex,
     activeNoteIndices: options.activeNoteIndices ?? DEFAULT_OPTIONS.activeNoteIndices,
@@ -91,7 +91,7 @@ ${body}
 
 export function renderSvgPages(document: Document, options: RenderOptions = {}): RenderedSvgPage[] {
   const resolved: Required<RenderOptions> = {
-    ...resolvedRenderOptions(options),
+    ...resolvedRenderOptions(document, options),
   };
   const inset = pageContentInset(resolved);
   const pageContentWidth = contentWidth(resolved.pageWidth, resolved.pageMargin);
@@ -139,7 +139,7 @@ export function renderSvgPages(document: Document, options: RenderOptions = {}):
 }
 
 export function renderSvg(document: Document, options: RenderOptions = {}): string {
-  const resolved = resolvedRenderOptions(options);
+  const resolved = resolvedRenderOptions(document, options);
   const inset = pageContentInset(resolved);
   const pageContentWidth = contentWidth(resolved.pageWidth, resolved.pageMargin);
   const pageContentHeight = contentHeight(resolved.pageHeight, inset);

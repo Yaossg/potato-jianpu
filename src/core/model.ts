@@ -116,6 +116,8 @@ export interface Header {
   timeSignature: TimeSignature;
   tempo: number;
   hidden: boolean;
+  footer: string;
+  numbering: boolean;
   program?: number;
   volume?: number;
   trackNames: Record<string, string>;
