@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { parse } from "../dist/parser/index.js";
 
 test("parses a header and unspaced score", () => {
-  const result = parse(`title: "Twinkle"\nkey: D\ntime: 4/4\ntempo: 180\n=\n1155|665-|\n`);
+  const result = parse(`title: "Twinkle"\nkey: D\ntime: 4/4\ntempo: 180\n===\n1155|665-|\n`);
   assert.equal(result.ok, true);
   assert.equal(result.value.header.title, "Twinkle");
   assert.equal(result.value.header.keySignature, 2);
@@ -32,18 +32,26 @@ test("parses empty files with default header values", () => {
 });
 
 test("parses page rendering header fields", () => {
-  const result = parse(`footer: "modern-jianpu"\nnumbering: true\npaginate: true\n=\n1 2`);
+  const result = parse(`footer: "modern-jianpu"\nnumbering: true\npaginate: true\n===\n1 2`);
   assert.equal(result.ok, true);
   assert.equal(result.value.header.footer, "modern-jianpu");
   assert.equal(result.value.header.numbering, true);
   assert.equal(result.value.header.paginate, true);
 });
 
-test("accepts multiple header separator characters", () => {
+test("accepts the exact triple-equals header separator", () => {
   const result = parse(`title: "Separator"\n===\n1 2`);
   assert.equal(result.ok, true);
   assert.equal(result.value.header.title, "Separator");
   assert.equal(result.value.score[0].measures[0].notes.length, 2);
+});
+
+test("rejects header separators that are not exactly three equals", () => {
+  for (const separator of ["=", "==", "===="]) {
+    const result = parse(`title: "Separator"\n${separator}\n1 2`);
+    assert.equal(result.ok, false, `${separator} should be rejected`);
+    assert.match(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Expected '===' header separator/);
+  }
 });
 
 test("accepts optional leading and trailing bars", () => {
@@ -260,7 +268,7 @@ test("warns and ignores empty measures between consecutive bars", () => {
 });
 
 test("keeps comment boundaries between header and score lines", () => {
-  const result = parse(`title: "Comments" ; header comment\n=\n1 2 ; score comment\n; whole-line comment\n3 4`);
+  const result = parse(`title: "Comments" ; header comment\n===\n1 2 ; score comment\n; whole-line comment\n3 4`);
   assert.equal(result.ok, true);
   assert.equal(result.value.header.title, "Comments");
   assert.equal(result.value.score.length, 2);
@@ -385,7 +393,7 @@ test("reports specific diagnostics for stray duration and chord markers", () => 
 
 
 test("rejects invalid typed header values", () => {
-  const result = parse(`tempo: -1\ntime: 5/4\nkey: H\nhidden: yes\npaginate: yes\n=\n1234`);
+  const result = parse(`tempo: -1\ntime: 5/4\nkey: H\nhidden: yes\npaginate: yes\n===\n1234`);
   assert.equal(result.ok, false);
   assert.match(result.diagnostics.map((d) => d.message).join("\n"), /Invalid tempo/);
   assert.match(result.diagnostics.map((d) => d.message).join("\n"), /Invalid time signature/);
@@ -413,19 +421,19 @@ test("rejects invalid typed header values", () => {
 });
 
 test("accepts accidental-first key spellings", () => {
-  const sharp = parse(`key: #C\n=\n1`);
+  const sharp = parse(`key: #C\n===\n1`);
   assert.equal(sharp.ok, true);
   assert.equal(sharp.value.header.keySignature, 1);
   assert.equal(sharp.value.header.keySignatureText, "#C");
 
-  const flat = parse(`key: bB\n=\n1`);
+  const flat = parse(`key: bB\n===\n1`);
   assert.equal(flat.ok, true);
   assert.equal(flat.value.header.keySignature, 10);
   assert.equal(flat.value.header.keySignatureText, "bB");
 });
 
 test("rejects old string syntax for typed header values", () => {
-  const result = parse(`tempo: "120"\ntime: "4/4"\nkey: "D"\nhidden: "yes"\npaginate: "true"\n=\n1 2`);
+  const result = parse(`tempo: "120"\ntime: "4/4"\nkey: "D"\nhidden: "yes"\npaginate: "true"\n===\n1 2`);
   assert.equal(result.ok, false);
   const messages = result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
   assert.match(messages, /Expected numeric tempo value/);
@@ -436,7 +444,7 @@ test("rejects old string syntax for typed header values", () => {
 });
 
 test("rejects unknown and case-mismatched header keys", () => {
-  const result = parse(`arranger2_name: "Ada"\nTempo: 120\nT1.Name: "Melody"\n=\n1 2`);
+  const result = parse(`arranger2_name: "Ada"\nTempo: 120\nT1.Name: "Melody"\n===\n1 2`);
   assert.equal(result.ok, false);
   const messages = result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
   assert.match(messages, /Unknown header key 'arranger2_name'/);
@@ -445,7 +453,7 @@ test("rejects unknown and case-mismatched header keys", () => {
 });
 
 test("rejects duplicate header properties", () => {
-  const result = parse(`tempo: 120\ntempo: 96\nT1.name: "Melody"\nT1: "Other"\nL1.name: "Verse"\nL1: "Other"\n=\n1 2`);
+  const result = parse(`tempo: 120\ntempo: 96\nT1.name: "Melody"\nT1: "Other"\nL1.name: "Verse"\nL1: "Other"\n===\n1 2`);
   assert.equal(result.ok, false);
   const messages = result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
   assert.match(messages, /Duplicate header property 'tempo'/);
@@ -454,13 +462,13 @@ test("rejects duplicate header properties", () => {
 });
 
 test("keeps quoted header string escape text", () => {
-  const result = parse(`title: "A \\"quoted\\" title"\n=\n1`);
+  const result = parse(`title: "A \\"quoted\\" title"\n===\n1`);
   assert.equal(result.ok, true);
   assert.equal(result.value.header.title, `A \\"quoted\\" title`);
 });
 
 test("reports unterminated header strings", () => {
-  const result = parse(`title: "unterminated\n=\n1 2`);
+  const result = parse(`title: "unterminated\n===\n1 2`);
   assert.equal(result.ok, false);
   const messages = result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
   assert.match(messages, /Unterminated string literal/);
@@ -472,7 +480,7 @@ test("reports unterminated header strings", () => {
 });
 
 test("recovers malformed header lines without score-syntax cascades", () => {
-  const result = parse("title: Missing Quotes\ncomposer: \"Ada\"\n=\n1 2 3 4");
+  const result = parse("title: Missing Quotes\ncomposer: \"Ada\"\n===\n1 2 3 4");
   assert.equal(result.ok, false);
   const messages = result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
   assert.match(messages, /Expected quoted string value for title/);
@@ -480,13 +488,13 @@ test("recovers malformed header lines without score-syntax cascades", () => {
 });
 
 test("rejects unknown header fields", () => {
-  const result = parse(`arranger2_name: "Ada"\ntitle: "Raw Header"\n=\n1 2 3 4`);
+  const result = parse(`arranger2_name: "Ada"\ntitle: "Raw Header"\n===\n1 2 3 4`);
   assert.equal(result.ok, false);
   assert.match(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Unknown header key 'arranger2_name'/);
 });
 
 test("requires identifiers to start with a letter", () => {
-  const result = parse(`_arranger: "Ada"\n=\n1 2 3 4`);
+  const result = parse(`_arranger: "Ada"\n===\n1 2 3 4`);
   assert.equal(result.ok, false);
   assert.match(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Unexpected character '_'/);
 });
@@ -530,7 +538,7 @@ test("rejects score line labels outside the supported MIDI track label range", (
 });
 
 test("accepts T-prefixed header and score line labels", () => {
-  const result = parse(`T1: "Drums"\n=\nT1: X X`);
+  const result = parse(`T1: "Drums"\n===\nT1: X X`);
   assert.equal(result.ok, true);
   assert.equal(result.value.header.trackNames.T1, "Drums");
   assert.equal(result.value.score[0].label, "T1");
@@ -540,17 +548,17 @@ test("accepts T-prefixed header and score line labels", () => {
   assert.equal(highTrack.ok, true);
   assert.equal(highTrack.value.score.at(-1).label, "T11");
 
-  const digitHeader = parse(`T1_name: "Drums"\n=\nT1: X1 X2`);
+  const digitHeader = parse(`T1_name: "Drums"\n===\nT1: X1 X2`);
   assert.equal(digitHeader.ok, false);
   assert.match(digitHeader.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Unknown header key 'T1_name'/);
 
-  const xHeader = parse(`X_name: "Drums"\n=\nXX`);
+  const xHeader = parse(`X_name: "Drums"\n===\nXX`);
   assert.equal(xHeader.ok, false);
   assert.match(xHeader.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Unknown header key 'X_name'/);
 });
 
 test("parses per-track header programs", () => {
-  const result = parse(`T1.program: 40\nT2.program: "Violin"\nT3.program: " flute "\n=\nT1: 1\nT2: 2\nT3: 3`);
+  const result = parse(`T1.program: 40\nT2.program: "Violin"\nT3.program: " flute "\n===\nT1: 1\nT2: 2\nT3: 3`);
   assert.equal(result.ok, true);
   assert.deepEqual(result.value.header.trackPrograms, {
     T1: 40,
@@ -560,7 +568,7 @@ test("parses per-track header programs", () => {
 });
 
 test("rejects invalid per-track header programs", () => {
-  const result = parse(`T1.program: "40"\nT2.program: "Not A Program"\nT3.program: -1\nT4.program: 128\nT5.program: piano\nT1.program: 41\nT10.program: 40\n=\nT1: 1`);
+  const result = parse(`T1.program: "40"\nT2.program: "Not A Program"\nT3.program: -1\nT4.program: 128\nT5.program: piano\nT1.program: 41\nT10.program: 40\n===\nT1: 1`);
   assert.equal(result.ok, false);
   const messages = result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
   assert.match(messages, /Unknown Program name '40'/);
@@ -573,20 +581,20 @@ test("rejects invalid per-track header programs", () => {
 });
 
 test("parses default header program and volume", () => {
-  const result = parse(`program: 128\nvolume: 72.5%\n=\nX 1`);
+  const result = parse(`program: 128\nvolume: 72.5%\n===\nX 1`);
   assert.equal(result.ok, true);
   assert.equal(result.value.header.program, 128);
   assert.equal(result.value.header.volume, 0.725);
 });
 
 test("parses default header program names", () => {
-  const result = parse(`program: "Violin"\n=\n1`);
+  const result = parse(`program: "Violin"\n===\n1`);
   assert.equal(result.ok, true);
   assert.equal(result.value.header.program, 40);
 });
 
 test("rejects invalid default header program and volume", () => {
-  const result = parse(`program: -1\nprogram: 0\nvolume: 201%\n=\n1`);
+  const result = parse(`program: -1\nprogram: 0\nvolume: 201%\n===\n1`);
   assert.equal(result.ok, false);
   const messages = result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
   assert.match(messages, /Expected Program number 0-174 or quoted Program name/);
@@ -595,7 +603,7 @@ test("rejects invalid default header program and volume", () => {
 });
 
 test("parses per-track header volumes", () => {
-  const result = parse(`T1.volume: 0\nT2.volume: 72.5%\nT3.volume: 2\n=\nT1: 1\nT2: 2\nT3: 3`);
+  const result = parse(`T1.volume: 0\nT2.volume: 72.5%\nT3.volume: 2\n===\nT1: 1\nT2: 2\nT3: 3`);
   assert.equal(result.ok, true);
   assert.deepEqual(result.value.header.trackVolumes, {
     T1: 0,
@@ -605,7 +613,7 @@ test("parses per-track header volumes", () => {
 });
 
 test("rejects invalid per-track header volumes", () => {
-  const result = parse(`T1.volume: "1"\nT2.volume: -0.1\nT3.volume: 2.1\nT4.volume: loud\nT5.volume: 201%\nT1.volume: 1\nT10.volume: 1\n=\nT1: 1`);
+  const result = parse(`T1.volume: "1"\nT2.volume: -0.1\nT3.volume: 2.1\nT4.volume: loud\nT5.volume: 201%\nT1.volume: 1\nT10.volume: 1\n===\nT1: 1`);
   assert.equal(result.ok, false);
   const messages = result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
   assert.match(messages, /Expected track volume number 0-2 or percentage 0%-200%/);
@@ -680,16 +688,16 @@ test("requires track label groups to start at T1 and increase", () => {
 });
 
 test("warns when measure duration does not match the time signature", () => {
-  const complete = parse(`time: 4/4\n=\n1 2 3 4`);
+  const complete = parse(`time: 4/4\n===\n1 2 3 4`);
   assert.equal(complete.ok, true);
   assert.equal(complete.diagnostics.some((diagnostic) => diagnostic.message.includes("Measure duration")), false);
 
-  const short = parse(`time: 4/4\n=\n1 2`);
+  const short = parse(`time: 4/4\n===\n1 2`);
   assert.equal(short.ok, true);
   assert.equal(short.diagnostics.some((diagnostic) => diagnostic.severity === "warning"), true);
   assert.match(short.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Measure duration 0.5 does not match/);
 
-  const compound = parse(`time: 6/8\n=\n1/ 2/ 3/ 4/ 5/ 6/`);
+  const compound = parse(`time: 6/8\n===\n1/ 2/ 3/ 4/ 5/ 6/`);
   assert.equal(compound.ok, true);
   assert.equal(compound.diagnostics.some((diagnostic) => diagnostic.message.includes("Measure duration")), false);
 });
@@ -783,7 +791,7 @@ test("rejects P without digits as a score line label", () => {
 });
 
 test("parses P-track header name, program, and volume", () => {
-  const result = parse(`P1.name: "Kick"\nP1.program: 128\nP1.volume: 0.8\nP2.name: "Snare"\nP2.program: 130\n=\nP1: X X\nP2: X X`);
+  const result = parse(`P1.name: "Kick"\nP1.program: 128\nP1.volume: 0.8\nP2.name: "Snare"\nP2.program: 130\n===\nP1: X X\nP2: X X`);
   assert.equal(result.ok, true);
   assert.equal(result.value.header.trackNames.P1, "Kick");
   assert.equal(result.value.header.trackPrograms.P1, 128);
@@ -793,7 +801,7 @@ test("parses P-track header name, program, and volume", () => {
 });
 
 test("rejects invalid P-track percussion programs", () => {
-  const result = parse(`P1.program: 50\nP2.program: 300\nP3.program: "Bass"\n=\nP1: X`);
+  const result = parse(`P1.program: 50\nP2.program: 300\nP3.program: "Bass"\n===\nP1: X`);
   assert.equal(result.ok, false);
   const messages = result.diagnostics.map((d) => d.message).join("\n");
   assert.match(messages, /Invalid Percussion Program '50'. Expected 128-174/);
@@ -818,18 +826,18 @@ test("P tracks can be used without T tracks", () => {
 });
 
 test("rejects duplicate P-track program definition", () => {
-  const result = parse(`P1.program: 128\nP1.program: 130\n=\nP1: X`);
+  const result = parse(`P1.program: 128\nP1.program: 130\n===\nP1: X`);
   assert.equal(result.ok, false);
   assert.match(result.diagnostics.map((d) => d.message).join("\n"), /Duplicate track program definition for 'P1'/);
 });
 
 test("warns when drum note is used on a melodic track", () => {
-  const result = parse("T1.program: 0\n=\nT1: X 1");
+  const result = parse("T1.program: 0\n===\nT1: X 1");
   assert.equal(result.ok, true);
   const warnings = result.diagnostics.filter((d) => d.severity === "warning");
   assert.ok(warnings.some((d) => d.message.includes("Drum note 'X' used on a melodic track")));
 
-  const scoreLevel = parse("program: 40\n=\nX 1");
+  const scoreLevel = parse("program: 40\n===\nX 1");
   assert.equal(scoreLevel.ok, true);
   const scoreWarnings = scoreLevel.diagnostics.filter((d) => d.severity === "warning");
   assert.ok(scoreWarnings.some((d) => d.message.includes("Drum note 'X' used on a melodic track")));
@@ -844,24 +852,24 @@ test("does not warn for drum notes when no program is set", () => {
 });
 
 test("does not warn for drum notes on a drum-mode track", () => {
-  const drumProgram = parse("program: 128\n=\nX X");
+  const drumProgram = parse("program: 128\n===\nX X");
   assert.equal(drumProgram.ok, true);
   const warnings = drumProgram.diagnostics.filter((d) => d.severity === "warning");
   assert.ok(!warnings.some((d) => d.message.includes("Drum note 'X' used on a melodic track")));
 
-  const pTrack = parse("P1.program: 128\n=\nP1: X X");
+  const pTrack = parse("P1.program: 128\n===\nP1: X X");
   assert.equal(pTrack.ok, true);
   const pWarnings = pTrack.diagnostics.filter((d) => d.severity === "warning");
   assert.ok(!pWarnings.some((d) => d.message.includes("Drum note 'X' used on a melodic track")));
 });
 
 test("warns when pitch note is used on a drum track", () => {
-  const drumProgram = parse("program: 128\n=\n1 2");
+  const drumProgram = parse("program: 128\n===\n1 2");
   assert.equal(drumProgram.ok, true);
   const warnings = drumProgram.diagnostics.filter((d) => d.severity === "warning");
   assert.ok(warnings.some((d) => d.message.includes("Pitch note used on a drum track")));
 
-  const pTrack = parse("P1.program: 130\n=\nP1: 1 X");
+  const pTrack = parse("P1.program: 130\n===\nP1: 1 X");
   assert.equal(pTrack.ok, true);
   const pWarnings = pTrack.diagnostics.filter((d) => d.severity === "warning");
   assert.ok(pWarnings.some((d) => d.message.includes("Pitch note used on a drum track")));
@@ -873,19 +881,19 @@ test("does not warn for pitch notes on a melodic track", () => {
   const noWarnings = noProgram.diagnostics.filter((d) => d.severity === "warning");
   assert.ok(!noWarnings.some((d) => d.message.includes("Pitch note used on a drum track")));
 
-  const withProgram = parse("T1.program: 0\n=\nT1: 1 2 3");
+  const withProgram = parse("T1.program: 0\n===\nT1: 1 2 3");
   assert.equal(withProgram.ok, true);
   const withWarnings = withProgram.diagnostics.filter((d) => d.severity === "warning");
   assert.ok(!withWarnings.some((d) => d.message.includes("Pitch note used on a drum track")));
 });
 
 test("rests never trigger note-kind warnings on any track", () => {
-  const melodic = parse("T1.program: 0\n=\nT1: 0 0");
+  const melodic = parse("T1.program: 0\n===\nT1: 0 0");
   assert.equal(melodic.ok, true);
   const melodicWarnings = melodic.diagnostics.filter((d) => d.severity === "warning");
   assert.ok(!melodicWarnings.some((d) => d.message.includes("rest")));
 
-  const drum = parse("program: 128\n=\n0 0 X");
+  const drum = parse("program: 128\n===\n0 0 X");
   assert.equal(drum.ok, true);
   const drumWarnings = drum.diagnostics.filter((d) => d.severity === "warning");
   assert.ok(!drumWarnings.some((d) => d.message.includes("rest")));

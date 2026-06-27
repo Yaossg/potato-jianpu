@@ -182,12 +182,19 @@ class Parser {
       }
     }
 
-    if (!this.match("equals")) {
-      this.error("Expected '=' header separator.");
+    if (!this.at("equals")) {
+      this.error("Expected '===' header separator.");
       return header;
     }
+
+    const separatorStart = this.current();
+    let separatorCount = 0;
     while (this.match("equals")) {
-      // Multiple header separator characters are allowed.
+      separatorCount += 1;
+    }
+    if (separatorCount !== 3) {
+      this.error("Expected '===' header separator.", mergeRange(separatorStart.range, this.previous().range));
+      this.synchronizeLine();
     }
     this.consumeNewlines("Expected newline after header separator.");
     return header;

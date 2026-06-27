@@ -52,7 +52,7 @@ function tiePaths(svg) {
 }
 
 test("renders a parse result as an SVG document", () => {
-  const result = parse(`title: "Render Test"\nkey: F#\n=\n1 #4/ 5-|`);
+  const result = parse(`title: "Render Test"\nkey: F#\n===\n1 #4/ 5-|`);
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 640 });
   assert.match(svg, /^<\?xml/);
@@ -67,7 +67,7 @@ test("renders a parse result as an SVG document", () => {
 });
 
 test("renders time signatures as stacked digits", () => {
-  const result = parse(`time: 4/4\n=\n1 2 3 4`);
+  const result = parse(`time: 4/4\n===\n1 2 3 4`);
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 360, color: "#111827", background: "#ffffff" });
   assert.match(svg, /<g class="time-signature">/);
@@ -79,7 +79,7 @@ test("renders time signatures as stacked digits", () => {
 });
 
 test("keeps key, time, and tempo metadata gaps equal as key text changes", () => {
-  const result = parse(`key: F#\ntime: 6/8\ntempo: 96\n=\n1 2 3`);
+  const result = parse(`key: F#\ntime: 6/8\ntempo: 96\n===\n1 2 3`);
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 360, color: "#111827", background: "#ffffff" });
   const keyMatch = svg.match(/<text class="metadata" x="(?<x>\d+)" y="40" dominant-baseline="central"> = F&#9839;<\/text>/);
@@ -97,7 +97,7 @@ test("keeps key, time, and tempo metadata gaps equal as key text changes", () =>
 });
 
 test("matches the minimal SVG snapshot", () => {
-  const result = parse(`title: "Snapshot"\nkey: C\ntime: 4/4\ntempo: 120\n=\n1 2 | 3 4 |`);
+  const result = parse(`title: "Snapshot"\nkey: C\ntime: 4/4\ntempo: 120\n===\n1 2 | 3 4 |`);
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 360, color: "#111827", background: "#ffffff" });
   assert.equal(svg, minimalSnapshot);
@@ -105,7 +105,7 @@ test("matches the minimal SVG snapshot", () => {
 
 test("matches the full header SVG snapshot", () => {
   const result = parse(
-    `title: "Full Header"\nsubtitle: "Snapshot Case"\ncomposer: "Composer Name"\nkey: Bb\ntime: 6/8\ntempo: 96\n=\n`,
+    `title: "Full Header"\nsubtitle: "Snapshot Case"\ncomposer: "Composer Name"\nkey: Bb\ntime: 6/8\ntempo: 96\n===\n`,
   );
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 500, color: "#111827", background: "#ffffff" });
@@ -114,7 +114,7 @@ test("matches the full header SVG snapshot", () => {
 
 test("matches the hidden header SVG snapshot", () => {
   const result = parse(
-    `title: "Hidden Title"\nsubtitle: "Hidden Subtitle"\ncomposer: "Hidden Composer"\nhidden: true\n=\n1 2 | 3 4 |`,
+    `title: "Hidden Title"\nsubtitle: "Hidden Subtitle"\ncomposer: "Hidden Composer"\nhidden: true\n===\n1 2 | 3 4 |`,
   );
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 320, color: "#111827", background: "#ffffff" });
@@ -137,7 +137,7 @@ test("matches the wrapped tie SVG snapshot", () => {
 });
 
 test("paginates visual lines into fixed-height page groups", () => {
-  const result = parse(`title: "Paged"\n=\n1 2 | 3 4 | 5 6 | 7 1' |\n1 2 | 3 4 | 5 6 | 7 1' |\n1 2 | 3 4 | 5 6 | 7 1' |`);
+  const result = parse(`title: "Paged"\n===\n1 2 | 3 4 | 5 6 | 7 1' |\n1 2 | 3 4 | 5 6 | 7 1' |\n1 2 | 3 4 | 5 6 | 7 1' |`);
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 120, paginate: true, pageHeight: 160, background: "#ffffff" });
   const pageCount = [...svg.matchAll(/<g class="page" data-page="(\d+)"/g)].length;
@@ -158,7 +158,7 @@ test("paginates visual lines into fixed-height page groups", () => {
 });
 
 test("uses pagination from the header unless render options override it", () => {
-  const result = parse(`paginate: true\n=\n1 2 | 3 4 | 5 6 | 7 1' |\n1 2 | 3 4 | 5 6 | 7 1' |`);
+  const result = parse(`paginate: true\n===\n1 2 | 3 4 | 5 6 | 7 1' |\n1 2 | 3 4 | 5 6 | 7 1' |`);
   assert.equal(result.ok, true);
 
   const fromHeader = renderSvg(result.value, { pageWidth: 120, pageHeight: 160, background: "#ffffff" });
@@ -185,7 +185,7 @@ test("starts a new paginated page at manual page breaks", () => {
 });
 
 test("renders score content inside page margins", () => {
-  const result = parse(`hidden: true\n=\n1 2 | 3 4 | 5 6 |`);
+  const result = parse(`hidden: true\n===\n1 2 | 3 4 | 5 6 |`);
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 160, pageMargin: 20, background: "#ffffff" });
   assert.match(svg, /<svg[^>]+width="160"/);
@@ -200,7 +200,7 @@ test("renders score content inside page margins", () => {
 });
 
 test("renders page footers and page numbers", () => {
-  const result = parse(`hidden: true\n=\n1 2 | 3 4 | 5 6 | 7 1' |\n1 2 | 3 4 | 5 6 | 7 1' |`);
+  const result = parse(`hidden: true\n===\n1 2 | 3 4 | 5 6 | 7 1' |\n1 2 | 3 4 | 5 6 | 7 1' |`);
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, {
     pageWidth: 140,
@@ -220,7 +220,7 @@ test("renders page footers and page numbers", () => {
 });
 
 test("uses page adornments from the header", () => {
-  const result = parse(`hidden: true\nfooter: "from-header"\nnumbering: true\n=\n1 2 | 3 4 | 5 6 | 7 1' |\n1 2 | 3 4 | 5 6 | 7 1' |`);
+  const result = parse(`hidden: true\nfooter: "from-header"\nnumbering: true\n===\n1 2 | 3 4 | 5 6 | 7 1' |\n1 2 | 3 4 | 5 6 | 7 1' |`);
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, {
     pageWidth: 140,
@@ -258,7 +258,7 @@ test("connects ties to the previous note in the same track", () => {
 });
 
 test("renders tempo without musical glyph codepoints", () => {
-  const result = parse(`tempo: 132\ntime: 6/8\n=\n1 2 3`);
+  const result = parse(`tempo: 132\ntime: 6/8\n===\n1 2 3`);
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value);
   assert.match(svg, /class="tempo-mark"/);
@@ -268,7 +268,7 @@ test("renders tempo without musical glyph codepoints", () => {
 });
 
 test("uses a single sixteenth note for 16-denominator tempo marks", () => {
-  const result = parse(`tempo: 96\ntime: 2/16\n=\n1 2`);
+  const result = parse(`tempo: 96\ntime: 2/16\n===\n1 2`);
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value);
   assert.match(svg, />𝅘𝅥𝅯 = 96<\/text>/);
@@ -506,7 +506,7 @@ test("marks multiple active notes for arrangement preview highlighting", () => {
 });
 
 test("renders header-defined track labels with reserved horizontal space", () => {
-  const result = parse(`T1: "Verse"\n=\nT1: 1 2 | 3 4 |`);
+  const result = parse(`T1: "Verse"\n===\nT1: 1 2 | 3 4 |`);
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 160 });
   assert.match(svg, /<text class="line-label" x="8" y="[^"]+" text-anchor="start">Verse<\/text>/);
@@ -514,7 +514,7 @@ test("renders header-defined track labels with reserved horizontal space", () =>
 });
 
 test("renders T1 header label for a single unlabeled score line", () => {
-  const result = parse(`T1.name: "Melody"\n=\n1 2 | 3 4 |`);
+  const result = parse(`T1.name: "Melody"\n===\n1 2 | 3 4 |`);
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 160 });
   assert.match(svg, /<text class="line-label" x="8" y="[^"]+" text-anchor="start">Melody<\/text>/);
@@ -522,8 +522,8 @@ test("renders T1 header label for a single unlabeled score line", () => {
 });
 
 test("sizes label space from rendered label text", () => {
-  const short = parse(`T1: "A"\n=\nT1: 1 2`);
-  const long = parse(`T1: "Extremely Long Track Label For Width"\n=\nT1: 1 2`);
+  const short = parse(`T1: "A"\n===\nT1: 1 2`);
+  const long = parse(`T1: "Extremely Long Track Label For Width"\n===\nT1: 1 2`);
   assert.equal(short.ok, true);
   assert.equal(long.ok, true);
 
@@ -541,7 +541,7 @@ test("does not render bare track labels without header-defined names", () => {
 });
 
 test("renders voice brackets around simultaneous track groups", () => {
-  const result = parse(`T1: "High"\nT2: "Low"\n=\nT1: 1 2\nT2: 5, 6,\nT1: 3`);
+  const result = parse(`T1: "High"\nT2: "Low"\n===\nT1: 1 2\nT2: 5, 6,\nT1: 3`);
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 220 });
   const bracketCount = svg.match(/class="voice-bracket"/g)?.length ?? 0;
@@ -596,7 +596,7 @@ test("aligns differing simultaneous track rhythms when beat boundaries match", (
 });
 
 test("falls back to measure-level alignment when track rhythms miss beat boundaries", () => {
-  const result = parse('time: 2/4\n=\nT1: 1/ 2 1/\nT2: 5, 6,');
+  const result = parse('time: 2/4\n===\nT1: 1/ 2 1/\nT2: 5, 6,');
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 260 });
 
@@ -631,7 +631,7 @@ test("renders final bars on every line of the final voice group", () => {
 });
 
 test("renders lyrics below the preceding voice group", () => {
-  const result = parse('T1: "High"\nT2: "Low"\n=\nT1: 1 2\nT2: 5, 6,\nL1: "hello & goodbye"\n"second line"\nT1: 3 4');
+  const result = parse('T1: "High"\nT2: "Low"\n===\nT1: 1 2\nT2: 5, 6,\nL1: "hello & goodbye"\n"second line"\nT1: 3 4');
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 240 });
   assert.match(svg, /<text class="lyric-line" x="\d+" y="\d+" text-anchor="start">hello &amp; goodbye<\/text>/);
@@ -640,7 +640,7 @@ test("renders lyrics below the preceding voice group", () => {
 });
 
 test("renders header-defined lyric labels with reserved horizontal space", () => {
-  const result = parse('L1: "Verse"\n=\n1 2\nL1: "hello"\n"again"');
+  const result = parse('L1: "Verse"\n===\n1 2\nL1: "hello"\n"again"');
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 180 });
   assert.match(svg, /<text class="line-label" x="8" y="\d+" text-anchor="start">Verse<\/text><text class="lyric-line" x="79" y="\d+" text-anchor="start">hello<\/text>/);

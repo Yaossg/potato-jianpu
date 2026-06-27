@@ -275,7 +275,7 @@ Example:
 P1.name: "Kick"    P1.program: 128
 P2.name: "Snare"   P2.program: 130
 P3.name: "Hi-Hat"  P3.program: 133
-=
+===
 P1: X/ 0/ 0/ 0/ | X/ 0/ 0/ 0/ |
 P2: 0/ 0/ X/ 0/ | 0/ 0/ X/ 0/ |
 P3: X/ X/ X/ X/ | X/ X/ X/ X/ |

@@ -9,14 +9,14 @@ import JianpuSource from '../../../../components/JianpuSource.astro';
 import RelatedLinks from '../../../../components/RelatedLinks.astro';
 import ScorePreview from '../../../../components/ScorePreview.astro';
 
-一个文档可以有开头空行、可选文件头、可选乐谱正文，然后到达文件结束。只有文件里出现由一个或多个 `=` 组成的分隔行时，解析器才会识别文件头。文件头字段必须写在分隔行之前；乐谱、歌词和轨道行写在它之后。没有分隔行时，整个文件都会按乐谱正文解析。
+一个文档可以有开头空行、可选文件头、可选乐谱正文，然后到达文件结束。只有文件里出现只包含 `===` 的分隔行时，解析器才会识别文件头。文件头字段必须写在分隔行之前；乐谱、歌词和轨道行写在它之后。没有分隔行时，整个文件都会按乐谱正文解析。
 
 <JianpuSource
   title="完整文档源码"
   source={`title: "Example"
 composer: "Traditional"
 time: 4/4
-=
+===
 1 2 3 4 | 5 - 5 -`}
 />
 
@@ -25,7 +25,7 @@ time: 4/4
   source={`title: "Example"
 composer: "Traditional"
 time: 4/4
-=
+===
 1 2 3 4 | 5 - 5 -`}
 />
 

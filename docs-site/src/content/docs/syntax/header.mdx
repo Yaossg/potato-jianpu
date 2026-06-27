@@ -21,7 +21,7 @@ import ScorePreview from '../../../components/ScorePreview.astro';
 
 ## Header Basics
 
-The file header is line-oriented. Put it before the `=` separator.
+The file header is line-oriented. Put it before the `===` separator line.
 
 <JianpuSource
   title="Header source"
@@ -31,7 +31,7 @@ composer: "Anonymous"
 key: G
 time: 3/4
 tempo: 72
-=
+===
 5 6 5 | 3 - -`}
 />
 
@@ -43,7 +43,7 @@ composer: "Anonymous"
 key: G
 time: 3/4
 tempo: 72
-=
+===
 5 6 5 | 3 - -`}
 />
 
@@ -82,7 +82,7 @@ Text fields use double-quoted strings and must stay on one line. A backslash ski
   source={`title: "Evening Song"
 composer: "Anonymous"
 tempo: 72
-=
+===
 1 2 3 4`}
 />
 
@@ -91,7 +91,7 @@ tempo: 72
   source={`title: "Evening Song"
 composer: "Anonymous"
 tempo: 72
-=
+===
 1 2 3 4`}
 />
 
@@ -102,7 +102,7 @@ Header names are case-sensitive. Text values and visible label names must be quo
   status="invalid"
   description="The title string never closes, so the document is invalid."
   source={`title: "Open title
-=
+===
 1 2 3 4`}
 />
 
@@ -127,7 +127,7 @@ Use `hidden: true` to keep the rendered header block out of the SVG while retain
   source={`title: "Practice Line"
 composer: "Anonymous"
 hidden: true
-=
+===
 1 2 3 4`}
 />
 
@@ -136,7 +136,7 @@ hidden: true
   source={`title: "Practice Line"
 composer: "Anonymous"
 hidden: true
-=
+===
 1 2 3 4`}
 />
 
@@ -149,7 +149,7 @@ Use `paginate: true` to render fixed-height pages by default for SVG, PNG, and P
   source={`paginate: true
 footer: "modern-jianpu"
 numbering: true
-=
+===
 1 2 3 4
 ---
 5 6 7 1'`}
@@ -166,7 +166,7 @@ For a score with one unlabeled music line, `T1.name` still names that rendered l
   source={`T1.name: "Melody"
 T2: "Harmony"
 L1.name: "Verse"
-=
+===
 T1: 1 2 3 4
 T2: 5 5 5 5
 L1: "do re mi fa"`}
@@ -177,7 +177,7 @@ L1: "do re mi fa"`}
   source={`T1.name: "Melody"
 T2: "Harmony"
 L1.name: "Verse"
-=
+===
 T1: 1 2 3 4
 T2: 5 5 5 5
 L1: "do re mi fa"`}
@@ -198,7 +198,7 @@ T1.name: "Melody"
 T1.program: 0
 T2.name: "Violin"
 T2.program: "Violin"
-=
+===
 T1: 1 2 3 4
 T2: 5, 6, 7, 1`}
 />
@@ -210,7 +210,7 @@ T1.name: "Melody"
 T1.program: 0
 T2.name: "Violin"
 T2.program: "Violin"
-=
+===
 T1: 1 2 3 4
 T2: 5, 6, 7, 1`}
 />
@@ -230,7 +230,7 @@ T1.name: "Melody"
 T1.volume: 1
 T2.name: "Soft Harmony"
 T2.volume: 72.5%
-=
+===
 T1: 1 2 3 4
 T2: 5, 6, 7, 1`}
 />
@@ -242,7 +242,7 @@ T1.name: "Melody"
 T1.volume: 1
 T2.name: "Soft Harmony"
 T2.volume: 72.5%
-=
+===
 T1: 1 2 3 4
 T2: 5, 6, 7, 1`}
 />

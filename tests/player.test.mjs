@@ -16,7 +16,7 @@ import {
 } from "../dist/player/index.js";
 
 test("compiles pitch notes to MIDI notes with key and octave", () => {
-  const result = parse(`key: D\n=\n1 2 1'`);
+  const result = parse(`key: D\n===\n1 2 1'`);
   assert.equal(result.ok, true);
   const melody = compileMelody(result.value);
   assert.deepEqual(
@@ -275,7 +275,7 @@ test("groups labeled score lines into simultaneous arrangement tracks", () => {
 });
 
 test("uses per-track header programs with global fallback", () => {
-  const result = parse(`T2.program: "Violin"\nT3.program: "Flute"\n=\nT1: 1\nT2: 5,\nT3: 3`);
+  const result = parse(`T2.program: "Violin"\nT3.program: "Flute"\n===\nT1: 1\nT2: 5,\nT3: 3`);
   assert.equal(result.ok, true);
   const arrangement = compileArrangement(result.value, 24);
   assert.deepEqual(
@@ -289,7 +289,7 @@ test("uses per-track header programs with global fallback", () => {
 });
 
 test("uses default header program before API fallback", () => {
-  const result = parse(`program: 24\nT2.program: "Violin"\n=\nT1: 1\nT2: 5,`);
+  const result = parse(`program: 24\nT2.program: "Violin"\n===\nT1: 1\nT2: 5,`);
   assert.equal(result.ok, true);
   const arrangement = compileArrangement(result.value, 73);
   assert.deepEqual(
@@ -302,7 +302,7 @@ test("uses default header program before API fallback", () => {
 });
 
 test("uses T1 program and name for a single unlabeled arrangement track", () => {
-  const result = parse(`T1.name: "Melody"\nT1.program: "Violin"\n=\n1 2\n3 4`);
+  const result = parse(`T1.name: "Melody"\nT1.program: "Violin"\n===\n1 2\n3 4`);
   assert.equal(result.ok, true);
   const arrangement = compileArrangement(result.value, 24);
   assert.deepEqual(
@@ -312,7 +312,7 @@ test("uses T1 program and name for a single unlabeled arrangement track", () => 
 });
 
 test("ignores unused per-track programs for unlabeled arrangements", () => {
-  const result = parse(`T3.program: "Flute"\n=\n1 2 3`);
+  const result = parse(`T3.program: "Flute"\n===\n1 2 3`);
   assert.equal(result.ok, true);
   const arrangement = compileArrangement(result.value, 24);
   assert.deepEqual(
@@ -322,7 +322,7 @@ test("ignores unused per-track programs for unlabeled arrangements", () => {
 });
 
 test("uses per-track header volumes with neutral fallback", () => {
-  const result = parse(`T2.volume: 72.5%\nT3.volume: 2\n=\nT1: 1\nT2: 5,\nT3: 3`);
+  const result = parse(`T2.volume: 72.5%\nT3.volume: 2\n===\nT1: 1\nT2: 5,\nT3: 3`);
   assert.equal(result.ok, true);
   const arrangement = compileArrangement(result.value);
   assert.deepEqual(
@@ -336,7 +336,7 @@ test("uses per-track header volumes with neutral fallback", () => {
 });
 
 test("uses default header volume before neutral fallback", () => {
-  const result = parse(`volume: 25%\nT2.volume: 50%\n=\nT1: 1\nT2: 5,`);
+  const result = parse(`volume: 25%\nT2.volume: 50%\n===\nT1: 1\nT2: 5,`);
   assert.equal(result.ok, true);
   const arrangement = compileArrangement(result.value);
   assert.deepEqual(
@@ -349,7 +349,7 @@ test("uses default header volume before neutral fallback", () => {
 });
 
 test("uses T1 volume for a single unlabeled arrangement track", () => {
-  const result = parse(`T1.volume: 0.25\n=\n1 2\n3 4`);
+  const result = parse(`T1.volume: 0.25\n===\n1 2\n3 4`);
   assert.equal(result.ok, true);
   const arrangement = compileArrangement(result.value);
   assert.deepEqual(
@@ -442,7 +442,7 @@ test("omits shared initial arrangement rests only up to the first sounding track
 });
 
 test("exports a standard MIDI header", () => {
-  const result = parse(`tempo: 120\n=\n1 2 3 4`);
+  const result = parse(`tempo: 120\n===\n1 2 3 4`);
   assert.equal(result.ok, true);
   const bytes = exportMidiBytes(result.value);
   assert.equal(String.fromCharCode(...bytes.slice(0, 4)), "MThd");
@@ -462,7 +462,7 @@ test("exports labeled arrangement tracks as separate MIDI tracks", () => {
 });
 
 test("exports separate MIDI program changes for per-track programs", () => {
-  const result = parse(`T1.program: 24\nT2.program: "Violin"\n=\nT1: 1\nT2: 5,`);
+  const result = parse(`T1.program: 24\nT2.program: "Violin"\n===\nT1: 1\nT2: 5,`);
   assert.equal(result.ok, true);
   const bytes = [...exportMidiBytes(result.value, 0)];
   assert.notEqual(bytes.findIndex((byte, index) => byte === 0xc0 && bytes[index + 1] === 24), -1);
@@ -471,7 +471,7 @@ test("exports separate MIDI program changes for per-track programs", () => {
 });
 
 test("exports per-track MIDI velocities from track volumes", () => {
-  const result = parse(`T1.volume: 50%\nT2.volume: 2\n=\nT1: 1\nT2: 5,`);
+  const result = parse(`T1.volume: 50%\nT2.volume: 2\n===\nT1: 1\nT2: 5,`);
   assert.equal(result.ok, true);
   const bytes = [...exportMidiBytes(result.value)];
   assert.notEqual(bytes.findIndex((byte, index) => byte === 0x90 && bytes[index + 1] === 60 && bytes[index + 2] === 32), -1);
@@ -514,7 +514,7 @@ test("omitting initial rests preserves all-rest melodies as empty", () => {
 });
 
 test("exports tempo and time signature MIDI meta events", () => {
-  const result = parse(`tempo: 120\ntime: 6/8\n=\n1/ 2/ 3/ 4/ 5/ 6/`);
+  const result = parse(`tempo: 120\ntime: 6/8\n===\n1/ 2/ 3/ 4/ 5/ 6/`);
   assert.equal(result.ok, true);
   const bytes = [...exportMidiBytes(result.value)];
 
@@ -585,7 +585,7 @@ test("exports per-note MIDI velocities", () => {
 });
 
 test("falls back to track-velocity when no per-note velocity", () => {
-  const result = parse("T1.volume: 50%\n=\nT1: 1");
+  const result = parse("T1.volume: 50%\n===\nT1: 1");
   assert.equal(result.ok, true);
   const bytes = [...exportMidiBytes(result.value)];
   const noteOnIndex = bytes.findIndex((byte, i) => byte === 0x90);
@@ -594,7 +594,7 @@ test("falls back to track-velocity when no per-note velocity", () => {
 });
 
 test("scales per-note velocity by track volume (multiplicative)", () => {
-  const result = parse("T1.volume: 50%\n=\nT1: f 1 pp 2");
+  const result = parse("T1.volume: 50%\n===\nT1: f 1 pp 2");
   assert.equal(result.ok, true);
   const bytes = [...exportMidiBytes(result.value)];
   const noteOnIndex = bytes.findIndex((byte, i) => byte === 0x90);
@@ -619,7 +619,7 @@ test("maps programs to deterministic synth waveforms", () => {
 });
 
 test("compiles multi-P-track arrangement to percussion notes", () => {
-  const result = parse(`P1.program: 128\nP2.program: 130\n=\nP1: X X\nP2: X X`);
+  const result = parse(`P1.program: 128\nP2.program: 130\n===\nP1: X X\nP2: X X`);
   assert.equal(result.ok, true);
   const arrangement = compileArrangement(result.value);
   assert.equal(arrangement.tracks.length, 2);
@@ -635,7 +635,7 @@ test("compiles multi-P-track arrangement to percussion notes", () => {
 });
 
 test("P track defaults to drum program 128 when no program is specified", () => {
-  const result = parse(`P1.name: "Drums"\n=\nP1: X X`);
+  const result = parse(`P1.name: "Drums"\n===\nP1: X X`);
   assert.equal(result.ok, true);
   const arrangement = compileArrangement(result.value);
   assert.equal(arrangement.tracks.length, 1);
@@ -644,7 +644,7 @@ test("P track defaults to drum program 128 when no program is specified", () => 
 });
 
 test("mixed T and P arrangement routes P tracks to drum channel", () => {
-  const result = parse(`T1.program: 0\nP1.program: 128\n=\nT1: 1 2\nP1: X X`);
+  const result = parse(`T1.program: 0\nP1.program: 128\n===\nT1: 1 2\nP1: X X`);
   assert.equal(result.ok, true);
   const arrangement = compileArrangement(result.value);
   assert.equal(arrangement.tracks.length, 2);
@@ -658,7 +658,7 @@ test("mixed T and P arrangement routes P tracks to drum channel", () => {
 });
 
 test("exports MIDI with P tracks on drum channel", () => {
-  const result = parse(`P1.program: 128\nP2.program: 130\n=\nP1: X\nP2: X`);
+  const result = parse(`P1.program: 128\nP2.program: 130\n===\nP1: X\nP2: X`);
   assert.equal(result.ok, true);
   const bytes = [...exportMidiBytes(result.value)];
 
