@@ -128,6 +128,41 @@ test("CLI export-svg accepts explicit color and background", async () => {
   assert.match(svg, /fill="#f8fafc"/);
 });
 
+test("CLI export-svg accepts page footer and number options", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
+  const input = join(dir, "score.jpu");
+  const output = join(dir, "score.svg");
+  await writeFile(input, "1 2 | 3 4 | 5 6 | 7 1' |\n1 2 | 3 4 | 5 6 | 7 1' |", "utf8");
+
+  await execFileAsync(
+    process.execPath,
+    [
+      "dist/cli/main.js",
+      "export-svg",
+      input,
+      "-o",
+      output,
+      "--page-width",
+      "140",
+      "--paginate",
+      "--page-height",
+      "160",
+      "--page-margin",
+      "20",
+      "--page-footer",
+      "modern-jianpu",
+      "--page-numbers",
+    ],
+    {
+      cwd: repoDir,
+    },
+  );
+
+  const svg = await readFile(output, "utf8");
+  assert.match(svg, /<text class="page-footer"[^>]*>modern-jianpu<\/text>/);
+  assert.match(svg, /<text class="page-number"[^>]*>1 \/ \d+<\/text>/);
+});
+
 test("CLI export-svg succeeds with warnings", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
   const input = join(dir, "score.jpu");

@@ -18,6 +18,21 @@ should document the same user-visible behavior.
 
 Docs-site-specific translation rules live in `docs-site/docs/TRANSLATION.md`.
 
+## Web App Translations
+
+The browser app keeps user-visible UI labels in `src/web/i18n.ts`.
+
+When adding, removing, or renaming a `TranslationKey`, update both the English
+and Simplified Chinese `translations` entries in the same change. Do not rely on
+the English fallback for new UI text. The `zh` translation table is intentionally
+typed as a complete `Record<TranslationKey, string>` so `pnpm run check` catches
+missing Chinese copy.
+
+When adding frontend controls, settings, export options, dialog text, status
+messages, or toolbar/menu labels, include the corresponding Chinese text before
+finishing the change. If a new recurring UI term is introduced, choose the
+Chinese wording here or near the related docs and reuse it consistently.
+
 ## Tone And Audience
 
 Write grammar documentation for score authors, not parser implementers.

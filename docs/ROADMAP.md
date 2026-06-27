@@ -24,16 +24,6 @@ commitment.
     - Keep exported SVG page boundaries and PDF page dimensions aligned.
     - Verify SVG, PNG, and PDF output dimensions for each supported preset and
       orientation.
-  - Optional page headers, footers, and page numbers:
-    - Define page metadata fields separately from the score header so page
-      furniture can be enabled without changing score content.
-    - Add renderer support for first-page-only, every-page, and disabled header
-      behavior.
-    - Add footer and page-number placement that respects margins.
-    - Add CLI and frontend options for page numbers and simple header/footer
-      text.
-    - Verify multi-page PDF output and exported SVG page groups include the
-      expected text on the intended pages.
   - Manual page breaks and simple orphan-line avoidance:
     - Choose source syntax or renderer-only control for manual page breaks.
     - If source syntax is added, update grammar docs, parser tests, and

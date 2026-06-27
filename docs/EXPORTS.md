@@ -27,9 +27,9 @@ pnpm run cli -- validate examples/twinkle.jpu
 pnpm run cli -- --version
 pnpm run cli -- validate examples/twinkle.jpu --json
 pnpm run cli -- parse examples/twinkle.jpu --json
-pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --page-width 1000 --paginate --page-height 1400 --page-margin 40 --color "#111827" --background "#ffffff"
-pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --page-width 1000 --paginate --page-height 1400 --page-margin 40 --color "#111827" --background "#ffffff"
-pnpm run cli -- export-pdf examples/twinkle.jpu -o twinkle.pdf --page-width 1000 --paginate --page-height 1400 --page-margin 40 --color "#111827" --background "#ffffff"
+pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --page-width 1000 --paginate --page-height 1400 --page-margin 40 --page-footer "modern-jianpu" --page-numbers --color "#111827" --background "#ffffff"
+pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --page-width 1000 --paginate --page-height 1400 --page-margin 40 --page-footer "modern-jianpu" --page-numbers --color "#111827" --background "#ffffff"
+pnpm run cli -- export-pdf examples/twinkle.jpu -o twinkle.pdf --page-width 1000 --paginate --page-height 1400 --page-margin 40 --page-footer "modern-jianpu" --page-numbers --color "#111827" --background "#ffffff"
 pnpm run cli -- export-midi examples/twinkle.jpu -o twinkle.mid --program 0 --omit-initial-rest
 pnpm run cli -- export-wav examples/twinkle.jpu -o twinkle.wav --sample-rate 44100 --amplitude 1 --omit-initial-rest
 pnpm run cli -- export-mp3 examples/twinkle.jpu -o twinkle.mp3 --sample-rate 44100 --amplitude 1 --bit-rate 128 --omit-initial-rest
@@ -119,6 +119,8 @@ Options:
   does not change non-paginated output by itself.
 - `--page-margin <px>`: non-negative number. Defaults to `0`. The same margin
   is applied to all four sides of the page.
+- `--page-footer <text>`: optional bottom-left page-level footer text.
+- `--page-numbers`: renders centered page numbers as `current / total`.
 - `--color <css>`: CSS color used for `currentColor` SVG notation elements.
 - `--background <css>`: CSS color used for SVG page background rectangles.
 
@@ -133,6 +135,9 @@ header appears only on the first page. When `--page-margin` is non-zero, page
 content is shifted into a `.page-content` group while backgrounds and page
 boundaries still use the full page size. Each page also includes an exported
 `.page-boundary` rectangle so page edges are visible in both SVG and PNG output.
+Optional page footer and page-number text is rendered inside the page groups,
+uses the same export color as notation, and reserves vertical content space so
+it does not overlap score content.
 
 ## PNG Export
 
@@ -148,6 +153,8 @@ Options:
 - `--paginate`: same behavior as SVG export.
 - `--page-height <px>`: same behavior and validation as SVG export.
 - `--page-margin <px>`: same behavior and validation as SVG export.
+- `--page-footer <text>`: same behavior as SVG export.
+- `--page-numbers`: same behavior as SVG export.
 - `--color <css>`: same behavior as SVG export.
 - `--background <css>`: sets both the SVG background rectangle and the PNG
   renderer background.
@@ -176,6 +183,8 @@ Options:
 - `--paginate`: same behavior as SVG export.
 - `--page-height <px>`: same behavior and validation as SVG export.
 - `--page-margin <px>`: same behavior and validation as SVG export.
+- `--page-footer <text>`: same behavior as SVG export.
+- `--page-numbers`: same behavior as SVG export.
 - `--color <css>`: same behavior as SVG export.
 - `--background <css>`: same behavior as SVG export.
 

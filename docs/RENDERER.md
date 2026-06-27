@@ -33,6 +33,8 @@ interface RenderOptions {
   paginate?: boolean;
   pageHeight?: number;
   pageMargin?: number;
+  pageFooter?: string;
+  pageNumbers?: boolean;
   justifyMode?: "none" | "except-last" | "all";
   activeNoteIndex?: number;
   activeNoteIndices?: number[];
@@ -50,6 +52,9 @@ interface RenderOptions {
 - `pageMargin` adds an equal margin on all four page sides. The SVG viewport
   and PDF page size stay unchanged, while header layout, measure wrapping, score
   justification, and pagination use the reduced content box. Default: `0`.
+- `pageFooter` sets optional page-level footer text. Default: empty.
+- `pageNumbers` renders centered page numbers as `current / total`. Default:
+  `false`.
 - `justifyMode` controls horizontal score justification. `"none"` keeps natural
   spacing, `"except-last"` justifies every visual line except the final score
   line, and `"all"` justifies every visual line. Default: `"none"`.
@@ -97,9 +102,11 @@ The renderer follows a measurement-first pipeline:
 6. Horizontally scale any single visual line that still exceeds the content
    width.
 7. Optionally justify line coordinates when `justifyMode` enables it.
-8. Optionally paginate completed visual lines into fixed-height page boxes.
-9. Draw bars, ties, notes, duration marks, and attached lyric lines or syllables.
-10. Compute final SVG height from either the adaptive content height or the fixed
+8. Reserve page-adornment space for optional page footers and page numbers.
+9. Optionally paginate completed visual lines into fixed-height page boxes.
+10. Draw bars, ties, notes, duration marks, and attached lyric lines or
+    syllables.
+11. Compute final SVG height from either the adaptive content height or the fixed
    page height multiplied by page count.
 
 The main internal layout records are:
@@ -250,12 +257,19 @@ SVG and PNG visibly show page edges. When a background color is provided, it
 also draws one `.page-background` rectangle per page at the page's root SVG y
 coordinate.
 
+Page-level adornments are separate from the score header. `pageFooter` draws
+footer text at the bottom-left page margin, and `pageNumbers` draws centered
+`current / total` numbering. When page adornments are enabled, the renderer
+reserves vertical content space so notation does not overlap them; their text
+still uses `currentColor`.
+
 The CLI exposes pagination through:
 
 ```sh
 pnpm run cli -- export-svg input.jpu -o output.svg --paginate --page-height 1400
 pnpm run cli -- export-png input.jpu -o output.png --paginate --page-height 1400
 pnpm run cli -- export-pdf input.jpu -o output.pdf --paginate --page-height 1400
+pnpm run cli -- export-pdf input.jpu -o output.pdf --paginate --page-footer "modern-jianpu" --page-numbers
 ```
 
 ## Header Rendering

@@ -172,6 +172,8 @@ export function App() {
   const [paginate, setPaginate] = useState(false);
   const [pageHeight, setPageHeight] = useState(DEFAULT_PAGE_HEIGHT);
   const [pageMargin, setPageMargin] = useState(DEFAULT_PAGE_MARGIN);
+  const [pageFooter, setPageFooter] = useState("");
+  const [pageNumbers, setPageNumbers] = useState(false);
   const [justifyMode, setJustifyMode] = useState<JustifyMode>("none");
   const [theme, setTheme] = useState<ThemeName>(() => initialTheme());
   const [scoreColor, setScoreColor] = useState(() => themeColors(initialTheme()).scoreColor);
@@ -213,13 +215,15 @@ export function App() {
             paginate,
             pageHeight,
             pageMargin,
+            pageFooter,
+            pageNumbers,
             justifyMode,
             activeNoteIndices: parsed.ok ? activeNoteIndices : [],
             color: scoreColor,
             background: pageBackground,
           })
         : null,
-    [activeNoteIndices, justifyMode, pageBackground, pageHeight, pageMargin, pageWidth, paginate, parsed.ok, previewParsed, scoreColor],
+    [activeNoteIndices, justifyMode, pageBackground, pageFooter, pageHeight, pageMargin, pageNumbers, pageWidth, paginate, parsed.ok, previewParsed, scoreColor],
   );
   const svgPages = useMemo(
     () =>
@@ -229,13 +233,15 @@ export function App() {
             paginate,
             pageHeight,
             pageMargin,
+            pageFooter,
+            pageNumbers,
             justifyMode,
             activeNoteIndices: parsed.ok ? activeNoteIndices : [],
             color: scoreColor,
             background: pageBackground,
           })
         : null,
-    [activeNoteIndices, justifyMode, pageBackground, pageHeight, pageMargin, pageWidth, paginate, parsed.ok, previewParsed, scoreColor],
+    [activeNoteIndices, justifyMode, pageBackground, pageFooter, pageHeight, pageMargin, pageNumbers, pageWidth, paginate, parsed.ok, previewParsed, scoreColor],
   );
   const previewPageCount = useMemo(() => (svg ? Math.max(1, svg.match(/<g class="page" /g)?.length ?? 1) : 0), [svg]);
 
@@ -639,6 +645,8 @@ export function App() {
           pageMargin={pageMargin}
           minPageMargin={MIN_PAGE_MARGIN}
           maxPageMargin={maxPageMargin}
+          pageFooter={pageFooter}
+          pageNumbers={pageNumbers}
           scoreColor={scoreColor}
           pageBackground={pageBackground}
           justifyMode={justifyMode}
@@ -660,6 +668,8 @@ export function App() {
           onPaginateChange={setPaginate}
           onPageHeightChange={setPageHeight}
           onPageMarginChange={setPageMargin}
+          onPageFooterChange={setPageFooter}
+          onPageNumbersChange={setPageNumbers}
           onScoreColorChange={setScoreColor}
           onPageBackgroundChange={setPageBackground}
           onJustifyModeChange={setJustifyMode}

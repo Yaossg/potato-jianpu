@@ -5,6 +5,8 @@ export interface RenderOptions {
   paginate?: boolean;
   pageHeight?: number;
   pageMargin?: number;
+  pageFooter?: string;
+  pageNumbers?: boolean;
   justifyMode?: JustifyMode;
   activeNoteIndex?: number;
   activeNoteIndices?: number[];
@@ -17,6 +19,8 @@ export const DEFAULT_OPTIONS: Required<RenderOptions> = {
   paginate: false,
   pageHeight: 1400,
   pageMargin: 0,
+  pageFooter: "",
+  pageNumbers: false,
   justifyMode: "none",
   activeNoteIndex: -1,
   activeNoteIndices: [],

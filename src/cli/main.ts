@@ -4,15 +4,16 @@ import { exportMp3Bytes, exportWavBytes, renderPdfBytes, renderPngBytes } from "
 import { parse } from "../parser/index.js";
 import { exportMidiBytes } from "../player/index.js";
 import { renderSvg, renderSvgPages } from "../renderer/index.js";
+import type { RenderOptions } from "../renderer/index.js";
 
 function usage(): string {
   return [
     "Usage:",
     "  jianpu validate <file> [--json]",
     "  jianpu parse <file> [--json]",
-    "  jianpu export-svg <file> -o <output.svg> [--page-width <px>] [--paginate] [--page-height <px>] [--page-margin <px>] [--color <css>] [--background <css>]",
-    "  jianpu export-png <file> -o <output.png> [--page-width <px>] [--paginate] [--page-height <px>] [--page-margin <px>] [--color <css>] [--background <css>]",
-    "  jianpu export-pdf <file> -o <output.pdf> [--page-width <px>] [--paginate] [--page-height <px>] [--page-margin <px>] [--color <css>] [--background <css>]",
+    "  jianpu export-svg <file> -o <output.svg> [--page-width <px>] [--paginate] [--page-height <px>] [--page-margin <px>] [--page-footer <text>] [--page-numbers] [--color <css>] [--background <css>]",
+    "  jianpu export-png <file> -o <output.png> [--page-width <px>] [--paginate] [--page-height <px>] [--page-margin <px>] [--page-footer <text>] [--page-numbers] [--color <css>] [--background <css>]",
+    "  jianpu export-pdf <file> -o <output.pdf> [--page-width <px>] [--paginate] [--page-height <px>] [--page-margin <px>] [--page-footer <text>] [--page-numbers] [--color <css>] [--background <css>]",
     "  jianpu export-midi <file> -o <output.mid> [--program <number>] [--omit-initial-rest]",
     "  jianpu export-wav <file> -o <output.wav> [--program <number>] [--sample-rate <hz>] [--amplitude <0-1>] [--omit-initial-rest]",
     "  jianpu export-mp3 <file> -o <output.mp3> [--program <number>] [--sample-rate <hz>] [--amplitude <0-1>] [--bit-rate <kbps>] [--omit-initial-rest]",
@@ -26,7 +27,19 @@ function readFlag(flags: string[], name: string): string | undefined {
   return index >= 0 ? flags[index + 1] : undefined;
 }
 
-const VALUE_FLAGS = new Set(["-o", "--page-width", "--page-height", "--page-margin", "--color", "--background", "--program", "--sample-rate", "--amplitude", "--bit-rate"]);
+const VALUE_FLAGS = new Set([
+  "-o",
+  "--page-width",
+  "--page-height",
+  "--page-margin",
+  "--page-footer",
+  "--color",
+  "--background",
+  "--program",
+  "--sample-rate",
+  "--amplitude",
+  "--bit-rate",
+]);
 const NEGATIVE_NUMBER_PATTERN = /^-\d+(?:\.\d+)?$/;
 
 function looksLikeFlag(value: string): boolean {
@@ -56,7 +69,17 @@ function commandFlags(command: string): Set<string> {
     case "export-svg":
     case "export-png":
     case "export-pdf":
-      return new Set(["-o", "--page-width", "--paginate", "--page-height", "--page-margin", "--color", "--background"]);
+      return new Set([
+        "-o",
+        "--page-width",
+        "--paginate",
+        "--page-height",
+        "--page-margin",
+        "--page-footer",
+        "--page-numbers",
+        "--color",
+        "--background",
+      ]);
     case "export-midi":
       return new Set(["-o", "--program", "--omit-initial-rest"]);
     case "export-wav":
@@ -106,6 +129,34 @@ function readNonNegativeNumberFlag(flags: string[], name: string): number | unde
   return Number.isFinite(value) && value >= 0 ? value : Number.NaN;
 }
 
+function readRenderOptions(flags: string[]): RenderOptions | null {
+  const pageWidth = readPositiveNumberFlag(flags, "--page-width");
+  if (Number.isNaN(pageWidth)) {
+    console.error("error: --page-width must be a positive number");
+    return null;
+  }
+  const pageHeight = readPositiveNumberFlag(flags, "--page-height");
+  if (Number.isNaN(pageHeight)) {
+    console.error("error: --page-height must be a positive number");
+    return null;
+  }
+  const pageMargin = readNonNegativeNumberFlag(flags, "--page-margin");
+  if (Number.isNaN(pageMargin)) {
+    console.error("error: --page-margin must be a non-negative number");
+    return null;
+  }
+  return {
+    pageWidth,
+    paginate: flags.includes("--paginate"),
+    pageHeight,
+    pageMargin,
+    pageFooter: readFlag(flags, "--page-footer"),
+    pageNumbers: flags.includes("--page-numbers"),
+    color: readFlag(flags, "--color"),
+    background: readFlag(flags, "--background"),
+  };
+}
+
 function readProgram(flags: string[]): number | null {
   const program = Number(readFlag(flags, "--program") ?? "0");
   if (!Number.isInteger(program) || program < 0 || program > 174) {
@@ -140,6 +191,7 @@ async function main(argv: string[]): Promise<number> {
     "--page-width",
     "--page-height",
     "--page-margin",
+    "--page-footer",
     "--color",
     "--background",
     "--program",
@@ -188,33 +240,11 @@ async function main(argv: string[]): Promise<number> {
       console.error("error: export-svg requires -o <output.svg>");
       return 2;
     }
-    const pageWidth = readPositiveNumberFlag(flags, "--page-width");
-    if (Number.isNaN(pageWidth)) {
-      console.error("error: --page-width must be a positive number");
+    const renderOptions = readRenderOptions(flags);
+    if (!renderOptions) {
       return 2;
     }
-    const pageHeight = readPositiveNumberFlag(flags, "--page-height");
-    if (Number.isNaN(pageHeight)) {
-      console.error("error: --page-height must be a positive number");
-      return 2;
-    }
-    const pageMargin = readNonNegativeNumberFlag(flags, "--page-margin");
-    if (Number.isNaN(pageMargin)) {
-      console.error("error: --page-margin must be a non-negative number");
-      return 2;
-    }
-    await writeFile(
-      output,
-      renderSvg(result.value, {
-        pageWidth,
-        paginate: flags.includes("--paginate"),
-        pageHeight,
-        pageMargin,
-        color: readFlag(flags, "--color"),
-        background: readFlag(flags, "--background"),
-      }),
-      "utf8",
-    );
+    await writeFile(output, renderSvg(result.value, renderOptions), "utf8");
     console.log(output);
   }
 
@@ -224,30 +254,12 @@ async function main(argv: string[]): Promise<number> {
       console.error("error: export-png requires -o <output.png>");
       return 2;
     }
-    const pageWidth = readPositiveNumberFlag(flags, "--page-width");
-    if (Number.isNaN(pageWidth)) {
-      console.error("error: --page-width must be a positive number");
-      return 2;
-    }
-    const pageHeight = readPositiveNumberFlag(flags, "--page-height");
-    if (Number.isNaN(pageHeight)) {
-      console.error("error: --page-height must be a positive number");
-      return 2;
-    }
-    const pageMargin = readNonNegativeNumberFlag(flags, "--page-margin");
-    if (Number.isNaN(pageMargin)) {
-      console.error("error: --page-margin must be a non-negative number");
+    const renderOptions = readRenderOptions(flags);
+    if (!renderOptions) {
       return 2;
     }
     const background = readFlag(flags, "--background");
-    const svg = renderSvg(result.value, {
-      pageWidth,
-      paginate: flags.includes("--paginate"),
-      pageHeight,
-      pageMargin,
-      color: readFlag(flags, "--color"),
-      background,
-    });
+    const svg = renderSvg(result.value, renderOptions);
     await writeFile(output, renderPngBytes(svg, { background }));
     console.log(output);
   }
@@ -258,29 +270,11 @@ async function main(argv: string[]): Promise<number> {
       console.error("error: export-pdf requires -o <output.pdf>");
       return 2;
     }
-    const pageWidth = readPositiveNumberFlag(flags, "--page-width");
-    if (Number.isNaN(pageWidth)) {
-      console.error("error: --page-width must be a positive number");
+    const renderOptions = readRenderOptions(flags);
+    if (!renderOptions) {
       return 2;
     }
-    const pageHeight = readPositiveNumberFlag(flags, "--page-height");
-    if (Number.isNaN(pageHeight)) {
-      console.error("error: --page-height must be a positive number");
-      return 2;
-    }
-    const pageMargin = readNonNegativeNumberFlag(flags, "--page-margin");
-    if (Number.isNaN(pageMargin)) {
-      console.error("error: --page-margin must be a non-negative number");
-      return 2;
-    }
-    const pages = renderSvgPages(result.value, {
-      pageWidth,
-      paginate: flags.includes("--paginate"),
-      pageHeight,
-      pageMargin,
-      color: readFlag(flags, "--color"),
-      background: readFlag(flags, "--background"),
-    });
+    const pages = renderSvgPages(result.value, renderOptions);
     await writeFile(output, await renderPdfBytes(pages, { title: result.value.header.title || undefined }));
     console.log(output);
   }

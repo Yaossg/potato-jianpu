@@ -37,6 +37,8 @@ export type TranslationKey =
   | "paginate"
   | "pageHeight"
   | "pageMargin"
+  | "pageFooter"
+  | "pageNumbers"
   | "color"
   | "page"
   | "justify"
@@ -73,7 +75,7 @@ export type TranslationKey =
   | "event"
   | "events";
 
-const translations: { en: Record<TranslationKey, string>; zh: Partial<Record<TranslationKey, string>> } = {
+const translations: { en: Record<TranslationKey, string>; zh: Record<TranslationKey, string> } = {
   en: {
     tagline: "Browser preview for the parser, SVG renderer, and audio exporters.",
     language: "Language",
@@ -110,6 +112,8 @@ const translations: { en: Record<TranslationKey, string>; zh: Partial<Record<Tra
     paginate: "Paginate",
     pageHeight: "Page height",
     pageMargin: "Page margin",
+    pageFooter: "Page footer",
+    pageNumbers: "Page numbers",
     color: "Color",
     page: "Page",
     justify: "Justify",
@@ -182,6 +186,8 @@ const translations: { en: Record<TranslationKey, string>; zh: Partial<Record<Tra
     paginate: "分页",
     pageHeight: "页高",
     pageMargin: "页边距",
+    pageFooter: "页脚",
+    pageNumbers: "页码",
     color: "谱面颜色",
     page: "页面",
     justify: "对齐",
@@ -191,6 +197,7 @@ const translations: { en: Record<TranslationKey, string>; zh: Partial<Record<Tra
     soundSettings: "声音设置",
     editorSettings: "编辑器设置",
     program: "音色",
+    trackProgramOverrides: "{count} 个声部音色覆盖",
     generalMidi: "通用 MIDI",
     drums: "鼓组",
     volume: "音量",

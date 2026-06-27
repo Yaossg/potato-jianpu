@@ -243,7 +243,8 @@ button:disabled {
 .select-control,
 .range-control,
 .checkbox-control,
-.color-control {
+.color-control,
+.text-control {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -253,6 +254,15 @@ button:disabled {
 
 .number-control input {
   width: 92px;
+  border: 1px solid var(--control-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: var(--control-text);
+  background: var(--control-bg);
+}
+
+.text-control input {
+  width: 220px;
   border: 1px solid var(--control-border);
   border-radius: 6px;
   padding: 8px 10px;
