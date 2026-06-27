@@ -176,6 +176,22 @@ export function SettingsPanel({
                 }}
               />
             </label>
+            <label className="number-control">
+              {t("pageMargin")}
+              <input
+                type="number"
+                min={minPageMargin}
+                max={maxPageMargin}
+                step={10}
+                value={pageMargin}
+                onChange={(event) => {
+                  const value = Number(event.target.value);
+                  if (Number.isFinite(value) && value >= 0) {
+                    onPageMarginChange(Math.min(maxPageMargin, Math.max(minPageMargin, Math.round(value))));
+                  }
+                }}
+              />
+            </label>
             <label className="checkbox-control">
               <input type="checkbox" checked={paginate} onChange={(event) => onPaginateChange(event.target.checked)} />
               {t("paginate")}
@@ -198,22 +214,6 @@ export function SettingsPanel({
                 />
               </label>
             )}
-            <label className="number-control">
-              {t("pageMargin")}
-              <input
-                type="number"
-                min={minPageMargin}
-                max={maxPageMargin}
-                step={10}
-                value={pageMargin}
-                onChange={(event) => {
-                  const value = Number(event.target.value);
-                  if (Number.isFinite(value) && value >= 0) {
-                    onPageMarginChange(Math.min(maxPageMargin, Math.max(minPageMargin, Math.round(value))));
-                  }
-                }}
-              />
-            </label>
             {paginate && (
               <label className="checkbox-control">
                 <input type="checkbox" checked={pageNumbers} onChange={(event) => onPageNumbersChange(event.target.checked)} />
