@@ -63,6 +63,7 @@ class Parser {
     this.labeledScoreMode = this.scoreHasTrackLabelsAhead();
     const score = this.at("eof") ? [] : this.parseScore();
     this.validateTrackLabelOrder(score);
+    this.validatePageBreaks(score);
     this.validateNoteKinds(score, header);
     this.validateLyrics(score);
     this.normalizeFinalEnding(score);
@@ -213,15 +214,28 @@ class Parser {
 
   private parseScore(): ScoreLine[] {
     const lines: ScoreLine[] = [];
+    let pageBreakBeforeNextLine = false;
     while (!this.at("eof")) {
       if (this.at("newline")) {
         this.skipNewlines();
         continue;
       }
-      if (this.isLyricLineStart()) {
+      if (this.isPageBreakLineStart()) {
+        this.parsePageBreakLine();
+        pageBreakBeforeNextLine = true;
+      } else if (this.isLyricLineStart()) {
+        if (pageBreakBeforeNextLine) {
+          this.error("Page breaks must appear before a score line, not before lyrics.");
+          pageBreakBeforeNextLine = false;
+        }
         this.attachLyricLine(lines, this.parseLyricLine());
       } else {
-        lines.push(this.parseLine());
+        const line = this.parseLine();
+        if (pageBreakBeforeNextLine) {
+          line.pageBreakBefore = true;
+          pageBreakBeforeNextLine = false;
+        }
+        lines.push(line);
       }
       if (this.at("newline")) {
         this.skipNewlines();
@@ -231,6 +245,19 @@ class Parser {
       }
     }
     return lines;
+  }
+
+  private isPageBreakLineStart(): boolean {
+    return (
+      this.at("dash") &&
+      this.tokens[this.index + 1]?.type === "dash" &&
+      this.tokens[this.index + 2]?.type === "dash" &&
+      (this.tokens[this.index + 3]?.type === "newline" || this.tokens[this.index + 3]?.type === "eof")
+    );
+  }
+
+  private parsePageBreakLine() {
+    this.index += 3;
   }
 
   private isLyricLineStart(): boolean {
@@ -658,6 +685,17 @@ class Parser {
         return;
       }
       expected = this.nextTrackLabel(label);
+    }
+  }
+
+  private validatePageBreaks(lines: ScoreLine[]) {
+    if (!lines.some((line) => line.label !== undefined)) {
+      return;
+    }
+    for (const line of lines) {
+      if (line.pageBreakBefore && line.label !== "T1") {
+        this.error("Page breaks in labeled scores must appear before T1 so the voice group stays together.", line.range);
+      }
     }
   }
 

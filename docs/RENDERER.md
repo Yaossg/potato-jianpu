@@ -103,7 +103,8 @@ The renderer follows a measurement-first pipeline:
    width.
 7. Optionally justify line coordinates when `justifyMode` enables it.
 8. Reserve page-adornment space for optional page footers and page numbers.
-9. Optionally paginate completed visual lines into fixed-height page boxes.
+9. Optionally paginate completed visual lines into fixed-height page boxes,
+   honoring manual page breaks from the parsed score.
 10. Draw bars, ties, notes, duration marks, and attached lyric lines or
     syllables.
 11. Compute final SVG height from either the adaptive content height or the fixed
@@ -251,6 +252,12 @@ one visual line. The header renders only on the first page and consumes
 first-page vertical space. If a visual line is taller than the available page
 height, it is placed at the top content inset of a new page without vertical
 compression.
+
+A score line containing only `---` marks a manual page break. When `paginate`
+is `true`, the next score line starts on a new page. Manual breaks do not
+render visible marks, and they do not affect unpaginated adaptive-height SVG
+layout. In labeled multi-voice scores, a manual break must appear before `T1`
+so the voice group stays together.
 
 Paginated output draws one `.page-boundary` rectangle per page so the exported
 SVG and PNG visibly show page edges. When a background color is provided, it

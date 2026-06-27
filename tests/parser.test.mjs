@@ -257,6 +257,26 @@ test("keeps comment boundaries between header and score lines", () => {
   assert.equal(result.value.score[1].measures[0].notes.length, 2);
 });
 
+test("parses manual page breaks before score lines", () => {
+  const result = parse("1 2\n---\n3 4");
+  assert.equal(result.ok, true);
+  assert.equal(result.value.score.length, 2);
+  assert.equal(result.value.score[0].pageBreakBefore, undefined);
+  assert.equal(result.value.score[1].pageBreakBefore, true);
+});
+
+test("rejects manual page breaks before lyrics", () => {
+  const result = parse('1 2\n---\n"hello"');
+  assert.equal(result.ok, false);
+  assert.match(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Page breaks must appear before a score line/);
+});
+
+test("rejects manual page breaks inside labeled voice groups", () => {
+  const result = parse("T1: 1 2\n---\nT2: 5, 6,");
+  assert.equal(result.ok, false);
+  assert.match(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Page breaks in labeled scores must appear before T1/);
+});
+
 test("applies measure octave prefixes to pitch notes", () => {
   const result = parse("'' 2' 1'/. 1'//~ 1' 6//");
   assert.equal(result.ok, true);

@@ -24,15 +24,11 @@ commitment.
     - Keep exported SVG page boundaries and PDF page dimensions aligned.
     - Verify SVG, PNG, and PDF output dimensions for each supported preset and
       orientation.
-  - Manual page breaks and simple orphan-line avoidance:
-    - Choose source syntax or renderer-only control for manual page breaks.
-    - If source syntax is added, update grammar docs, parser tests, and
-      docs-site references in both languages.
-    - Teach pagination to start a new page at explicit break markers.
+  - Simple orphan-line avoidance:
     - Add an orphan-line rule that moves a final short line to the next page
       when doing so improves page balance.
-    - Verify explicit breaks, automatic breaks, and orphan avoidance with
-      focused renderer snapshots.
+    - Verify automatic breaks and orphan avoidance with focused renderer
+      snapshots.
   - Stronger keep-together behavior for multi-voice groups and attached lyrics:
     - Identify the score units that must remain together during pagination.
     - Extend layout measurement so a keep-together group can be measured before

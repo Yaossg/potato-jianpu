@@ -473,6 +473,7 @@ interface ScoreVisualBlock {
   height: number;
   lineHeight: number;
   hasLyrics: boolean;
+  pageBreakBefore: boolean;
 }
 
 interface ScoreRenderPlacement {
@@ -898,6 +899,7 @@ function visualBlocks(context: ScoreLayoutContext): ScoreVisualBlock[] {
       lineHeight: item.layout.height + DIMENSIONS.lineSpacing,
       height: item.layout.height + DIMENSIONS.lineSpacing + lyricHeight,
       hasLyrics,
+      pageBreakBefore: item.layout.measureStartIndex === 0 && item.layout.line.pageBreakBefore === true,
     };
   });
 }
@@ -998,6 +1000,11 @@ function paginateBlocks(blocks: ScoreVisualBlock[], yStart: number, pageHeight: 
   let pageHasScore = false;
 
   for (const block of blocks) {
+    if (block.pageBreakBefore && (pageHasScore || (pageIndex === 0 && yStart > 0))) {
+      pageIndex += 1;
+      y = PAGINATED_PAGE_CONTENT_TOP;
+      pageHasScore = false;
+    }
     const pageTop = pageIndex === 0 ? Math.max(yStart, PAGINATED_PAGE_CONTENT_TOP) : PAGINATED_PAGE_CONTENT_TOP;
     const available = pageHeight - y;
     if (block.height > available && (pageHasScore || (pageIndex === 0 && yStart > 0))) {

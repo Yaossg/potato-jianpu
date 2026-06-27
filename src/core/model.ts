@@ -94,6 +94,7 @@ export interface LyricLine {
 
 export interface ScoreLine {
   label?: string;
+  pageBreakBefore?: boolean;
   measures: Measure[];
   lyrics?: LyricLine[];
   range: SourceRange;

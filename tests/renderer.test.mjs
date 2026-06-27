@@ -157,6 +157,20 @@ test("paginates visual lines into fixed-height page groups", () => {
   assert.doesNotMatch(svg, /<g class="page" data-page="2"[^>]*>[\s\S]*Paged/);
 });
 
+test("starts a new paginated page at manual page breaks", () => {
+  const result = parse("1 2\n---\n3 4");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 160, paginate: true, pageHeight: 180, background: "#ffffff" });
+  assert.equal([...svg.matchAll(/<g class="page" data-page="/g)].length, 2);
+  const page1 = svg.match(/<g class="page" data-page="1"[\s\S]*?(?=<g class="page" data-page="2")/)?.[0] ?? "";
+  const page2 = svg.match(/<g class="page" data-page="2"[\s\S]*?<\/g>\s*<\/svg>/)?.[0] ?? "";
+  assert.match(page1, />1<\/text>/);
+  assert.match(page1, />2<\/text>/);
+  assert.doesNotMatch(page1, />3<\/text>/);
+  assert.match(page2, />3<\/text>/);
+  assert.match(page2, />4<\/text>/);
+});
+
 test("renders score content inside page margins", () => {
   const result = parse(`hidden: true\n=\n1 2 | 3 4 | 5 6 |`);
   assert.equal(result.ok, true);
