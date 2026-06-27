@@ -28,7 +28,7 @@ const keyMap: Record<string, KeySignature> = {
   B: 11,
 };
 
-const semanticKeys = new Set(["title", "subtitle", "composer", "key", "time", "tempo", "hidden", "footer", "numbering", "program", "volume"]);
+const semanticKeys = new Set(["title", "subtitle", "composer", "key", "time", "tempo", "hidden", "footer", "numbering", "paginate", "program", "volume"]);
 
 export function createDefaultHeader(): Header {
   return {
@@ -42,6 +42,7 @@ export function createDefaultHeader(): Header {
     hidden: false,
     footer: "",
     numbering: false,
+    paginate: false,
     trackNames: {},
     trackPrograms: {},
     trackVolumes: {},
@@ -133,6 +134,14 @@ export function applyHeaderProperty(
       return "ok";
     }
     parseNumbering(header, value, diagnostics);
+    return "ok";
+  }
+
+  if (textKey === "paginate") {
+    if (!value || !recordKey(seen, "paginate", "Duplicate header property 'paginate'.", keyRange, diagnostics)) {
+      return "ok";
+    }
+    parsePaginate(header, value, diagnostics);
     return "ok";
   }
 
@@ -374,6 +383,22 @@ function parseNumbering(header: Header, value: HeaderValue, diagnostics: Diagnos
     return;
   }
   diagnostics.push({ severity: "error", message: "Expected boolean value for numbering.", range: value.range });
+}
+
+function parsePaginate(header: Header, value: HeaderValue, diagnostics: Diagnostic[]) {
+  if (value.quoted) {
+    diagnostics.push({ severity: "error", message: "Expected boolean value for paginate.", range: value.range });
+    return;
+  }
+  if (value.text === "true") {
+    header.paginate = true;
+    return;
+  }
+  if (value.text === "false") {
+    header.paginate = false;
+    return;
+  }
+  diagnostics.push({ severity: "error", message: "Expected boolean value for paginate.", range: value.range });
 }
 
 function parseProgram(header: Header, value: HeaderValue, diagnostics: Diagnostic[]) {

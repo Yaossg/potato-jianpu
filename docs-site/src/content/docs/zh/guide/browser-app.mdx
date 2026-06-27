@@ -39,7 +39,7 @@ import RelatedLinks from '../../../../components/RelatedLinks.astro';
 
 ## 导出
 
-导出菜单可以把当前有效乐谱下载为 SVG、PNG、PDF、MIDI、WAV 或 MP3。SVG、PNG 和 PDF 使用当前页面设置：宽度、分页、页高、页边距、页码、颜色、背景和对齐方式；页脚文字来自 `footer` 文件头字段。MIDI 使用当前默认 Program、乐谱里的 `program`/`volume` 默认值、`Tn.program`/`Tn.volume` 覆盖值，以及忽略开头休止符设置。WAV 与 MP3 会把浏览器主音量和解析出的轨道音量一起用于本地渲染。
+导出菜单可以把当前有效乐谱下载为 SVG、PNG、PDF、MIDI、WAV 或 MP3。SVG、PNG 和 PDF 使用当前页面设置：宽度、分页、页高、页边距、页码、颜色、背景和对齐方式；分页和页脚文字也可以来自 `paginate` 与 `footer` 文件头字段。MIDI 使用当前默认 Program、乐谱里的 `program`/`volume` 默认值、`Tn.program`/`Tn.volume` 覆盖值，以及忽略开头休止符设置。WAV 与 MP3 会把浏览器主音量和解析出的轨道音量一起用于本地渲染。
 
 音频导出通常比图片或 MIDI 导出更久，因为浏览器需要先渲染完整编排再下载。渲染 WAV 或 MP3 时，导出菜单会显示事件数量和大致时长。
 

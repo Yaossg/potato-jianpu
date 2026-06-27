@@ -118,6 +118,7 @@ export interface Header {
   hidden: boolean;
   footer: string;
   numbering: boolean;
+  paginate: boolean;
   program?: number;
   volume?: number;
   trackNames: Record<string, string>;

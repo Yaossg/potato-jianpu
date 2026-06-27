@@ -46,7 +46,8 @@ interface RenderOptions {
 - `pageWidth` controls the SVG `width`, `viewBox` width, header layout, measure
   wrapping, and maximum visual line width. Default: `1000`.
 - `paginate` switches from one adaptive-height SVG page to a fixed-height
-  multi-page SVG. Default: `false`.
+  multi-page SVG. Default: the parsed `paginate` header value, or `false` when
+  omitted.
 - `pageHeight` controls each page box height when `paginate` is `true`.
   Default: `1400`.
 - `pageMargin` adds an equal margin on all four page sides. The SVG viewport
@@ -265,12 +266,13 @@ SVG and PNG visibly show page edges. When a background color is provided, it
 also draws one `.page-background` rectangle per page at the page's root SVG y
 coordinate.
 
-Page-level adornments can come from parsed header fields or render options.
-`pageFooter` draws footer text at the bottom-left page margin, and
-`pageNumbers` draws centered `current / total` numbering. Render options
-override header values for one render. When page adornments are enabled, the
-renderer reserves vertical content space so notation does not overlap them;
-their text still uses `currentColor`.
+Page-level rendering defaults can come from parsed header fields or render
+options. `paginate` enables fixed-height pages, `pageFooter` draws footer text
+at the bottom-left page margin, and `pageNumbers` draws centered
+`current / total` numbering. Render options override header values for one
+render. When page adornments are enabled, the renderer reserves vertical
+content space so notation does not overlap them; their text still uses
+`currentColor`.
 
 The CLI exposes pagination through:
 

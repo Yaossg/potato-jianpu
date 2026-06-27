@@ -37,7 +37,7 @@ The examples panel loads bundled `.jpu` scores into the editor. If the editor al
 
 ## Export
 
-The export menu downloads the current valid score as SVG, PNG, PDF, MIDI, WAV, or MP3. SVG, PNG, and PDF use the current page settings: width, pagination, page size, page margin, page numbers, color, background, and justification; page footer text comes from the `footer` header field. MIDI uses the selected default Program, any score-level `program`/`volume` defaults, any per-track `Tn.program`/`Tn.volume` overrides, and the initial-rest setting. WAV and MP3 are rendered locally in the browser with the same Program resolution, master volume, resolved track volumes, sample rate, and initial-rest setting.
+The export menu downloads the current valid score as SVG, PNG, PDF, MIDI, WAV, or MP3. SVG, PNG, and PDF use the current page settings: width, pagination, page size, page margin, page numbers, color, background, and justification; pagination and page footer text can also come from the `paginate` and `footer` header fields. MIDI uses the selected default Program, any score-level `program`/`volume` defaults, any per-track `Tn.program`/`Tn.volume` overrides, and the initial-rest setting. WAV and MP3 are rendered locally in the browser with the same Program resolution, master volume, resolved track volumes, sample rate, and initial-rest setting.
 
 Audio export can take longer than image or MIDI export because the browser renders the full arrangement before downloading. While WAV or MP3 is rendering, the export menu reports the event count and approximate duration.
 

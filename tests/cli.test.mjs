@@ -64,6 +64,22 @@ test("CLI export-svg can paginate with explicit page height", async () => {
   assert.equal([...svg.matchAll(/<rect class="page-boundary"/g)].length, pageCount);
 });
 
+test("CLI export-svg uses pagination from header", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
+  const input = join(dir, "score.jpu");
+  const output = join(dir, "score.svg");
+  await writeFile(input, "paginate: true\n=\n1 2 | 3 4 | 5 6 | 7 1' |\n1 2 | 3 4 | 5 6 | 7 1' |", "utf8");
+
+  await execFileAsync(process.execPath, ["dist/cli/main.js", "export-svg", input, "-o", output, "--page-width", "120", "--page-height", "160"], {
+    cwd: repoDir,
+  });
+
+  const svg = await readFile(output, "utf8");
+  const pageCount = [...svg.matchAll(/<g class="page" data-page="/g)].length;
+  assert.ok(pageCount > 1);
+  assert.match(svg, new RegExp(`<svg[^>]+height="${pageCount * 160}"`));
+});
+
 test("CLI export-svg accepts page margin", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
   const input = join(dir, "score.jpu");

@@ -15,7 +15,7 @@ function resolvedRenderOptions(document: Document, options: RenderOptions): Requ
   const pageMargin = Math.max(0, options.pageMargin ?? DEFAULT_OPTIONS.pageMargin);
   return {
     pageWidth: options.pageWidth ?? DEFAULT_OPTIONS.pageWidth,
-    paginate: options.paginate ?? DEFAULT_OPTIONS.paginate,
+    paginate: options.paginate ?? document.header.paginate ?? DEFAULT_OPTIONS.paginate,
     pageHeight: options.pageHeight ?? DEFAULT_OPTIONS.pageHeight,
     pageMargin,
     pageFooter: options.pageFooter ?? document.header.footer,

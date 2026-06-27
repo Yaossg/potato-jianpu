@@ -62,13 +62,14 @@ tempo: 72
 | `hidden` | 隐藏渲染出的文件头区块的布尔标记。 |
 | `footer` | SVG、PNG 和 PDF 渲染的页面页脚文本。 |
 | `numbering` | 渲染页码的布尔标记。 |
+| `paginate` | 启用固定页高分页视觉渲染的布尔标记。 |
 | `program` | 播放和导出的乐谱级默认 Program。 |
 | `volume` | 播放和导出的乐谱级默认轨道音量。 |
 | `Tn.program` | 旋律轨道的逐轨道播放和导出 Program 覆盖。 |
 | `Pn.program` | P 标签鼓轨道的逐轨道打击乐 Program（`128`–`174`）。 |
 | `Tn.volume` | 逐轨道播放和导出音量倍率。 |
 
-`title`、`subtitle`、`composer` 和 `footer` 的默认值为空；`hidden` 和 `numbering` 默认为 `false`，`key` 默认为 `C`，`time` 默认为 `4/4`，`tempo` 默认为 `120`，`program` 会回退到浏览器或 CLI 的 Program 设置，`volume` 默认为 `1`。
+`title`、`subtitle`、`composer` 和 `footer` 的默认值为空；`hidden`、`numbering` 和 `paginate` 默认为 `false`，`key` 默认为 `C`，`time` 默认为 `4/4`，`tempo` 默认为 `120`，`program` 会回退到浏览器或 CLI 的 Program 设置，`volume` 默认为 `1`。
 
 只接受文档列出的文件头字段。`arranger` 这样的未知字段，或 `temop` 这样的拼写错误字段，都会成为解析错误。
 
@@ -94,7 +95,7 @@ tempo: 72
 1 2 3 4`}
 />
 
-文件头字段名区分大小写。文本值和可见标签名称必须加引号；`key`、`time`、`tempo` 和 `hidden` 使用不加引号的类型化值。文件头字符串必须在同一行结束。
+文件头字段名区分大小写。文本值和可见标签名称必须加引号；`key`、`time`、`tempo`、`hidden`、`numbering` 和 `paginate` 使用不加引号的类型化值。文件头字符串必须在同一行结束。
 
 <JianpuExample
   title="未结束的文件头字符串"
@@ -141,11 +142,12 @@ hidden: true
 
 ## 页脚和页码
 
-使用 `footer` 设置每页左下角的页脚文本。使用 `numbering: true` 可以渲染居中的 `current / total` 页码。这些字段影响 SVG、PNG 和 PDF 渲染；浏览器和 CLI 的渲染选项仍可以为单次导出覆盖它们。
+使用 `paginate: true` 可以让 SVG、PNG 和 PDF 输出默认使用固定页高分页渲染。使用 `footer` 设置每页左下角的页脚文本。使用 `numbering: true` 可以渲染居中的 `current / total` 页码。这些字段影响 SVG、PNG 和 PDF 渲染；浏览器和 CLI 的渲染选项仍可以为单次导出覆盖它们。
 
 <JianpuSource
   title="页面信息文件头源码"
-  source={`footer: "modern-jianpu"
+  source={`paginate: true
+footer: "modern-jianpu"
 numbering: true
 =
 1 2 3 4

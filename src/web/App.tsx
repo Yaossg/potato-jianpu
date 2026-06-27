@@ -189,7 +189,7 @@ export function App() {
   const [pageWidthMode, setPageWidthMode] = useState<PageWidthMode>("panel");
   const [manualPageWidth, setManualPageWidth] = useState(DEFAULT_PAGE_WIDTH);
   const [panelPageWidth, setPanelPageWidth] = useState(DEFAULT_PAGE_WIDTH);
-  const [paginate, setPaginate] = useState(false);
+  const [paginateOverride, setPaginateOverride] = useState<boolean | null>(null);
   const [pageHeight, setPageHeight] = useState(DEFAULT_PAGE_HEIGHT);
   const [pageMargin, setPageMargin] = useState(DEFAULT_PAGE_MARGIN);
   const [pageNumbers, setPageNumbers] = useState(false);
@@ -224,11 +224,13 @@ export function App() {
     [previewParsed],
   );
   const pageWidth = pageWidthMode === "panel" ? panelPageWidth : pageWidthMode === "content" ? contentPageWidth : manualPageWidth;
-  const maxPageMargin = Math.max(MIN_PAGE_MARGIN, Math.floor((Math.min(pageWidth, paginate ? pageHeight : pageWidth) - 1) / 2));
+  const headerPaginate = previewParsed?.ok ? previewParsed.value.header.paginate : false;
+  const effectivePaginate = paginateOverride ?? headerPaginate;
+  const maxPageMargin = Math.max(MIN_PAGE_MARGIN, Math.floor((Math.min(pageWidth, effectivePaginate ? pageHeight : pageWidth) - 1) / 2));
   const pageContentWidth = Math.max(1, pageWidth - pageMargin * 2);
   const headerPageFooter = previewParsed?.ok ? previewParsed.value.header.footer : "";
   const headerPageNumbers = previewParsed?.ok ? previewParsed.value.header.numbering : false;
-  const effectivePageNumbers = headerPageNumbers || (paginate && pageNumbers);
+  const effectivePageNumbers = headerPageNumbers || (effectivePaginate && pageNumbers);
   const trackProgramOverrideCount = parsed.ok ? Object.keys(parsed.value.header.trackPrograms).length : 0;
   const layoutDiagnostics = useMemo<Diagnostic[]>(
     () =>
@@ -246,7 +248,7 @@ export function App() {
       previewParsed?.ok
         ? renderSvg(previewParsed.value, {
             pageWidth,
-            paginate,
+            paginate: effectivePaginate,
             pageHeight,
             pageMargin,
             pageFooter: headerPageFooter,
@@ -257,14 +259,27 @@ export function App() {
             background: pageBackground,
           })
         : null,
-    [activeNoteIndices, effectivePageNumbers, headerPageFooter, justifyMode, pageBackground, pageHeight, pageMargin, pageWidth, paginate, parsed.ok, previewParsed, scoreColor],
+    [
+      activeNoteIndices,
+      effectivePageNumbers,
+      effectivePaginate,
+      headerPageFooter,
+      justifyMode,
+      pageBackground,
+      pageHeight,
+      pageMargin,
+      pageWidth,
+      parsed.ok,
+      previewParsed,
+      scoreColor,
+    ],
   );
   const svgPages = useMemo(
     () =>
       previewParsed?.ok
         ? renderSvgPages(previewParsed.value, {
             pageWidth,
-            paginate,
+            paginate: effectivePaginate,
             pageHeight,
             pageMargin,
             pageFooter: headerPageFooter,
@@ -275,20 +290,33 @@ export function App() {
             background: pageBackground,
           })
         : null,
-    [activeNoteIndices, effectivePageNumbers, headerPageFooter, justifyMode, pageBackground, pageHeight, pageMargin, pageWidth, paginate, parsed.ok, previewParsed, scoreColor],
+    [
+      activeNoteIndices,
+      effectivePageNumbers,
+      effectivePaginate,
+      headerPageFooter,
+      justifyMode,
+      pageBackground,
+      pageHeight,
+      pageMargin,
+      pageWidth,
+      parsed.ok,
+      previewParsed,
+      scoreColor,
+    ],
   );
   const previewPageCount = useMemo(() => (svg ? Math.max(1, svg.match(/<g class="page" /g)?.length ?? 1) : 0), [svg]);
   const pageHeightWarningMessages = useMemo(
     () =>
       pageLayoutWarnings({
-        paginate,
+        paginate: effectivePaginate,
         pageHeight,
         pageMargin,
         pageFooter: headerPageFooter,
         pageNumbers: effectivePageNumbers,
         pageCount: previewPageCount,
       }).map(pageLayoutWarningMessage),
-    [effectivePageNumbers, headerPageFooter, pageHeight, pageMargin, paginate, previewPageCount],
+    [effectivePageNumbers, effectivePaginate, headerPageFooter, pageHeight, pageMargin, previewPageCount],
   );
   const pageHeightDiagnostics = parsed.ok
     ? pageHeightWarningMessages.map((message) => ({
@@ -691,7 +719,7 @@ export function App() {
           manualPageWidth={manualPageWidth}
           minPageWidth={MIN_PAGE_WIDTH}
           maxPageWidth={MAX_PAGE_WIDTH}
-          paginate={paginate}
+          paginate={effectivePaginate}
           pageHeight={pageHeight}
           minPageHeight={MIN_PAGE_HEIGHT}
           maxPageHeight={MAX_PAGE_HEIGHT}
@@ -718,7 +746,7 @@ export function App() {
           onClose={() => setShowSettings(false)}
           onPageWidthModeChange={setPageWidthMode}
           onManualPageWidthChange={setManualPageWidth}
-          onPaginateChange={setPaginate}
+          onPaginateChange={setPaginateOverride}
           onPageHeightChange={setPageHeight}
           onPageMarginChange={setPageMargin}
           onPageNumbersChange={setPageNumbers}

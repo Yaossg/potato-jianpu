@@ -67,9 +67,10 @@ Parse result shape:
         "beatsPerWholeNote": 4
       },
       "tempo": 120,
-  "hidden": false,
-  "footer": "",
-  "numbering": false,
+      "hidden": false,
+      "footer": "",
+      "numbering": false,
+      "paginate": false,
       "trackNames": {},
       "trackPrograms": {},
       "trackVolumes": {},
@@ -115,7 +116,8 @@ Options:
 - `--page-width <px>`: positive number. Defaults to the renderer default when
   omitted.
 - `--paginate`: render one fixed-height multi-page SVG instead of the default
-  adaptive-height SVG.
+  adaptive-height SVG. When omitted, the renderer uses the parsed `paginate`
+  header value.
 - `--page-height <px>`: positive number. Defaults to `1400` when pagination is
   enabled. The value is validated even when `--paginate` is omitted, but it
   does not change non-paginated output by itself.
@@ -139,10 +141,10 @@ header appears only on the first page. When `--page-margin` is non-zero, page
 content is shifted into a `.page-content` group while backgrounds and page
 boundaries still use the full page size. Each page also includes an exported
 `.page-boundary` rectangle so page edges are visible in both SVG and PNG output.
-Optional page footer and page-number text can be set in the file header or CLI
-options. They render inside the page groups, use the same export color as
-notation, and reserve vertical content space so they do not overlap score
-content.
+Optional pagination, page footer, and page-number text can be set in the file
+header or CLI options. They render inside the page groups, use the same export
+color as notation, and reserve vertical content space so they do not overlap
+score content.
 
 ## PNG Export
 

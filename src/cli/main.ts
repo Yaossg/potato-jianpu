@@ -147,7 +147,7 @@ function readRenderOptions(flags: string[]): RenderOptions | null {
   }
   return {
     pageWidth,
-    paginate: flags.includes("--paginate"),
+    paginate: flags.includes("--paginate") ? true : undefined,
     pageHeight,
     pageMargin,
     pageFooter: readFlag(flags, "--page-footer"),

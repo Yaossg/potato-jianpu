@@ -157,6 +157,19 @@ test("paginates visual lines into fixed-height page groups", () => {
   assert.doesNotMatch(svg, /<g class="page" data-page="2"[^>]*>[\s\S]*Paged/);
 });
 
+test("uses pagination from the header unless render options override it", () => {
+  const result = parse(`paginate: true\n=\n1 2 | 3 4 | 5 6 | 7 1' |\n1 2 | 3 4 | 5 6 | 7 1' |`);
+  assert.equal(result.ok, true);
+
+  const fromHeader = renderSvg(result.value, { pageWidth: 120, pageHeight: 160, background: "#ffffff" });
+  const pageCount = [...fromHeader.matchAll(/<g class="page" data-page="/g)].length;
+  assert.ok(pageCount > 1);
+  assert.match(fromHeader, new RegExp(`<svg[^>]+height="${pageCount * 160}"`));
+
+  const overridden = renderSvg(result.value, { pageWidth: 120, paginate: false, pageHeight: 160, background: "#ffffff" });
+  assert.doesNotMatch(overridden, /<g class="page" data-page="/);
+});
+
 test("starts a new paginated page at manual page breaks", () => {
   const result = parse("1 2\n---\n3 4");
   assert.equal(result.ok, true);
