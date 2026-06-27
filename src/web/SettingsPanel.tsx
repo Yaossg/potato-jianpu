@@ -19,6 +19,7 @@ interface SettingsPanelProps {
   maxPageMargin: number;
   pageFooter: string;
   pageNumbers: boolean;
+  pageWarnings: string[];
   scoreColor: string;
   pageBackground: string;
   justifyMode: JustifyMode;
@@ -86,6 +87,7 @@ export function SettingsPanel({
   maxPageMargin,
   pageFooter,
   pageNumbers,
+  pageWarnings,
   scoreColor,
   pageBackground,
   justifyMode,
@@ -241,6 +243,13 @@ export function SettingsPanel({
               </select>
             </label>
           </div>
+          {pageWarnings.length > 0 && (
+            <div className="settings-warnings" role="status">
+              {pageWarnings.map((warning) => (
+                <p key={warning}>{warning}</p>
+              ))}
+            </div>
+          )}
         </section>
 
         <section className="settings-section">

@@ -46,6 +46,7 @@ test("frontend production build emits the expected app shell", async () => {
   const settingsPanelSource = await readFile(new URL("../src/web/SettingsPanel.tsx", import.meta.url), "utf8");
   const sourceEditorSource = await readFile(new URL("../src/web/SourceEditor.tsx", import.meta.url), "utf8");
   const audioSource = await readFile(new URL("../src/web/audio.ts", import.meta.url), "utf8");
+  const pageWarningsSource = await readFile(new URL("../src/web/page-warnings.ts", import.meta.url), "utf8");
 
   assert.match(script, /Modern Jianpu Markup/);
   assert.match(script, /Export/);
@@ -68,6 +69,8 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(script, /Width mode/);
   assert.match(script, /Paginate/);
   assert.match(script, /Page height/);
+  assert.match(script, /Only .* of page height is usable/);
+  assert.match(script, /These page settings create/);
   assert.match(script, /Content/);
   assert.match(script, /Justify/);
   assert.match(script, /page\(s\)/);
@@ -113,6 +116,7 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(style, /\.settings-panel/);
   assert.match(style, /\.settings-section\s*\+\s*\.settings-section/);
   assert.match(style, /\.settings-grid/);
+  assert.match(style, /\.settings-warnings/);
   assert.match(style, /\.page-settings-grid/);
   assert.match(style, /flex-wrap:wrap/);
   assert.match(style, /\.examples-panel/);
@@ -160,6 +164,9 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(settingsPanelSource, /\{paginate && \(/);
   assert.match(settingsPanelSource, /t\("pageHeight"\)/);
   assert.match(settingsPanelSource, /t\("pageMargin"\)/);
+  assert.match(settingsPanelSource, /settings-warnings/);
+  assert.match(pageWarningsSource, /MIN_USABLE_PAGE_HEIGHT/);
+  assert.match(pageWarningsSource, /EXCESSIVE_PAGE_COUNT/);
   assert.match(sourceEditorSource, /onChange=\{\(event\) => updateSource\(event\.target\.value, event\.target\.selectionStart\)\}/);
   assert.match(sourceEditorSource, /selectDiagnosticRange/);
   assert.match(sourceEditorSource, /title=\{part\.tooltip\}/);

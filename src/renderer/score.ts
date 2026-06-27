@@ -1,4 +1,15 @@
-import { actualNotePerBeat, VELOCITY_LABELS, type Document, type LyricLine, type Measure, type Note, type Pitch, type PitchNote, type ScoreLine } from "../core/index.js";
+import {
+  actualNotePerBeat,
+  VELOCITY_LABELS,
+  type Document,
+  type LyricLine,
+  type Measure,
+  type Note,
+  type Pitch,
+  type PitchNote,
+  type ScoreLine,
+  type SourceRange,
+} from "../core/index.js";
 import { DIMENSIONS } from "./dimensions.js";
 import { labelOffsetForTexts, lyricLineDisplayLabel, scoreLineDisplayLabel } from "./labels.js";
 import { flattenNotes, layoutLine, lineWidth, measureXOffset, type LineLayout, type MeasureLayout } from "./layout.js";
@@ -489,6 +500,23 @@ interface ScoreRenderResult {
   pages?: string[];
 }
 
+export type OverwideScoreLayoutWarning =
+  | {
+      kind: "overwide-line";
+      range: SourceRange;
+      naturalWidth: number;
+      pageWidth: number;
+      multiTrack: boolean;
+    }
+  | {
+      kind: "wrapped-source-line";
+      range: SourceRange;
+      naturalWidth: number;
+      pageWidth: number;
+      visualLineCount: number;
+      multiTrack: boolean;
+    };
+
 function timelineKey(value: number): string {
   return value.toFixed(9);
 }
@@ -902,6 +930,82 @@ function visualBlocks(context: ScoreLayoutContext): ScoreVisualBlock[] {
       pageBreakBefore: item.layout.measureStartIndex === 0 && item.layout.line.pageBreakBefore === true,
     };
   });
+}
+
+function rangeKey(range: SourceRange): string {
+  return `${range.start.offset}:${range.end.offset}`;
+}
+
+export function analyzeScoreOverwidth(document: Document, pageWidth: number): OverwideScoreLayoutWarning[] {
+  const safePageWidth = Math.max(1, pageWidth);
+  const context = layoutScore(document, safePageWidth);
+  const warnings: OverwideScoreLayoutWarning[] = [];
+  const seen = new Set<string>();
+  const layoutsBySourceLine = new Map<ScoreLine, RenderLineLayout[]>();
+
+  for (const item of context.layouts) {
+    layoutsBySourceLine.set(item.layout.line, [...(layoutsBySourceLine.get(item.layout.line) ?? []), item]);
+    const group = context.groups[item.groupIndex]!;
+    const multiTrack = group.lines.length > 1;
+    let measureWarningCount = 0;
+    for (const measureLayout of item.layout.measures) {
+      const naturalWidth = measureLayout.width + item.labelOffset + item.bracketOffset * 2;
+      if (naturalWidth <= safePageWidth) {
+        continue;
+      }
+      const key = `measure:${rangeKey(measureLayout.measure.range)}`;
+      if (seen.has(key)) {
+        continue;
+      }
+      seen.add(key);
+      measureWarningCount += 1;
+      warnings.push({
+        kind: "overwide-line",
+        range: measureLayout.measure.range,
+        naturalWidth: Math.ceil(naturalWidth),
+        pageWidth: safePageWidth,
+        multiTrack,
+      });
+    }
+
+    const naturalWidth = Math.max(lineVisualWidth(item), item.groupVisualWidth);
+    const key = `line:${rangeKey(item.layout.line.range)}`;
+    if (measureWarningCount === 0 && naturalWidth > safePageWidth && !seen.has(key)) {
+      seen.add(key);
+      warnings.push({
+        kind: "overwide-line",
+        range: item.layout.line.range,
+        naturalWidth: Math.ceil(naturalWidth),
+        pageWidth: safePageWidth,
+        multiTrack,
+      });
+    }
+  }
+
+  for (const [line, items] of layoutsBySourceLine) {
+    if (items.length <= 1) {
+      continue;
+    }
+    const firstItem = items[0]!;
+    const group = context.groups[firstItem.groupIndex]!;
+    const key = `wrapped-line:${rangeKey(line.range)}`;
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    warnings.push({
+      kind: "wrapped-source-line",
+      range: line.range,
+      naturalWidth: Math.ceil(
+        items.reduce((sum, item) => sum + item.layout.width, 0) + firstItem.labelOffset + firstItem.bracketOffset * 2,
+      ),
+      pageWidth: safePageWidth,
+      visualLineCount: items.length,
+      multiTrack: group.lines.length > 1,
+    });
+  }
+
+  return warnings;
 }
 
 function renderScorePlacements(

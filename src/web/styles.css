@@ -419,6 +419,25 @@ button:disabled {
   line-height: 1.4;
 }
 
+.settings-warnings {
+  margin-top: 12px;
+  border: 1px solid rgba(138, 91, 0, 0.28);
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: var(--diagnostics-bg);
+  color: #8a5b00;
+}
+
+.settings-warnings p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.settings-warnings p + p {
+  margin-top: 4px;
+}
+
 .examples-grid {
   flex-wrap: wrap;
   padding: 14px;

@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { parse } from "../dist/parser/index.js";
-import { inferContentPageWidth, renderSvg } from "../dist/renderer/index.js";
+import { analyzeScoreOverwidth, inferContentPageWidth, renderSvg } from "../dist/renderer/index.js";
 
 function readSnapshot(name) {
   return readFileSync(new URL(`./fixtures/snapshots/${name}`, import.meta.url), "utf8").replace(/\r\n/g, "\n").replace(/\n$/, "");
@@ -301,6 +301,32 @@ test("scales a single overwide score line into the page width", () => {
   const svg = renderSvg(result.value, { pageWidth: 120 });
   assert.match(svg, /<svg[^>]+width="120"/);
   assert.match(svg, /<g class="score-line scaled" transform="scale\(0\.\d+,1\)">/);
+});
+
+test("reports overwide score layout warnings", () => {
+  const single = parse("1--- 2--- 3--- 4---");
+  assert.equal(single.ok, true);
+  const singleWarnings = analyzeScoreOverwidth(single.value, 120);
+  assert.equal(singleWarnings.length, 1);
+  assert.equal(singleWarnings[0].multiTrack, false);
+  assert.equal(singleWarnings[0].range.start.line, 1);
+  assert.ok(singleWarnings[0].naturalWidth > singleWarnings[0].pageWidth);
+
+  const multi = parse("T1: 1--- 2--- 3--- 4---\nT2: 5--- 6--- 7--- 1'---");
+  assert.equal(multi.ok, true);
+  const multiWarnings = analyzeScoreOverwidth(multi.value, 160);
+  assert.ok(multiWarnings.some((warning) => warning.multiTrack));
+});
+
+test("reports source lines that auto-wrap into multiple visual lines", () => {
+  const result = parse("1 2 | 3 4 | 5 6 | 7 1' |");
+  assert.equal(result.ok, true);
+  const warnings = analyzeScoreOverwidth(result.value, 120);
+  const wrapped = warnings.find((warning) => warning.kind === "wrapped-source-line");
+  assert.ok(wrapped);
+  assert.equal(wrapped.range.start.line, 1);
+  assert.equal(wrapped.multiTrack, false);
+  assert.ok(wrapped.visualLineCount > 1);
 });
 
 test("renders chord notes as stacked text instead of slash-joined text", () => {
