@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { KeyboardEvent } from "react";
 import { DRUM_PROGRAMS, GM_PROGRAMS } from "../index.js";
 import type { JustifyMode, PageWidthMode, TranslationKey } from "./i18n.js";
 
@@ -68,6 +69,44 @@ function clampRounded(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, Math.round(value)));
 }
 
+function blurOnEnter(event: KeyboardEvent<HTMLInputElement>) {
+  if (event.key === "Enter") {
+    event.currentTarget.blur();
+  }
+}
+
+function useClampedNumberDraft(value: number, min: number, max: number, onChange: (value: number) => void) {
+  const [draft, setDraft] = useState(() => String(value));
+
+  useEffect(() => {
+    setDraft(String(value));
+  }, [value]);
+
+  function update(draftValue: string) {
+    setDraft(draftValue);
+    if (draftValue.trim() === "") {
+      return;
+    }
+    const nextValue = Number(draftValue);
+    if (Number.isFinite(nextValue) && nextValue >= min && nextValue <= max) {
+      onChange(Math.round(nextValue));
+    }
+  }
+
+  function commit() {
+    const nextValue = Number(draft);
+    if (!Number.isFinite(nextValue)) {
+      setDraft(String(value));
+      return;
+    }
+    const clampedValue = clampRounded(nextValue, min, max);
+    setDraft(String(clampedValue));
+    onChange(clampedValue);
+  }
+
+  return { commit, draft, update };
+}
+
 export function SettingsPanel({
   t,
   pageWidthMode,
@@ -122,22 +161,10 @@ export function SettingsPanel({
   onAuditionProgram,
 }: SettingsPanelProps) {
   const displayedPageWidth = pageWidthMode === "panel" ? panelPageWidth : pageWidthMode === "content" ? contentPageWidth : manualPageWidth;
-  const [editorFontSizeDraft, setEditorFontSizeDraft] = useState(() => String(editorFontSize));
-
-  useEffect(() => {
-    setEditorFontSizeDraft(String(editorFontSize));
-  }, [editorFontSize]);
-
-  function commitEditorFontSizeDraft() {
-    const value = Number(editorFontSizeDraft);
-    if (!Number.isFinite(value)) {
-      setEditorFontSizeDraft(String(editorFontSize));
-      return;
-    }
-    const nextFontSize = clampRounded(value, minEditorFontSize, maxEditorFontSize);
-    setEditorFontSizeDraft(String(nextFontSize));
-    onEditorFontSizeChange(nextFontSize);
-  }
+  const pageWidthDraft = useClampedNumberDraft(displayedPageWidth, minPageWidth, maxPageWidth, onManualPageWidthChange);
+  const pageMarginDraft = useClampedNumberDraft(pageMargin, minPageMargin, maxPageMargin, onPageMarginChange);
+  const pageHeightDraft = useClampedNumberDraft(pageHeight, minPageHeight, maxPageHeight, onPageHeightChange);
+  const editorFontSizeDraft = useClampedNumberDraft(editorFontSize, minEditorFontSize, maxEditorFontSize, onEditorFontSizeChange);
 
   return (
     <section className="settings-panel">
@@ -166,14 +193,11 @@ export function SettingsPanel({
                 min={minPageWidth}
                 max={maxPageWidth}
                 step={20}
-                value={displayedPageWidth}
+                value={pageWidthDraft.draft}
                 disabled={pageWidthMode !== "manual"}
-                onChange={(event) => {
-                  const value = Number(event.target.value);
-                  if (Number.isFinite(value) && value > 0) {
-                    onManualPageWidthChange(Math.min(maxPageWidth, Math.max(minPageWidth, Math.round(value))));
-                  }
-                }}
+                onChange={(event) => pageWidthDraft.update(event.target.value)}
+                onBlur={pageWidthDraft.commit}
+                onKeyDown={blurOnEnter}
               />
             </label>
             <label className="number-control">
@@ -183,13 +207,10 @@ export function SettingsPanel({
                 min={minPageMargin}
                 max={maxPageMargin}
                 step={10}
-                value={pageMargin}
-                onChange={(event) => {
-                  const value = Number(event.target.value);
-                  if (Number.isFinite(value) && value >= 0) {
-                    onPageMarginChange(Math.min(maxPageMargin, Math.max(minPageMargin, Math.round(value))));
-                  }
-                }}
+                value={pageMarginDraft.draft}
+                onChange={(event) => pageMarginDraft.update(event.target.value)}
+                onBlur={pageMarginDraft.commit}
+                onKeyDown={blurOnEnter}
               />
             </label>
             <label className="checkbox-control">
@@ -204,13 +225,10 @@ export function SettingsPanel({
                   min={minPageHeight}
                   max={maxPageHeight}
                   step={20}
-                  value={pageHeight}
-                  onChange={(event) => {
-                    const value = Number(event.target.value);
-                    if (Number.isFinite(value) && value > 0) {
-                      onPageHeightChange(Math.min(maxPageHeight, Math.max(minPageHeight, Math.round(value))));
-                    }
-                  }}
+                  value={pageHeightDraft.draft}
+                  onChange={(event) => pageHeightDraft.update(event.target.value)}
+                  onBlur={pageHeightDraft.commit}
+                  onKeyDown={blurOnEnter}
                 />
               </label>
             )}
@@ -260,21 +278,10 @@ export function SettingsPanel({
                 min={minEditorFontSize}
                 max={maxEditorFontSize}
                 step={1}
-                value={editorFontSizeDraft}
-                onChange={(event) => {
-                  const draft = event.target.value;
-                  setEditorFontSizeDraft(draft);
-                  const value = Number(draft);
-                  if (Number.isFinite(value) && value >= minEditorFontSize && value <= maxEditorFontSize) {
-                    onEditorFontSizeChange(Math.round(value));
-                  }
-                }}
-                onBlur={commitEditorFontSizeDraft}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.currentTarget.blur();
-                  }
-                }}
+                value={editorFontSizeDraft.draft}
+                onChange={(event) => editorFontSizeDraft.update(event.target.value)}
+                onBlur={editorFontSizeDraft.commit}
+                onKeyDown={blurOnEnter}
               />
             </label>
             <label className="checkbox-control">

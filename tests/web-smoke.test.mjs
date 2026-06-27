@@ -164,6 +164,13 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(settingsPanelSource, /\{paginate && \(/);
   assert.match(settingsPanelSource, /t\("pageHeight"\)/);
   assert.match(settingsPanelSource, /t\("pageMargin"\)/);
+  assert.match(settingsPanelSource, /function useClampedNumberDraft/);
+  assert.match(settingsPanelSource, /const pageMarginDraft = useClampedNumberDraft/);
+  assert.match(settingsPanelSource, /value=\{pageMarginDraft\.draft\}/);
+  assert.match(settingsPanelSource, /onBlur=\{pageMarginDraft\.commit\}/);
+  assert.match(settingsPanelSource, /const pageHeightDraft = useClampedNumberDraft/);
+  assert.match(settingsPanelSource, /value=\{pageHeightDraft\.draft\}/);
+  assert.match(settingsPanelSource, /onBlur=\{pageHeightDraft\.commit\}/);
   assert.match(settingsPanelSource, /settings-warnings/);
   assert.match(pageWarningsSource, /MIN_USABLE_PAGE_HEIGHT/);
   assert.match(pageWarningsSource, /EXCESSIVE_PAGE_COUNT/);
