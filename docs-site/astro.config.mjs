@@ -70,10 +70,10 @@ export default defineConfig({
               },
             },
             {
-              label: "Notes and Rests",
+              label: "Notes",
               slug: "syntax/notes",
               translations: {
-                "zh-CN": "音符与休止符",
+                "zh-CN": "音符",
               },
             },
             {

@@ -1,10 +1,10 @@
 ---
-title: 音符与休止符
-description: 编写数字音符、休止符、鼓音、变音记号、八度标记和和弦。
+title: 音符
+description: 编写数字音符、休止符、鼓音、八度标记、变音记号和和弦。
 docId: syntax-notes
 sectionIds:
   - basic-notes
-  - accidentals-and-octaves
+  - octaves-and-accidentals
   - chords
   - support
 ---
@@ -35,17 +35,9 @@ import SupportMatrix from '../../../../components/SupportMatrix.astro';
   source={`1 2 x 4`}
 />
 
-## 变音记号和八度
+## 八度和变音记号
 
-变音记号写在音高音符前面。`#` 和 `##` 升高音高，`b` 和 `bb` 降低音高，`%` 取消当前音名的临时变音。
-
-<JianpuSource title="变音记号源码" source={`#1 b2 %3 ##4 | bb5 - - -`} />
-
-<ScorePreview source={`#1 b2 %3 ##4 | bb5 - - -`} />
-
-变音记号只作用于音高音符。在播放、导出和延音线校验中，临时变音会持续到当前小节结束，并在下一个小节重置。
-
-八度后缀写在音符后面。音符上方或下方的点会改变八度。
+八度后缀写在音高音符后面。音符上方或下方的点会改变八度。
 
 <JianpuSource title="八度后缀源码" source={`1' 2'' 3, 4,,`} />
 
@@ -68,6 +60,23 @@ import SupportMatrix from '../../../../components/SupportMatrix.astro';
 
 小节级八度前缀必须出现在本小节的音符之前。不同方向的前缀字符不能混在一起作为同一个前缀。
 
+变音记号写在音高音符前面。`#` 和 `##` 升高音高，`b` 和 `bb` 降低音高，`%` 取消当前音名的临时变音。
+
+<JianpuSource title="变音记号源码" source={`#1 b2 %3 ##4 | bb5 - - -`} />
+
+<ScorePreview source={`#1 b2 %3 ##4 | bb5 - - -`} />
+
+变音记号只作用于音高音符。在播放、导出和延音线校验中，临时变音会持续到当前小节结束，并在下一个小节重置。
+
+休止符和鼓音不能带八度标记或变音记号；给它们加这些标记是无效语法。
+
+<JianpuExample
+  title="休止符和鼓音的非法修饰"
+  status="invalid"
+  description="变音记号和八度标记只作用于音高音符，不能用于休止符或鼓音。"
+  source={`#0 X'`}
+/>
+
 ## 和弦
 
 和弦使用花括号。
@@ -79,7 +88,7 @@ import SupportMatrix from '../../../../components/SupportMatrix.astro';
 
 <ScorePreview title="渲染后的和弦" source={`{1 3 5} - {2 4 6} -`} />
 
-和弦成员可以带变音记号和八度后缀。休止符和鼓音不能作为和弦成员。持续时值写在右花括号之后，作用于整个和弦。
+和弦成员可以带八度后缀和变音记号。休止符和鼓音不能作为和弦成员。持续时值写在右花括号之后，作用于整个和弦。
 
 <JianpuSource title="和弦成员源码" source={`{#1 3 b5}/ {1' 3' 5'}- 0/ 0`} />
 
@@ -105,7 +114,7 @@ import SupportMatrix from '../../../../components/SupportMatrix.astro';
   title="音符支持"
   features={[
     { id: 'pitch-rests-drums', feature: '音高音符、休止符和鼓音', parser: true, render: true, playback: true, export: true, cli: true },
-    { id: 'accidentals-octaves', feature: '变音记号和八度', parser: true, render: true, playback: true, export: true, cli: true },
+    { id: 'octaves-accidentals', feature: '八度和变音记号', parser: true, render: true, playback: true, export: true, cli: true },
     { id: 'chords', feature: '和弦', parser: true, render: true, playback: true, export: true, cli: true },
     { id: 'lyrics', feature: '歌词', parser: true, render: true, playback: false, export: false, cli: true },
   ]}

@@ -1,10 +1,10 @@
 ---
-title: Notes and Rests
-description: Write numbered notes, rests, drum notes, accidentals, octave marks, and chords.
+title: Notes
+description: Write numbered notes, rests, drum notes, octave marks, accidentals, and chords.
 docId: syntax-notes
 sectionIds:
   - basic-notes
-  - accidentals-and-octaves
+  - octaves-and-accidentals
   - chords
   - support
 ---
@@ -35,17 +35,9 @@ Lowercase `x` is not a drum note.
   source={`1 2 x 4`}
 />
 
-## Accidentals and Octaves
+## Octaves and Accidentals
 
-Accidentals come before a pitch note. `#` and `##` raise a pitch, `b` and `bb` lower it, and `%` cancels the active accidental for that note spelling.
-
-<JianpuSource title="Accidental source" source={`#1 b2 %3 ##4 | bb5 - - -`} />
-
-<ScorePreview source={`#1 b2 %3 ##4 | bb5 - - -`} />
-
-Accidentals apply only to pitch notes. They persist within the current measure for playback, export, and tie validation, then reset at the next measure boundary.
-
-Octave suffixes come after a note. A dot above or below the note changes the octave.
+Octave suffixes come after a pitch note. A dot above or below the note changes the octave.
 
 <JianpuSource title="Octave suffix source" source={`1' 2'' 3, 4,,`} />
 
@@ -68,6 +60,23 @@ Each `'` raises the note by one octave; each `,` lowers it by one octave. Measur
 
 The prefix must appear before notes in the measure. Mixed prefix characters are not one prefix.
 
+Accidentals come before a pitch note. `#` and `##` raise a pitch, `b` and `bb` lower it, and `%` cancels the active accidental for that note spelling.
+
+<JianpuSource title="Accidental source" source={`#1 b2 %3 ##4 | bb5 - - -`} />
+
+<ScorePreview source={`#1 b2 %3 ##4 | bb5 - - -`} />
+
+Accidentals apply only to pitch notes. They persist within the current measure for playback, export, and tie validation, then reset at the next measure boundary.
+
+Rests and drum notes cannot have octave marks or accidentals; adding those marks is invalid syntax.
+
+<JianpuExample
+  title="Invalid rest and drum modifiers"
+  status="invalid"
+  description="Accidentals and octave marks apply to pitch notes only, not rests or drums."
+  source={`#0 X'`}
+/>
+
 ## Chords
 
 Chords are written with braces.
@@ -79,7 +88,7 @@ Chords are written with braces.
 
 <ScorePreview title="Rendered chords" source={`{1 3 5} - {2 4 6} -`} />
 
-Chord members can use accidentals and octave suffixes. Rests and drum notes are not valid chord members. Put the duration suffix after the closing brace to apply it to the whole chord.
+Chord members can use octave suffixes and accidentals. Rests and drum notes are not valid chord members. Put the duration suffix after the closing brace to apply it to the whole chord.
 
 <JianpuSource title="Chord member source" source={`{#1 3 b5}/ {1' 3' 5'}- 0/ 0`} />
 
@@ -105,7 +114,7 @@ Chord members can use accidentals and octave suffixes. Rests and drum notes are 
   title="Note support"
   features={[
     { id: 'pitch-rests-drums', feature: 'Pitch notes, rests, and drums', parser: true, render: true, playback: true, export: true, cli: true },
-    { id: 'accidentals-octaves', feature: 'Accidentals and octaves', parser: true, render: true, playback: true, export: true, cli: true },
+    { id: 'octaves-accidentals', feature: 'Octaves and accidentals', parser: true, render: true, playback: true, export: true, cli: true },
     { id: 'chords', feature: 'Chords', parser: true, render: true, playback: true, export: true, cli: true },
     { id: 'lyrics', feature: 'Lyrics', parser: true, render: true, playback: false, export: false, cli: true },
   ]}
