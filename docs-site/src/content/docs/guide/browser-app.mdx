@@ -3,6 +3,7 @@ title: Browser App
 description: Edit, preview, play, and download scores in the browser.
 docId: guide-browser-app
 sectionIds:
+  - files
   - editing-diagnostics
   - preview-playback
   - examples
@@ -15,16 +16,17 @@ import RelatedLinks from '../../../components/RelatedLinks.astro';
 
 Use the browser app when you want immediate feedback while writing a score. The app keeps editing, validation, preview, playback, and export in one local workspace, so it is the fastest place to try syntax before saving or scripting a `.jpu` file elsewhere.
 
+## Files
+
+Use Open to load a local `.jpu` file into the editor. If the editor already contains text, the app asks before replacing it. Use Save to download the current source text as a `.jpu` file; saving source does not require the score to parse successfully.
+
+The editor also keeps a browser-local draft on the current device. Reloading the page restores that draft, while Save creates a file you can keep, share, or pass to the CLI later.
+
 ## Editing And Diagnostics
 
 The source editor accepts the same `.jpu` text that the CLI reads. It shows line numbers, highlights the current line, and can wrap or preserve long source lines depending on the editor setting. Source text is stored in browser local storage, so reloading the page keeps the draft on the same device.
 
 Diagnostics appear below the editor, are highlighted in the source, and add red or yellow markers beside affected line numbers. Click a diagnostic or gutter marker to focus the affected range. Errors prevent a fresh render, but the preview keeps the last valid score visible with a stale-preview notice so you can compare while fixing the source. Warnings keep the score usable and mark behavior that deserves review, such as measure-duration mismatches.
-
-Use Open to load a local `.jpu` file into the editor. If the editor already
-contains text, the app asks before replacing it. Use Save to download the
-current source text as a `.jpu` file; saving source does not require the score
-to parse successfully.
 
 The clear action asks for confirmation before removing the current source.
 
@@ -43,6 +45,8 @@ The examples panel loads bundled `.jpu` scores into the editor. If the editor al
 ## Export
 
 The export menu downloads the current valid score as SVG, PNG, PDF, MIDI, WAV, or MP3. SVG, PNG, and PDF use the current page settings: paper preset, orientation, width, pagination, page size, page margin, page numbers, color, background, and justification; pagination and page footer text can also come from the `paginate` and `footer` header fields. MIDI uses the selected default Program, any score-level `program`/`volume` defaults, any per-track `Tn.program`/`Tn.volume` overrides, and the initial-rest setting. WAV and MP3 are rendered locally in the browser with the same Program resolution, master volume, resolved track volumes, sample rate, and initial-rest setting.
+
+Enable Paginate in Page Settings to preview and export fixed-height pages for SVG, PNG, and PDF. Page height, page margin, page numbers, and footer text affect how much score content fits on each page; the preview summary shows the current page count. A line containing only `---` starts the next score line on a new page when pagination is enabled.
 
 Audio export can take longer than image or MIDI export because the browser renders the full arrangement before downloading. While WAV or MP3 is rendering, the export menu reports the event count and approximate duration.
 
@@ -63,17 +67,17 @@ Editor settings control source editing preferences:
 - Highlight current line: show or hide the active source-line background.
 - Highlight diagnostics: show or hide inline source diagnostic highlights while keeping the diagnostics list.
 
-Export settings control downloads and offline audio rendering:
-
-- Split pages: download SVG and PNG as one file per rendered page.
-- Audio sample rate: choose the WAV/MP3 render sample rate.
-
 Sound settings control playback and audio export:
 
 - Program: choose the default General MIDI program or drum-note program for tracks without `Tn.program`.
 - Volume: adjust browser playback and browser-rendered WAV/MP3 output.
 - Omit initial rests: skip shared leading silence when starting from the beginning.
 - Audition: play a short phrase with the selected sound.
+
+Export settings control downloads and offline audio rendering:
+
+- Split pages: download SVG and PNG as one file per rendered page.
+- Audio sample rate: choose the WAV/MP3 render sample rate.
 
 The language and theme buttons are in the top toolbar. Language preference, theme preference, source text, editor display preferences, and editor/preview split width are stored locally in the browser.
 

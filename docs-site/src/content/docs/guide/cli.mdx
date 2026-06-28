@@ -31,7 +31,7 @@ pnpm run cli -- export-mp3 examples/twinkle.jpu -o twinkle.mp3
 
 SVG, PNG, and PDF export accept `--paper <a4|b5|letter>`, `--orientation <portrait|landscape>`, `--page-width <px>`, `--page-height <px>`, `--page-margin <px>`, `--page-footer <text>`, `--page-numbers`, `--color <css>`, and `--background <css>`. Explicit page width and height values override paper preset dimensions. SVG and PNG export also accept `--split-pages`; with `-o score.svg`, split output writes `score-01.svg`, `score-02.svg`, and so on without overwriting existing page files.
 
-MIDI, WAV, and MP3 export accept `--program <number>` and `--omit-initial-rest`. `--program` is the default Program for tracks without score-level `Tn.program` headers. WAV and MP3 also accept `--sample-rate <hz>` and `--amplitude <0-1>`. MP3 additionally accepts `--bit-rate <kbps>`.
+MIDI, WAV, and MP3 export accept `--program <number>` and `--omit-initial-rest`. `--program` is the default Program for tracks without score-level `program` or per-track `Tn.program` headers. WAV and MP3 also accept `--sample-rate <hz>` and `--amplitude <0-1>`. MP3 additionally accepts `--bit-rate <kbps>`.
 
 Programs `0..127` are melodic General MIDI programs. Programs `128..174` enable drum mode, mapping `X` to percussion note `program - 128 + 35`.
 
