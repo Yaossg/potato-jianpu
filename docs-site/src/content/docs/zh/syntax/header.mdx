@@ -4,14 +4,12 @@ description: 使用文件头字段描述乐谱，并设置音乐默认值。
 docId: syntax-header
 sectionIds:
   - header-basics
-  - fields
-  - strings-and-validation
+  - field-summary
+  - syntax-and-validation
+  - score-display
   - musical-defaults
-  - hidden-header
-  - page-adornments
   - track-and-lyric-labels
-  - track-programs
-  - track-volumes
+  - track-playback-defaults
 ---
 
 import JianpuExample from '../../../../components/JianpuExample.astro';
@@ -21,7 +19,7 @@ import ScorePreview from '../../../../components/ScorePreview.astro';
 
 ## 文件头基础
 
-文件头按行书写。把它放在 `===` 分隔行之前。
+文件头是按行书写的元数据，放在 `===` 分隔行之前。没有这个分隔行时，整个文件都会按乐谱正文解析。
 
 <JianpuSource
   title="文件头源码"
@@ -47,33 +45,25 @@ tempo: 72
 5 6 5 | 3 - -`}
 />
 
-## 字段
+## 字段速查
 
 已知字段包括：
 
-| 字段 | 含义 |
-| --- | --- |
-| `title` | 渲染在乐谱上方的主标题。 |
-| `subtitle` | 副标题文本。 |
-| `composer` | 作曲者或来源文本。 |
-| `key` | 用于播放和导出的调号。 |
-| `time` | 用于小节时值校验的拍号。 |
-| `tempo` | 播放和 MIDI 速度。 |
-| `hidden` | 隐藏渲染出的文件头区块的布尔标记。 |
-| `footer` | SVG、PNG 和 PDF 渲染的页面页脚文本。 |
-| `numbering` | 渲染页码的布尔标记。 |
-| `paginate` | 启用固定页高分页视觉渲染的布尔标记。 |
-| `program` | 播放和导出的乐谱级默认 Program。 |
-| `volume` | 播放和导出的乐谱级默认轨道音量。 |
-| `Tn.program` | 旋律轨道的逐轨道播放和导出 Program 覆盖。 |
-| `Pn.program` | P 标签鼓轨道的逐轨道打击乐 Program（`128`–`174`）。 |
-| `Tn.volume` | 逐轨道播放和导出音量倍率。 |
+| 分类 | 字段 | 含义 |
+| --- | --- | --- |
+| 乐谱显示 | `title`、`subtitle`、`composer`、`hidden`、`paginate`、`numbering`、`footer` | 可见元数据、文件头显示、分页视觉渲染、页码和页脚文本。 |
+| 音乐默认值 | `key`、`time`、`tempo` | 音高拼写、小节时值校验，以及播放/导出速度。 |
+| 播放默认值 | `program`、`volume` | 播放和导出的乐谱级 Program 与轨道音量默认值。 |
+| 轨道和歌词标签 | `Tn.name`、`Tn`、`Pn.name`、`Pn`、`Ln.name`、`Ln` | 旋律轨道、打击乐轨道和歌词行的可见名称。 |
+| 轨道播放覆盖 | `Tn.program`、`Pn.program`、`Tn.volume`、`Pn.volume` | 播放和导出的逐轨道 Program 与音量覆盖。 |
 
-`title`、`subtitle`、`composer` 和 `footer` 的默认值为空；`hidden`、`numbering` 和 `paginate` 默认为 `false`，`key` 默认为 `C`，`time` 默认为 `4/4`，`tempo` 默认为 `120`，`program` 会回退到浏览器或 CLI 的 Program 设置，`volume` 默认为 `1`。
+`title`、`subtitle`、`composer` 和 `footer` 的默认值为空；`hidden`、`numbering` 和 `paginate` 默认为 `false`；`key` 默认为 `C`；`time` 默认为 `4/4`；`tempo` 默认为 `120`；`program` 会回退到浏览器或 CLI 的 Program 设置；`volume` 默认为 `1`。
 
 只接受文档列出的文件头字段。`arranger` 这样的未知字段，或 `temop` 这样的拼写错误字段，都会成为解析错误。
 
-## 字符串和校验
+## 语法和校验
+
+文件头字段名区分大小写。文本值和可见标签名称必须加引号；`key`、`time`、`tempo`、`hidden`、`numbering` 和 `paginate` 使用不加引号的类型化值。
 
 文本字段使用双引号字符串，并且必须保持在同一行。反斜杠会让分词器跳过后面的一个字符，但反斜杠本身会作为源文本保留，不会被解释成转义序列。因此请按希望用户读到的样子书写可见元数据。
 
@@ -95,8 +85,6 @@ tempo: 72
 1 2 3 4`}
 />
 
-文件头字段名区分大小写。文本值和可见标签名称必须加引号；`key`、`time`、`tempo`、`hidden`、`numbering` 和 `paginate` 使用不加引号的类型化值。文件头字符串必须在同一行结束。
-
 <JianpuExample
   title="未结束的文件头字符串"
   status="invalid"
@@ -106,19 +94,9 @@ tempo: 72
 1 2 3 4`}
 />
 
-`key` 字段接受 `C`、`C#`、`Db`、`D`、`D#`、`Eb`、`E`、`F`、`F#`、`Gb`、`G`、`G#`、`Ab`、`A`、`A#`、`Bb` 和 `B`。也可以写成 `#F` 或 `bB` 这样的变音在前形式。它会影响播放和导出的音高；无效调名会产生诊断。
+## 乐谱显示
 
-## 音乐默认值
-
-`time` 字段使用 `拍数/拍单位`，例如 `4/4`、`3/4` 或 `6/8`。允许的分子是 `2`、`3`、`4`、`6`、`9` 和 `12`；允许的分母是 `2`、`4`、`8` 和 `16`。它用于小节时值校验。小节时值和拍号不一致时会产生警告，而不是硬解析失败。
-
-`tempo` 字段是正的 BPM，可以是 `96`、`120` 或 `132.5` 这样的整数或小数。它用于播放、MIDI 导出和音频导出。
-
-`program` 字段设置播放和导出的乐谱级默认 Program。数字值可以是 `0` 到 `174`；`128..174` 会启用和浏览器、CLI Program 控件相同的鼓模式。也可以使用带引号的旋律 Program 名称。只有文件头省略 `program` 时，才会使用浏览器或 CLI 的 Program 控件。
-
-`volume` 字段设置乐谱级默认轨道音量。值可以是 `0` 到 `2` 的数字，也可以是 `0%` 到 `200%` 的百分数；`1` 和 `100%` 都表示不变。它是没有 `Tn.volume` 的轨道默认值，不会和 `Tn.volume` 叠加相乘。
-
-## 隐藏文件头
+使用 `title`、`subtitle` 和 `composer` 编写渲染在乐谱上方的文本。这些字段不影响解析、播放计时或导出格式选择。
 
 使用 `hidden: true` 可以让整块渲染文件头从 SVG 中隐藏，同时把元数据保留在文档里。使用 `hidden: false` 或省略该字段时，会正常渲染文件头。
 
@@ -140,9 +118,7 @@ hidden: true
 1 2 3 4`}
 />
 
-## 页脚和页码
-
-使用 `paginate: true` 可以让 SVG、PNG 和 PDF 输出默认使用固定页高分页渲染。使用 `footer` 设置每页左下角的页脚文本。使用 `numbering: true` 可以渲染居中的 `current / total` 页码。这些字段影响 SVG、PNG 和 PDF 渲染；浏览器和 CLI 的渲染选项仍可以为单次导出覆盖它们。
+使用 `paginate: true` 可以让 SVG、PNG 和 PDF 输出默认使用固定页高分页渲染。使用 `footer` 设置每页左下角的页脚文本。使用 `numbering: true` 可以渲染居中的 `current / total` 页码。浏览器和 CLI 的渲染选项仍可以为单次导出覆盖这些字段。
 
 <JianpuSource
   title="页面信息文件头源码"
@@ -155,20 +131,34 @@ numbering: true
 5 6 7 1'`}
 />
 
+## 音乐默认值
+
+`key` 字段接受 `C`、`C#`、`Db`、`D`、`D#`、`Eb`、`E`、`F`、`F#`、`Gb`、`G`、`G#`、`Ab`、`A`、`A#`、`Bb` 和 `B`。也可以写成 `#F` 或 `bB` 这样的变音在前形式。它会影响播放和导出的音高；无效调名会产生诊断。
+
+`time` 字段使用 `拍数/拍单位`，例如 `4/4`、`3/4` 或 `6/8`。允许的分子是 `2`、`3`、`4`、`6`、`9` 和 `12`；允许的分母是 `2`、`4`、`8` 和 `16`。小节时值和拍号不一致时会产生警告，而不是硬解析失败。
+
+`tempo` 字段是正的 BPM，可以是 `96`、`120` 或 `132.5` 这样的整数或小数。它用于播放、MIDI 导出和音频导出。
+
+`program` 字段设置播放和导出的乐谱级默认 Program。数字值可以是 `0` 到 `174`；`128..174` 会启用鼓模式。也可以使用带引号的旋律 Program 名称。只有文件头省略 `program` 时，才会使用浏览器或 CLI 的 Program 控件。
+
+`volume` 字段设置乐谱级默认轨道音量。值可以是 `0` 到 `2` 的数字，也可以是 `0%` 到 `200%` 的百分数；`1` 和 `100%` 都表示不变。它是没有逐轨道音量覆盖的轨道默认值。
+
 ## 轨道和歌词标签
 
-文件头也可以给轨道和歌词行命名。轨道名称可以写成 `Tn.name` 或简写 `Tn`；歌词标签可以写成 `Ln.name` 或简写 `Ln`。
+文件头字段可以给旋律轨道、打击乐轨道和歌词行命名。轨道名称可以写成 `Tn.name` 或简写 `Tn`；打击乐轨道名称可以写成 `Pn.name` 或简写 `Pn`；歌词标签可以写成 `Ln.name` 或简写 `Ln`。
 
-只有一条未写 `T1:` 的音乐行时，`T1.name` 也会命名这条渲染行。
+只有一条未写 `T1:` 的音乐行时，`T1.name` 也会命名这条渲染行。轨道分组和歌词附着规则见“歌词与多轨”页。
 
 <JianpuSource
   title="轨道和歌词标签源码"
   source={`T1.name: "Melody"
 T2: "Harmony"
+P1.name: "Drums"
 L1.name: "Verse"
 ===
 T1: 1 2 3 4
 T2: 5 5 5 5
+P1: X 0 X 0
 L1: "do re mi fa"`}
 />
 
@@ -176,82 +166,68 @@ L1: "do re mi fa"`}
   title="渲染后的轨道和歌词标签"
   source={`T1.name: "Melody"
 T2: "Harmony"
+P1.name: "Drums"
 L1.name: "Verse"
 ===
 T1: 1 2 3 4
 T2: 5 5 5 5
+P1: X 0 X 0
 L1: "do re mi fa"`}
 />
 
-## 轨道 Program
+## 轨道播放默认值
 
-在文件头中使用 `Tn.program`，可以为带标签的编排轨道指定旋律 General MIDI Program。值可以是 `0` 到 `127` 的整数，也可以是浏览器 Program 选择器中的带引号 Program 名称。带引号名称会先去掉首尾空白，再按不区分大小写的方式匹配。
+使用 `Tn.program` 可以为旋律编排轨道指定旋律 General MIDI Program。值可以是 `0` 到 `127` 的整数，也可以是浏览器 Program 选择器中的带引号 Program 名称。带引号名称会先去掉首尾空白，再按不区分大小写的方式匹配。
 
-`Tn.program` 会覆盖该轨道的乐谱级 `program` 默认值。只有文件头省略 `program` 时，浏览器和 CLI 的 Program 控件才作为默认值。只有一条未写 `T1:` 的音乐行时，`T1.program` 会应用到这条播放/导出轨道。
+使用 `Pn.program` 可以为 P 标签打击乐轨道指定打击乐 Program（`128`–`174`）。如果未指定 `Pn.program`，P 轨道默认使用 `128`。`T10.program` 不允许使用，因为 T10 是保留的 MIDI 鼓通道。
 
-`Pn.program` 为 P 标签打击乐轨道指定打击乐 Program（`128`–`174`）。每条 P 轨道演奏自己的 GM 打击乐音色，所有 P 轨道共享 MIDI 通道 10。如果未指定 `Pn.program`，则默认值为 `128`。`T10.program` 不允许使用，因为 T10 是保留的 MIDI 鼓通道。
+使用 `Tn.volume` 或 `Pn.volume` 可以设置单个播放/导出轨道的音量。值可以是 `0` 到 `2` 的数字，也可以是 `0%` 到 `200%` 的百分数；`1` 和 `100%` 表示不变。逐轨道音量会覆盖该轨道的乐谱级 `volume` 默认值，而不是和它相乘。
+
+只有一条未写 `T1:` 的音乐行时，`T1.program` 和 `T1.volume` 会应用到这条播放/导出轨道。
 
 <JianpuSource
-  title="轨道 Program 源码"
+  title="轨道播放默认值源码"
   source={`program: 24
+volume: 75%
 T1.name: "Melody"
 T1.program: 0
+T1.volume: 1
 T2.name: "Violin"
 T2.program: "Violin"
+T2.volume: 72.5%
+P1.name: "Kick"
+P1.program: 128
+P1.volume: 80%
 ===
 T1: 1 2 3 4
-T2: 5, 6, 7, 1`}
+T2: 5, 6, 7, 1
+P1: X 0 X 0`}
 />
 
 <ScorePreview
-  title="渲染后的轨道 Program 乐谱"
+  title="渲染后的轨道播放默认值"
   source={`program: 24
+volume: 75%
 T1.name: "Melody"
 T1.program: 0
+T1.volume: 1
 T2.name: "Violin"
 T2.program: "Violin"
-===
-T1: 1 2 3 4
-T2: 5, 6, 7, 1`}
-/>
-
-## 轨道音量
-
-在文件头中使用 `Tn.volume`，可以设置单个播放/导出轨道的音量。值可以是 `0` 到 `2` 的数字，也可以是 `0%` 到 `200%` 的百分数；`1` 和 `100%` 表示不变，`0.5` 和 `50%` 表示半音量，`0` 和 `0%` 表示静音，`2` 和 `200%` 表示在限幅前把该轨道的力度/增益加倍。
-
-`Tn.volume` 会覆盖该轨道的乐谱级 `volume` 默认值，而不是和它相乘。解析出的轨道音量会和浏览器音量滑杆或 CLI 音频 `--amplitude` 叠加使用，而不是替代主音量。MIDI 导出中，解析出的轨道音量会缩放该轨道的音符力度。浏览器播放、WAV 和 MP3 中，主音量/振幅和逐轨道音量都会生效。
-
-只有一条未写 `T1:` 的音乐行时，`T1.volume` 会应用到这条播放/导出轨道。
-
-<JianpuSource
-  title="轨道音量源代码"
-  source={`volume: 75%
-T1.name: "Melody"
-T1.volume: 1
-T2.name: "Soft Harmony"
 T2.volume: 72.5%
+P1.name: "Kick"
+P1.program: 128
+P1.volume: 80%
 ===
 T1: 1 2 3 4
-T2: 5, 6, 7, 1`}
-/>
-
-<ScorePreview
-  title="渲染后的轨道音量乐谱"
-  source={`volume: 75%
-T1.name: "Melody"
-T1.volume: 1
-T2.name: "Soft Harmony"
-T2.volume: 72.5%
-===
-T1: 1 2 3 4
-T2: 5, 6, 7, 1`}
+T2: 5, 6, 7, 1
+P1: X 0 X 0`}
 />
 
 <RelatedLinks
   title="相关页面"
   links={[
     { href: '../lyrics-tracks/', label: '歌词与轨道', description: '把文件头标签用于多轨和歌词行。' },
+    { href: '../../guide/playback/', label: '播放', description: '了解 Program 和音量字段如何影响播放。' },
     { href: '../../reference/grammar/', label: '语法参考', description: '快速查找文件头语法。' },
-    { href: '../../guide/cli/', label: '命令行', description: '用校验输出查看诊断上下文。' },
   ]}
 />
