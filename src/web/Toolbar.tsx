@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { openGrammarHelp } from "./browser-utils.js";
 import { ExportMenu } from "./ExportMenu.js";
 import type { Language, TranslationKey } from "./i18n.js";
@@ -18,6 +19,8 @@ interface ToolbarProps {
   onToggleTheme: () => void;
   onToggleSettings: () => void;
   onToggleExamples: () => void;
+  onOpenFile: (file: File) => void;
+  onSaveSource: () => void;
   onPlay: () => void;
   onStop: () => void;
   onExportSvg: () => void;
@@ -42,6 +45,8 @@ export function Toolbar({
   onToggleTheme,
   onToggleSettings,
   onToggleExamples,
+  onOpenFile,
+  onSaveSource,
   onPlay,
   onStop,
   onExportSvg,
@@ -51,6 +56,17 @@ export function Toolbar({
   onExportWav,
   onExportMp3,
 }: ToolbarProps) {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  function chooseFile() {
+    const input = fileInputRef.current;
+    if (!input) {
+      return;
+    }
+    input.value = "";
+    input.click();
+  }
+
   return (
     <div className="actions">
       <button type="button" className="icon-button" onClick={onToggleLanguage} aria-label={`${t("language")}: ${language === "en" ? t("english") : t("chinese")}`} title={`${t("language")}: ${language === "en" ? t("english") : t("chinese")}`}>
@@ -67,6 +83,24 @@ export function Toolbar({
       </button>
       <button type="button" className="icon-button" onClick={onToggleExamples} aria-label={t("examples")} title={t("examples")}>
         <ToolbarIcon name="examples" />
+      </button>
+      <button type="button" className="icon-button" onClick={chooseFile} aria-label={t("open")} title={t("open")}>
+        <ToolbarIcon name="open" />
+      </button>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".jpu,text/plain"
+        hidden
+        onChange={(event) => {
+          const file = event.currentTarget.files?.[0];
+          if (file) {
+            onOpenFile(file);
+          }
+        }}
+      />
+      <button type="button" className="icon-button" onClick={onSaveSource} aria-label={t("save")} title={t("save")}>
+        <ToolbarIcon name="save" />
       </button>
       {isPlaying ? (
         <button type="button" className="icon-button playback-button stop-button" onClick={onStop} aria-label={t("stop")} title={t("stop")}>

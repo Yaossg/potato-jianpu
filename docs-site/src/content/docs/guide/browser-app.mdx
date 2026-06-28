@@ -21,6 +21,11 @@ The source editor accepts the same `.jpu` text that the CLI reads. It shows line
 
 Diagnostics appear below the editor, are highlighted in the source, and add red or yellow markers beside affected line numbers. Click a diagnostic or gutter marker to focus the affected range. Errors prevent a fresh render, but the preview keeps the last valid score visible with a stale-preview notice so you can compare while fixing the source. Warnings keep the score usable and mark behavior that deserves review, such as measure-duration mismatches.
 
+Use Open to load a local `.jpu` file into the editor. If the editor already
+contains text, the app asks before replacing it. Use Save to download the
+current source text as a `.jpu` file; saving source does not require the score
+to parse successfully.
+
 The clear action asks for confirmation before removing the current source.
 
 ## Preview And Playback

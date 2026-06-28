@@ -12,10 +12,10 @@ The repository builds two targets from shared TypeScript source:
 The backend CLI provides parse, validate, SVG, split-page SVG, PNG, split-page
 PNG, PDF, MIDI, WAV, and MP3 export.
 
-The frontend web app provides editing, SVG preview, playback, note highlighting,
-SVG download, split-page SVG download, PNG download, split-page PNG download,
-PDF download, MIDI download, WAV download, MP3 download, examples, and
-diagnostics.
+The frontend web app provides editing, `.jpu` open/save, SVG preview, playback,
+note highlighting, SVG download, split-page SVG download, PNG download,
+split-page PNG download, PDF download, MIDI download, WAV download, MP3
+download, examples, and diagnostics.
 
 ## Data Flow
 
@@ -228,6 +228,7 @@ src/web/
 Responsibilities:
 
 - editor
+- `.jpu` file open/save
 - examples
 - diagnostics display
 - SVG preview

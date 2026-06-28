@@ -208,7 +208,7 @@ export function App() {
   const [audioExportDetails, setAudioExportDetails] = useState("");
   const [showSettings, setShowSettings] = useState(false);
   const [showExamples, setShowExamples] = useState(false);
-  const [pendingExampleSource, setPendingExampleSource] = useState<string | null>(null);
+  const [pendingReplacementSource, setPendingReplacementSource] = useState<string | null>(null);
   const [confirmClearSource, setConfirmClearSource] = useState(false);
   const [editorPanePercent, setEditorPanePercent] = useState(() => initialEditorPanePercent());
   const playerRef = useRef<PreviewAudioPlayer | null>(null);
@@ -672,15 +672,34 @@ export function App() {
   function loadSource(nextSource: string) {
     stopPlayback();
     setSource(nextSource);
-    setPendingExampleSource(null);
+    setPendingReplacementSource(null);
   }
 
-  function requestExampleSource(nextSource: string) {
+  function requestSourceReplacement(nextSource: string) {
     if (source.trim().length === 0) {
       loadSource(nextSource);
       return;
     }
-    setPendingExampleSource(nextSource);
+    setPendingReplacementSource(nextSource);
+  }
+
+  function requestExampleSource(nextSource: string) {
+    requestSourceReplacement(nextSource);
+  }
+
+  async function openSourceFile(file: File) {
+    try {
+      const text = await file.text();
+      setShowExamples(false);
+      requestSourceReplacement(text);
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "Failed to open score file.");
+    }
+  }
+
+  function saveSourceFile() {
+    const title = parsed.ok ? parsed.value.header.title : "";
+    downloadBytes(source, exportFilename(title, "jpu"), "text/plain;charset=utf-8");
   }
 
   function updateSource(nextSource: string) {
@@ -729,6 +748,8 @@ export function App() {
           onToggleTheme={toggleTheme}
           onToggleSettings={() => setShowSettings((visible) => !visible)}
           onToggleExamples={() => setShowExamples((visible) => !visible)}
+          onOpenFile={(file) => void openSourceFile(file)}
+          onSaveSource={saveSourceFile}
           onPlay={() => void play()}
           onStop={stop}
           onExportSvg={exportSvg}
@@ -804,16 +825,16 @@ export function App() {
       {showExamples && (
         <ExamplesPanel language={language} t={t} onClose={() => setShowExamples(false)} onSelectExample={requestExampleSource} />
       )}
-      {pendingExampleSource !== null && (
+      {pendingReplacementSource !== null && (
         <div className="score-warning-overlay" role="presentation">
           <section className="score-warning-dialog" role="dialog" aria-modal="true" aria-labelledby="score-warning-title">
             <h2 id="score-warning-title">{t("overwriteScoreTitle")}</h2>
             <p>{t("overwriteScoreMessage")}</p>
             <div className="dialog-actions">
-              <button type="button" onClick={() => setPendingExampleSource(null)}>
+              <button type="button" onClick={() => setPendingReplacementSource(null)}>
                 {t("cancel")}
               </button>
-              <button type="button" className="danger-action" onClick={() => loadSource(pendingExampleSource)}>
+              <button type="button" className="danger-action" onClick={() => loadSource(pendingReplacementSource)}>
                 {t("overwriteScoreConfirm")}
               </button>
             </div>

@@ -12,6 +12,8 @@ export type TranslationKey =
   | "help"
   | "settings"
   | "examples"
+  | "open"
+  | "save"
   | "stop"
   | "play"
   | "export"
@@ -92,6 +94,8 @@ const translations: { en: Record<TranslationKey, string>; zh: Record<Translation
     help: "Help",
     settings: "Settings",
     examples: "Examples",
+    open: "Open",
+    save: "Save",
     stop: "Stop",
     play: "Play",
     export: "Export",
@@ -105,7 +109,7 @@ const translations: { en: Record<TranslationKey, string>; zh: Record<Translation
     clearScoreMessage: "This will remove the current score and clear the saved browser draft.",
     clearScoreConfirm: "Clear editor",
     overwriteScoreTitle: "Replace current score?",
-    overwriteScoreMessage: "Loading an example will replace the score currently in the editor.",
+    overwriteScoreMessage: "This will replace the score currently in the editor.",
     overwriteScoreConfirm: "Replace score",
     pageSettings: "Page Settings",
     exportSettings: "Export Settings",
@@ -171,6 +175,8 @@ const translations: { en: Record<TranslationKey, string>; zh: Record<Translation
     help: "帮助",
     settings: "设置",
     examples: "示例",
+    open: "打开",
+    save: "保存",
     stop: "停止",
     play: "播放",
     export: "导出",
@@ -184,7 +190,7 @@ const translations: { en: Record<TranslationKey, string>; zh: Record<Translation
     clearScoreMessage: "这会移除当前乐谱，并清除浏览器中保存的草稿。",
     clearScoreConfirm: "清空编辑器",
     overwriteScoreTitle: "覆盖当前乐谱？",
-    overwriteScoreMessage: "加载示例会替换编辑器中当前的乐谱。",
+    overwriteScoreMessage: "这会替换编辑器中当前的乐谱。",
     overwriteScoreConfirm: "覆盖乐谱",
     pageSettings: "页面设置",
     exportSettings: "导出设置",

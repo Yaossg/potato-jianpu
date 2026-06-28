@@ -1,4 +1,4 @@
-export type ToolbarIconName = "dark" | "examples" | "export" | "help" | "language" | "light" | "play" | "settings" | "stop";
+export type ToolbarIconName = "dark" | "examples" | "export" | "help" | "language" | "light" | "open" | "play" | "save" | "settings" | "stop";
 
 export function ToolbarIcon({ name }: { name: ToolbarIconName }) {
   const icon =
@@ -23,6 +23,16 @@ export function ToolbarIcon({ name }: { name: ToolbarIconName }) {
       <>
         <path d="M6 3.5h9.2L20 8.3V20a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 20V5A1.5 1.5 0 0 1 5.5 3.5H6Zm8 1.9V9h3.6L14 5.4ZM6 5.5v14h12V11h-6V5.5H6Z" />
         <path d="M8 9h2v2H8V9Zm0 4h2v2H8v-2Zm4-3h4v1.7h-4V10Zm0 4h4v1.7h-4V14Z" />
+      </>
+    ) : name === "open" ? (
+      <>
+        <path d="M4 7.5A1.5 1.5 0 0 1 5.5 6H10l2 2h6.5A1.5 1.5 0 0 1 20 9.5V11h-2V10h-6.8l-2-2H6v10h6v2H5.5A1.5 1.5 0 0 1 4 18.5v-11Z" />
+        <path d="M16 12v5.2l2.2-2.2 1.4 1.4-4.6 4.6-4.6-4.6 1.4-1.4 2.2 2.2V12h2Z" />
+      </>
+    ) : name === "save" ? (
+      <>
+        <path d="M5 3.5h11.6L20.5 7.4V20A1.5 1.5 0 0 1 19 21.5H5A1.5 1.5 0 0 1 3.5 20V5A1.5 1.5 0 0 1 5 3.5Zm.5 2v14h13V8.2l-2.7-2.7H15V10H7V5.5H5.5ZM9 5.5V8h4V5.5H9Z" />
+        <path d="M7 13h10v2H7v-2Zm0 3h10v2H7v-2Z" />
       </>
     ) : name === "export" ? (
       <>
