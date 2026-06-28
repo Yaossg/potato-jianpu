@@ -27,11 +27,11 @@ pnpm run cli -- validate examples/twinkle.jpu
 pnpm run cli -- --version
 pnpm run cli -- validate examples/twinkle.jpu --json
 pnpm run cli -- parse examples/twinkle.jpu --json
-pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --page-width 1000 --paginate --page-height 1400 --page-margin 40 --page-footer "modern-jianpu" --page-numbers --color "#111827" --background "#ffffff"
-pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --page-width 1000 --paginate --page-height 1400 --split-pages
-pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --page-width 1000 --paginate --page-height 1400 --page-margin 40 --page-footer "modern-jianpu" --page-numbers --color "#111827" --background "#ffffff"
-pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --page-width 1000 --paginate --page-height 1400 --split-pages
-pnpm run cli -- export-pdf examples/twinkle.jpu -o twinkle.pdf --page-width 1000 --paginate --page-height 1400 --page-margin 40 --page-footer "modern-jianpu" --page-numbers --color "#111827" --background "#ffffff"
+pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --paper a4 --orientation portrait --paginate --page-margin 40 --page-footer "modern-jianpu" --page-numbers --color "#111827" --background "#ffffff"
+pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --paper a4 --paginate --split-pages
+pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --paper a4 --orientation portrait --paginate --page-margin 40 --page-footer "modern-jianpu" --page-numbers --color "#111827" --background "#ffffff"
+pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --paper a4 --paginate --split-pages
+pnpm run cli -- export-pdf examples/twinkle.jpu -o twinkle.pdf --paper a4 --orientation portrait --paginate --page-margin 40 --page-footer "modern-jianpu" --page-numbers --color "#111827" --background "#ffffff"
 pnpm run cli -- export-midi examples/twinkle.jpu -o twinkle.mid --program 0 --omit-initial-rest
 pnpm run cli -- export-wav examples/twinkle.jpu -o twinkle.wav --sample-rate 44100 --amplitude 1 --omit-initial-rest
 pnpm run cli -- export-mp3 examples/twinkle.jpu -o twinkle.mp3 --sample-rate 44100 --amplitude 1 --bit-rate 128 --omit-initial-rest
@@ -98,9 +98,9 @@ Validate result shape:
 ```
 
 Fatal parse, validation, or export errors return exit code `1`. Usage errors,
-such as a missing `-o`, invalid `--page-width`, invalid `--page-height`,
-invalid `--page-margin`, invalid `--sample-rate`, or invalid `--program`,
-return exit code `2`.
+such as a missing `-o`, invalid `--paper`, invalid `--orientation`, invalid
+`--page-width`, invalid `--page-height`, invalid `--page-margin`, invalid
+`--sample-rate`, or invalid `--program`, return exit code `2`.
 
 Unknown options and options missing their required value are rejected with exit
 code `2`.
@@ -110,20 +110,30 @@ code `2`.
 SVG export uses the shared renderer:
 
 ```sh
-pnpm run cli -- export-svg input.jpu -o output.svg --page-width 1000 --paginate --page-height 1400 --page-margin 40
-pnpm run cli -- export-svg input.jpu -o output.svg --page-width 1000 --paginate --page-height 1400 --split-pages
+pnpm run cli -- export-svg input.jpu -o output.svg --paper a4 --orientation portrait --paginate --page-margin 40
+pnpm run cli -- export-svg input.jpu -o output.svg --paper a4 --paginate --split-pages
 ```
 
 Options:
 
+- `--paper <a4|b5|letter>`: resolve page width and height from a shared paper
+  preset. A4 is `1190 x 1684`, B5 is `998 x 1418`, and Letter is
+  `1224 x 1584` in renderer units. Preset dimensions intentionally use twice
+  the 72-DPI/PDF-point page dimensions; future presets should follow the same
+  doubled-point rule.
+- `--orientation <portrait|landscape>`: orient the preset or default page size.
+  Defaults to `portrait`.
 - `--page-width <px>`: positive number. Defaults to the renderer default when
-  omitted.
+  omitted. When combined with `--paper`, this explicit value overrides the
+  preset width after orientation is applied.
 - `--paginate`: render one fixed-height multi-page SVG instead of the default
   adaptive-height SVG. When omitted, the renderer uses the parsed `paginate`
   header value.
 - `--page-height <px>`: positive number. Defaults to `1400` when pagination is
   enabled. The value is validated even when `--paginate` is omitted, but it
-  does not change non-paginated output by itself.
+  does not change non-paginated output by itself. When combined with
+  `--paper`, this explicit value overrides the preset height after orientation
+  is applied.
 - `--page-margin <px>`: non-negative number. Defaults to `0`. The same margin
   is applied to all four sides of the page.
 - `--page-footer <text>`: optional bottom-left page-level footer text. When
@@ -164,12 +174,14 @@ page file.
 The backend CLI renders the same SVG output through the backend PNG adapter:
 
 ```sh
-pnpm run cli -- export-png input.jpu -o output.png --page-width 1000 --paginate --page-height 1400 --page-margin 40
-pnpm run cli -- export-png input.jpu -o output.png --page-width 1000 --paginate --page-height 1400 --split-pages
+pnpm run cli -- export-png input.jpu -o output.png --paper a4 --orientation portrait --paginate --page-margin 40
+pnpm run cli -- export-png input.jpu -o output.png --paper a4 --paginate --split-pages
 ```
 
 Options:
 
+- `--paper <a4|b5|letter>`: same behavior as SVG export.
+- `--orientation <portrait|landscape>`: same behavior as SVG export.
 - `--page-width <px>`: same behavior as SVG export.
 - `--paginate`: same behavior as SVG export.
 - `--page-height <px>`: same behavior and validation as SVG export.
@@ -189,10 +201,10 @@ The frontend also exposes PNG download. Browser PNG export uses a different
 adapter: it turns the current SVG string into an SVG `Blob`, loads it into an
 `Image`, draws that image to a canvas, and downloads the canvas result as
 `jianpu-score.png`. It uses the same preview/export color, background, page
-width, pagination, page height, and page margin settings as SVG download. When
-Split pages is enabled in Export Settings, SVG and PNG downloads use the same
-per-page naming pattern as CLI split output and trigger one browser download
-per rendered page.
+width, paper preset, orientation, pagination, page height, and page margin
+settings as SVG download. When Split pages is enabled in Export Settings, SVG
+and PNG downloads use the same per-page naming pattern as CLI split output and
+trigger one browser download per rendered page.
 
 ## PDF Export
 
@@ -200,11 +212,13 @@ PDF export uses the shared renderer's SVG page output and writes vector PDF
 pages:
 
 ```sh
-pnpm run cli -- export-pdf input.jpu -o output.pdf --page-width 1000 --paginate --page-height 1400 --page-margin 40
+pnpm run cli -- export-pdf input.jpu -o output.pdf --paper a4 --orientation portrait --paginate --page-margin 40
 ```
 
 Options:
 
+- `--paper <a4|b5|letter>`: same behavior as SVG export.
+- `--orientation <portrait|landscape>`: same behavior as SVG export.
 - `--page-width <px>`: same behavior as SVG export.
 - `--paginate`: same behavior as SVG export.
 - `--page-height <px>`: same behavior and validation as SVG export.
@@ -221,9 +235,9 @@ SVG render becomes one PDF page.
 The backend CLI converts rendered SVG pages through PDFKit and SVG-to-PDFKit.
 The frontend exposes PDF download through jsPDF and svg2pdf.js, using the same
 preview/export color, background, page width, pagination, page height, page
-margin, and justification settings as SVG and PNG download. Both PDF paths
-embed Noto Sans SC for Unicode text such as Chinese titles, composer names, and
-lyrics.
+margin, paper preset, orientation, and justification settings as SVG and PNG
+download. Both PDF paths embed Noto Sans SC for Unicode text such as Chinese
+titles, composer names, and lyrics.
 
 ## MIDI Export
 

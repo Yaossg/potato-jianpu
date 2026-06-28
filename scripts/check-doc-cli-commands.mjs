@@ -9,6 +9,8 @@ const commands = {
   validate: new Set(["--json"]),
   "export-svg": new Set([
     "-o",
+    "--paper",
+    "--orientation",
     "--page-width",
     "--paginate",
     "--page-height",
@@ -21,6 +23,8 @@ const commands = {
   ]),
   "export-png": new Set([
     "-o",
+    "--paper",
+    "--orientation",
     "--page-width",
     "--paginate",
     "--page-height",
@@ -33,6 +37,8 @@ const commands = {
   ]),
   "export-pdf": new Set([
     "-o",
+    "--paper",
+    "--orientation",
     "--page-width",
     "--paginate",
     "--page-height",
@@ -48,6 +54,8 @@ const commands = {
 };
 const valueFlags = new Set([
   "-o",
+  "--paper",
+  "--orientation",
   "--page-width",
   "--page-height",
   "--page-margin",

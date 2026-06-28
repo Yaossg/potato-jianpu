@@ -66,6 +66,13 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(script, /Theme/);
   assert.match(script, /Settings/);
   assert.match(script, /Page Settings/);
+  assert.match(script, /Paper/);
+  assert.match(script, /Orientation/);
+  assert.match(script, /A4/);
+  assert.match(script, /B5/);
+  assert.match(script, /Letter/);
+  assert.match(script, /Portrait/);
+  assert.match(script, /Landscape/);
   assert.match(script, /Width mode/);
   assert.match(script, /Paginate/);
   assert.match(script, /Page height/);
@@ -164,6 +171,12 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(appSource, /splitPageExportFilename/);
   assert.match(appSource, /<SourceEditor/);
   assert.match(settingsPanelSource, /\{paginate && \(/);
+  assert.match(settingsPanelSource, /PAPER_PRESET_LIST/);
+  assert.match(settingsPanelSource, /PAGE_ORIENTATIONS/);
+  assert.match(settingsPanelSource, /\{!usesCustomPageSize && \(/);
+  assert.doesNotMatch(settingsPanelSource, /disabled=\{usesCustomPageSize\}/);
+  assert.match(settingsPanelSource, /onPaperPresetChange/);
+  assert.match(settingsPanelSource, /onPageOrientationChange/);
   assert.match(settingsPanelSource, /onSplitPagesChange/);
   assert.match(settingsPanelSource, /t\("splitPages"\)/);
   assert.match(settingsPanelSource, /t\("pageHeight"\)/);

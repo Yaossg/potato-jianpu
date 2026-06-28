@@ -22,6 +22,7 @@ const TIME_SIGNATURE_WIDTH = 20;
 const TIME_SIGNATURE_DIGIT_Y_OFFSET = 10;
 const TEMPO_SPACE_WIDTH = 6;
 const TEMPO_TEXT_WIDTH = 10;
+const TEMPO_NUMBER_TEXT_WIDTH = 9;
 
 function displayKeyText(key: string): string {
   return key.replace(/#/g, "♯").replace(/b/g, "♭");
@@ -47,12 +48,12 @@ function keySignatureWidth(key: string): number {
   return KEY_NOTE_WIDTH + estimateDisplayWidth(` = ${displayKeyText(key)}`, KEY_TEXT_WIDTH);
 }
 
-function tempoMarkText(beatsPerWholeNote: number, tempo: number): string {
-  return `${tempoMarkMap.get(beatsPerWholeNote) ?? "♩"} = ${tempo}`;
+function tempoMarkSymbol(beatsPerWholeNote: number): string {
+  return tempoMarkMap.get(beatsPerWholeNote) ?? "♩";
 }
 
 function tempoMarkWidth(beatsPerWholeNote: number, tempo: number): number {
-  return estimateDisplayWidth(tempoMarkText(beatsPerWholeNote, tempo), TEMPO_TEXT_WIDTH);
+  return estimateDisplayWidth(tempoMarkSymbol(beatsPerWholeNote), TEMPO_TEXT_WIDTH) + estimateDisplayWidth(` = ${tempo}`, TEMPO_NUMBER_TEXT_WIDTH);
 }
 
 function metadataLayout(header: Document["header"]): { keyX: number; timeX: number; tempoX: number; width: number } {
@@ -68,7 +69,7 @@ function metadataLayout(header: Document["header"]): { keyX: number; timeX: numb
 }
 
 function renderTempoMark(beatsPerWholeNote: number, tempo: number, x: number, centerY: number): string {
-  return `<text class="tempo-mark" x="${x}" y="${centerY}" dominant-baseline="central">${tempoMarkText(beatsPerWholeNote, tempo)}</text>`;
+  return `<text class="tempo-mark" x="${x}" y="${centerY}" dominant-baseline="central">${tempoMarkSymbol(beatsPerWholeNote)}<tspan class="tempo-value"> = ${tempo}</tspan></text>`;
 }
 
 function renderKeySignature(key: string, x: number, centerY: number): string {

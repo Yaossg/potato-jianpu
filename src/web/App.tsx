@@ -10,8 +10,8 @@ import {
   skipInitialArrangementRests,
   trimArrangementAtNote,
 } from "../index.js";
-import { analyzeScoreOverwidth, inferContentPageWidth, renderSvg, renderSvgPages } from "../renderer/index.js";
-import type { OverwideScoreLayoutWarning } from "../renderer/index.js";
+import { DEFAULT_PAGE_SIZE, PAPER_PRESET_LIST, analyzeScoreOverwidth, inferContentPageWidth, renderSvg, renderSvgPages, resolvePageSize } from "../renderer/index.js";
+import type { OverwideScoreLayoutWarning, PageOrientation, PaperPresetName } from "../renderer/index.js";
 import { exportBrowserMp3Bytes, exportBrowserWavBytes } from "./audio-export.js";
 import { PreviewAudioPlayer } from "./audio.js";
 import { waitForNextFrame } from "./browser-utils.js";
@@ -40,9 +40,10 @@ const SHOW_LINE_NUMBERS_STORAGE_KEY = "modern-jianpu-markup-show-line-numbers";
 const HIGHLIGHT_CURRENT_LINE_STORAGE_KEY = "modern-jianpu-markup-highlight-current-line";
 const HIGHLIGHT_DIAGNOSTICS_STORAGE_KEY = "modern-jianpu-markup-highlight-diagnostics";
 const EDITOR_PANE_PERCENT_STORAGE_KEY = "modern-jianpu-markup-editor-pane-percent";
+type PaperSelection = PaperPresetName | "custom";
 
-const DEFAULT_PAGE_WIDTH = 1000;
-const DEFAULT_PAGE_HEIGHT = 1400;
+const DEFAULT_PAGE_WIDTH = DEFAULT_PAGE_SIZE.pageWidth;
+const DEFAULT_PAGE_HEIGHT = DEFAULT_PAGE_SIZE.pageHeight;
 const DEFAULT_PAGE_MARGIN = 0;
 const MIN_PAGE_WIDTH = 240;
 const MAX_PAGE_WIDTH = 2000;
@@ -188,6 +189,8 @@ export function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeNoteIndices, setActiveNoteIndices] = useState<number[]>([]);
   const [pageWidthMode, setPageWidthMode] = useState<PageWidthMode>("panel");
+  const [paperPreset, setPaperPreset] = useState<PaperSelection>("custom");
+  const [pageOrientation, setPageOrientation] = useState<PageOrientation>("portrait");
   const [manualPageWidth, setManualPageWidth] = useState(DEFAULT_PAGE_WIDTH);
   const [panelPageWidth, setPanelPageWidth] = useState(DEFAULT_PAGE_WIDTH);
   const [paginateOverride, setPaginateOverride] = useState<boolean | null>(null);
@@ -225,10 +228,18 @@ export function App() {
     () => (previewParsed?.ok ? inferContentPageWidth(previewParsed.value, { minWidth: MIN_PAGE_WIDTH, maxWidth: MAX_PAGE_WIDTH }) : DEFAULT_PAGE_WIDTH),
     [previewParsed],
   );
-  const pageWidth = pageWidthMode === "panel" ? panelPageWidth : pageWidthMode === "content" ? contentPageWidth : manualPageWidth;
+  const customPageWidth = pageWidthMode === "panel" ? panelPageWidth : pageWidthMode === "content" ? contentPageWidth : manualPageWidth;
+  const pageSize = resolvePageSize({
+    paper: paperPreset === "custom" ? undefined : paperPreset,
+    orientation: pageOrientation,
+    pageWidth: paperPreset === "custom" ? customPageWidth : undefined,
+    pageHeight: paperPreset === "custom" ? pageHeight : undefined,
+  });
+  const pageWidth = pageSize.pageWidth;
+  const resolvedPageHeight = pageSize.pageHeight;
   const headerPaginate = previewParsed?.ok ? previewParsed.value.header.paginate : false;
   const effectivePaginate = paginateOverride ?? headerPaginate;
-  const maxPageMargin = Math.max(MIN_PAGE_MARGIN, Math.floor((Math.min(pageWidth, effectivePaginate ? pageHeight : pageWidth) - 1) / 2));
+  const maxPageMargin = Math.max(MIN_PAGE_MARGIN, Math.floor((Math.min(pageWidth, effectivePaginate ? resolvedPageHeight : pageWidth) - 1) / 2));
   const pageContentWidth = Math.max(1, pageWidth - pageMargin * 2);
   const headerPageFooter = previewParsed?.ok ? previewParsed.value.header.footer : "";
   const headerPageNumbers = previewParsed?.ok ? previewParsed.value.header.numbering : false;
@@ -251,7 +262,7 @@ export function App() {
         ? renderSvg(previewParsed.value, {
             pageWidth,
             paginate: effectivePaginate,
-            pageHeight,
+            pageHeight: resolvedPageHeight,
             pageMargin,
             pageFooter: headerPageFooter,
             pageNumbers: effectivePageNumbers,
@@ -268,7 +279,7 @@ export function App() {
       headerPageFooter,
       justifyMode,
       pageBackground,
-      pageHeight,
+      resolvedPageHeight,
       pageMargin,
       pageWidth,
       parsed.ok,
@@ -282,7 +293,7 @@ export function App() {
         ? renderSvgPages(previewParsed.value, {
             pageWidth,
             paginate: effectivePaginate,
-            pageHeight,
+            pageHeight: resolvedPageHeight,
             pageMargin,
             pageFooter: headerPageFooter,
             pageNumbers: effectivePageNumbers,
@@ -299,7 +310,7 @@ export function App() {
       headerPageFooter,
       justifyMode,
       pageBackground,
-      pageHeight,
+      resolvedPageHeight,
       pageMargin,
       pageWidth,
       parsed.ok,
@@ -308,17 +319,20 @@ export function App() {
     ],
   );
   const previewPageCount = useMemo(() => (svg ? Math.max(1, svg.match(/<g class="page" /g)?.length ?? 1) : 0), [svg]);
+  const selectedPaperPreset = paperPreset === "custom" ? null : (PAPER_PRESET_LIST.find((preset) => preset.name === paperPreset) ?? null);
+  const pageWidthModeLabel =
+    selectedPaperPreset === null ? t(pageWidthModeLabels[pageWidthMode]) : `${selectedPaperPreset.label} ${t(pageOrientation)}`;
   const pageHeightWarningMessages = useMemo(
     () =>
       pageLayoutWarnings({
         paginate: effectivePaginate,
-        pageHeight,
+        pageHeight: resolvedPageHeight,
         pageMargin,
         pageFooter: headerPageFooter,
         pageNumbers: effectivePageNumbers,
         pageCount: previewPageCount,
       }).map(pageLayoutWarningMessage),
-    [effectivePageNumbers, effectivePaginate, headerPageFooter, pageHeight, pageMargin, previewPageCount],
+    [effectivePageNumbers, effectivePaginate, headerPageFooter, resolvedPageHeight, pageMargin, previewPageCount],
   );
   const pageHeightDiagnostics = parsed.ok
     ? pageHeightWarningMessages.map((message) => ({
@@ -730,13 +744,15 @@ export function App() {
         <SettingsPanel
           t={t}
           pageWidthMode={pageWidthMode}
+          paperPreset={paperPreset}
+          pageOrientation={pageOrientation}
           panelPageWidth={panelPageWidth}
           contentPageWidth={contentPageWidth}
           manualPageWidth={manualPageWidth}
           minPageWidth={MIN_PAGE_WIDTH}
           maxPageWidth={MAX_PAGE_WIDTH}
           paginate={effectivePaginate}
-          pageHeight={pageHeight}
+          pageHeight={resolvedPageHeight}
           minPageHeight={MIN_PAGE_HEIGHT}
           maxPageHeight={MAX_PAGE_HEIGHT}
           pageMargin={pageMargin}
@@ -762,6 +778,8 @@ export function App() {
           highlightDiagnostics={highlightDiagnostics}
           onClose={() => setShowSettings(false)}
           onPageWidthModeChange={setPageWidthMode}
+          onPaperPresetChange={setPaperPreset}
+          onPageOrientationChange={setPageOrientation}
           onManualPageWidthChange={setManualPageWidth}
           onPaginateChange={setPaginateOverride}
           onPageHeightChange={setPageHeight}
@@ -860,7 +878,7 @@ export function App() {
           panelRef={previewPanelRef}
           previewDocument={previewParsed?.ok ? previewParsed.value : null}
           pageWidth={pageWidth}
-          pageWidthModeLabel={t(pageWidthModeLabels[pageWidthMode])}
+          pageWidthModeLabel={pageWidthModeLabel}
           pageCount={previewPageCount}
           svg={svg}
           stale={previewIsStale}

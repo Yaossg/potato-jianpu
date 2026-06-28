@@ -20,6 +20,7 @@ export const SVG_STYLE = `.title { fill: currentColor; font-family: Arial, Helve
 .ending-line { stroke: currentColor; stroke-width: 2; fill: none; }
 .ending-label { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-weight: 700; }
 .tempo-mark { fill: currentColor; font-family: "Segoe UI Symbol", "Noto Music", "Noto Sans Symbols 2", Arial, Helvetica, sans-serif; font-size: 22px; font-weight: 400; }
+.tempo-value { font-size: 20px; }
 .underline { stroke: currentColor; stroke-width: 2.5; }
 .dash { stroke: currentColor; stroke-width: 3; }
 .tie { fill: currentColor; stroke: currentColor; stroke-width: 1; }

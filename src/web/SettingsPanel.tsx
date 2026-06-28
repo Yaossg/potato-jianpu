@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { DRUM_PROGRAMS, GM_PROGRAMS } from "../index.js";
+import { PAGE_ORIENTATIONS, PAPER_PRESET_LIST, isPageOrientation, isPaperPresetName, resolvePageSize } from "../renderer/index.js";
+import type { PageOrientation, PaperPresetName } from "../renderer/index.js";
 import type { JustifyMode, PageWidthMode, TranslationKey } from "./i18n.js";
+
+type PaperSelection = PaperPresetName | "custom";
 
 interface SettingsPanelProps {
   t: (key: TranslationKey, values?: Record<string, string | number>) => string;
   pageWidthMode: PageWidthMode;
+  paperPreset: PaperSelection;
+  pageOrientation: PageOrientation;
   panelPageWidth: number;
   contentPageWidth: number;
   manualPageWidth: number;
@@ -38,6 +44,8 @@ interface SettingsPanelProps {
   highlightDiagnostics: boolean;
   onClose: () => void;
   onPageWidthModeChange: (mode: PageWidthMode) => void;
+  onPaperPresetChange: (preset: PaperSelection) => void;
+  onPageOrientationChange: (orientation: PageOrientation) => void;
   onManualPageWidthChange: (width: number) => void;
   onPaginateChange: (paginate: boolean) => void;
   onPageHeightChange: (height: number) => void;
@@ -61,6 +69,14 @@ interface SettingsPanelProps {
 
 function toPageWidthMode(value: string): PageWidthMode {
   return value === "content" || value === "manual" ? value : "panel";
+}
+
+function toPaperPreset(value: string): PaperSelection {
+  return isPaperPresetName(value) ? value : "custom";
+}
+
+function toPageOrientation(value: string): PageOrientation {
+  return isPageOrientation(value) ? value : "portrait";
 }
 
 function toJustifyMode(value: string): JustifyMode {
@@ -112,6 +128,8 @@ function useClampedNumberDraft(value: number, min: number, max: number, onChange
 export function SettingsPanel({
   t,
   pageWidthMode,
+  paperPreset,
+  pageOrientation,
   panelPageWidth,
   contentPageWidth,
   manualPageWidth,
@@ -144,6 +162,8 @@ export function SettingsPanel({
   highlightDiagnostics,
   onClose,
   onPageWidthModeChange,
+  onPaperPresetChange,
+  onPageOrientationChange,
   onManualPageWidthChange,
   onPaginateChange,
   onPageHeightChange,
@@ -164,7 +184,13 @@ export function SettingsPanel({
   onHighlightDiagnosticsChange,
   onAuditionProgram,
 }: SettingsPanelProps) {
-  const displayedPageWidth = pageWidthMode === "panel" ? panelPageWidth : pageWidthMode === "content" ? contentPageWidth : manualPageWidth;
+  const usesCustomPageSize = paperPreset === "custom";
+  const presetPageSize = resolvePageSize({
+    paper: paperPreset === "custom" ? undefined : paperPreset,
+    orientation: pageOrientation,
+  });
+  const customPageWidth = pageWidthMode === "panel" ? panelPageWidth : pageWidthMode === "content" ? contentPageWidth : manualPageWidth;
+  const displayedPageWidth = usesCustomPageSize ? customPageWidth : presetPageSize.pageWidth;
   const pageWidthDraft = useClampedNumberDraft(displayedPageWidth, minPageWidth, maxPageWidth, onManualPageWidthChange);
   const pageMarginDraft = useClampedNumberDraft(pageMargin, minPageMargin, maxPageMargin, onPageMarginChange);
   const pageHeightDraft = useClampedNumberDraft(pageHeight, minPageHeight, maxPageHeight, onPageHeightChange);
@@ -183,8 +209,35 @@ export function SettingsPanel({
           <h3>{t("pageSettings")}</h3>
           <div className="settings-grid">
             <label className="select-control">
+              {t("paper")}
+              <select value={paperPreset} onChange={(event) => onPaperPresetChange(toPaperPreset(event.target.value))}>
+                <option value="custom">{t("custom")}</option>
+                {PAPER_PRESET_LIST.map((preset) => (
+                  <option key={preset.name} value={preset.name}>
+                    {preset.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {!usesCustomPageSize && (
+              <label className="select-control">
+                {t("orientation")}
+                <select value={pageOrientation} onChange={(event) => onPageOrientationChange(toPageOrientation(event.target.value))}>
+                  {PAGE_ORIENTATIONS.map((orientation) => (
+                    <option key={orientation} value={orientation}>
+                      {t(orientation)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <label className="select-control">
               {t("widthMode")}
-              <select value={pageWidthMode} onChange={(event) => onPageWidthModeChange(toPageWidthMode(event.target.value))}>
+              <select
+                value={pageWidthMode}
+                disabled={!usesCustomPageSize}
+                onChange={(event) => onPageWidthModeChange(toPageWidthMode(event.target.value))}
+              >
                 <option value="panel">{t("panel")}</option>
                 <option value="content">{t("content")}</option>
                 <option value="manual">{t("manual")}</option>
@@ -198,7 +251,7 @@ export function SettingsPanel({
                 max={maxPageWidth}
                 step={20}
                 value={pageWidthDraft.draft}
-                disabled={pageWidthMode !== "manual"}
+                disabled={!usesCustomPageSize || pageWidthMode !== "manual"}
                 onChange={(event) => pageWidthDraft.update(event.target.value)}
                 onBlur={pageWidthDraft.commit}
                 onKeyDown={blurOnEnter}
@@ -230,6 +283,7 @@ export function SettingsPanel({
                   max={maxPageHeight}
                   step={20}
                   value={pageHeightDraft.draft}
+                  disabled={!usesCustomPageSize}
                   onChange={(event) => pageHeightDraft.update(event.target.value)}
                   onBlur={pageHeightDraft.commit}
                   onKeyDown={blurOnEnter}

@@ -12,17 +12,20 @@ import {
 } from "../backend/index.js";
 import { parse } from "../parser/index.js";
 import { exportMidiBytes } from "../player/index.js";
-import { renderSvg, renderSvgPages } from "../renderer/index.js";
-import type { RenderOptions } from "../renderer/index.js";
+import { PAPER_PRESET_LIST, isPageOrientation, isPaperPresetName, renderSvg, renderSvgPages, resolvePageSize } from "../renderer/index.js";
+import type { PageOrientation, PaperPresetName, RenderOptions } from "../renderer/index.js";
+
+const PAPER_PRESET_USAGE = PAPER_PRESET_LIST.map((preset) => preset.name).join("|");
+const PAPER_PRESET_MESSAGE = PAPER_PRESET_LIST.map((preset) => preset.name).join(", ");
 
 function usage(): string {
   return [
     "Usage:",
     "  jianpu validate <file> [--json]",
     "  jianpu parse <file> [--json]",
-    "  jianpu export-svg <file> -o <output.svg> [--page-width <px>] [--paginate] [--page-height <px>] [--page-margin <px>] [--page-footer <text>] [--page-numbers] [--color <css>] [--background <css>] [--split-pages]",
-    "  jianpu export-png <file> -o <output.png> [--page-width <px>] [--paginate] [--page-height <px>] [--page-margin <px>] [--page-footer <text>] [--page-numbers] [--color <css>] [--background <css>] [--split-pages]",
-    "  jianpu export-pdf <file> -o <output.pdf> [--page-width <px>] [--paginate] [--page-height <px>] [--page-margin <px>] [--page-footer <text>] [--page-numbers] [--color <css>] [--background <css>]",
+    `  jianpu export-svg <file> -o <output.svg> [--paper <${PAPER_PRESET_USAGE}>] [--orientation <portrait|landscape>] [--page-width <px>] [--paginate] [--page-height <px>] [--page-margin <px>] [--page-footer <text>] [--page-numbers] [--color <css>] [--background <css>] [--split-pages]`,
+    `  jianpu export-png <file> -o <output.png> [--paper <${PAPER_PRESET_USAGE}>] [--orientation <portrait|landscape>] [--page-width <px>] [--paginate] [--page-height <px>] [--page-margin <px>] [--page-footer <text>] [--page-numbers] [--color <css>] [--background <css>] [--split-pages]`,
+    `  jianpu export-pdf <file> -o <output.pdf> [--paper <${PAPER_PRESET_USAGE}>] [--orientation <portrait|landscape>] [--page-width <px>] [--paginate] [--page-height <px>] [--page-margin <px>] [--page-footer <text>] [--page-numbers] [--color <css>] [--background <css>]`,
     "  jianpu export-midi <file> -o <output.mid> [--program <number>] [--omit-initial-rest]",
     "  jianpu export-wav <file> -o <output.wav> [--program <number>] [--sample-rate <hz>] [--amplitude <0-1>] [--omit-initial-rest]",
     "  jianpu export-mp3 <file> -o <output.mp3> [--program <number>] [--sample-rate <hz>] [--amplitude <0-1>] [--bit-rate <kbps>] [--omit-initial-rest]",
@@ -38,6 +41,8 @@ function readFlag(flags: string[], name: string): string | undefined {
 
 const VALUE_FLAGS = new Set([
   "-o",
+  "--paper",
+  "--orientation",
   "--page-width",
   "--page-height",
   "--page-margin",
@@ -79,6 +84,8 @@ function commandFlags(command: string): Set<string> {
     case "export-png":
       return new Set([
         "-o",
+        "--paper",
+        "--orientation",
         "--page-width",
         "--paginate",
         "--page-height",
@@ -92,6 +99,8 @@ function commandFlags(command: string): Set<string> {
     case "export-pdf":
       return new Set([
         "-o",
+        "--paper",
+        "--orientation",
         "--page-width",
         "--paginate",
         "--page-height",
@@ -151,6 +160,24 @@ function readNonNegativeNumberFlag(flags: string[], name: string): number | unde
 }
 
 function readRenderOptions(flags: string[]): RenderOptions | null {
+  const paper = readFlag(flags, "--paper");
+  let paperPreset: PaperPresetName | undefined;
+  if (paper !== undefined && !isPaperPresetName(paper)) {
+    console.error(`error: --paper must be one of ${PAPER_PRESET_MESSAGE}`);
+    return null;
+  }
+  if (paper !== undefined) {
+    paperPreset = paper;
+  }
+  const orientation = readFlag(flags, "--orientation");
+  let pageOrientation: PageOrientation | undefined;
+  if (orientation !== undefined && !isPageOrientation(orientation)) {
+    console.error("error: --orientation must be portrait or landscape");
+    return null;
+  }
+  if (orientation !== undefined) {
+    pageOrientation = orientation;
+  }
   const pageWidth = readPositiveNumberFlag(flags, "--page-width");
   if (Number.isNaN(pageWidth)) {
     console.error("error: --page-width must be a positive number");
@@ -166,10 +193,16 @@ function readRenderOptions(flags: string[]): RenderOptions | null {
     console.error("error: --page-margin must be a non-negative number");
     return null;
   }
-  return {
+  const pageSize = resolvePageSize({
+    paper: paperPreset,
+    orientation: pageOrientation,
     pageWidth,
-    paginate: flags.includes("--paginate") ? true : undefined,
     pageHeight,
+  });
+  return {
+    pageWidth: pageSize.pageWidth,
+    paginate: flags.includes("--paginate") ? true : undefined,
+    pageHeight: pageSize.pageHeight,
     pageMargin,
     pageFooter: readFlag(flags, "--page-footer"),
     pageNumbers: flags.includes("--page-numbers") ? true : undefined,
@@ -244,6 +277,8 @@ async function main(argv: string[]): Promise<number> {
   }
   const missingFlagValue = validateFlagValues(flags, [
     "-o",
+    "--paper",
+    "--orientation",
     "--page-width",
     "--page-height",
     "--page-margin",

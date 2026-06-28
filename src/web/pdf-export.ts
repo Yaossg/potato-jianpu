@@ -18,6 +18,7 @@ text,
 .accidental,
 .ending-label,
 .tempo-mark,
+.tempo-value,
 .velocity {
   font-family: ${PDF_FONT_FAMILY}, sans-serif !important;
 }`;

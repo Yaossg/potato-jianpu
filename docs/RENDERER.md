@@ -12,6 +12,8 @@ Current renderer modules:
 - `dimensions.ts`: shared renderer layout constants.
 - `styles.ts`: inline SVG stylesheet.
 - `options.ts`: public render options and defaults.
+- `paper.ts`: shared paper preset dimensions and orientation-based page-size
+  resolution.
 - `xml.ts`: XML escaping helper.
 
 ## Public API
@@ -74,6 +76,22 @@ interface RenderOptions {
 `renderSvg()` returns a complete SVG string with XML declaration, `<svg>`,
 inline `<style>`, header graphics, and score graphics. `renderSvgPages()`
 returns complete per-page SVG documents for target-specific PDF adapters.
+
+The renderer also exports paper helpers used by the CLI and browser app:
+
+```ts
+PAPER_PRESET_LIST
+PAGE_ORIENTATIONS
+resolvePageSize(options)
+```
+
+Supported presets are A4 (`1190 x 1684`), B5 (`998 x 1418`), and Letter
+(`1224 x 1584`) in renderer units. These dimensions intentionally use twice the
+72-DPI/PDF-point page dimensions so notation keeps the default layout scale.
+Future paper presets should follow the same doubled-point rule.
+`resolvePageSize()` applies portrait or landscape orientation to the selected
+preset, then applies explicit `pageWidth` or `pageHeight` overrides. Without a
+preset it resolves the renderer default page size, `1000 x 1400`.
 
 ## Backend And Frontend Use
 
@@ -207,10 +225,11 @@ Important details:
 - `pageMargin` shifts rendered header and score content inward without changing
   the SVG viewport width
 
-The CLI exposes direct dimensions through:
+The CLI exposes direct dimensions and paper presets through:
 
 ```sh
 pnpm run cli -- export-svg input.jpu -o output.svg --page-width 800 --page-margin 40
+pnpm run cli -- export-svg input.jpu -o output.svg --paper a4 --orientation landscape --paginate
 pnpm run cli -- export-png input.jpu -o output.png --page-width 800 --page-margin 40
 pnpm run cli -- export-pdf input.jpu -o output.pdf --page-width 800 --page-margin 40
 ```
@@ -219,9 +238,11 @@ The frontend exposes this through the Settings panel. Panel width mode measures
 the preview panel with `ResizeObserver` and uses the available panel width as
 the render `pageWidth`. Content width mode uses `inferContentPageWidth()` to
 estimate the unwrapped natural score width from the current document. Manual
-mode keeps an explicit numeric width for preview and export. The preview panel
-also uses responsive CSS so a wide exported page scales down visually instead
-of forcing horizontal page overflow.
+mode keeps an explicit numeric width for preview and export. Selecting A4, B5,
+or Letter resolves both width and height from the shared preset table and
+orientation, while Custom keeps the panel, content, and manual width modes
+available. The preview panel also uses responsive CSS so a wide exported page
+scales down visually instead of forcing horizontal page overflow.
 
 When score justification is enabled, selected visual lines are stretched to the
 available content width by remapping horizontal coordinates. The `"except-last"`
@@ -314,6 +335,9 @@ The tempo mark style uses this font stack:
 ```css
 "Segoe UI Symbol", "Noto Music", "Noto Sans Symbols 2", Arial, Helvetica, sans-serif
 ```
+
+The tempo mark symbol renders at `22px`; the equals sign and tempo number are
+wrapped in a `20px` nested text span.
 
 ## Score Rendering
 

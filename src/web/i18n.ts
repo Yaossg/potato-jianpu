@@ -29,6 +29,11 @@ export type TranslationKey =
   | "overwriteScoreConfirm"
   | "pageSettings"
   | "exportSettings"
+  | "paper"
+  | "custom"
+  | "orientation"
+  | "portrait"
+  | "landscape"
   | "widthMode"
   | "panel"
   | "content"
@@ -104,6 +109,11 @@ const translations: { en: Record<TranslationKey, string>; zh: Record<Translation
     overwriteScoreConfirm: "Replace score",
     pageSettings: "Page Settings",
     exportSettings: "Export Settings",
+    paper: "Paper",
+    custom: "Custom",
+    orientation: "Orientation",
+    portrait: "Portrait",
+    landscape: "Landscape",
     widthMode: "Width mode",
     panel: "Panel",
     content: "Content",
@@ -178,6 +188,11 @@ const translations: { en: Record<TranslationKey, string>; zh: Record<Translation
     overwriteScoreConfirm: "覆盖乐谱",
     pageSettings: "页面设置",
     exportSettings: "导出设置",
+    paper: "纸张",
+    custom: "自定义",
+    orientation: "方向",
+    portrait: "纵向",
+    landscape: "横向",
     widthMode: "宽度模式",
     panel: "面板",
     content: "内容",

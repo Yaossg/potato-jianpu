@@ -102,6 +102,48 @@ test("CLI export-svg accepts page margin", async () => {
   assert.match(svg, /<g class="page-content" transform="translate\(20, 20\)">/);
 });
 
+test("CLI export-svg accepts paper presets and orientation", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
+  const input = join(dir, "score.jpu");
+  const output = join(dir, "score.svg");
+  const overriddenOutput = join(dir, "score-custom.svg");
+  await writeFile(input, "1 2 | 3 4 |", "utf8");
+
+  await execFileAsync(process.execPath, ["dist/cli/main.js", "export-svg", input, "-o", output, "--paper", "b5", "--orientation", "landscape", "--paginate"], {
+    cwd: repoDir,
+  });
+
+  const svg = await readFile(output, "utf8");
+  assert.match(svg, /<svg[^>]+width="1418" height="998" viewBox="0 0 1418 998"/);
+  assert.match(svg, /<rect class="page-boundary" x="0\.5" y="0\.5" width="1417" height="997"/);
+
+  await execFileAsync(
+    process.execPath,
+    [
+      "dist/cli/main.js",
+      "export-svg",
+      input,
+      "-o",
+      overriddenOutput,
+      "--paper",
+      "a4",
+      "--orientation",
+      "landscape",
+      "--page-width",
+      "700",
+      "--page-height",
+      "900",
+      "--paginate",
+    ],
+    {
+      cwd: repoDir,
+    },
+  );
+
+  const overriddenSvg = await readFile(overriddenOutput, "utf8");
+  assert.match(overriddenSvg, /<svg[^>]+width="700" height="900" viewBox="0 0 700 900"/);
+});
+
 test("CLI export-png accepts pagination options", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
   const input = join(dir, "score.jpu");
@@ -149,7 +191,7 @@ test("CLI export-png can split rendered pages", async () => {
 
   const { stdout } = await execFileAsync(
     process.execPath,
-    ["dist/cli/main.js", "export-png", input, "-o", output, "--page-width", "160", "--paginate", "--page-height", "180", "--split-pages"],
+    ["dist/cli/main.js", "export-png", input, "-o", output, "--paper", "letter", "--orientation", "landscape", "--paginate", "--split-pages"],
     {
       cwd: repoDir,
     },
@@ -157,8 +199,8 @@ test("CLI export-png can split rendered pages", async () => {
 
   const paths = stdout.trim().split(/\r?\n/);
   assert.deepEqual(paths, [join(dir, "score-01.png"), join(dir, "score-02.png")]);
-  assert.deepEqual(pngDimensions(await readFile(paths[0])), { width: 160, height: 180 });
-  assert.deepEqual(pngDimensions(await readFile(paths[1])), { width: 160, height: 180 });
+  assert.deepEqual(pngDimensions(await readFile(paths[0])), { width: 1584, height: 1224 });
+  assert.deepEqual(pngDimensions(await readFile(paths[1])), { width: 1584, height: 1224 });
 });
 
 test("CLI export-pdf accepts pagination options", async () => {
@@ -286,6 +328,34 @@ test("CLI rejects invalid page width", async () => {
       cwd: repoDir,
     }),
     /--page-width must be a positive number/,
+  );
+});
+
+test("CLI rejects invalid paper options", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
+  const input = join(dir, "score.jpu");
+  const output = join(dir, "score.svg");
+  await writeFile(input, "1 2 3 4", "utf8");
+
+  await assert.rejects(
+    execFileAsync(process.execPath, ["dist/cli/main.js", "export-svg", input, "-o", output, "--paper", "b4"], {
+      cwd: repoDir,
+    }),
+    /--paper must be one of a4, b5, letter/,
+  );
+
+  await assert.rejects(
+    execFileAsync(process.execPath, ["dist/cli/main.js", "export-svg", input, "-o", output, "--orientation", "sideways"], {
+      cwd: repoDir,
+    }),
+    /--orientation must be portrait or landscape/,
+  );
+
+  await assert.rejects(
+    execFileAsync(process.execPath, ["dist/cli/main.js", "export-svg", input, "-o", output, "--paper"], {
+      cwd: repoDir,
+    }),
+    /--paper requires a value/,
   );
 });
 

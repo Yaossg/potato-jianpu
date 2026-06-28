@@ -1,3 +1,5 @@
+import { DEFAULT_PAGE_SIZE } from "./paper.js";
+
 export type JustifyMode = "none" | "except-last" | "all";
 
 export interface RenderOptions {
@@ -15,9 +17,9 @@ export interface RenderOptions {
 }
 
 export const DEFAULT_OPTIONS: Required<RenderOptions> = {
-  pageWidth: 1000,
+  pageWidth: DEFAULT_PAGE_SIZE.pageWidth,
   paginate: false,
-  pageHeight: 1400,
+  pageHeight: DEFAULT_PAGE_SIZE.pageHeight,
   pageMargin: 0,
   pageFooter: "",
   pageNumbers: false,

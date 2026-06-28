@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { parse } from "../dist/parser/index.js";
-import { analyzeScoreOverwidth, inferContentPageWidth, renderSvg } from "../dist/renderer/index.js";
+import { analyzeScoreOverwidth, inferContentPageWidth, PAPER_PRESET_LIST, renderSvg, resolvePageSize } from "../dist/renderer/index.js";
 
 function readSnapshot(name) {
   return readFileSync(new URL(`./fixtures/snapshots/${name}`, import.meta.url), "utf8").replace(/\r\n/g, "\n").replace(/\n$/, "");
@@ -84,7 +84,9 @@ test("keeps key, time, and tempo metadata gaps equal as key text changes", () =>
   const svg = renderSvg(result.value, { pageWidth: 360, color: "#111827", background: "#ffffff" });
   const keyMatch = svg.match(/<text class="metadata" x="(?<x>\d+)" y="40" dominant-baseline="central"> = F&#9839;<\/text>/);
   const timeMatch = svg.match(/<text x="(?<x>\d+)" y="30" text-anchor="middle" dominant-baseline="central">6<\/text>/);
-  const tempoMatch = svg.match(/<text class="tempo-mark" x="(?<x>\d+)" y="40" dominant-baseline="central">[^<]+ = 96<\/text>/);
+  const tempoMatch = svg.match(
+    /<text class="tempo-mark" x="(?<x>\d+)" y="40" dominant-baseline="central">[^<]+<tspan class="tempo-value"> = 96<\/tspan><\/text>/,
+  );
   assert.ok(keyMatch?.groups);
   assert.ok(timeMatch?.groups);
   assert.ok(tempoMatch?.groups);
@@ -168,6 +170,19 @@ test("uses pagination from the header unless render options override it", () => 
 
   const overridden = renderSvg(result.value, { pageWidth: 120, paginate: false, pageHeight: 160, background: "#ffffff" });
   assert.doesNotMatch(overridden, /<g class="page" data-page="/);
+});
+
+test("resolves paper presets before explicit page size overrides", () => {
+  assert.deepEqual(PAPER_PRESET_LIST.map((preset) => preset.name), ["a4", "b5", "letter"]);
+  assert.deepEqual(resolvePageSize({ paper: "a4" }), { pageWidth: 1190, pageHeight: 1684 });
+  assert.deepEqual(resolvePageSize({ paper: "a4", orientation: "landscape" }), { pageWidth: 1684, pageHeight: 1190 });
+  assert.deepEqual(resolvePageSize({ paper: "b5" }), { pageWidth: 998, pageHeight: 1418 });
+  assert.deepEqual(resolvePageSize({ paper: "b5", orientation: "landscape" }), { pageWidth: 1418, pageHeight: 998 });
+  assert.deepEqual(resolvePageSize({ paper: "letter", orientation: "landscape", pageWidth: 700 }), {
+    pageWidth: 700,
+    pageHeight: 1224,
+  });
+  assert.deepEqual(resolvePageSize({ orientation: "landscape", pageHeight: 900 }), { pageWidth: 1400, pageHeight: 900 });
 });
 
 test("starts a new paginated page at manual page breaks", () => {
@@ -262,7 +277,8 @@ test("renders tempo without musical glyph codepoints", () => {
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value);
   assert.match(svg, /class="tempo-mark"/);
-  assert.match(svg, />♪ = 132<\/text>/);
+  assert.match(svg, /\.tempo-value \{ font-size: 20px; \}/);
+  assert.match(svg, />♪<tspan class="tempo-value"> = 132<\/tspan><\/text>/);
   assert.match(svg, /Segoe UI Symbol/);
   assert.doesNotMatch(svg, /&#119100;|&#119101;|&#119102;|&#119104;/);
 });
@@ -271,7 +287,7 @@ test("uses a single sixteenth note for 16-denominator tempo marks", () => {
   const result = parse(`tempo: 96\ntime: 2/16\n===\n1 2`);
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value);
-  assert.match(svg, />𝅘𝅥𝅯 = 96<\/text>/);
+  assert.match(svg, />𝅘𝅥𝅯<tspan class="tempo-value"> = 96<\/tspan><\/text>/);
   assert.doesNotMatch(svg, /♬ = 96/);
 });
 

@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { inflateSync } from "node:zlib";
 import { parse } from "../dist/parser/index.js";
-import { renderSvg, renderSvgPages } from "../dist/renderer/index.js";
+import { PAGE_ORIENTATIONS, PAPER_PRESET_LIST, renderSvg, renderSvgPages, resolvePageSize } from "../dist/renderer/index.js";
 import { exportMp3Bytes, exportWavBytes, renderPdfBytes, renderPngBytes } from "../dist/backend/index.js";
 
 function pdfContentStreams(pdf) {
@@ -25,6 +25,22 @@ function pdfContentStreams(pdf) {
     offset = end + endMarker.length;
   }
   return streams.join("\n");
+}
+
+function pngDimensions(png) {
+  const view = new DataView(png.buffer, png.byteOffset, png.byteLength);
+  return {
+    width: view.getUint32(16),
+    height: view.getUint32(20),
+  };
+}
+
+function pdfMediaBoxes(pdf) {
+  const text = Buffer.from(pdf).toString("latin1");
+  return [...text.matchAll(/\/MediaBox\s*\[\s*0\s+0\s+([0-9.]+)\s+([0-9.]+)\s*\]/g)].map((match) => ({
+    width: Number(match[1]),
+    height: Number(match[2]),
+  }));
 }
 
 test("renders SVG output to PNG bytes", () => {
@@ -68,6 +84,37 @@ test("renders paginated SVG pages to a multi-page PDF", async () => {
   const pdf = await renderPdfBytes(pages);
   const text = Buffer.from(pdf).toString("latin1");
   assert.equal([...text.matchAll(/\/Type\s*\/Page\b/g)].length, pages.length);
+});
+
+test("renders paper preset dimensions consistently for SVG, PNG, and PDF", async () => {
+  const result = parse("hidden: true\n===\n1 2 | 3 4 |\n---\n5 6 | 7 1' |");
+  assert.equal(result.ok, true);
+
+  for (const preset of PAPER_PRESET_LIST) {
+    for (const orientation of PAGE_ORIENTATIONS) {
+      const pageSize = resolvePageSize({ paper: preset.name, orientation });
+      const pages = renderSvgPages(result.value, {
+        pageWidth: pageSize.pageWidth,
+        paginate: true,
+        pageHeight: pageSize.pageHeight,
+        background: "#ffffff",
+      });
+      assert.equal(pages.length, 2);
+      assert.equal(pages[0].width, pageSize.pageWidth);
+      assert.equal(pages[0].height, pageSize.pageHeight);
+      assert.match(
+        pages[0].svg,
+        new RegExp(`<svg[^>]+width="${pageSize.pageWidth}" height="${pageSize.pageHeight}" viewBox="0 0 ${pageSize.pageWidth} ${pageSize.pageHeight}"`),
+      );
+
+      assert.deepEqual(pngDimensions(renderPngBytes(pages[0].svg, { background: "#ffffff" })), {
+        width: pageSize.pageWidth,
+        height: pageSize.pageHeight,
+      });
+
+      assert.deepEqual(pdfMediaBoxes(await renderPdfBytes([pages[0]])), [{ width: pageSize.pageWidth, height: pageSize.pageHeight }]);
+    }
+  }
 });
 
 test("exports melody to WAV bytes", () => {

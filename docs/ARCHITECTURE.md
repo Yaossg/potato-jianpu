@@ -126,6 +126,8 @@ Responsibilities:
 - render header and score as deterministic SVG output
 - attach note metadata for frontend interaction
 - apply active-note highlighting
+- define shared paper preset dimensions and orientation-based page-size
+  resolution
 - support export color/background options
 
 The renderer does not parse source text and does not use browser-only APIs.
@@ -238,7 +240,7 @@ Responsibilities:
 - WAV download
 - MP3 download
 - preview/export page width and theme controls
-- split-page controls for SVG and PNG visual exports
+- paper preset, orientation, and split-page controls for visual exports
 
 The frontend imports shared parser, renderer, and player code. It does not
 import backend PNG, PDF, WAV, or MP3 modules. Browser PNG, PDF, and audio
