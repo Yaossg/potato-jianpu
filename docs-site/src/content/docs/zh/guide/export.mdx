@@ -3,16 +3,18 @@ title: 导出
 description: 将乐谱导出为 SVG、PNG、PDF、MIDI、WAV 和 MP3。
 docId: guide-export
 sectionIds:
+  - export-overview
   - visual-exports
   - pagination
   - midi-export
   - audio-exports
+  - browser-vs-cli
 ---
 
 import SupportMatrix from '../../../../components/SupportMatrix.astro';
 import RelatedLinks from '../../../../components/RelatedLinks.astro';
 
-Modern Jianpu Markup 可以从浏览器 App 和 CLI 把同一个解析后的乐谱导出为视觉、MIDI 和音频格式。
+Modern Jianpu Markup 可以从浏览器 App 和 CLI 把同一份解析后的乐谱导出为视觉、MIDI 和音频格式。
 
 <SupportMatrix
   title="导出支持"
@@ -33,9 +35,15 @@ Modern Jianpu Markup 可以从浏览器 App 和 CLI 把同一个解析后的乐�
   ]}
 />
 
+## 导出概览
+
+视觉导出使用渲染器和页面布局设置。MIDI 和音频导出使用播放模型。所有导出命令都要求乐谱有效；解析错误会停止导出，警告则仍允许乐谱导出。
+
+需要从当前预览交互式下载时，使用浏览器 App。需要可重复命令、脚本化输出，或者希望导出设置跟随构建或发布流程时，使用 CLI。
+
 ## 视觉导出
 
-SVG 是渲染器输出的确定性文本。PNG 会栅格化同一份渲染后的 SVG。PDF 会把渲染后的 SVG 页面转换为矢量 PDF 页面，并嵌入 Noto Sans SC，让中文标题和歌词等 Unicode 文本正确显示。所有视觉导出都支持纸张预设、方向、页面宽度、页高、颜色和背景选项。
+SVG 是渲染器输出的确定性文本。PNG 会栅格化同一份渲染后的 SVG。PDF 会把渲染后的 SVG 页面转换为矢量 PDF 页面，并嵌入 Noto Sans SC，让中文标题和歌词等 Unicode 文本正确显示。
 
 ```sh
 pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --paper a4 --orientation portrait --paginate --color "#111827" --background "#ffffff"
@@ -44,13 +52,13 @@ pnpm run cli -- export-pdf examples/twinkle.jpu -o twinkle.pdf --paper a4 --orie
 pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --paper a4 --paginate --split-pages
 ```
 
-`--paper` 预设包括 `a4`、`b5` 和 `letter`；`--orientation` 可以是 `portrait` 或 `landscape`。显式 `--page-width` 和 `--page-height` 会在套用方向后覆盖预设尺寸。SVG 和 PNG 导出也支持 `--split-pages`，此时 `-o score.svg` 或 `-o score.png` 会被当作输出文件名前缀，写出 `score-01.svg` 或 `score-01.png` 这样的文件，并且不会覆盖已有分页文件。在浏览器 App 中，导出设置里的“拆分页”会对 SVG 和 PNG 下载使用同样的分页命名方式。
+所有视觉导出都支持纸张预设、方向、页面宽度、页面高度、颜色和背景选项。`--paper` 预设包括 `a4`、`b5` 和 `letter`；`--orientation` 可以是 `portrait` 或 `landscape`。显式 `--page-width` 和 `--page-height` 会在套用方向后覆盖预设尺寸。
+
+SVG 和 PNG 导出也支持 `--split-pages`，此时 `-o score.svg` 或 `-o score.png` 会被当作输出文件名前缀，写出 `score-01.svg` 或 `score-01.png` 这样的文件，并且不会覆盖已有分页文件。
 
 ## 分页
 
-分页适用于视觉导出：SVG、PNG 和 PDF。未启用分页时，渲染器会生成一个自适应高度的页面。启用分页后，渲染器会使用固定页高、绘制页面边界、只在第一页保留乐谱文件头，并在启用页码或页脚文字时预留页脚空间。
-
-在浏览器 App 中，可以在“页面设置”里启用“分页”。页高、页边距、页码、纸张预设、方向、颜色、背景和对齐方式会同时用于预览和视觉下载。“导出设置”里的“拆分页”适用于 SVG 和 PNG；它会按每个渲染页下载一个文件，而不是下载一个合并文件。
+分页适用于视觉导出：SVG、PNG 和 PDF。未启用分页时，渲染器会生成一个自适应高度的页面。启用分页后，渲染器会使用固定页面高度、绘制页面边界、只在第一页保留乐谱文件头，并在启用页码或页脚文字时预留页脚空间。
 
 在 `.jpu` 文件里，`paginate: true` 会让视觉渲染默认分页，`numbering: true` 会启用居中的 `current / total` 页码，`footer: "text"` 会添加左下角页脚文字。单独一行的 `---` 是手动分页；只有启用分页时，它才会让下一条谱面行从新页开始。
 
@@ -61,35 +69,40 @@ pnpm run cli -- export-pdf examples/twinkle.jpu -o twinkle.pdf --paper a4 --pagi
 pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --paper a4 --paginate --split-pages
 ```
 
+在浏览器 App 中，可以在“页面设置”里启用“分页”。页面高度、页边距、页码、纸张预设、方向、颜色、背景和对齐方式会同时用于预览和视觉下载。“导出设置”里的“拆分页”适用于 SVG 和 PNG；它会按每个渲染页下载一个文件，而不是下载一个合并文件。
+
 ## MIDI 导出
 
-MIDI 导出会写出 format 1 MIDI 文件，包含元数据、速度、拍号、音色处理，以及每个带标签编排轨道对应的一条音乐轨。
-
-`--program` 是 fallback 默认 Program。乐谱级 `program` 会覆盖这个 fallback，`T1.program: 24` 或 `T2.program: "Violin"` 会继续覆盖对应轨道的乐谱级默认值。
-
-`volume: 75%` 这样的文件头字段会设置默认 MIDI 音符力度缩放；`T1.volume: 72.5%` 会覆盖对应轨道的默认值，而不是和它相乘。播放模型会先解析音符力度，随后由解析出的轨道音量缩放这些力度。
+MIDI 导出会写出 format 1 MIDI 文件，包含元数据、速度、拍号、Program 变更、逐轨道音量，以及每个带标签编排轨道对应的一条音乐轨。
 
 ```sh
 pnpm run cli -- export-midi examples/twinkle.jpu -o twinkle.mid --program 0 --omit-initial-rest
 ```
 
+MIDI 导出使用共享播放模型处理音符计时、反复、Program 解析、鼓音映射、轨道音量和力度。完整声音与计时规则见“播放”指南。
+
 ## 音频导出
 
 WAV 和 MP3 通过基于 TinySynth 的音频路径渲染。浏览器导出使用 `OfflineAudioContext`；后端导出使用 Node 可用的离线渲染路径。MP3 通过 `lamejs` 在本地编码。
-
-音频导出使用和预览播放、MIDI 导出相同的播放模型和 Program 解析规则：逐轨道 `Tn.program` 优先，其次是乐谱级 `program`，最后才是选择器或 CLI Program fallback。解析出的轨道音量来自 `Tn.volume`、乐谱级 `volume` 或默认 `1`。它会和浏览器音量滑杆或 CLI `--amplitude` 叠加，因此主音量和轨道音量会一起生效。
 
 ```sh
 pnpm run cli -- export-wav examples/twinkle.jpu -o twinkle.wav --program 0 --sample-rate 44100 --amplitude 1 --omit-initial-rest
 pnpm run cli -- export-mp3 examples/twinkle.jpu -o twinkle.mp3 --program 0 --sample-rate 44100 --amplitude 1 --bit-rate 128 --omit-initial-rest
 ```
 
-音频采样率默认是 `44100`。MP3 比特率默认是 `128` kbps。
+音频采样率默认是 `44100`。MP3 比特率默认是 `128` kbps。音频导出使用和预览播放、MIDI 导出相同的播放模型，然后把浏览器主音量或 CLI `--amplitude` 应用到渲染输出上。
+
+## 浏览器与 CLI
+
+浏览器 App 会使用当前 UI 设置导出当前有效乐谱。它适合交互预览、快速下载，以及在保存前检查视觉页面设置如何影响输出。
+
+CLI 从显式命令导出。它适合可重复输出、脚本化校验，以及需要用命令行选项记录页面、颜色、MIDI 或音频设置的构建流程。
 
 <RelatedLinks
   title="相关页面"
   links={[
     { href: '../cli/', label: '命令行', description: '从终端运行可重复的导出命令。' },
-    { href: '../playback/', label: '播放', description: '查看 MIDI 和音频导出共用的计时模型。' },
+    { href: '../playback/', label: '播放', description: '查看 MIDI 和音频导出共用的计时与声音模型。' },
+    { href: '../../syntax/header/', label: '文件头', description: '设置乐谱元数据、视觉默认值和播放默认值。' },
   ]}
 />

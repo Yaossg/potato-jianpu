@@ -1,17 +1,19 @@
 ---
 title: Playback
-description: Understand browser playback, click-to-play, programs, volumes, drums, and repeats.
+description: Understand timing, browser playback, programs, volumes, drums, and repeats.
 docId: guide-playback
 sectionIds:
+  - playback-model
   - browser-playback
-  - programs-drums
-  - repeats-tracks
+  - programs-and-drums
+  - volumes-and-dynamics
+  - repeats-and-tracks
 ---
 
 import SupportMatrix from '../../../components/SupportMatrix.astro';
 import RelatedLinks from '../../../components/RelatedLinks.astro';
 
-Playback is compiled from the parsed document. Notes, rests, accidentals, octave marks, chords, ties, repeat barlines, repeated endings, and labeled tracks all affect the timed playback result.
+Playback is compiled from the parsed document. The same timing and sound model is used by browser playback, documentation previews with controls, MIDI export, WAV export, and MP3 export.
 
 <SupportMatrix
   title="Playback support"
@@ -24,7 +26,15 @@ Playback is compiled from the parsed document. Notes, rests, accidentals, octave
   ]}
 />
 
-## Browser playback
+## Playback Model
+
+Notes, rests, accidentals, octave marks, chords, ties, repeat barlines, repeated endings, key signatures, tempo, and labeled tracks all affect the timed playback result.
+
+The compiler first resolves the score structure into timed events. It then applies Program selection, track volume, note dynamics, and drum mapping before browser playback or audio/MIDI export receives the result.
+
+Lyrics render visually but do not affect playback timing.
+
+## Browser Playback
 
 The browser app uses WebAudioTinySynth. Playback schedules notes incrementally, highlights active rendered notes, and stops when the source changes.
 
@@ -32,30 +42,34 @@ Click-to-play starts from rendered note metadata. If the clicked note is the fir
 
 Rendered score previews in the documentation use the same playback compiler. When a preview includes playback controls, clicking a rendered note starts that preview from the clicked note.
 
-## Programs and drums
+## Programs And Drums
 
 Programs `0..127` use melodic TinySynth programs. Programs `128..174` use drum mode. In drum mode, source `X` maps to percussion note `program - 128 + 35`.
 
-Use `program` in the file header to set the score-level default Program. Use `Tn.program` to assign a melodic Program to a labeled track; it overrides `program` for that track. Melodic per-track numeric values are limited to `0..127`, and quoted names resolve through the same General MIDI Program list used by the browser selector. The browser and CLI Program controls are used only when the file header omits `program`.
+Use `program` in the file header to set the score-level default Program. The browser and CLI Program controls are used only when the file header omits `program`.
 
-Use `Pn.program` (`128`–`174`) on percussion tracks (lines labeled `P1:`, `P2:`, etc.) to assign a Percussion Program. Each P track plays its own GM percussion sound and shares MIDI channel 10 with other P tracks. Multiple P tracks let you write a full drum kit in one score. See the drum kit example in the browser app for a complete rock beat.
+Use `Tn.program` to assign a melodic Program to a labeled melodic track. It overrides `program` for that track. Melodic per-track numeric values are limited to `0..127`, and quoted names resolve through the same General MIDI Program list used by the browser selector.
 
-Use `volume` to set the score-level default track volume, and `Tn.volume` to override one track from `0` to `2` or `0%` to `200%`. The resolved track volume multiplies with the browser volume slider, so a quiet track stays quiet when the master volume changes.
+Use `Pn.program` on percussion tracks such as `P1:` or `P2:` to assign a percussion Program in the `128..174` range. Each P track plays its own GM percussion sound and shares MIDI channel 10 with other P tracks, so multiple P tracks can form a drum kit in one score.
 
-Per-note dynamic markings set the note velocity before track volume is applied. Hairpins interpolate velocities between their endpoints; when an endpoint has an explicit dynamic marking, that marking becomes the interpolation target.
+## Volumes And Dynamics
 
-The browser app includes default Program selection, volume, audition, and an initial-rest omission toggle in Sound Settings.
+Use `volume` to set the score-level default track volume. Use `Tn.volume` or `Pn.volume` to override one labeled track from `0` to `2` or `0%` to `200%`.
 
-## Repeats and tracks
+Resolved track volume comes from the matching track override, then score-level `volume`, then `1`. It combines with the browser volume slider or CLI `--amplitude`, so master volume changes preserve the relative balance between tracks.
 
-Repeat barlines and repeated endings are expanded for playback and export. Labeled tracks play together inside a voice group; the next group starts after the previous group ends.
+Per-note dynamic markings set note velocity before track volume is applied. Hairpins interpolate velocities between their endpoints; when an endpoint has an explicit dynamic marking, that marking becomes the interpolation target.
 
-Lyrics render visually but do not affect playback timing.
+## Repeats And Tracks
+
+Repeat barlines and repeated endings are expanded for playback and export. The rendered score still shows the written repeat syntax, while the playback model follows the expanded order.
+
+Labeled tracks play together inside a voice group; the next group starts after the previous group ends. This lets multiple melodic or percussion tracks sound together without changing the written grouping rules.
 
 <RelatedLinks
   links={[
     { href: '../browser-app/', label: 'Browser App', description: 'Use interactive playback and click-to-play while editing.' },
     { href: '../export/', label: 'Export', description: 'Create MIDI, WAV, and MP3 output from the same playback model.' },
-    { href: '../../syntax/repeats/', label: 'Repeats', description: 'Understand the repeat and ending syntax that playback expands.' },
+    { href: '../../syntax/header/', label: 'File Header', description: 'Set score-level and per-track playback defaults in the file header.' },
   ]}
 />

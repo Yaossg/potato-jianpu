@@ -3,12 +3,18 @@ title: CLI
 description: Validate, inspect, and export .jpu scores from a terminal.
 docId: guide-cli
 sectionIds:
-  - export-commands
+  - quick-start
+  - validate-and-inspect
+  - visual-export-commands
+  - midi-and-audio-export-commands
+  - scripting-notes
 ---
 
 import RelatedLinks from '../../../components/RelatedLinks.astro';
 
-Use the CLI for repeatable checks and scripted exports.
+Use the CLI when you want repeatable checks, source inspection, and scripted exports. It reads the same `.jpu` files as the browser app and uses the same parser, renderer, playback model, and export paths.
+
+## Quick Start
 
 ```sh
 pnpm run cli -- --version
@@ -16,28 +22,50 @@ pnpm run cli -- validate examples/twinkle.jpu
 pnpm run cli -- parse examples/twinkle.jpu
 ```
 
-`validate` reports diagnostics without writing output. `parse` prints the parsed document data for inspection.
+Run commands from the repository root. During development, `pnpm run cli --` passes the remaining arguments to the Modern Jianpu Markup CLI.
 
-## Export commands
+## Validate And Inspect
+
+`validate` reports diagnostics without writing output. Use it in scripts or before committing a `.jpu` file when you only need to know whether the score parses cleanly.
+
+`parse` prints the parsed document data for inspection. It is useful when you want to confirm how file-header fields, score lines, labeled tracks, lyrics, repeats, or notation tokens were interpreted before rendering or exporting.
+
+Diagnostics use the same parser behavior as the browser app. Errors stop export commands; warnings keep the score usable but mark behavior that deserves review.
+
+## Visual Export Commands
 
 ```sh
 pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg
 pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png
 pnpm run cli -- export-pdf examples/twinkle.jpu -o twinkle.pdf
+```
+
+SVG, PNG, and PDF export accept `--paper <a4|b5|letter>`, `--orientation <portrait|landscape>`, `--page-width <px>`, `--page-height <px>`, `--page-margin <px>`, `--page-footer <text>`, `--page-numbers`, `--paginate`, `--color <css>`, and `--background <css>`. Explicit page width and height values override paper preset dimensions.
+
+SVG and PNG export also accept `--split-pages`. With `-o score.svg`, split output writes `score-01.svg`, `score-02.svg`, and so on without overwriting existing page files.
+
+## MIDI And Audio Export Commands
+
+```sh
 pnpm run cli -- export-midi examples/twinkle.jpu -o twinkle.mid
 pnpm run cli -- export-wav examples/twinkle.jpu -o twinkle.wav
 pnpm run cli -- export-mp3 examples/twinkle.jpu -o twinkle.mp3
 ```
 
-SVG, PNG, and PDF export accept `--paper <a4|b5|letter>`, `--orientation <portrait|landscape>`, `--page-width <px>`, `--page-height <px>`, `--page-margin <px>`, `--page-footer <text>`, `--page-numbers`, `--color <css>`, and `--background <css>`. Explicit page width and height values override paper preset dimensions. SVG and PNG export also accept `--split-pages`; with `-o score.svg`, split output writes `score-01.svg`, `score-02.svg`, and so on without overwriting existing page files.
+MIDI, WAV, and MP3 export accept `--program <number>` and `--omit-initial-rest`. WAV and MP3 also accept `--sample-rate <hz>` and `--amplitude <0-1>`. MP3 additionally accepts `--bit-rate <kbps>`.
 
-MIDI, WAV, and MP3 export accept `--program <number>` and `--omit-initial-rest`. `--program` is the default Program for tracks without score-level `program` or per-track `Tn.program` headers. WAV and MP3 also accept `--sample-rate <hz>` and `--amplitude <0-1>`. MP3 additionally accepts `--bit-rate <kbps>`.
+`--program` is only the fallback default Program. File-header `program`, `Tn.program`, and `Pn.program` fields can override it for the score or for individual tracks. Program, drum, volume, dynamics, and repeat behavior are described in the Playback guide.
 
-Programs `0..127` are melodic General MIDI programs. Programs `128..174` enable drum mode, mapping `X` to percussion note `program - 128 + 35`.
+## Scripting Notes
+
+Use the CLI when the same score needs to be checked or exported repeatedly. A common flow is to run `validate` first, then run one or more export commands only after diagnostics pass.
+
+Keep format-specific choices close to the export command: visual commands carry page and color options, MIDI/audio commands carry Program and audio-rendering options. For full output behavior, use the Export guide as the format reference.
 
 <RelatedLinks
   links={[
-    { href: '../export/', label: 'Export', description: 'Review format-specific export behavior before choosing an output.' },
+    { href: '../export/', label: 'Export', description: 'Review format-specific behavior before choosing an output.' },
+    { href: '../playback/', label: 'Playback', description: 'Understand Program, drum, volume, dynamics, and repeat behavior.' },
     { href: '../../syntax/overview/', label: 'Syntax Overview', description: 'Use diagnostics with the syntax pages to find the relevant rule.' },
   ]}
 />

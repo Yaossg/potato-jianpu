@@ -1,17 +1,19 @@
 ---
 title: 播放
-description: 了解浏览器播放、点击播放、音色、鼓音和反复。
+description: 了解计时、浏览器播放、Program、音量、鼓音和反复。
 docId: guide-playback
 sectionIds:
+  - playback-model
   - browser-playback
-  - programs-drums
-  - repeats-tracks
+  - programs-and-drums
+  - volumes-and-dynamics
+  - repeats-and-tracks
 ---
 
 import SupportMatrix from '../../../../components/SupportMatrix.astro';
 import RelatedLinks from '../../../../components/RelatedLinks.astro';
 
-播放结果由解析后的文档编译而来。音符、休止符、变音记号、八度标记、和弦、延音线、反复小节线、反复结尾和带标签轨道都会影响最终的计时播放结果。
+播放结果由解析后的文档编译而来。浏览器播放、带控件的文档预览、MIDI 导出、WAV 导出和 MP3 导出使用同一套计时与声音模型。
 
 <SupportMatrix
   title="播放支持"
@@ -23,13 +25,21 @@ import RelatedLinks from '../../../../components/RelatedLinks.astro';
     ['cli', 'CLI'],
   ]}
   features={[
-    { id: 'notes-rests-accidentals', feature: '音符、休止符和变音', parser: true, render: true, playback: true, export: true, cli: true },
+    { id: 'notes-rests-accidentals', feature: '音符、休止符和变音记号', parser: true, render: true, playback: true, export: true, cli: true },
     { id: 'chords-ties', feature: '和弦与延音线', parser: true, render: true, playback: true, export: true, cli: true },
     { id: 'repeats-endings', feature: '反复与反复结尾', parser: true, render: true, playback: true, export: true, cli: true },
     { id: 'labeled-tracks', feature: '带标签轨道', parser: true, render: true, playback: true, export: true, cli: true },
     { id: 'lyrics-timing', feature: '歌词计时', parser: true, render: true, playback: false, export: '仅视觉', cli: true },
   ]}
 />
+
+## 播放模型
+
+音符、休止符、变音记号、八度标记、和弦、延音线、反复小节线、反复结尾、调号、速度和带标签轨道都会影响最终的计时播放结果。
+
+编译器会先把乐谱结构解析为计时事件，然后再应用 Program 选择、轨道音量、音符力度和鼓音映射，最后交给浏览器播放或音频/MIDI 导出。
+
+歌词只参与视觉渲染，不影响播放计时。
 
 ## 浏览器播放
 
@@ -39,31 +49,35 @@ import RelatedLinks from '../../../../components/RelatedLinks.astro';
 
 文档中的渲染预览也使用同一套播放编译器。带播放控件的预览支持点击渲染出的音符，并从被点击的音符开始播放。
 
-## 音色与鼓音
+## Program 与鼓音
 
 程序号 `0..127` 使用旋律 TinySynth 音色。程序号 `128..174` 使用鼓模式。在鼓模式中，源码里的 `X` 会映射到打击乐音符 `program - 128 + 35`。
 
-使用 `program` 可以设置乐谱级默认 Program；使用 `Tn.program` 可以给带标签轨道指定旋律 Program，并覆盖该轨道的 `program` 默认值。逐轨道旋律 Program 的数字值只能是 `0..127`，带引号名称会通过浏览器选择器使用的同一份 General MIDI Program 列表解析。只有文件头省略 `program` 时，浏览器和 CLI 的 Program 控件才作为默认值。
+使用文件头里的 `program` 可以设置乐谱级默认 Program。只有文件头省略 `program` 时，浏览器和 CLI 的 Program 控件才作为默认值。
 
-在打击乐轨道（标有 `P1:`、`P2:` 等的行）上使用 `Pn.program`（`128`–`174`）来指定打击乐 Program。每条 P 轨道演奏自己的 GM 打击乐音色，并与其它 P 轨道共享 MIDI 通道 10。多条 P 轨道可以让你在同一个乐谱里编写完整的架子鼓编排。浏览器 App 中有一个完整的鼓组示例。
+使用 `Tn.program` 可以给带标签旋律轨道指定旋律 Program，并覆盖该轨道的 `program` 默认值。逐轨道旋律 Program 的数字值只能是 `0..127`，带引号名称会通过浏览器选择器使用的同一份 General MIDI Program 列表解析。
 
-使用 `volume` 可以设置乐谱级默认轨道音量；使用 `Tn.volume` 可以把单个轨道覆盖为 `0` 到 `2`，也可以写成 `0%` 到 `200%`。解析出的轨道音量会和浏览器音量滑杆相乘，所以主音量变化时，较轻的轨道仍保持相对较轻。
+在 `P1:` 或 `P2:` 这样的打击乐轨道上使用 `Pn.program`，可以指定 `128..174` 范围内的打击乐 Program。每条 P 轨道演奏自己的 GM 打击乐音色，并与其它 P 轨道共享 MIDI 通道 10，因此多条 P 轨道可以在同一份乐谱里组成一套鼓组。
+
+## 音量与力度
+
+使用 `volume` 可以设置乐谱级默认轨道音量。使用 `Tn.volume` 或 `Pn.volume` 可以把单个带标签轨道覆盖为 `0` 到 `2`，也可以写成 `0%` 到 `200%`。
+
+解析出的轨道音量来自对应的轨道覆盖值，其次是乐谱级 `volume`，最后是 `1`。它会和浏览器音量滑杆或 CLI `--amplitude` 结合，因此主音量变化时，轨道之间的相对平衡会保持不变。
 
 逐音符力度标记会在应用轨道音量之前设置音符力度。渐强、渐弱会在两个端点之间插值音符力度；如果端点写有明确的力度标记，该标记会成为插值目标。
 
-浏览器 App 的声音设置包含音色选择、音量、试听，以及忽略开头休止符开关。
-
 ## 反复与轨道
 
-反复小节线和反复结尾会在播放和导出时展开。带标签轨道会在同一个声部组内同时播放；下一个声部组会在前一个组结束后开始。
+反复小节线和反复结尾会在播放和导出时展开。渲染出的谱面仍显示写下来的反复语法，而播放模型会遵循展开后的顺序。
 
-歌词只参与视觉渲染，不影响播放计时。
+带标签轨道会在同一个声部组内同时播放；下一个组会在前一个组结束后开始。这样多条旋律或打击乐轨道可以同时发声，而不会改变书写时的分组规则。
 
 <RelatedLinks
   title="相关页面"
   links={[
     { href: '../browser-app/', label: '浏览器 App', description: '编辑时使用交互播放和点击播放。' },
     { href: '../export/', label: '导出', description: '从同一套播放模型生成 MIDI、WAV 和 MP3。' },
-    { href: '../../syntax/repeats/', label: '反复', description: '了解播放展开的反复和反复结尾语法。' },
+    { href: '../../syntax/header/', label: '文件头', description: '在文件头中设置乐谱级和逐轨道播放默认值。' },
   ]}
 />

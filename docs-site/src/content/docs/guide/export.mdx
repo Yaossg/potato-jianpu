@@ -3,10 +3,12 @@ title: Export
 description: Export scores as SVG, PNG, PDF, MIDI, WAV, and MP3.
 docId: guide-export
 sectionIds:
+  - export-overview
   - visual-exports
   - pagination
   - midi-export
   - audio-exports
+  - browser-vs-cli
 ---
 
 import SupportMatrix from '../../../components/SupportMatrix.astro';
@@ -26,9 +28,15 @@ Modern Jianpu Markup can export the same parsed score to visual, MIDI, and audio
   ]}
 />
 
-## Visual exports
+## Export Overview
 
-SVG is deterministic text output from the renderer. PNG rasterizes the same rendered SVG. PDF converts rendered SVG pages to vector PDF pages and embeds Noto Sans SC so Unicode text such as Chinese titles and lyrics renders correctly. All visual exports support paper presets, orientation, page width, page height, color, and background options.
+Visual exports use the renderer and page layout settings. MIDI and audio exports use the playback model. All export commands require a valid score; parser errors stop export, while warnings leave the score exportable.
+
+Use the browser app for interactive downloads from the current preview. Use the CLI for repeatable commands, scripted outputs, and export settings that should live beside a build or release process.
+
+## Visual Exports
+
+SVG is deterministic text output from the renderer. PNG rasterizes the same rendered SVG. PDF converts rendered SVG pages to vector PDF pages and embeds Noto Sans SC so Unicode text such as Chinese titles and lyrics renders correctly.
 
 ```sh
 pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --paper a4 --orientation portrait --paginate --color "#111827" --background "#ffffff"
@@ -37,13 +45,13 @@ pnpm run cli -- export-pdf examples/twinkle.jpu -o twinkle.pdf --paper a4 --orie
 pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --paper a4 --paginate --split-pages
 ```
 
-The `--paper` presets are `a4`, `b5`, and `letter`; `--orientation` can be `portrait` or `landscape`. Explicit `--page-width` and `--page-height` values override the preset dimensions after orientation is applied. SVG and PNG export also accept `--split-pages`, which interprets `-o score.svg` or `-o score.png` as a stem and writes files such as `score-01.svg` or `score-01.png` without overwriting existing page files. In the browser app, the Split pages export setting applies the same per-page naming pattern to SVG and PNG downloads.
+All visual exports support paper presets, orientation, page width, page height, color, and background options. The `--paper` presets are `a4`, `b5`, and `letter`; `--orientation` can be `portrait` or `landscape`. Explicit `--page-width` and `--page-height` values override the preset dimensions after orientation is applied.
+
+SVG and PNG export also accept `--split-pages`, which interprets `-o score.svg` or `-o score.png` as a stem and writes files such as `score-01.svg` or `score-01.png` without overwriting existing page files.
 
 ## Pagination
 
 Pagination applies to visual exports: SVG, PNG, and PDF. When pagination is off, the renderer creates one adaptive-height page. When pagination is on, the renderer uses fixed-height pages, draws page boundaries, keeps the score header on the first page, and reserves footer space when page numbers or footer text are enabled.
-
-In the browser app, enable Paginate in Page Settings. The page height, page margin, page numbers, paper preset, orientation, color, background, and justification settings are used by preview and by visual downloads. Export Settings also has Split pages for SVG and PNG; it downloads one file per rendered page instead of one combined file.
 
 In a `.jpu` file, `paginate: true` makes paginated visual rendering the default, `numbering: true` enables centered `current / total` page numbers, and `footer: "text"` adds bottom-left footer text. A score line containing only `---` is a manual page break; it starts the next score line on a new page only when pagination is enabled.
 
@@ -54,34 +62,39 @@ pnpm run cli -- export-pdf examples/twinkle.jpu -o twinkle.pdf --paper a4 --pagi
 pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --paper a4 --paginate --split-pages
 ```
 
-## MIDI export
+In the browser app, enable Paginate in Page Settings. The page height, page margin, page numbers, paper preset, orientation, color, background, and justification settings are used by preview and by visual downloads. Export Settings also has Split pages for SVG and PNG; it downloads one file per rendered page instead of one combined file.
 
-MIDI export writes a format 1 MIDI file with metadata, tempo, time signature, program handling, per-track volume, and one music track per labeled arrangement track.
+## MIDI Export
 
-The `--program` option is the fallback default Program. A score-level `program` header overrides that fallback, and `T1.program: 24` or `T2.program: "Violin"` override the score-level default for the matching labeled tracks.
-
-Header fields such as `volume: 0.75` set the default MIDI note velocity scale. `T1.volume: 0.5` overrides that default for the matching track rather than multiplying by it. The playback model resolves note velocities before the resolved track volume scales them.
+MIDI export writes a format 1 MIDI file with metadata, tempo, time signature, Program changes, per-track volume, and one music track per labeled arrangement track.
 
 ```sh
 pnpm run cli -- export-midi examples/twinkle.jpu -o twinkle.mid --program 0 --omit-initial-rest
 ```
 
-## Audio exports
+MIDI export uses the shared playback model for note timing, repeats, Program resolution, drum mapping, track volume, and dynamics. Use the Playback guide for the full sound and timing rules.
+
+## Audio Exports
 
 WAV and MP3 render through the TinySynth-based audio path. Browser exports use `OfflineAudioContext`; backend exports use the Node-capable offline render path. MP3 encoding is local through `lamejs`.
-
-Audio exports use the same playback model and Program resolution as preview playback and MIDI export: per-track `Tn.program` values win, then score-level `program`, then the selected or CLI Program fallback. Resolved track volume comes from `Tn.volume`, then score-level `volume`, then `1`; it combines with the browser volume slider or CLI `--amplitude`, so master volume and track volume are applied together.
 
 ```sh
 pnpm run cli -- export-wav examples/twinkle.jpu -o twinkle.wav --program 0 --sample-rate 44100 --amplitude 1 --omit-initial-rest
 pnpm run cli -- export-mp3 examples/twinkle.jpu -o twinkle.mp3 --program 0 --sample-rate 44100 --amplitude 1 --bit-rate 128 --omit-initial-rest
 ```
 
-Audio sample rate defaults to `44100`. MP3 bit rate defaults to `128` kbps.
+Audio sample rate defaults to `44100`. MP3 bit rate defaults to `128` kbps. Audio export uses the same playback model as preview playback and MIDI export, then applies the browser master volume or CLI `--amplitude` to the rendered output.
+
+## Browser Vs CLI
+
+The browser app exports the currently valid score using the current UI settings. It is best for interactive preview, quick downloads, and checking how visual page settings affect the output before saving.
+
+The CLI exports from explicit commands. It is best for repeatable output, scripted validation, and builds where command-line options should document the expected page, color, MIDI, or audio settings.
 
 <RelatedLinks
   links={[
     { href: '../cli/', label: 'CLI', description: 'Run repeatable export commands from a terminal.' },
-    { href: '../playback/', label: 'Playback', description: 'Review the timing model shared by MIDI and audio exports.' },
+    { href: '../playback/', label: 'Playback', description: 'Review the timing and sound model shared by MIDI and audio exports.' },
+    { href: '../../syntax/header/', label: 'File Header', description: 'Set score metadata, visual defaults, and playback defaults.' },
   ]}
 />
