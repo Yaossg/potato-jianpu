@@ -58,3 +58,59 @@ Implementation should start from a shared arrangement model so playback and all
 exports follow the same measure order. Tests should cover plain D.C./D.S. flows,
 Fine termination, Coda jumps, interaction with repeated endings, and invalid
 navigation graphs.
+
+### Lyrics Alignment Placeholders
+
+Support placeholder syntax for lyric alignment when the lyric text is not yet
+available or when one lyric syllable should intentionally span multiple notes.
+This would let authors prepare note-to-lyric alignment before final lyrics are
+known, and write melismatic passages without forcing artificial filler text.
+
+Design work should define:
+
+- Spacing placeholders that reserve an aligned lyric slot without rendering
+  visible lyric text.
+- Merge placeholders that attach one visible syllable to multiple consecutive
+  sounding notes.
+- Source syntax that is easy to type inside the existing quoted lyric string
+  model and does not conflict with ordinary lyric punctuation.
+- How placeholders interact with the current rule where fewer syllables align
+  to leading main-voice notes and excess syllables fall back to a normal lyric
+  line.
+- Diagnostics for placeholders without a previous syllable to merge, merge
+  spans that cross unavailable note anchors, and placeholder counts that exceed
+  the main-voice note count.
+
+Implementation should keep placeholders visual-only for playback. Parser tests
+should cover tokenization and diagnostics, renderer tests should cover empty
+reserved slots and melismatic spans, and docs should include examples for draft
+lyrics and one-syllable-many-note passages.
+
+### Automatic Lyrics Tokenization
+
+Automatically tokenize lyrics into syllables for alignment with Jianpu notes.
+This should cover Chinese lyrics entered naturally without manual spaces, and
+English words that use hyphens to mark syllable boundaries, such as
+`sev-en` or `glo-ri-a`.
+
+Design work should define:
+
+- Whether Chinese text splits Han characters one-by-one, uses a smarter
+  word-segmentation approach, or exposes both modes.
+- How hyphenated English words split into aligned syllables while preserving
+  the rendered word form or expected lyric typography.
+- How mixed Chinese, hyphenated Latin text, numbers, punctuation, and
+  whitespace are tokenized in one lyric line.
+- How authors can opt out of automatic tokenization or force manual grouping
+  when multiple Chinese characters or hyphenated word parts should align to one
+  note.
+- How automatic tokenization interacts with lyric placeholders, merge syntax,
+  rests, and the current partial-alignment behavior.
+- Diagnostics or warnings for ambiguous mixed-script input only when they help
+  authors fix a rendered alignment problem.
+
+Implementation should keep tokenization deterministic and shared by parser,
+renderer, docs examples, and tests. Tests should cover pure Chinese lyrics,
+hyphenated English words, mixed Chinese/English lyrics, punctuation, manually
+grouped phrases, and cases where automatic tokens exceed available main-voice
+notes.
