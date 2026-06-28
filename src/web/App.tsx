@@ -12,7 +12,6 @@ import {
 } from "../index.js";
 import { DEFAULT_PAGE_SIZE, PAPER_PRESET_LIST, analyzeScoreOverwidth, inferContentPageWidth, renderSvg, renderSvgPages, resolvePageSize } from "../renderer/index.js";
 import type { OverwideScoreLayoutWarning, PageOrientation, PaperPresetName } from "../renderer/index.js";
-import { exportBrowserMp3Bytes, exportBrowserWavBytes } from "./audio-export.js";
 import { PreviewAudioPlayer } from "./audio.js";
 import { waitForNextFrame } from "./browser-utils.js";
 import { downloadBlob, downloadBytes, svgToPngBlob } from "./downloads.js";
@@ -21,7 +20,6 @@ import { exportFilename, splitPageExportFilename } from "./export-filename.js";
 import { isLanguage, pageWidthModeLabels, translate } from "./i18n.js";
 import { pageLayoutWarnings } from "./page-warnings.js";
 import type { PageLayoutWarning } from "./page-warnings.js";
-import { svgPagesToPdfBuffer } from "./pdf-export.js";
 import { PreviewPanel } from "./PreviewPanel.js";
 import { SettingsPanel } from "./SettingsPanel.js";
 import { SourceEditor } from "./SourceEditor.js";
@@ -518,6 +516,7 @@ export function App() {
       return;
     }
     try {
+      const { svgPagesToPdfBuffer } = await import("./pdf-export.js");
       const buffer = await svgPagesToPdfBuffer(svgPages);
       downloadBytes(buffer, exportFilename(parsed.value.header.title, "pdf"), "application/pdf");
     } catch (error) {
@@ -552,6 +551,7 @@ export function App() {
     setAudioExportDetails(describeAudioExport());
     try {
       await waitForNextFrame();
+      const { exportBrowserWavBytes } = await import("./audio-export.js");
       const wav = await exportBrowserWavBytes(parsed.value, {
         program,
         sampleRate: audioSampleRate,
@@ -576,6 +576,7 @@ export function App() {
     setAudioExportDetails(describeAudioExport());
     try {
       await waitForNextFrame();
+      const { exportBrowserMp3Bytes } = await import("./audio-export.js");
       const mp3 = await exportBrowserMp3Bytes(parsed.value, {
         program,
         sampleRate: audioSampleRate,
@@ -654,7 +655,6 @@ export function App() {
       },
       undefined,
       volume / 100,
-      program,
     );
   }
 

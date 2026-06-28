@@ -84,7 +84,12 @@ The release file allow-list currently includes:
 - `dist/`
 - `dist-web/`
 - `docs/`
-- `docs-site/`
+- `docs-site/AGENTS.md`
+- `docs-site/astro.config.mjs`
+- `docs-site/docs/`
+- `docs-site/package.json`
+- `docs-site/public/`
+- `docs-site/src/`
 - `examples/`
 - `README.md`
 - `AGENTS.md`
@@ -116,8 +121,9 @@ Before cutting a release:
   `docs-site/docs/COMMANDS.md`.
 - Run `npm pack --dry-run --json` and inspect the file list. The package should
   include `dist/` backend/library output, `dist-web/` static frontend and docs
-  output, and `docs-site/` documentation source, but not `dist/web/`
-  browser-source compiler output.
+  output, and docs-site documentation source, but not `dist/web/`
+  browser-source compiler output, docs-site dependency folders, or docs-site
+  build caches.
 - Check `git status --short`.
 - Confirm `package.json` versioning and release notes.
 - Confirm `pnpm run cli -- --version` prints the intended package version.

@@ -5,7 +5,7 @@ commitment.
 
 ## Risks
 
-- No risks have been identified yet.
+- No current risks are listed yet.
 
 ## Future Features
 

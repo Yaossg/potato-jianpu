@@ -47,7 +47,6 @@ export class PreviewAudioPlayer {
     onEnded: () => void,
     onNoteStart?: (noteIndices: number[]) => void,
     volume = 1,
-    program = 0,
   ) {
     this.stop();
     const generation = this.playGeneration;
