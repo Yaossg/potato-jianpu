@@ -8,8 +8,8 @@ export const SVG_STYLE = `.title { fill: currentColor; font-family: Arial, Helve
 .time-signature { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 18px; font-weight: 700; }
 .time-signature line { stroke: currentColor; stroke-width: 1.5; stroke-linecap: butt; }
 .line-label { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: 700; }
-.lyric-line { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 17px; font-weight: 400; }
-.lyric-syllable { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 17px; font-weight: 400; }
+.lyric-line { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: 400; }
+.lyric-syllable { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: 400; }
 .voice-bracket { stroke: currentColor; stroke-width: 3; fill: none; stroke-linecap: butt; stroke-linejoin: miter; }
 .note { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 24px; font-weight: 700; }
 .accidental { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-weight: 700; text-anchor: middle; }

@@ -210,7 +210,7 @@ const translations: { en: Record<TranslationKey, string>; zh: Record<Translation
     pageNumbers: "页码",
     color: "谱面颜色",
     page: "页面",
-    justify: "对齐",
+    justify: "两端对齐",
     none: "无",
     exceptLastLine: "除最后一行",
     allLines: "所有行",
