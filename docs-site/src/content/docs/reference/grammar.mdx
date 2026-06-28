@@ -26,9 +26,11 @@ The parser recognizes these tokens. Whitespace and comments are skipped between 
 | `BOOLEAN` | `true` or `false` |
 | `PROGRAM_NUMBER` | integer `0` through `127` |
 | `DEFAULT_PROGRAM_NUMBER` | integer `0` through `174` |
+| `PERCUSSION_PROGRAM_NUMBER` | integer `128` through `174` |
 | `PROGRAM_NAME` | quoted melodic General MIDI program name |
 | `VOLUME_NUMBER` | number from `0` to `2`, or percentage from `0%` to `200%` |
-| `TRACK_LABEL` | `T1` through `T9`, `T11` through `T16` |
+| `MELODIC_TRACK_LABEL` | `T1` through `T9`, `T11` through `T16` |
+| `PERCUSSION_TRACK_LABEL` | `P` followed by one or more digits |
 | `LYRIC_LABEL` | `L` followed by one or more digits |
 | `STRING` | double-quoted string on one line |
 | `DIGIT` | `0` through `9` |
@@ -80,6 +82,10 @@ These diagrams are generated from `docs/grammar.ebnf`.
 <RailroadDiagram rule="track_program_property" title="track_program_property" caption="A per-track playback and export Program header field." />
 <RailroadDiagram rule="program_value" title="program_value" caption="A melodic Program number or quoted Program name." />
 <RailroadDiagram rule="track_volume_property" title="track_volume_property" caption="A per-track playback and export volume multiplier header field." />
+<RailroadDiagram rule="percussion_name_property" title="percussion_name_property" caption="A canonical visible percussion-track name header field." />
+<RailroadDiagram rule="percussion_name_shorthand_property" title="percussion_name_shorthand_property" caption="A shorthand visible percussion-track name header field." />
+<RailroadDiagram rule="percussion_program_property" title="percussion_program_property" caption="A per-track percussion Program header field." />
+<RailroadDiagram rule="percussion_volume_property" title="percussion_volume_property" caption="A per-track percussion volume multiplier header field." />
 <RailroadDiagram rule="lyric_label_property" title="lyric_label_property" caption="A canonical visible lyric-label header field." />
 <RailroadDiagram rule="lyric_label_shorthand_property" title="lyric_label_shorthand_property" caption="A shorthand visible lyric-label header field." />
 <RailroadDiagram rule="score" title="score" caption="Score items separated by one or more line breaks." />

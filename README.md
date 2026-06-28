@@ -55,14 +55,20 @@ key: C
 time: 4/4
 tempo: 96
 hidden: false
+program: 24
+volume: 85%
 T1.program: "Violin"
+T1.volume: 0.8
+P1.program: 128
 ===
 T1: 1 1 5 5 | 6 6 5 - |
+P1: X 0 X 0 | X 0 X 0 |
 ```
 
-Use `Tn.program` to assign a melodic General MIDI Program to a labeled track.
-The CLI and browser Program controls remain the default for tracks without a
-score-level Program.
+Use `program` and `volume` for score-level playback/export defaults,
+`Tn.program` and `Tn.volume` for melodic track overrides, and `Pn.program` or
+`Pn.volume` for P-labeled percussion tracks. The CLI and browser Program
+controls remain the default for tracks without a score-level Program.
 
 ## Built Outputs
 

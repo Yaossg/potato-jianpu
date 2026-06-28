@@ -93,7 +93,8 @@ Responsibilities:
 - tokenize source text
 - parse optional header and score notation
 - parse closed typed header properties
-- parse score-level default Program/volume and per-track melodic Program/volume header properties
+- parse score-level default Program/volume, per-track melodic Program/volume,
+  and P-track percussion Program/volume header properties
 - parse per-note velocity markers
 - validate tie semantics
 - warn on measure duration mismatches

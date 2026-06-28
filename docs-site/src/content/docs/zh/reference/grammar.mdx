@@ -26,9 +26,11 @@ import RelatedLinks from '../../../../components/RelatedLinks.astro';
 | `BOOLEAN` | `true` 或 `false` |
 | `PROGRAM_NUMBER` | 整数 `0` 到 `127` |
 | `DEFAULT_PROGRAM_NUMBER` | 整数 `0` 到 `174` |
+| `PERCUSSION_PROGRAM_NUMBER` | 整数 `128` 到 `174` |
 | `PROGRAM_NAME` | 带引号的旋律 General MIDI Program 名称 |
 | `VOLUME_NUMBER` | `0` 到 `2` 的数字，或 `0%` 到 `200%` 的百分数 |
-| `TRACK_LABEL` | `T1` 到 `T9`，以及 `T11` 到 `T16` |
+| `MELODIC_TRACK_LABEL` | `T1` 到 `T9`，以及 `T11` 到 `T16` |
+| `PERCUSSION_TRACK_LABEL` | `P` 后接一个或多个数字 |
 | `LYRIC_LABEL` | `L` 后接一个或多个数字 |
 | `STRING` | 同一行内的双引号字符串 |
 | `DIGIT` | `0` 到 `9` |
@@ -80,6 +82,10 @@ import RelatedLinks from '../../../../components/RelatedLinks.astro';
 <RailroadDiagram rule="track_program_property" title="track_program_property" caption="逐轨道播放和导出 Program 文件头字段。" />
 <RailroadDiagram rule="program_value" title="program_value" caption="旋律 Program 编号或带引号的 Program 名称。" />
 <RailroadDiagram rule="track_volume_property" title="track_volume_property" caption="逐轨道播放和导出音量倍率文件头字段。" />
+<RailroadDiagram rule="percussion_name_property" title="percussion_name_property" caption="规范写法的可见打击乐轨道名称文件头字段。" />
+<RailroadDiagram rule="percussion_name_shorthand_property" title="percussion_name_shorthand_property" caption="简写的可见打击乐轨道名称文件头字段。" />
+<RailroadDiagram rule="percussion_program_property" title="percussion_program_property" caption="逐轨道打击乐 Program 文件头字段。" />
+<RailroadDiagram rule="percussion_volume_property" title="percussion_volume_property" caption="逐轨道打击乐音量倍率文件头字段。" />
 <RailroadDiagram rule="lyric_label_property" title="lyric_label_property" caption="规范写法的可见歌词标签文件头字段。" />
 <RailroadDiagram rule="lyric_label_shorthand_property" title="lyric_label_shorthand_property" caption="简写的可见歌词标签文件头字段。" />
 <RailroadDiagram rule="score" title="score" caption="由一个或多个换行分隔的谱面项目。" />
