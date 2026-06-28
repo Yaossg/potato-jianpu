@@ -62,6 +62,7 @@ function paddingDownOf(note: Note): number {
 function layoutMeasure(
   measure: Measure,
   allNotes: Note[],
+  minAdvanceByNote: Map<Note, number> | undefined,
   inlineRepeatStart = false,
   repeatStartAfterEnd = false,
   repeatEndBeforeStart = false,
@@ -84,7 +85,7 @@ function layoutMeasure(
     dashPositions.push(
       Array.from({ length: note.duration.dashes }, (_, index) => totalWidth + DIMENSIONS.dashSpacing * (index + 1)),
     );
-    totalWidth += widthOf(note);
+    totalWidth += Math.max(widthOf(note), minAdvanceByNote?.get(note) ?? 0);
     paddingUp = Math.max(paddingUp, paddingUpOf(note, noteTieAfter(note, allNotes), note === measure.notes[0] && measure.ending !== undefined));
     paddingDown = Math.max(paddingDown, paddingDownOf(note));
   }
@@ -123,7 +124,7 @@ function buildLineLayout(line: ScoreLine, measures: MeasureLayout[], measureStar
   };
 }
 
-export function layoutLine(line: ScoreLine, allNotes: Note[], pageWidth: number): LineLayout[] {
+export function layoutLine(line: ScoreLine, allNotes: Note[], pageWidth: number, minAdvanceByNote?: Map<Note, number>): LineLayout[] {
   const layouts: LineLayout[] = [];
   let current: MeasureLayout[] = [];
   let currentWidth = 0;
@@ -135,6 +136,7 @@ export function layoutLine(line: ScoreLine, allNotes: Note[], pageWidth: number)
     let measure = layoutMeasure(
       measureNode,
       allNotes,
+      minAdvanceByNote,
       current.length > 0,
       Boolean(previousMeasure?.repeatEnd && measureNode.repeatStart),
       Boolean(measureNode.repeatEnd && nextMeasure?.repeatStart),
@@ -142,7 +144,7 @@ export function layoutLine(line: ScoreLine, allNotes: Note[], pageWidth: number)
     const nextWidth = current.length === 0 ? measure.width : currentWidth + DIMENSIONS.measureSpacing + measure.width;
     if (current.length > 0 && nextWidth > pageWidth) {
       layouts.push(buildLineLayout(line, current, currentStartIndex));
-      measure = layoutMeasure(measureNode, allNotes, false, false, Boolean(measureNode.repeatEnd && nextMeasure?.repeatStart));
+      measure = layoutMeasure(measureNode, allNotes, minAdvanceByNote, false, false, Boolean(measureNode.repeatEnd && nextMeasure?.repeatStart));
       current = [measure];
       currentWidth = measure.width;
       currentStartIndex = measureIndex;

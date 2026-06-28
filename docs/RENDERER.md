@@ -170,9 +170,13 @@ own measure contents are stretched to fit between those aligned barlines.
 Lyric lines render below the preceding score group. A lyric string with
 multiple whitespace-separated syllables is rendered as centered syllables under
 the main voice note anchors when the syllable count matches the main voice note
-count and the main voice occupies one rendered visual line. Otherwise it remains
-a normal left-aligned lyric line. In multi-voice groups, the renderer uses `T1`
-as the main voice; unlabeled lines in labeled scores also count as `T1`.
+count and the main voice occupies one rendered visual line. Long aligned lyric
+syllables participate in score layout by increasing the horizontal advance
+between neighboring main-voice note anchors, so English words do not overlap
+adjacent syllables. If the expanded main voice wraps or must be horizontally
+scaled to fit the page, the lyric remains a normal left-aligned lyric line. In
+multi-voice groups, the renderer uses `T1` as the main voice; unlabeled lines in
+labeled scores also count as `T1`.
 
 Track and lyric labels reserve horizontal space based on the rendered label
 text length plus padding. Visible labels come from typed header label fields,

@@ -89,7 +89,7 @@ When a score contains any labeled track, unlabeled score lines are treated as `T
 
 ## Lyric Diagnostics
 
-Lyrics are attached to the preceding score group. A lyric line before any score line is invalid. When a lyric line contains multiple whitespace-separated syllables and the main voice renders on one row, the renderer centers those syllables under sounding main-voice notes. Rests do not receive lyric positions. If the syllable count does not match the main voice note count, the lyric is rendered as a plain full line and reported as a warning.
+Lyrics are attached to the preceding score group. A lyric line before any score line is invalid. When a lyric line contains multiple whitespace-separated syllables and the main voice renders on one row, the renderer centers those syllables under sounding main-voice notes. Long syllables, especially English words, can widen the spacing between neighboring notes so lyrics do not collide. Rests do not receive lyric positions. If the syllable count does not match the main voice note count, or if the widened main voice no longer fits on one row, the lyric is rendered as a plain full line and reported as a warning only when the syllable count mismatches.
 
 <JianpuExample
   title="Mismatched lyric count"

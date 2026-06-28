@@ -25,6 +25,12 @@ const accidentalMap = new Map([
   [-2, "&#119083;"],
 ]);
 const LYRIC_CHARACTER_WIDTH = 9;
+const LYRIC_LATIN_WIDTH = 8.5;
+const LYRIC_CJK_WIDTH = 17;
+const LYRIC_SPACE_WIDTH = 4.5;
+const LYRIC_PUNCTUATION_WIDTH = 5;
+const LYRIC_OTHER_WIDTH = 9;
+const LYRIC_SYLLABLE_GAP = 6;
 const PAGINATED_PAGE_CONTENT_TOP = 12;
 
 interface RenderedLine {
@@ -605,8 +611,15 @@ function measureRhythmPositions(measure: Measure): MeasureRhythmPositions {
   return { noteStarts, dashStarts, totalDuration: start };
 }
 
-function rhythmicSlotWidth(note: Note): number {
-  return widthOf(note) - note.duration.dashes * DIMENSIONS.dashSpacing;
+function noteAdvanceInLayout(layout: MeasureLayout, noteIndex: number): number {
+  const position = layout.notePositions[noteIndex] ?? 0;
+  const nextPosition = layout.notePositions[noteIndex + 1];
+  return nextPosition !== undefined ? nextPosition - position : measureContentWidth(layout) - position;
+}
+
+function rhythmicSlotWidth(layout: MeasureLayout, noteIndex: number): number {
+  const note = layout.measure.notes[noteIndex]!;
+  return Math.max(0, noteAdvanceInLayout(layout, noteIndex) - note.duration.dashes * DIMENSIONS.dashSpacing);
 }
 
 function setTimelineWidth(widthsByStart: Map<string, { start: number; width: number }>, start: number, width: number) {
@@ -715,7 +728,7 @@ function alignMeasureLayoutsByBeat(measureLayouts: MeasureLayout[], positionsByM
       for (const [noteIndex, note] of layout.measure.notes.entries()) {
         const noteStart = positions.noteStarts[noteIndex]!;
         if (noteStart >= beatStart - 1e-9 && noteStart < beatEnd - 1e-9) {
-          setTimelineWidth(widthsByRelativeStart, noteStart - beatStart, rhythmicSlotWidth(note));
+          setTimelineWidth(widthsByRelativeStart, noteStart - beatStart, rhythmicSlotWidth(layout, noteIndex));
         }
         for (const dashStart of positions.dashStarts[noteIndex]!) {
           if (dashStart >= beatStart - 1e-9 && dashStart < beatEnd - 1e-9) {
@@ -766,7 +779,7 @@ function alignMeasureLayouts(measureLayouts: MeasureLayout[], unit: number): Mea
   for (const [layoutIndex, layout] of measureLayouts.entries()) {
     const positions = positionsByMeasure[layoutIndex]!;
     for (const [noteIndex, note] of layout.measure.notes.entries()) {
-      setTimelineWidth(widthsByStart, positions.noteStarts[noteIndex]!, rhythmicSlotWidth(note));
+      setTimelineWidth(widthsByStart, positions.noteStarts[noteIndex]!, rhythmicSlotWidth(layout, noteIndex));
       for (const dashStart of positions.dashStarts[noteIndex]!) {
         setTimelineWidth(widthsByStart, dashStart, DIMENSIONS.dashSpacing);
       }
@@ -873,6 +886,80 @@ function scoreLineGroups(document: Document): ScoreLineGroup[] {
   });
 }
 
+function lyricCharWidth(char: string): number {
+  if (/\s/u.test(char)) {
+    return LYRIC_SPACE_WIDTH;
+  }
+  if (/[\u3400-\u9fff\uf900-\ufaff]/u.test(char)) {
+    return LYRIC_CJK_WIDTH;
+  }
+  if (/[A-Za-z0-9]/u.test(char)) {
+    return LYRIC_LATIN_WIDTH;
+  }
+  if (/[\p{P}\p{S}]/u.test(char)) {
+    return LYRIC_PUNCTUATION_WIDTH;
+  }
+  return LYRIC_OTHER_WIDTH;
+}
+
+function lyricTextWidth(text: string): number {
+  return [...text].reduce((sum, char) => sum + lyricCharWidth(char), 0);
+}
+
+function lyricSyllableAdvanceMap(line: ScoreLine, lyrics: LyricLine[]): Map<Note, number> | undefined {
+  const soundingNotes = notesInLine(line).filter((note) => note.kind !== "rest");
+  if (soundingNotes.length <= 1) {
+    return undefined;
+  }
+
+  const widths = Array.from({ length: soundingNotes.length }, () => 0);
+  for (const lyric of lyrics) {
+    if (lyric.syllables.length <= 1 || lyric.syllables.length !== soundingNotes.length) {
+      continue;
+    }
+    for (const [index, syllable] of lyric.syllables.entries()) {
+      widths[index] = Math.max(widths[index] ?? 0, lyricTextWidth(syllable));
+    }
+  }
+
+  if (widths.every((width) => width === 0)) {
+    return undefined;
+  }
+
+  const minAdvanceByNote = new Map<Note, number>();
+  for (let index = 0; index < widths.length - 1; index += 1) {
+    const requiredAdvance = widths[index]! / 2 + widths[index + 1]! / 2 + LYRIC_SYLLABLE_GAP;
+    const note = soundingNotes[index]!;
+    minAdvanceByNote.set(note, Math.max(minAdvanceByNote.get(note) ?? 0, requiredAdvance));
+  }
+  return minAdvanceByNote;
+}
+
+function layoutGroupLines(group: ScoreLineGroup, allNotes: Note[], pageWidth: number, hasLabels: boolean): LineLayout[] {
+  const lyricAdvanceByLine = new Map<ScoreLine, Map<Note, number>>();
+  for (const line of group.lines) {
+    if (!isPrimaryLyricLine(line, hasLabels)) {
+      continue;
+    }
+    const advances = lyricSyllableAdvanceMap(line, group.lyrics);
+    if (advances) {
+      lyricAdvanceByLine.set(line, advances);
+    }
+  }
+
+  const buildLayouts = (useLyricAdvances: boolean): LineLayout[] =>
+    group.lines.flatMap((line) => layoutLine(line, allNotes, pageWidth, useLyricAdvances ? lyricAdvanceByLine.get(line) : undefined));
+
+  if (lyricAdvanceByLine.size === 0) {
+    return buildLayouts(false);
+  }
+
+  const expanded = buildLayouts(true);
+  const primaryLines = new Set(lyricAdvanceByLine.keys());
+  const expandedPrimaryLineCount = expanded.filter((layout) => primaryLines.has(layout.line)).length;
+  return expandedPrimaryLineCount === primaryLines.size ? expanded : buildLayouts(false);
+}
+
 function finalBarMeasures(groups: ScoreLineGroup[]): Set<Measure> {
   const finalMeasures = new Set<Measure>();
   const finalGroup = groups.at(-1);
@@ -964,10 +1051,7 @@ function layoutScore(document: Document, pageWidth: number): ScoreLayoutContext 
   const notesByLine = lineNotesByTrack(document);
   const finalMeasures = finalBarMeasures(groups);
   const layouts = groups.flatMap((group, groupIndex) => {
-    const groupLayouts = alignLineLayouts(
-      group.lines.flatMap((line) => layoutLine(line, allNotes, Math.max(1, pageWidth - group.labelOffset - group.bracketOffset * 2))),
-      unit,
-    );
+    const groupLayouts = alignLineLayouts(layoutGroupLines(group, allNotes, Math.max(1, pageWidth - group.labelOffset - group.bracketOffset * 2), hasLabels), unit);
     const groupVisualWidth = Math.max(0, lyricNaturalWidth(group), ...groupLayouts.map((layout) => layout.width + group.labelOffset + group.bracketOffset * 2));
     return groupLayouts.map((layout) => ({
       layout,
@@ -1120,9 +1204,8 @@ function renderScorePlacements(
     );
     parts.push(scaled ? `<g class="score-line scaled" transform="scale(${scaleX},1)">${renderedLine.svg}</g>` : renderedLine.svg);
     const groupPageKey = `${pageIndex}:${item.groupIndex}`;
-    if (isPrimaryLyricLine(item.layout.line, context.hasLabels)) {
-      const lyricAnchors = scaled ? renderedLine.lyricAnchors.map((anchor) => anchor * scaleX) : renderedLine.lyricAnchors;
-      lyricAnchorLinesByGroup.set(groupPageKey, [...(lyricAnchorLinesByGroup.get(groupPageKey) ?? []), lyricAnchors]);
+    if (!scaled && !groupScaled && isPrimaryLyricLine(item.layout.line, context.hasLabels)) {
+      lyricAnchorLinesByGroup.set(groupPageKey, [...(lyricAnchorLinesByGroup.get(groupPageKey) ?? []), renderedLine.lyricAnchors]);
     }
 
     if (context.groups[item.groupIndex]?.bracketed) {
