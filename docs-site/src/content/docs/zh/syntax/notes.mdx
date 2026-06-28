@@ -6,14 +6,12 @@ sectionIds:
   - basic-notes
   - octaves-and-accidentals
   - chords
-  - support
 ---
 
 import JianpuExample from '../../../../components/JianpuExample.astro';
 import JianpuSource from '../../../../components/JianpuSource.astro';
 import RelatedLinks from '../../../../components/RelatedLinks.astro';
 import ScorePreview from '../../../../components/ScorePreview.astro';
-import SupportMatrix from '../../../../components/SupportMatrix.astro';
 
 ## 基本音符
 
@@ -106,18 +104,6 @@ import SupportMatrix from '../../../../components/SupportMatrix.astro';
   status="invalid"
   description="和弦成员必须是音高音符，因此花括号里的休止符和鼓音会被拒绝。"
   source={`{1 0 X}`}
-/>
-
-## 支持范围
-
-<SupportMatrix
-  title="音符支持"
-  features={[
-    { id: 'pitch-rests-drums', feature: '音高音符、休止符和鼓音', parser: true, render: true, playback: true, export: true, cli: true },
-    { id: 'octaves-accidentals', feature: '八度和变音记号', parser: true, render: true, playback: true, export: true, cli: true },
-    { id: 'chords', feature: '和弦', parser: true, render: true, playback: true, export: true, cli: true },
-    { id: 'lyrics', feature: '歌词', parser: true, render: true, playback: false, export: false, cli: true },
-  ]}
 />
 
 <RelatedLinks

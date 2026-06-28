@@ -1,23 +1,24 @@
 ---
 const {
-  title = "Support",
+  title,
   features = [],
-  columns = [
-    ["parser", "Parser"],
-    ["render", "SVG"],
-    ["playback", "Playback"],
-    ["export", "Export"],
-    ["cli", "CLI"],
-  ],
+  columns,
   featureLabel,
   yesLabel,
   noLabel,
   unknownLabel = "-",
 } = Astro.props;
 const isChinesePage = Astro.url.pathname.includes("/zh/");
+const resolvedColumns = columns ?? [
+  ["parser", isChinesePage ? "解析器" : "Parser"],
+  ["image", isChinesePage ? "图像" : "Image"],
+  ["playback", isChinesePage ? "播放" : "Playback"],
+  ["export", isChinesePage ? "导出" : "Export"],
+  ["cli", "CLI"],
+];
 const resolvedFeatureLabel = featureLabel ?? (isChinesePage ? "功能" : "Feature");
-const resolvedYesLabel = yesLabel ?? (isChinesePage ? "是" : "Yes");
-const resolvedNoLabel = noLabel ?? (isChinesePage ? "否" : "No");
+const resolvedYesLabel = yesLabel ?? "✔️";
+const resolvedNoLabel = noLabel ?? "❌";
 
 function supportLabel(value) {
   if (value === true) return resolvedYesLabel;
@@ -27,19 +28,19 @@ function supportLabel(value) {
 ---
 
 <section class="support-matrix">
-  <h2>{title}</h2>
+  {title && <h2>{title}</h2>}
   <table>
     <thead>
       <tr>
         <th>{resolvedFeatureLabel}</th>
-        {columns.map(([, label]) => <th>{label}</th>)}
+        {resolvedColumns.map(([, label]) => <th>{label}</th>)}
       </tr>
     </thead>
     <tbody>
       {features.map((feature) => (
         <tr>
           <th scope="row">{feature.feature}</th>
-          {columns.map(([key]) => <td>{supportLabel(feature[key])}</td>)}
+          {resolvedColumns.map(([key]) => <td>{supportLabel(feature[key])}</td>)}
         </tr>
       ))}
     </tbody>

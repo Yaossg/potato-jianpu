@@ -7,14 +7,12 @@ sectionIds:
   - adjacent-repeats
   - repeated-endings
   - diagnostics
-  - support
 ---
 
 import JianpuExample from '../../../components/JianpuExample.astro';
 import JianpuSource from '../../../components/JianpuSource.astro';
 import RelatedLinks from '../../../components/RelatedLinks.astro';
 import ScorePreview from '../../../components/ScorePreview.astro';
-import SupportMatrix from '../../../components/SupportMatrix.astro';
 
 ## Repeat Barlines
 
@@ -117,16 +115,6 @@ Every repeated-ending group must include an explicit final ending. When more mea
 />
 
 Repeated-ending validation is scoped to each repeat section and to each labeled track. Non-final endings return with `:|`; the explicit final ending closes the group without a repeat end.
-
-## Support
-
-<SupportMatrix
-  title="Repeat support"
-  features={[
-    { id: 'repeat-barlines', feature: 'Repeat barlines', parser: true, render: true, playback: true, export: true, cli: true },
-    { id: 'repeated-endings', feature: 'Repeated endings', parser: true, render: true, playback: true, export: true, cli: true },
-  ]}
-/>
 
 <RelatedLinks
   links={[

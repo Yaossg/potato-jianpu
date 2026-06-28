@@ -10,28 +10,9 @@ sectionIds:
   - repeats-and-tracks
 ---
 
-import SupportMatrix from '../../../../components/SupportMatrix.astro';
 import RelatedLinks from '../../../../components/RelatedLinks.astro';
 
 播放结果由解析后的文档编译而来。浏览器播放、带控件的文档预览、MIDI 导出、WAV 导出和 MP3 导出使用同一套计时与声音模型。
-
-<SupportMatrix
-  title="播放支持"
-  columns={[
-    ['parser', '解析器'],
-    ['render', 'SVG'],
-    ['playback', '播放'],
-    ['export', '导出'],
-    ['cli', 'CLI'],
-  ]}
-  features={[
-    { id: 'notes-rests-accidentals', feature: '音符、休止符和变音记号', parser: true, render: true, playback: true, export: true, cli: true },
-    { id: 'chords-ties', feature: '和弦与延音线', parser: true, render: true, playback: true, export: true, cli: true },
-    { id: 'repeats-endings', feature: '反复与反复结尾', parser: true, render: true, playback: true, export: true, cli: true },
-    { id: 'labeled-tracks', feature: '带标签轨道', parser: true, render: true, playback: true, export: true, cli: true },
-    { id: 'lyrics-timing', feature: '歌词计时', parser: true, render: true, playback: false, export: '仅视觉', cli: true },
-  ]}
-/>
 
 ## 播放模型
 

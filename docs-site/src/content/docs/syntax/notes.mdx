@@ -6,14 +6,12 @@ sectionIds:
   - basic-notes
   - octaves-and-accidentals
   - chords
-  - support
 ---
 
 import JianpuExample from '../../../components/JianpuExample.astro';
 import JianpuSource from '../../../components/JianpuSource.astro';
 import RelatedLinks from '../../../components/RelatedLinks.astro';
 import ScorePreview from '../../../components/ScorePreview.astro';
-import SupportMatrix from '../../../components/SupportMatrix.astro';
 
 ## Basic Notes
 
@@ -106,18 +104,6 @@ Chord members can use octave suffixes and accidentals. Rests and drum notes are 
   status="invalid"
   description="Chord members must be pitch notes, so rests and drums are rejected inside braces."
   source={`{1 0 X}`}
-/>
-
-## Support
-
-<SupportMatrix
-  title="Note support"
-  features={[
-    { id: 'pitch-rests-drums', feature: 'Pitch notes, rests, and drums', parser: true, render: true, playback: true, export: true, cli: true },
-    { id: 'octaves-accidentals', feature: 'Octaves and accidentals', parser: true, render: true, playback: true, export: true, cli: true },
-    { id: 'chords', feature: 'Chords', parser: true, render: true, playback: true, export: true, cli: true },
-    { id: 'lyrics', feature: 'Lyrics', parser: true, render: true, playback: false, export: false, cli: true },
-  ]}
 />
 
 <RelatedLinks

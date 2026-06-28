@@ -6,14 +6,12 @@ sectionIds:
   - dynamic-markings
   - hairpins
   - diagnostics
-  - support
 ---
 
 import JianpuExample from '../../../../components/JianpuExample.astro';
 import JianpuSource from '../../../../components/JianpuSource.astro';
 import RelatedLinks from '../../../../components/RelatedLinks.astro';
 import ScorePreview from '../../../../components/ScorePreview.astro';
-import SupportMatrix from '../../../../components/SupportMatrix.astro';
 
 ## 力度标记
 
@@ -101,24 +99,6 @@ f < 1 2 p < 3`}
 />
 
 当没有逐音符力度标记或渐变端点时，文件头中的轨道级或乐谱级音量会控制力度。
-
-## 支持范围
-
-<SupportMatrix
-  title="力度支持"
-  columns={[
-    ['parser', '解析器'],
-    ['render', 'SVG'],
-    ['playback', '播放'],
-    ['export', '导出'],
-    ['cli', 'CLI'],
-  ]}
-  features={[
-    { id: 'per-note-dynamics', feature: '逐音符力度', parser: true, render: true, playback: true, export: true, cli: true },
-    { id: 'hairpins', feature: '渐强线和渐弱线', parser: true, render: true, playback: true, export: true, cli: true },
-    { id: 'hairpin-warnings', feature: '渐变方向警告', parser: true, render: false, playback: false, export: false, cli: true },
-  ]}
-/>
 
 <RelatedLinks
   title="相关页面"
