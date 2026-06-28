@@ -1,0 +1,131 @@
+---
+title: 力度
+description: 编写逐音符力度、渐强线和渐弱线。
+docId: syntax-dynamics
+sectionIds:
+  - dynamic-markings
+  - hairpins
+  - diagnostics
+  - support
+---
+
+import JianpuExample from '../../../../components/JianpuExample.astro';
+import JianpuSource from '../../../../components/JianpuSource.astro';
+import RelatedLinks from '../../../../components/RelatedLinks.astro';
+import ScorePreview from '../../../../components/ScorePreview.astro';
+import SupportMatrix from '../../../../components/SupportMatrix.astro';
+
+## 力度标记
+
+逐音符力度使用意大利力度术语作为音符前缀。每个力度标记只作用于一个音符，标记与音符之间的空格可选。
+
+<JianpuSource
+  title="力度标记源码"
+  source={`time: 2/4
+===
+f1 p2 | mf3 ff4`}
+/>
+
+<ScorePreview title="渲染后的力度标记" source={`time: 2/4
+===
+f1 p2 | mf3 ff4`} />
+
+支持八种力度级别，分别映射到 MIDI velocity 值：
+
+| 标记 | 含义 | MIDI velocity |
+| --- | --- | --- |
+| `ppp` | 极弱 | 16 |
+| `pp` | 很弱 | 33 |
+| `p` | 弱 | 49 |
+| `mp` | 中弱 | 61 |
+| `mf` | 中强 | 73 |
+| `f` | 强 | 85 |
+| `ff` | 很强 | 102 |
+| `fff` | 极强 | 118 |
+
+力度也可以用于和弦、休止符和带延音线的音符。
+
+<JianpuSource
+  title="力度用于和弦、休止符和延音线"
+  source={`time: 2/4
+===
+mf {1 3 5} - | f1 ~f1 | p0 -`}
+/>
+
+<ScorePreview
+  source={`time: 2/4
+===
+mf {1 3 5} - | f1 ~f1 | p0 -`}
+/>
+
+## 渐强与渐弱
+
+渐变力度使用成对的渐强、渐弱符号，写在带时值的音符前面。`<` 在两个端点处都表示渐强，`>` 在两个端点处都表示渐弱。第一个标记开始渐变，同一轨道中后面匹配的标记结束它。
+
+<JianpuSource
+  title="渐变力度源码"
+  source={`time: 2/4
+===
+p < 1 2
+3 f < 4`}
+/>
+
+<ScorePreview
+  title="渲染后的渐变力度"
+  source={`time: 2/4
+===
+p < 1 2
+3 f < 4`}
+/>
+
+相反方向的渐变可以在同一个音符上交接：`<>` 在该音符上结束渐强并开始渐弱，`><` 则相反。渐强、渐弱可以跨源码行和视觉换行；渐变被拆开时，渲染器会在每个视觉行上画出一段独立的渐变线。
+
+## 诊断
+
+如果两端都有明确的力度标记，而渐变方向与写出的力度不一致，解析器会产生警告。
+
+<JianpuExample
+  title="渐变方向警告"
+  status="warning"
+  description="渐强应该以更强的力度结束。"
+  source={`time: 3/4
+===
+f < 1 2 p < 3`}
+/>
+
+<JianpuExample
+  title="延音线在力度之前"
+  status="invalid"
+  description="力度标记必须放在延音线前缀之后：应写作 ~f1，而不是 f~1。"
+  source={`1 f~1`}
+/>
+
+当没有逐音符力度标记或渐变端点时，文件头中的轨道级或乐谱级音量会控制力度。
+
+## 支持范围
+
+<SupportMatrix
+  title="力度支持"
+  columns={[
+    ['parser', '解析器'],
+    ['render', 'SVG'],
+    ['playback', '播放'],
+    ['export', '导出'],
+    ['cli', 'CLI'],
+  ]}
+  features={[
+    { id: 'per-note-dynamics', feature: '逐音符力度', parser: true, render: true, playback: true, export: true, cli: true },
+    { id: 'hairpins', feature: '渐强线和渐弱线', parser: true, render: true, playback: true, export: true, cli: true },
+    { id: 'hairpin-warnings', feature: '渐变方向警告', parser: true, render: false, playback: false, export: false, cli: true },
+  ]}
+/>
+
+<RelatedLinks
+  title="相关页面"
+  links={[
+    { href: '../notes/', label: '音符与休止符', description: '编写可以接收力度的音高、休止符、鼓音和和弦项目。' },
+    { href: '../rhythm/', label: '节奏', description: '把力度和时值后缀、延音线放在一起书写。' },
+    { href: '../../guide/playback/', label: '播放', description: '了解力度如何变成播放和导出的 velocity。' },
+    { href: '../../reference/grammar/', label: '语法参考', description: '查询力度和渐变线语法。' },
+  ]}
+/>

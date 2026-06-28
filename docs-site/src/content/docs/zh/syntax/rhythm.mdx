@@ -7,6 +7,7 @@ sectionIds:
   - dash-durations
   - slash-and-dot-durations
   - duration-table
+  - ties
   - diagnostics
 ---
 
@@ -102,9 +103,42 @@ import ScorePreview from '../../../../components/ScorePreview.astro';
 | `1..` | 复附点四分音符 |
 | `1/.` | 附点八分音符 |
 
-## 诊断
-
 时值标记属于它前面的音符、休止符、鼓音或和弦。没有前置对象的游离时值标记是无效的。
+
+## 延音线
+
+前导延音线标记 `~` 会把当前音符连接到前一个兼容音符，并合并它们在播放和导出中的时值。
+
+<JianpuSource
+  title="延音线源码"
+  source={`1 - - - | ~1 - - -`}
+/>
+
+<ScorePreview title="渲染后的延音线" source={`1 - - - | ~1 - - -`} />
+
+延音线目标必须和前一个发声音高兼容。轨道里的第一个音符不能带延音线；带标签轨道的延音线会按轨道分别校验。
+
+<JianpuSource
+  title="兼容延音线源码"
+  source={`time: 2/4
+===
+#4 ~4 | X ~X | {1 3 5} ~{1 3 5}`}
+/>
+
+<ScorePreview
+  source={`time: 2/4
+===
+#4 ~4 | X ~X | {1 3 5} ~{1 3 5}`}
+/>
+
+<JianpuExample
+  title="非法延音线"
+  status="invalid"
+  description="延音线不能出现在轨道开头，不能接在休止符之后，也不能改变目标音高。"
+  source={`1 0 ~1`}
+/>
+
+## 诊断
 
 <JianpuSource
   title="混合项目时值源码"
@@ -148,7 +182,8 @@ import ScorePreview from '../../../../components/ScorePreview.astro';
 <RelatedLinks
   title="相关页面"
   links={[
-    { href: '../notes/', label: '音符与休止符', description: '查看哪些项目可以接收时值后缀。' },
+    { href: '../notes/', label: '音符与休止符', description: '查看哪些项目可以接收时值后缀和延音线。' },
+    { href: '../dynamics/', label: '力度', description: '用力度标记和渐变线控制音符力度。' },
     { href: '../repeats/', label: '反复', description: '检查反复小节和结尾里的节奏。' },
     { href: '../../reference/grammar/', label: '语法参考', description: '快速查找时值 token。' },
   ]}

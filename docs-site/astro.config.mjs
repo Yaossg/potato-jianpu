@@ -84,6 +84,13 @@ export default defineConfig({
               },
             },
             {
+              label: "Dynamics",
+              slug: "syntax/dynamics",
+              translations: {
+                "zh-CN": "力度",
+              },
+            },
+            {
               label: "Repeats",
               slug: "syntax/repeats",
               translations: {
