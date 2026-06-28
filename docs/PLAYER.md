@@ -331,6 +331,18 @@ Browser playback base velocity is currently `64`. The browser volume slider is
 applied through WebAudioTinySynth master volume, and the resolved track volume
 scales each track's note velocity.
 
+Per-note dynamic markers (`ppp` through `fff`) set explicit MIDI-style
+velocities. Gradual dynamic hairpins use paired `<` markers for crescendo and
+paired `>` markers for diminuendo. For example, `p < 1 2 3 f < 4`
+interpolates from `p` on `1` to `f` on `4`. The shared melody compiler
+interpolates note velocities across the marked range. Explicit dynamic markers
+at the hairpin start or end become the interpolation endpoints; when the ending
+note has no explicit dynamic, the compiler applies a modest default rise or
+fall from the starting velocity. When both endpoints have explicit dynamic
+markers, the parser warns if a crescendo does not end louder than it starts or
+a diminuendo does not end softer than it starts. Track volume and browser or
+export master volume still scale the resulting per-note velocity.
+
 Backend WAV and MP3 export use the same WebAudioTinySynth adapter with an
 offline rendering context, so Program and drum timbres are aligned with browser
 playback. Browser WAV and MP3 export use `OfflineAudioContext` with the same
@@ -375,6 +387,7 @@ The music track contains:
 - per-track melodic Program Change events when arrangement tracks have different
   Programs
 - score-level or per-track note velocities from `volume`/`Tn.volume`
+- per-note dynamic markers and interpolated hairpin velocities
 - note-on events
 - note-off events
 - end-of-track event
@@ -428,7 +441,8 @@ The WAV synthesizer uses WebAudioTinySynth offline:
 - drum programs `128..174` use TinySynth percussion channel 10 and the same
   percussion note mapping as MIDI export
 - base note velocity is fixed at `64`
-- resolved track volume scales note velocity
+- per-note dynamic markers and hairpins set note velocity before resolved track
+  volume scales it
 - `amplitude` is applied as TinySynth master volume, so it combines with the
   resolved track volume
 - rest events are silence

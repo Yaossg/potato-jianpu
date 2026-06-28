@@ -4,6 +4,7 @@ import {
   type Diagnostic,
   type Document,
   type DurationMark,
+  type HairpinKind,
   type Header,
   type Measure,
   type Note,
@@ -27,6 +28,9 @@ type ResolvedTieTarget =
   | { kind: "drum" };
 
 type EndingBlock = { endings: number[]; startIndex: number; endIndex: number };
+type ActiveHairpin = { kind: HairpinKind; range: SourceRange };
+type DynamicHairpinSpan = { kind: HairpinKind; start: Note; end: Note };
+type NotePrefixes = { velocity?: number; hairpinStart?: HairpinKind; hairpinEnd?: HairpinKind };
 
 function mergeRange(start: SourceRange, end: SourceRange): SourceRange {
   return { start: start.start, end: end.end };
@@ -47,6 +51,7 @@ class Parser {
   private diagnostics: Diagnostic[];
   private noteIndex = 0;
   private activeEndings = new Map<string, number[] | undefined>();
+  private activeHairpins = new Map<string, ActiveHairpin>();
   private labeledScoreMode = false;
 
   constructor(
@@ -62,6 +67,8 @@ class Parser {
     this.skipNewlines();
     this.labeledScoreMode = this.scoreHasTrackLabelsAhead();
     const score = this.at("eof") ? [] : this.parseScore();
+    this.validateIncompleteHairpins();
+    this.validateHairpinDynamics(score);
     this.validateTrackLabelOrder(score);
     this.validatePageBreaks(score);
     this.validateNoteKinds(score, header);
@@ -324,7 +331,7 @@ class Parser {
     }
     const measures: Measure[] = [];
     let currentEnding = this.parseOptionalEnding() ?? this.activeEndings.get(trackKey);
-    const firstMeasure = this.parseMeasure(leadingRepeatStart, currentEnding);
+    const firstMeasure = this.parseMeasure(trackKey, leadingRepeatStart, currentEnding);
     if (firstMeasure) {
       measures.push(firstMeasure);
     }
@@ -342,7 +349,7 @@ class Parser {
         }
         currentEnding = this.parseOptionalEnding();
         this.activeEndings.set(trackKey, currentEnding);
-        const measure = this.parseMeasure(true, currentEnding);
+        const measure = this.parseMeasure(trackKey, true, currentEnding);
         if (measure) {
           measures.push(measure);
         }
@@ -357,7 +364,7 @@ class Parser {
         }
         currentEnding = this.parseOptionalEnding() ?? currentEnding;
         this.activeEndings.set(trackKey, currentEnding);
-        const measure = this.parseMeasure(false, currentEnding);
+        const measure = this.parseMeasure(trackKey, false, currentEnding);
         if (measure) {
           measures.push(measure);
         }
@@ -366,7 +373,7 @@ class Parser {
       if (this.match("repeatStart")) {
         currentEnding = this.parseOptionalEnding() ?? currentEnding;
         this.activeEndings.set(trackKey, currentEnding);
-        const measure = this.parseMeasure(true, currentEnding);
+        const measure = this.parseMeasure(trackKey, true, currentEnding);
         if (measure) {
           measures.push(measure);
         }
@@ -374,7 +381,7 @@ class Parser {
       }
       currentEnding = this.parseOptionalEnding() ?? currentEnding;
       this.activeEndings.set(trackKey, currentEnding);
-      const measure = this.parseMeasure(false, currentEnding);
+      const measure = this.parseMeasure(trackKey, false, currentEnding);
       if (measure) {
         measures.push(measure);
       }
@@ -387,7 +394,7 @@ class Parser {
     };
   }
 
-  private parseMeasure(repeatStart = false, ending?: number[]): Measure | null {
+  private parseMeasure(trackKey: string, repeatStart = false, ending?: number[]): Measure | null {
     const start = this.current().range;
     const octavePrefix = this.parseOptionalMeasureOctave();
     const notes: Note[] = [];
@@ -404,7 +411,12 @@ class Parser {
         this.parseUnexpectedScoreToken();
         continue;
       }
-      notes.push(this.parseDurableNote(octavePrefix));
+      const prefixes = this.parseDurablePrefixes(trackKey);
+      if (!this.isDurableNoteCoreStart()) {
+        this.error("Hairpin markers must be followed by a note, rest, drum note, chord, or tie.");
+        continue;
+      }
+      notes.push(this.parseDurableNote(octavePrefix, prefixes));
     }
     if (notes.length === 0) {
       this.warning("Empty measure ignored.", start);
@@ -450,6 +462,9 @@ class Parser {
   }
 
   private isDurableNoteStart(): boolean {
+    if (this.isHairpinToken()) {
+      return true;
+    }
     if (this.at("tie")) {
       return true;
     }
@@ -457,6 +472,14 @@ class Parser {
       return true;
     }
     return this.isGeneralNoteStart();
+  }
+
+  private isDurableNoteCoreStart(): boolean {
+    return this.at("tie") || this.at("velocity") || this.isGeneralNoteStart();
+  }
+
+  private isHairpinToken(): boolean {
+    return this.at("crescendo") || this.at("diminuendo");
   }
 
   private isGeneralNoteStart(): boolean {
@@ -484,14 +507,51 @@ class Parser {
     );
   }
 
-  private parseDurableNote(measureOctave: number): Note {
+  private parseDurablePrefixes(trackKey: string): NotePrefixes {
+    const prefixes: NotePrefixes = {};
+    if (this.at("velocity") && (this.tokens[this.index + 1]?.type === "crescendo" || this.tokens[this.index + 1]?.type === "diminuendo")) {
+      prefixes.velocity = this.parseVelocity();
+    }
+    return this.parseHairpinPrefixes(trackKey, prefixes);
+  }
+
+  private parseHairpinPrefixes(trackKey: string, prefixes: NotePrefixes = {}): NotePrefixes {
+    while (this.isHairpinToken()) {
+      const token = this.current();
+      const kind: HairpinKind = token.type === "crescendo" ? "crescendo" : "diminuendo";
+      const active = this.activeHairpins.get(trackKey);
+      if (active?.kind === kind) {
+        if (prefixes.hairpinEnd !== undefined) {
+          this.error("Only one hairpin can end on a note.", token.range);
+        } else {
+          prefixes.hairpinEnd = kind;
+        }
+        this.activeHairpins.delete(trackKey);
+      } else if (active) {
+        this.error("Hairpins cannot overlap on the same track.", token.range);
+      } else if (prefixes.hairpinStart !== undefined) {
+        this.error("Only one hairpin can start on a note.", token.range);
+      } else {
+        prefixes.hairpinStart = kind;
+        this.activeHairpins.set(trackKey, { kind, range: token.range });
+      }
+      this.index += 1;
+    }
+    return prefixes;
+  }
+
+  private parseDurableNote(measureOctave: number, prefixes: NotePrefixes = {}): Note {
     const start = this.current().range;
     const tie = Boolean(this.match("tie"));
-    const velocity = this.parseVelocity();
+    if (prefixes.velocity !== undefined && this.at("velocity")) {
+      this.error("Only one dynamic velocity marker can be attached to a note.", this.current().range);
+      this.parseVelocity();
+    }
+    const velocity = prefixes.velocity ?? this.parseVelocity();
     const note = this.parseGeneralNote(measureOctave);
     const duration = this.parseDuration();
     const range = mergeRange(start, this.previous().range);
-    return { ...note, tie, velocity, duration, index: this.noteIndex++, range } as Note;
+    return { ...note, tie, velocity, ...prefixes, duration, index: this.noteIndex++, range } as Note;
   }
 
   private parseGeneralNote(measureOctave: number): DraftNote {
@@ -634,8 +694,58 @@ class Parser {
       }
       return;
     }
+    if (this.isHairpinToken()) {
+      this.error("Hairpin markers must be followed by a note, rest, drum note, chord, or tie.");
+      this.index += 1;
+      return;
+    }
     this.error("Expected note, rest, drum note, chord, or tie.");
     this.index += 1;
+  }
+
+  private validateIncompleteHairpins() {
+    for (const active of this.activeHairpins.values()) {
+      const marker = active.kind === "crescendo" ? "<" : ">";
+      this.error(`Hairpin must end with a matching '${marker}'.`, active.range);
+    }
+  }
+
+  private validateHairpinDynamics(lines: ScoreLine[]) {
+    for (const trackLines of this.trackLineGroups(lines)) {
+      for (const span of this.hairpinSpans(this.notesInLines(trackLines))) {
+        const startVelocity = span.start.velocity;
+        const endVelocity = span.end.velocity;
+        if (startVelocity === undefined || endVelocity === undefined) {
+          continue;
+        }
+        const range = mergeRange(span.start.range, span.end.range);
+        if (span.kind === "crescendo" && endVelocity <= startVelocity) {
+          this.warning("Crescendo '<' should end louder than it starts.", range);
+        }
+        if (span.kind === "diminuendo" && endVelocity >= startVelocity) {
+          this.warning("Diminuendo '>' should end softer than it starts.", range);
+        }
+      }
+    }
+  }
+
+  private hairpinSpans(notes: Note[]): DynamicHairpinSpan[] {
+    const spans: DynamicHairpinSpan[] = [];
+    let active: { kind: HairpinKind; start: Note } | null = null;
+    for (const note of notes) {
+      if (note.hairpinEnd !== undefined && active?.kind === note.hairpinEnd) {
+        spans.push({ ...active, end: note });
+        active = null;
+      }
+      if (note.hairpinStart !== undefined) {
+        active = { kind: note.hairpinStart, start: note };
+      }
+    }
+    return spans;
+  }
+
+  private notesInLines(lines: ScoreLine[]): Note[] {
+    return lines.flatMap((line) => line.measures).flatMap((measure) => measure.notes);
   }
 
   private trackLineGroups(lines: ScoreLine[]): ScoreLine[][] {

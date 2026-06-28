@@ -206,6 +206,12 @@ Renderer dimensions are centralized in the `DIMENSIONS` object:
 | `dotSpacing` | `12` | Horizontal spacing for duration dots |
 | `dashSpacing` | `24` | Horizontal spacing for extension dashes |
 | `lineSpacing` | `10` | Vertical spacing after each visual line |
+| `velocityFontSize` | `14` | Per-note dynamic marker font size |
+| `velocityTextGap` | `2` | Gap between dynamic text and the note or chord |
+| `hairpinHeight` | `12` | Vertical opening of gradual dynamic hairpins |
+| `hairpinTopGap` | `16` | Gap between hairpins and the note row |
+| `hairpinTransitionGap` | `6` | Horizontal gap between opposite hairpins that meet on one note |
+| `hairpinVelocityClearance` | `8` | Extra upward offset when hairpins share a note with dynamic text |
 
 These constants are not yet exposed as a public theme API.
 
@@ -420,6 +426,20 @@ draws an outgoing partial tie.
 
 This is a pragmatic cross-line rendering strategy, not full engraving-quality
 tie layout.
+
+### Dynamics And Hairpins
+
+Per-note dynamic markers render as italic text above their attached note.
+
+Gradual dynamic hairpins render above the note row. Paired `<` markers draw a
+crescendo, and paired `>` markers draw a diminuendo. Opposite markers may meet
+on the same note, so `<>` closes a crescendo and starts a diminuendo at that
+note, while `><` does the reverse. The renderer leaves a small horizontal gap
+between opposite hairpins at that shared note. Hairpins move slightly upward
+when they share a note with dynamic text such as `p` or `f`, so the markings do
+not overlap. Hairpins may cross measure and visual line boundaries. When
+source line breaks or wrapping split a hairpin, the renderer draws a separate
+complete hairpin on each visual line.
 
 ## Interactivity Metadata
 

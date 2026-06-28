@@ -15,7 +15,9 @@ const notationFeaturesSnapshot = readSnapshot("notation-features.svg");
 const wrappedTieSnapshot = readSnapshot("wrapped-tie.svg");
 
 function noteX(svg, noteIndex) {
-  const match = svg.match(new RegExp(`<g class="note-item(?: active)?" data-note-index="${noteIndex}"><text class="note" x="([^"]+)"`));
+  const match = svg.match(
+    new RegExp(`<g class="note-item(?: active)?" data-note-index="${noteIndex}">[\\s\\S]*?<text class="note" x="([^"]+)"`),
+  );
   assert.ok(match, `note ${noteIndex} should render`);
   return Number(match[1]);
 }
@@ -703,4 +705,52 @@ test("renders velocity text in SVG for notes with dynamic markings", () => {
   const svg = renderSvg(result.value);
   assert.match(svg, /<text class="velocity"[^>]*>f<\/text>/);
   assert.match(svg, /<text class="velocity"[^>]*>p<\/text>/);
+});
+
+test("renders hairpins in SVG", () => {
+  const result = parse("p < 1 2 3 f < 4");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  assert.match(svg, /\.hairpin \{ stroke: currentColor/);
+  assert.equal(svg.match(/class="hairpin"/g)?.length, 2);
+  assert.match(svg, /<line class="hairpin" x1="18" y1="[^"]+" x2="90" y2="[^"]+"\/>/);
+});
+
+test("renders hairpins split across visual lines as separate hairpins", () => {
+  const result = parse("p < 1 2 | 3 f < 4 |");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 70 });
+  assert.ok((svg.match(/class="hairpin"/g)?.length ?? 0) >= 4);
+});
+
+test("renders hairpins across source lines on the same track", () => {
+  const result = parse("p < 1 2\n3 f < 4");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  assert.equal(svg.match(/class="hairpin"/g)?.length, 4);
+});
+
+test("separates opposite hairpins that meet on one note", () => {
+  const result = parse("p < 1 2 f <> 3 4 p > 5");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  const hairpinLines = [...svg.matchAll(/<line class="hairpin" x1="([^"]+)" y1="[^"]+" x2="([^"]+)"/g)];
+  assert.equal(hairpinLines.length, 4);
+  const firstEndX = Number(hairpinLines[0][2]);
+  const secondStartX = Number(hairpinLines[2][1]);
+  assert.equal(firstEndX, noteX(svg, 2) - 3);
+  assert.equal(secondStartX, noteX(svg, 2) + 3);
+});
+
+test("raises hairpins above colocated dynamic markings", () => {
+  const result = parse("p < 1 f < 2");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  const hairpinYs = [...svg.matchAll(/<line class="hairpin" x1="[^"]+" y1="([^"]+)" x2="[^"]+" y2="([^"]+)"/g)].flatMap((match) => [
+    Number(match[1]),
+    Number(match[2]),
+  ]);
+  const velocityY = Number(svg.match(/<text class="velocity" x="18" y="([^"]+)"/)?.[1]);
+  assert.ok(Number.isFinite(velocityY));
+  assert.ok(Math.max(...hairpinYs) <= velocityY - 14);
 });

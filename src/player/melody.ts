@@ -31,6 +31,8 @@ export interface Arrangement {
 const C_MAJOR_NOTE_MAP = [60, 62, 64, 65, 67, 69, 71] as const;
 const MIN_PROGRAM = 0;
 const MAX_PROGRAM = 174;
+const DEFAULT_VELOCITY = 64;
+const HAIRPIN_DEFAULT_DELTA = 24;
 
 function assertProgram(program: number) {
   if (!Number.isInteger(program) || program < MIN_PROGRAM || program > MAX_PROGRAM) {
@@ -64,7 +66,7 @@ function compileNote(note: Note, noteMap: number[], program: number): MelodyNote
   }
 }
 
-function compileMeasure(measure: Measure, baseNoteMap: number[], program: number, output: MelodyNote[]) {
+function compileMeasure(measure: Measure, baseNoteMap: number[], program: number, output: MelodyNote[], sourceNotes: Note[]) {
   const noteMap = [...baseNoteMap];
   for (const note of measure.notes) {
     if (note.kind === "pitch") {
@@ -83,6 +85,48 @@ function compileMeasure(measure: Measure, baseNoteMap: number[], program: number
       }
     } else {
       output.push(melodyNote);
+      sourceNotes.push(note);
+    }
+  }
+}
+
+function clampVelocity(velocity: number): number {
+  return Math.max(0, Math.min(127, Math.round(velocity)));
+}
+
+function interpolateHairpin(notes: MelodyNote[], startIndex: number, endIndex: number, startVelocity: number, endVelocity: number) {
+  const span = Math.max(1, endIndex - startIndex);
+  for (let index = startIndex; index <= endIndex; index += 1) {
+    const amount = (index - startIndex) / span;
+    notes[index]!.velocity = clampVelocity(startVelocity + (endVelocity - startVelocity) * amount);
+  }
+}
+
+function applyHairpinVelocities(notes: MelodyNote[], sourceNotes: Note[]) {
+  let lastExplicitVelocity = DEFAULT_VELOCITY;
+  let active: { kind: NonNullable<Note["hairpinStart"]>; startIndex: number; startVelocity: number } | null = null;
+
+  for (const [index, note] of sourceNotes.entries()) {
+    const melodyNote = notes[index]!;
+    if (melodyNote.velocity !== undefined && active === null) {
+      lastExplicitVelocity = melodyNote.velocity;
+    }
+
+    if (note.hairpinEnd !== undefined && active?.kind === note.hairpinEnd) {
+      const fallbackEndVelocity =
+        active.kind === "crescendo" ? active.startVelocity + HAIRPIN_DEFAULT_DELTA : active.startVelocity - HAIRPIN_DEFAULT_DELTA;
+      const endVelocity = melodyNote.velocity ?? fallbackEndVelocity;
+      interpolateHairpin(notes, active.startIndex, index, active.startVelocity, endVelocity);
+      lastExplicitVelocity = clampVelocity(endVelocity);
+      active = null;
+    }
+
+    if (note.hairpinStart !== undefined) {
+      const startVelocity = melodyNote.velocity ?? lastExplicitVelocity;
+      active = { kind: note.hairpinStart, startIndex: index, startVelocity };
+      melodyNote.velocity = startVelocity;
+    } else if (melodyNote.velocity !== undefined && active === null) {
+      lastExplicitVelocity = melodyNote.velocity;
     }
   }
 }
@@ -147,9 +191,11 @@ function expandRepeatedMeasures(measures: Measure[]): Measure[] {
 function compileMeasures(document: Document, measures: Measure[], program: number): Melody {
   const baseNoteMap = C_MAJOR_NOTE_MAP.map((note) => note + document.header.keySignature);
   const notes: MelodyNote[] = [];
+  const sourceNotes: Note[] = [];
   for (const measure of expandRepeatedMeasures(measures)) {
-    compileMeasure(measure, baseNoteMap, program, notes);
+    compileMeasure(measure, baseNoteMap, program, notes, sourceNotes);
   }
+  applyHairpinVelocities(notes, sourceNotes);
 
   return {
     notes,

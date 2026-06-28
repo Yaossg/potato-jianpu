@@ -24,6 +24,7 @@ export const SVG_STYLE = `.title { fill: currentColor; font-family: Arial, Helve
 .underline { stroke: currentColor; stroke-width: 2.5; }
 .dash { stroke: currentColor; stroke-width: 3; }
 .tie { fill: currentColor; stroke: currentColor; stroke-width: 1; }
+.hairpin { stroke: currentColor; stroke-width: 1.8; stroke-linecap: butt; }
 .velocity { fill: currentColor; font-family: 'Georgia Pro', Georgia, 'DejaVu Serif', Times, 'Times New Roman', FreeSerif, 'DejaVu Math TeX', serif; font-size: 14px; font-style: italic; font-weight: bold; }
 .note-item { cursor: pointer; }
 .note-item.active .note, .note-item.active .accidental, .note-item.active .dot, .note-item.active .velocity { fill: #dc2626; }

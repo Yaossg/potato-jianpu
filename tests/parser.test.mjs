@@ -760,6 +760,67 @@ test("rejects velocity before tie (wrong order)", () => {
   assert.ok(result.diagnostics.some((diagnostic) => diagnostic.message.includes("Expected")));
 });
 
+test("parses hairpin markers on durable notes", () => {
+  const result = parse("p < 1 2 3 f < 4");
+  assert.equal(result.ok, true);
+  const notes = result.value.score[0].measures[0].notes;
+  assert.equal(notes[0].hairpinStart, "crescendo");
+  assert.equal(notes[3].hairpinEnd, "crescendo");
+  assert.equal(notes[3].velocity, 85);
+});
+
+test("validates hairpin pairing per track", () => {
+  const incomplete = parse("< 1 2");
+  assert.equal(incomplete.ok, false);
+  assert.match(incomplete.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Hairpin must end with a matching '<'/);
+
+  const overlapping = parse("< 1 > 2 < 3");
+  assert.equal(overlapping.ok, false);
+  assert.match(overlapping.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Hairpins cannot overlap/);
+
+  const transition = parse("p < 1 2 f <> 3 4 p > 5");
+  assert.equal(transition.ok, true);
+  const transitionNotes = transition.value.score[0].measures[0].notes;
+  assert.equal(transitionNotes[2].hairpinEnd, "crescendo");
+  assert.equal(transitionNotes[2].hairpinStart, "diminuendo");
+
+  const reverseTransition = parse("f > 1 2 p >< 3 4 f < 5");
+  assert.equal(reverseTransition.ok, true);
+  const reverseNotes = reverseTransition.value.score[0].measures[0].notes;
+  assert.equal(reverseNotes[2].hairpinEnd, "diminuendo");
+  assert.equal(reverseNotes[2].hairpinStart, "crescendo");
+
+  const separateTracks = parse("T1: < 1 2\nT2: > 5, 6,\nT1: < 3\nT2: > 7,");
+  assert.equal(separateTracks.ok, true);
+
+  const noTarget = parse("< | 1");
+  assert.equal(noTarget.ok, false);
+  assert.match(noTarget.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Hairpin markers must be followed/);
+  assert.equal(noTarget.diagnostics.some((diagnostic) => diagnostic.message.includes("Expected pitch note 1-7")), false);
+});
+
+test("warns when hairpin direction disagrees with explicit dynamics", () => {
+  const crescendo = parse("f < 1 2 p < 3");
+  assert.equal(crescendo.ok, true);
+  const crescendoWarnings = crescendo.diagnostics.filter((diagnostic) => diagnostic.severity === "warning");
+  assert.ok(crescendoWarnings.some((diagnostic) => diagnostic.message.includes("Crescendo '<' should end louder")));
+
+  const diminuendo = parse("p > 1 2 f > 3");
+  assert.equal(diminuendo.ok, true);
+  const diminuendoWarnings = diminuendo.diagnostics.filter((diagnostic) => diagnostic.severity === "warning");
+  assert.ok(diminuendoWarnings.some((diagnostic) => diagnostic.message.includes("Diminuendo '>' should end softer")));
+
+  const inferredEndpoint = parse("p < 1 2 < 3");
+  assert.equal(inferredEndpoint.ok, true);
+  assert.equal(inferredEndpoint.diagnostics.some((diagnostic) => diagnostic.message.includes("should end")), false);
+});
+
+test("rejects obsolete hairpin end markers", () => {
+  const strayEnd = parse("! 1");
+  assert.equal(strayEnd.ok, false);
+  assert.match(strayEnd.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Unexpected character '!'/);
+});
+
 test("reports source ranges for parser diagnostics", () => {
   const result = parse("1 2\n@");
   assert.equal(result.ok, false);

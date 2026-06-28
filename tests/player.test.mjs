@@ -607,6 +607,39 @@ test("scales per-note velocity by track volume (multiplicative)", () => {
   assert.equal(bytes[secondNoteOnIndex + 2], 17);
 });
 
+test("compiles hairpins into gradual melody velocities", () => {
+  const result = parse("p < 1 2 3 f < 4");
+  assert.equal(result.ok, true);
+  const melody = compileMelody(result.value);
+  assert.deepEqual(
+    melody.notes.map((note) => note.velocity),
+    [49, 61, 73, 85],
+  );
+});
+
+test("exports hairpin MIDI velocities", () => {
+  const result = parse("f > 1 2 3 p > 4");
+  assert.equal(result.ok, true);
+  const bytes = [...exportMidiBytes(result.value)];
+  const velocities = [];
+  for (let index = 0; index < bytes.length - 2; index += 1) {
+    if (bytes[index] === 0x90) {
+      velocities.push(bytes[index + 2]);
+    }
+  }
+  assert.deepEqual(velocities, [85, 73, 61, 49]);
+});
+
+test("uses one note as both hairpin endpoint and next start", () => {
+  const result = parse("p < 1 2 f <> 3 4 p > 5");
+  assert.equal(result.ok, true);
+  const melody = compileMelody(result.value);
+  assert.deepEqual(
+    melody.notes.map((note) => note.velocity),
+    [49, 67, 85, 67, 49],
+  );
+});
+
 test("maps programs to deterministic synth waveforms", () => {
   assert.equal(waveformForProgram(0), "triangle");
   assert.equal(waveformForProgram(24), "sawtooth");

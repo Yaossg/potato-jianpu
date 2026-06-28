@@ -9,30 +9,6 @@ commitment.
 
 ## Future Features
 
-### Dynamic Hairpins And Gradual Volume Changes
-
-Support notation for gradual volume changes, including crescendo and diminuendo
-hairpins. This should cover both visual notation and sound-producing behavior
-rather than treating hairpins as renderer-only marks.
-
-Design work should define:
-
-- Syntax for starting, continuing, and ending a gradual dynamic change within a
-  measure or across measure boundaries.
-- How hairpins interact with existing score-level, track-level, and per-note
-  volume or velocity settings.
-- Renderer placement rules for single-line and wrapped scores, including how
-  hairpins attach to notes, rests, chords, and tied notes.
-- Shared playback semantics for browser playback, MIDI export, WAV export, and
-  MP3 export, including interpolation shape, timing resolution, and behavior at
-  repeated material.
-- Diagnostics for incomplete, overlapping, or contradictory gradual dynamic
-  marks.
-
-Implementation should include parser coverage, renderer snapshots where the
-notation affects SVG output, and player/MIDI/export tests that confirm all sound
-paths share the same dynamic curve.
-
 ### Ornament Notation
 
 Support notation for common Jianpu embellishments, such as grace notes,

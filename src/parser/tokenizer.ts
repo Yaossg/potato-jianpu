@@ -29,6 +29,8 @@ export type TokenType =
   | "lbracket"
   | "rbracket"
   | "velocity"
+  | "crescendo"
+  | "diminuendo"
   | "newline"
   | "eof";
 
@@ -238,6 +240,12 @@ export function tokenize(source: string): { tokens: Token[]; diagnostics: Diagno
         break;
       case "~":
         push("tie", char);
+        break;
+      case "<":
+        push("crescendo", char);
+        break;
+      case ">":
+        push("diminuendo", char);
         break;
       case "=":
         push("equals", char);

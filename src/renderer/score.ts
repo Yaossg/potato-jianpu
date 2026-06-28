@@ -40,6 +40,12 @@ interface LineEntry {
   dashAnchors: number[];
 }
 
+interface HairpinSegment {
+  kind: NonNullable<Note["hairpinStart"]>;
+  start: Note;
+  end: Note;
+}
+
 function renderOctaveDots(pitch: Pitch, x: number, y: number, isBase: boolean, halves: number): string {
   const parts: string[] = [];
   if (pitch.octave > 0) {
@@ -157,6 +163,18 @@ function renderOutgoingTie(startX: number, edgeX: number, y: number, chordHeight
   const topControlX = (startX + edgeX) / 2;
   const bottomControlX = topControlX;
   return `<path class="tie" d="M${startX},${tieY} Q${topControlX},${topCutY} ${topCutX},${topCutY} L${bottomCutX},${bottomCutY} Q${bottomControlX},${bottomCutY} ${startX},${tieY} Z"/>`;
+}
+
+function renderHairpin(kind: NonNullable<Note["hairpinStart"]>, startX: number, endX: number, centerY: number): string {
+  if (endX <= startX) {
+    return "";
+  }
+  const leftGap = kind === "crescendo" ? 0 : DIMENSIONS.hairpinHeight / 2;
+  const rightGap = kind === "crescendo" ? DIMENSIONS.hairpinHeight / 2 : 0;
+  return [
+    `<line class="hairpin" x1="${startX}" y1="${centerY - leftGap}" x2="${endX}" y2="${centerY - rightGap}"/>`,
+    `<line class="hairpin" x1="${startX}" y1="${centerY + leftGap}" x2="${endX}" y2="${centerY + rightGap}"/>`,
+  ].join("");
 }
 
 function renderRepeatDots(x: number, baselineY: number): string {
@@ -291,12 +309,26 @@ function nextNoteInSequence(notes: Note[], note: Note): Note | undefined {
   return index >= 0 ? notes[index + 1] : undefined;
 }
 
-function lineNotesByTrack(document: Document): Map<ScoreLine, Note[]> {
-  const hasLabels = document.score.some((line) => line.label !== undefined);
-  if (!hasLabels) {
-    return new Map(document.score.map((line) => [line, notesInLine(line)]));
+function hairpinSegments(notes: Note[]): HairpinSegment[] {
+  const segments: HairpinSegment[] = [];
+  let active: { kind: NonNullable<Note["hairpinStart"]>; start: Note } | null = null;
+  for (const note of notes) {
+    if (note.hairpinEnd !== undefined && active?.kind === note.hairpinEnd) {
+      segments.push({ ...active, end: note });
+      active = null;
+    }
+    if (note.hairpinStart !== undefined) {
+      active = { kind: note.hairpinStart, start: note };
+    }
   }
+  return segments;
+}
 
+function isHairpinTransition(note: Note): boolean {
+  return note.hairpinStart !== undefined && note.hairpinEnd !== undefined && note.hairpinStart !== note.hairpinEnd;
+}
+
+function lineNotesByTrack(document: Document): Map<ScoreLine, Note[]> {
   const notesByTrack = new Map<string, Note[]>();
   for (const line of document.score) {
     const trackLabel = line.label ?? "";
@@ -404,6 +436,40 @@ function renderLine(
         measureLayout.measure.repeatEnd,
       ),
     );
+  }
+
+  const lineTrackIndexes = lineEntries.map((entry) => trackNotes.indexOf(entry.note)).filter((index) => index >= 0);
+  const firstLineTrackIndex = Math.min(...lineTrackIndexes);
+  const lastLineTrackIndex = Math.max(...lineTrackIndexes);
+  const lineHasDynamicHairpinCollision = lineEntries.some(
+    (entry) => entry.note.velocity !== undefined && (entry.note.hairpinStart !== undefined || entry.note.hairpinEnd !== undefined),
+  );
+  const hairpinY =
+    lineY +
+    layout.maxPaddingUp -
+    DIMENSIONS.baseNoteHeight -
+    DIMENSIONS.hairpinTopGap -
+    (lineHasDynamicHairpinCollision ? DIMENSIONS.hairpinVelocityClearance : 0);
+  for (const segment of hairpinSegments(trackNotes)) {
+    const startIndex = trackNotes.indexOf(segment.start);
+    const endIndex = trackNotes.indexOf(segment.end);
+    if (startIndex < 0 || endIndex < 0 || endIndex < firstLineTrackIndex || startIndex > lastLineTrackIndex) {
+      continue;
+    }
+    const startEntry = lineEntries.find((entry) => entry.note === segment.start);
+    const endEntry = lineEntries.find((entry) => entry.note === segment.end);
+    const containsInterior = lineEntries.some((entry) => {
+      const index = trackNotes.indexOf(entry.note);
+      return index > startIndex && index < endIndex;
+    });
+    if (!startEntry && !endEntry && !containsInterior) {
+      continue;
+    }
+    const startX =
+      (startEntry?.x ?? leftTieEdgeX) + (startEntry && isHairpinTransition(segment.start) ? DIMENSIONS.hairpinTransitionGap / 2 : 0);
+    const endX =
+      (endEntry?.x ?? rightTieEdgeX) - (endEntry && isHairpinTransition(segment.end) ? DIMENSIONS.hairpinTransitionGap / 2 : 0);
+    parts.push(renderHairpin(segment.kind, startX, endX, hairpinY));
   }
 
   for (const entry of lineEntries) {

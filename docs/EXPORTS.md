@@ -255,7 +255,7 @@ Options:
 - `--omit-initial-rest`: remove leading rests before writing note events.
 
 Program behavior, arrangement track grouping, track labels, per-track Program
-and volume, drum mode, and MIDI channel assignment are described in
+and volume, per-note dynamics and hairpins, drum mode, and MIDI channel assignment are described in
 [docs/PLAYER.md](PLAYER.md).
 
 ## WAV Export
@@ -277,8 +277,8 @@ Options:
   Defaults to `1`.
 - `--omit-initial-rest`: remove leading rests before rendering audio.
 
-The WAV renderer shares Program, per-track Program, drum-channel, and velocity
-behavior with browser preview playback and MIDI export. See
+The WAV renderer shares Program, per-track Program, drum-channel, and dynamic
+velocity behavior with browser preview playback and MIDI export. See
 [docs/PLAYER.md](PLAYER.md) for arrangement, Program, and volume behavior.
 
 The WAV renderer uses `WebAudioTinySynth` with an offline

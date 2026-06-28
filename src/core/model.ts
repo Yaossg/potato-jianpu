@@ -45,7 +45,11 @@ export interface BaseNote {
   index: number;
   range: SourceRange;
   velocity?: number;
+  hairpinStart?: HairpinKind;
+  hairpinEnd?: HairpinKind;
 }
+
+export type HairpinKind = "crescendo" | "diminuendo";
 
 export const VELOCITY_MAP: Record<string, number> = {
   ppp: 16,
