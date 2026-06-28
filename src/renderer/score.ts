@@ -914,7 +914,7 @@ function lyricSyllableAdvanceMap(line: ScoreLine, lyrics: LyricLine[]): Map<Note
 
   const widths = Array.from({ length: soundingNotes.length }, () => 0);
   for (const lyric of lyrics) {
-    if (lyric.syllables.length <= 1 || lyric.syllables.length !== soundingNotes.length) {
+    if (lyric.syllables.length <= 1 || lyric.syllables.length > soundingNotes.length) {
       continue;
     }
     for (const [index, syllable] of lyric.syllables.entries()) {
@@ -928,6 +928,9 @@ function lyricSyllableAdvanceMap(line: ScoreLine, lyrics: LyricLine[]): Map<Note
 
   const minAdvanceByNote = new Map<Note, number>();
   for (let index = 0; index < widths.length - 1; index += 1) {
+    if (widths[index] === 0 || widths[index + 1] === 0) {
+      continue;
+    }
     const requiredAdvance = widths[index]! / 2 + widths[index + 1]! / 2 + LYRIC_SYLLABLE_GAP;
     const note = soundingNotes[index]!;
     minAdvanceByNote.set(note, Math.max(minAdvanceByNote.get(note) ?? 0, requiredAdvance));
@@ -1025,7 +1028,7 @@ function renderLyrics(document: Document, lyrics: LyricLine[], contentX: number,
 function renderAlignedLyrics(document: Document, lyrics: LyricLine[], contentX: number, y: number, targetTextWidth: number | undefined, anchors: number[]): string {
   return lyrics
     .map((lyric, index) => {
-      if (lyric.syllables.length <= 1 || lyric.syllables.length !== anchors.length) {
+      if (lyric.syllables.length <= 1 || lyric.syllables.length > anchors.length) {
         return renderLyrics(document, [lyric], contentX, y + index * DIMENSIONS.lyricLineHeight, targetTextWidth);
       }
       const lineY = y + index * DIMENSIONS.lyricLineHeight;

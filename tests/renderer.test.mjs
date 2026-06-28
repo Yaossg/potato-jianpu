@@ -690,6 +690,23 @@ test("aligns lyric syllables under main voice notes", () => {
   assert.equal(lyricSyllableX(svg, "three"), noteX(svg, 2));
 });
 
+test("aligns fewer lyric syllables under leading main voice notes", () => {
+  const result = parse('1 2 3 4\n"one two"');
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 180 });
+  assert.equal(lyricSyllableX(svg, "one"), noteX(svg, 0));
+  assert.equal(lyricSyllableX(svg, "two"), noteX(svg, 1));
+  assert.doesNotMatch(svg, /<text class="lyric-line"[^>]*>one two<\/text>/);
+});
+
+test("keeps excess lyric syllables as a normal lyric line", () => {
+  const result = parse('1 2\n"one two three"');
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 180 });
+  assert.match(svg, /<text class="lyric-line" x="18" y="\d+" text-anchor="start">one two three<\/text>/);
+  assert.doesNotMatch(svg, /<text class="lyric-syllable"/);
+});
+
 test("expands lyric syllable anchors to avoid English lyric overlap", () => {
   const result = parse('1 2\n"wonderful evening"');
   assert.equal(result.ok, true);

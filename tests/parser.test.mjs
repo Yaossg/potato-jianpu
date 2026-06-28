@@ -648,12 +648,18 @@ test("parses lyric lines after score groups", () => {
   assert.equal(result.value.score[2].lyrics, undefined);
 });
 
-test("warns when aligned lyric syllables do not match main voice notes", () => {
+test("allows aligned lyric syllables to omit trailing main voice notes", () => {
   const result = parse('1 2 3 4\n"one two"');
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("warns when lyric syllables exceed main voice notes", () => {
+  const result = parse('1 2 3 4\n"one two three four five"');
   assert.equal(result.ok, true);
   assert.deepEqual(
     result.diagnostics.map((diagnostic) => diagnostic.message),
-    ["Lyric has 2 syllables but the main voice has 4 notes."],
+    ["Lyric has 5 syllables but the main voice has 4 notes."],
   );
 });
 

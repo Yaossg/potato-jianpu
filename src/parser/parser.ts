@@ -874,7 +874,7 @@ class Parser {
         .flatMap((measure) => measure.notes)
         .filter((note) => note.kind !== "rest").length;
       for (const lyric of lyrics) {
-        if (lyric.syllables.length > 1 && lyric.syllables.length !== soundingNoteCount) {
+        if (lyric.syllables.length > soundingNoteCount) {
           this.warning(`Lyric has ${lyric.syllables.length} syllables but the main voice has ${soundingNoteCount} notes.`, lyric.range);
         }
       }
