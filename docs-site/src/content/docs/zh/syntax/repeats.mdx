@@ -3,6 +3,7 @@ title: 反复
 description: 为播放和导出书写反复小节线与反复结尾。
 docId: syntax-repeats
 sectionIds:
+  - repeat-support
   - repeat-barlines
   - adjacent-repeats
   - repeated-endings
@@ -13,6 +14,16 @@ import JianpuExample from '../../../../components/JianpuExample.astro';
 import JianpuSource from '../../../../components/JianpuSource.astro';
 import RelatedLinks from '../../../../components/RelatedLinks.astro';
 import ScorePreview from '../../../../components/ScorePreview.astro';
+import SupportMatrix from '../../../../components/SupportMatrix.astro';
+
+<SupportMatrix
+  title="反复支持"
+  features={[
+    { feature: '反复小节线', parser: true, image: true, playback: true, export: true, cli: true },
+    { feature: '相邻反复', parser: true, image: true, playback: true, export: true, cli: true },
+    { feature: '反复结尾', parser: true, image: true, playback: true, export: true, cli: true },
+  ]}
+/>
 
 ## 反复小节线
 

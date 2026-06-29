@@ -58,6 +58,26 @@ An unlabeled quoted lyric line is also accepted.
 "five six sev-en one"`}
 />
 
+Use `_` as a standalone lyric token to reserve an aligned blank slot. Use `~`
+as a standalone lyric token to let the previous visible syllable span one more
+sounding note; the syllable renders at the center of the covered note span.
+
+<JianpuSource
+  title="Lyric placeholder source"
+  source={`1 2 3 4
+"one _ three four"
+5 6 7 1'
+"shine ~ on _"`}
+/>
+
+<ScorePreview
+  title="Lyric placeholders"
+  source={`1 2 3 4
+"one _ three four"
+5 6 7 1'
+"shine ~ on _"`}
+/>
+
 ## Track Labels
 
 Track labels `T1:` through `T9:` and `T11:` through `T16:` write multi-track
@@ -89,7 +109,7 @@ When a score contains any labeled track, unlabeled score lines are treated as `T
 
 ## Lyric Diagnostics
 
-Lyrics are attached to the preceding score group. A lyric line before any score line is invalid. When a lyric line contains multiple whitespace-separated syllables and the main voice renders on one row, the renderer centers those syllables under the leading sounding main-voice notes. Long syllables, especially English words, can widen the spacing between neighboring notes so lyrics do not collide. Rests do not receive lyric positions. If the lyric has more syllables than main-voice notes, or if the widened main voice no longer fits on one row, the lyric is rendered as a plain full line; extra syllables also produce a warning.
+Lyrics are attached to the preceding score group. A lyric line before any score line is invalid. When a lyric line contains multiple whitespace-separated lyric units and the main voice renders on one row, the renderer centers visible syllables under the leading sounding main-voice notes. Long syllables, especially English words, can widen the spacing between neighboring notes so lyrics do not collide. Rests do not receive lyric positions. If the lyric has more aligned slots than main-voice notes, or if the widened main voice no longer fits on one row, the lyric is rendered as a plain full line; extra aligned slots also produce a warning. A `~` merge placeholder before any visible syllable is invalid.
 
 <JianpuExample
   title="Mismatched lyric count"

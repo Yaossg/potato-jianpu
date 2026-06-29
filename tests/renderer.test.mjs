@@ -699,6 +699,38 @@ test("aligns fewer lyric syllables under leading main voice notes", () => {
   assert.doesNotMatch(svg, /<text class="lyric-line"[^>]*>one two<\/text>/);
 });
 
+test("renders lyric spacing placeholders as empty aligned slots", () => {
+  const result = parse('1 2 3 4\n"one _ three four"');
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 180 });
+  assert.equal(lyricSyllableX(svg, "one"), noteX(svg, 0));
+  assert.equal(lyricSyllableX(svg, "three"), noteX(svg, 2));
+  assert.equal(lyricSyllableX(svg, "four"), noteX(svg, 3));
+  assert.doesNotMatch(svg, /<text class="lyric-syllable"[^>]*>_<\/text>/);
+});
+
+test("renders lyric merge placeholders without filler text", () => {
+  const result = parse('1 2 3 4\n"held ~ next _"');
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 180 });
+  assert.equal(lyricSyllableX(svg, "held"), (noteX(svg, 0) + noteX(svg, 1)) / 2);
+  assert.equal(lyricSyllableX(svg, "next"), noteX(svg, 2));
+  assert.doesNotMatch(svg, /<text class="lyric-syllable"[^>]*>~<\/text>/);
+  assert.doesNotMatch(svg, /<text class="lyric-syllable"[^>]*>_<\/text>/);
+});
+
+test("does not expand note spacing for lyric merge placeholder targets", () => {
+  const blank = parse('1 2 3 4\n"shine _ on _"');
+  const merged = parse('1 2 3 4\n"shine ~ on _"');
+  assert.equal(blank.ok, true);
+  assert.equal(merged.ok, true);
+  const blankSvg = renderSvg(blank.value, { pageWidth: 180 });
+  const mergedSvg = renderSvg(merged.value, { pageWidth: 180 });
+  assert.equal(noteX(mergedSvg, 1), noteX(blankSvg, 1));
+  assert.equal(lyricSyllableX(mergedSvg, "shine"), (noteX(mergedSvg, 0) + noteX(mergedSvg, 1)) / 2);
+  assert.equal(lyricSyllableX(mergedSvg, "on"), noteX(mergedSvg, 2));
+});
+
 test("keeps excess lyric syllables as a normal lyric line", () => {
   const result = parse('1 2\n"one two three"');
   assert.equal(result.ok, true);

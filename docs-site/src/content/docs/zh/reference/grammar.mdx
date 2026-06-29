@@ -61,6 +61,8 @@ import RelatedLinks from '../../../../components/RelatedLinks.astro';
 | `NEWLINE` | `\n`、`\r\n` 或 `\r` |
 | `EOF` | 文件结束 |
 
+在歌词 `STRING` 内部，单独由空白分隔的 `_` 和 `~` token 会作为歌词对齐占位符，而不是可见音节。
+
 ## 铁路图
 
 这些图由 `docs/grammar.ebnf` 生成。
@@ -96,6 +98,8 @@ import RelatedLinks from '../../../../components/RelatedLinks.astro';
 <RailroadDiagram rule="track_label" title="track_label" caption="受支持的轨道标签后接冒号。" />
 <RailroadDiagram rule="lyric_label" title="lyric_label" caption="歌词标签后接冒号。" />
 <RailroadDiagram rule="lyric_line" title="lyric_line" caption="可选歌词标签后接带引号的字符串。" />
+<RailroadDiagram rule="lyric_string" title="lyric_string" caption="带引号的歌词字符串，其中单独的 _ 和 ~ token 可作为对齐占位符。" />
+<RailroadDiagram rule="lyric_alignment_placeholder" title="lyric_alignment_placeholder" caption="歌词字符串占位符：_ 预留空位，~ 延展前一个可见音节。" />
 <RailroadDiagram rule="page_break" title="page_break" caption="单独一行的 ---，使下一条分页谱面行从新页开始。" />
 <RailroadDiagram rule="start_barline" title="start_barline" caption="行首小节线或反复开始。" />
 <RailroadDiagram rule="end_barline" title="end_barline" caption="行尾小节线或反复结束。" />

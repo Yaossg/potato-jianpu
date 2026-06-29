@@ -906,6 +906,27 @@ function lyricTextWidth(text: string): number {
   return [...text].reduce((sum, char) => sum + lyricCharWidth(char), 0);
 }
 
+interface RenderedLyricSyllable {
+  text: string;
+  startIndex: number;
+  endIndex: number;
+}
+
+function renderedLyricSyllables(lyric: LyricLine): RenderedLyricSyllable[] {
+  const syllables: RenderedLyricSyllable[] = [];
+  for (const [index, unit] of lyric.alignment.entries()) {
+    if (unit.kind === "syllable") {
+      syllables.push({ text: unit.text, startIndex: index, endIndex: index });
+    } else if (unit.kind === "merge") {
+      const previous = syllables.at(-1);
+      if (previous) {
+        previous.endIndex = index;
+      }
+    }
+  }
+  return syllables;
+}
+
 function lyricSyllableAdvanceMap(line: ScoreLine, lyrics: LyricLine[]): Map<Note, number> | undefined {
   const soundingNotes = notesInLine(line).filter((note) => note.kind !== "rest");
   if (soundingNotes.length <= 1) {
@@ -914,11 +935,12 @@ function lyricSyllableAdvanceMap(line: ScoreLine, lyrics: LyricLine[]): Map<Note
 
   const widths = Array.from({ length: soundingNotes.length }, () => 0);
   for (const lyric of lyrics) {
-    if (lyric.syllables.length <= 1 || lyric.syllables.length > soundingNotes.length) {
+    if (lyric.alignment.length <= 1 || lyric.alignment.length > soundingNotes.length) {
       continue;
     }
-    for (const [index, syllable] of lyric.syllables.entries()) {
-      widths[index] = Math.max(widths[index] ?? 0, lyricTextWidth(syllable));
+    for (const syllable of renderedLyricSyllables(lyric)) {
+      const width = lyricTextWidth(syllable.text);
+      widths[syllable.startIndex] = Math.max(widths[syllable.startIndex] ?? 0, width);
     }
   }
 
@@ -1028,14 +1050,17 @@ function renderLyrics(document: Document, lyrics: LyricLine[], contentX: number,
 function renderAlignedLyrics(document: Document, lyrics: LyricLine[], contentX: number, y: number, targetTextWidth: number | undefined, anchors: number[]): string {
   return lyrics
     .map((lyric, index) => {
-      if (lyric.syllables.length <= 1 || lyric.syllables.length > anchors.length) {
+      if (lyric.alignment.length <= 1 || lyric.alignment.length > anchors.length) {
         return renderLyrics(document, [lyric], contentX, y + index * DIMENSIONS.lyricLineHeight, targetTextWidth);
       }
       const lineY = y + index * DIMENSIONS.lyricLineHeight;
       const displayLabel = lyricLineDisplayLabel(document, lyric);
       const label = displayLabel ? `<text class="line-label" x="8" y="${lineY}" text-anchor="start">${escapeXml(displayLabel)}</text>` : "";
-      const syllables = lyric.syllables
-        .map((syllable, syllableIndex) => `<text class="lyric-syllable" x="${anchors[syllableIndex]}" y="${lineY}" text-anchor="middle">${escapeXml(syllable)}</text>`)
+      const syllables = renderedLyricSyllables(lyric)
+        .map((syllable) => {
+          const x = (anchors[syllable.startIndex]! + anchors[syllable.endIndex]!) / 2;
+          return `<text class="lyric-syllable" x="${x}" y="${lineY}" text-anchor="middle">${escapeXml(syllable.text)}</text>`;
+        })
         .join("");
       return `${label}${syllables}`;
     })

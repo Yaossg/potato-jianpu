@@ -291,10 +291,12 @@ class Parser {
     }
     const text = this.consume("string", "Expected quoted lyric text.");
     const lyricText = text?.value ?? "";
+    const alignment = this.lyricAlignment(lyricText, text?.range ?? start);
     return {
       label,
       text: lyricText,
-      syllables: this.lyricSyllables(lyricText),
+      syllables: alignment.filter((unit) => unit.kind === "syllable").map((unit) => unit.text),
+      alignment,
       range: mergeRange(start, (text ?? this.previous()).range),
     };
   }
@@ -308,8 +310,25 @@ class Parser {
     target.lyrics = [...(target.lyrics ?? []), lyric];
   }
 
-  private lyricSyllables(text: string): string[] {
-    return text.trim().split(/\s+/).filter(Boolean);
+  private lyricAlignment(text: string, range: SourceRange): LyricLine["alignment"] {
+    const units: LyricLine["alignment"] = [];
+    let hasPreviousSyllable = false;
+    for (const token of text.trim().split(/\s+/).filter(Boolean)) {
+      if (token === "_") {
+        units.push({ kind: "space" });
+        continue;
+      }
+      if (token === "~") {
+        if (!hasPreviousSyllable) {
+          this.error("Lyric merge placeholder '~' must follow a visible syllable.", range);
+        }
+        units.push({ kind: "merge" });
+        continue;
+      }
+      units.push({ kind: "syllable", text: token });
+      hasPreviousSyllable = true;
+    }
+    return units;
   }
 
   private parseLine(): ScoreLine {
@@ -874,7 +893,10 @@ class Parser {
         .flatMap((measure) => measure.notes)
         .filter((note) => note.kind !== "rest").length;
       for (const lyric of lyrics) {
-        if (lyric.syllables.length > soundingNoteCount) {
+        const hasPlaceholders = lyric.alignment.some((unit) => unit.kind !== "syllable");
+        if (hasPlaceholders && lyric.alignment.length > soundingNoteCount) {
+          this.warning(`Lyric has ${lyric.alignment.length} aligned slots but the main voice has ${soundingNoteCount} notes.`, lyric.range);
+        } else if (!hasPlaceholders && lyric.syllables.length > soundingNoteCount) {
           this.warning(`Lyric has ${lyric.syllables.length} syllables but the main voice has ${soundingNoteCount} notes.`, lyric.range);
         }
       }

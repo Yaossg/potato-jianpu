@@ -59,33 +59,6 @@ exports follow the same measure order. Tests should cover plain D.C./D.S. flows,
 Fine termination, Coda jumps, interaction with repeated endings, and invalid
 navigation graphs.
 
-### Lyrics Alignment Placeholders
-
-Support placeholder syntax for lyric alignment when the lyric text is not yet
-available or when one lyric syllable should intentionally span multiple notes.
-This would let authors prepare note-to-lyric alignment before final lyrics are
-known, and write melismatic passages without forcing artificial filler text.
-
-Design work should define:
-
-- Spacing placeholders that reserve an aligned lyric slot without rendering
-  visible lyric text.
-- Merge placeholders that attach one visible syllable to multiple consecutive
-  sounding notes.
-- Source syntax that is easy to type inside the existing quoted lyric string
-  model and does not conflict with ordinary lyric punctuation.
-- How placeholders interact with the current rule where fewer syllables align
-  to leading main-voice notes and excess syllables fall back to a normal lyric
-  line.
-- Diagnostics for placeholders without a previous syllable to merge, merge
-  spans that cross unavailable note anchors, and placeholder counts that exceed
-  the main-voice note count.
-
-Implementation should keep placeholders visual-only for playback. Parser tests
-should cover tokenization and diagnostics, renderer tests should cover empty
-reserved slots and melismatic spans, and docs should include examples for draft
-lyrics and one-syllable-many-note passages.
-
 ### Automatic Lyrics Tokenization
 
 Automatically tokenize lyrics into syllables for alignment with Jianpu notes.

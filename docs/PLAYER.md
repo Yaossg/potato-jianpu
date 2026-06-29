@@ -136,8 +136,9 @@ preceding score group for rendering only. They do not create arrangement tracks
 and do not affect playback, MIDI, WAV, or MP3 timing. Header entries such as
 `L1.name: "Verse"` or the shorthand `L1: "Verse"` only control rendered lyric
 line names. Whitespace-separated lyric syllables may be visually aligned to
-main-voice notes by the renderer, but that alignment is not part of playback or
-export scheduling.
+main-voice notes by the renderer. Lyric alignment placeholders such as `_` and
+`~` are also visual-only; neither syllable alignment nor placeholders are part
+of playback or export scheduling.
 
 Repeat barlines and repeated endings are expanded independently inside each
 arrangement track.

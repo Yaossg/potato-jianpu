@@ -168,16 +168,21 @@ measure-level alignment: measure barlines align across tracks, and each track's
 own measure contents are stretched to fit between those aligned barlines.
 
 Lyric lines render below the preceding score group. A lyric string with
-multiple whitespace-separated syllables is rendered as centered syllables under
-leading main voice note anchors when the syllable count is less than or equal
-to the main voice note count and the main voice occupies one rendered visual
-line. Long aligned lyric syllables participate in score layout by increasing
-the horizontal advance between neighboring main-voice note anchors, so English
-words do not overlap adjacent syllables. If the lyric has more syllables than
-main voice notes, or if the expanded main voice wraps or must be horizontally
-scaled to fit the page, the lyric remains a normal left-aligned lyric line. In
-multi-voice groups, the renderer uses `T1` as the main voice; unlabeled lines in
-labeled scores also count as `T1`.
+multiple whitespace-separated alignment units is rendered under leading main
+voice note anchors when the aligned slot count is less than or equal to the
+main voice note count and the main voice occupies one rendered visual line.
+Normal tokens render as centered syllables, `_` reserves an empty aligned slot,
+and `~` reserves one additional slot for the previous visible syllable. A
+syllable followed by one or more `~` placeholders renders at the center of the
+covered anchor span instead of staying on its first note; the covered `~` slots
+do not add extra spacing pressure of their own. Long aligned lyric syllables
+participate in score layout by increasing the horizontal advance between
+neighboring main-voice note
+anchors, so English words do not overlap adjacent syllables. If the lyric has
+more aligned slots than main voice notes, or if the expanded main voice wraps or
+must be horizontally scaled to fit the page, the lyric remains a normal
+left-aligned lyric line. In multi-voice groups, the renderer uses `T1` as the
+main voice; unlabeled lines in labeled scores also count as `T1`.
 
 Track and lyric labels reserve horizontal space based on the rendered label
 text length plus padding. Visible labels come from typed header label fields,

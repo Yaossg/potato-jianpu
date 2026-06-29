@@ -34,7 +34,9 @@ score = score_item, { NEWLINE, { NEWLINE }, score_item }, { NEWLINE } ;
 score_item = line | lyric_line | page_break ;
 
 line = [ track_label ], [ start_barline ], [ ending ], [ measure ], { measure_separator, [ ending ], [ measure ] }, [ end_barline ] ;
-lyric_line = [ lyric_label ], STRING ;
+lyric_line = [ lyric_label ], lyric_string ;
+lyric_string = STRING ;
+lyric_alignment_placeholder = "_" | "~" ;
 page_break = DASH, DASH, DASH ;
 
 start_barline = BAR | REPEAT_START ;

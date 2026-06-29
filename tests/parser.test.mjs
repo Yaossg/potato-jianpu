@@ -654,12 +654,40 @@ test("allows aligned lyric syllables to omit trailing main voice notes", () => {
   assert.deepEqual(result.diagnostics, []);
 });
 
+test("parses lyric alignment placeholders", () => {
+  const result = parse('1 2 3 4\n"one _ held ~"');
+  assert.equal(result.ok, true);
+  const lyric = result.value.score[0].lyrics?.[0];
+  assert.deepEqual(lyric?.syllables, ["one", "held"]);
+  assert.deepEqual(lyric?.alignment, [
+    { kind: "syllable", text: "one" },
+    { kind: "space" },
+    { kind: "syllable", text: "held" },
+    { kind: "merge" },
+  ]);
+});
+
+test("rejects lyric merge placeholders before visible syllables", () => {
+  const result = parse('1 2\n"~ first"');
+  assert.equal(result.ok, false);
+  assert.match(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Lyric merge placeholder '~' must follow a visible syllable/);
+});
+
 test("warns when lyric syllables exceed main voice notes", () => {
   const result = parse('1 2 3 4\n"one two three four five"');
   assert.equal(result.ok, true);
   assert.deepEqual(
     result.diagnostics.map((diagnostic) => diagnostic.message),
     ["Lyric has 5 syllables but the main voice has 4 notes."],
+  );
+});
+
+test("warns when lyric alignment slots exceed main voice notes", () => {
+  const result = parse('time: 2/4\n===\n1 0\n"one _ two"');
+  assert.equal(result.ok, true);
+  assert.deepEqual(
+    result.diagnostics.map((diagnostic) => diagnostic.message),
+    ["Lyric has 3 aligned slots but the main voice has 1 notes."],
   );
 });
 

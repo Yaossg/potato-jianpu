@@ -89,10 +89,16 @@ export interface Measure {
   ending?: number[];
 }
 
+export type LyricAlignmentUnit =
+  | { kind: "syllable"; text: string }
+  | { kind: "space" }
+  | { kind: "merge" };
+
 export interface LyricLine {
   label: string;
   text: string;
   syllables: string[];
+  alignment: LyricAlignmentUnit[];
   range: SourceRange;
 }
 

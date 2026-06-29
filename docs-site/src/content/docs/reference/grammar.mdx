@@ -61,6 +61,9 @@ The parser recognizes these tokens. Whitespace and comments are skipped between 
 | `NEWLINE` | `\n`, `\r\n`, or `\r` |
 | `EOF` | end of file |
 
+Inside lyric `STRING` values, standalone whitespace-separated `_` and `~`
+tokens act as lyric alignment placeholders rather than visible syllables.
+
 ## Railroad Diagrams
 
 These diagrams are generated from `docs/grammar.ebnf`.
@@ -96,6 +99,8 @@ These diagrams are generated from `docs/grammar.ebnf`.
 <RailroadDiagram rule="track_label" title="track_label" caption="A supported track label followed by a colon." />
 <RailroadDiagram rule="lyric_label" title="lyric_label" caption="A lyric label followed by a colon." />
 <RailroadDiagram rule="lyric_line" title="lyric_line" caption="An optional lyric label followed by a quoted string." />
+<RailroadDiagram rule="lyric_string" title="lyric_string" caption="A quoted lyric string whose standalone _ and ~ tokens may act as alignment placeholders." />
+<RailroadDiagram rule="lyric_alignment_placeholder" title="lyric_alignment_placeholder" caption="A lyric-string placeholder: _ reserves an empty slot, and ~ extends the previous visible syllable." />
 <RailroadDiagram rule="page_break" title="page_break" caption="A standalone --- line that starts the next paginated score line on a new page." />
 <RailroadDiagram rule="start_barline" title="start_barline" caption="A line-opening barline or repeat start." />
 <RailroadDiagram rule="end_barline" title="end_barline" caption="A line-ending barline or repeat end." />
