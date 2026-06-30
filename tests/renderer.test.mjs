@@ -719,6 +719,26 @@ test("renders lyric merge placeholders without filler text", () => {
   assert.doesNotMatch(svg, /<text class="lyric-syllable"[^>]*>_<\/text>/);
 });
 
+test("aligns automatic Chinese lyric syllables under notes", () => {
+  const result = parse('1 2 3\n@"春天来"');
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 180 });
+  assert.equal(lyricSyllableX(svg, "春"), noteX(svg, 0));
+  assert.equal(lyricSyllableX(svg, "天"), noteX(svg, 1));
+  assert.equal(lyricSyllableX(svg, "来"), noteX(svg, 2));
+});
+
+test("renders automatic hyphenated English lyric syllables", () => {
+  const result = parse('1 2 3 4 5\n@"sev-en glo-ri-a"');
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 260 });
+  assert.equal(lyricSyllableX(svg, "sev-"), noteX(svg, 0));
+  assert.equal(lyricSyllableX(svg, "en"), noteX(svg, 1));
+  assert.equal(lyricSyllableX(svg, "glo-"), noteX(svg, 2));
+  assert.equal(lyricSyllableX(svg, "ri-"), noteX(svg, 3));
+  assert.equal(lyricSyllableX(svg, "a"), noteX(svg, 4));
+});
+
 test("does not expand note spacing for lyric merge placeholder targets", () => {
   const blank = parse('1 2 3 4\n"shine _ on _"');
   const merged = parse('1 2 3 4\n"shine ~ on _"');
@@ -736,6 +756,14 @@ test("keeps excess lyric syllables as a normal lyric line", () => {
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 180 });
   assert.match(svg, /<text class="lyric-line" x="18" y="\d+" text-anchor="start">one two three<\/text>/);
+  assert.doesNotMatch(svg, /<text class="lyric-syllable"/);
+});
+
+test("keeps excess automatic lyric syllables as a normal lyric line", () => {
+  const result = parse('1 2\n@"春天来"');
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 180 });
+  assert.match(svg, /<text class="lyric-line" x="18" y="\d+" text-anchor="start">春天来<\/text>/);
   assert.doesNotMatch(svg, /<text class="lyric-syllable"/);
 });
 

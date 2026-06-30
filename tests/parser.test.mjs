@@ -667,6 +667,53 @@ test("parses lyric alignment placeholders", () => {
   ]);
 });
 
+test("parses automatic Chinese lyric syllables", () => {
+  const result = parse('1 2 3\n@"春天来"');
+  assert.equal(result.ok, true);
+  const lyric = result.value.score[0].lyrics?.[0];
+  assert.equal(lyric?.text, "春天来");
+  assert.deepEqual(lyric?.syllables, ["春", "天", "来"]);
+  assert.deepEqual(lyric?.alignment, [
+    { kind: "syllable", text: "春" },
+    { kind: "syllable", text: "天" },
+    { kind: "syllable", text: "来" },
+  ]);
+});
+
+test("parses automatic hyphenated English lyric syllables", () => {
+  const result = parse('1 2 3 4 5\n@"sev-en glo-ri-a"');
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.value.score[0].lyrics?.[0]?.syllables, ["sev-", "en", "glo-", "ri-", "a"]);
+});
+
+test("parses mixed automatic lyric punctuation and manual placeholders", () => {
+  const result = parse('1 2 3 4 5 6\nL1: @"春天 glo-ri-a! _ ~"');
+  assert.equal(result.ok, true);
+  const lyric = result.value.score[0].lyrics?.[0];
+  assert.deepEqual(lyric?.syllables, ["春", "天", "glo-", "ri-", "a!"]);
+  assert.deepEqual(lyric?.alignment, [
+    { kind: "syllable", text: "春" },
+    { kind: "syllable", text: "天" },
+    { kind: "syllable", text: "glo-" },
+    { kind: "syllable", text: "ri-" },
+    { kind: "syllable", text: "a!" },
+    { kind: "space" },
+    { kind: "merge" },
+  ]);
+});
+
+test("keeps normal lyric strings manually tokenized", () => {
+  const result = parse('1 2 3\n"春天来"');
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.value.score[0].lyrics?.[0]?.syllables, ["春天来"]);
+});
+
+test("rejects automatic lyric strings as header quoted strings", () => {
+  const result = parse('title: @"Song"\n===\n1 2 3 4');
+  assert.equal(result.ok, false);
+  assert.match(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Expected quoted string value for title/);
+});
+
 test("rejects lyric merge placeholders before visible syllables", () => {
   const result = parse('1 2\n"~ first"');
   assert.equal(result.ok, false);

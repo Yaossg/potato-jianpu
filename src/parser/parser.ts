@@ -46,6 +46,83 @@ function durationOf(dashes: number, halves: number, dots: number): number {
   return unit / 2 ** halves;
 }
 
+function isHanCharacter(char: string): boolean {
+  return /[\u3400-\u9fff\uf900-\ufaff]/u.test(char);
+}
+
+function isAsciiLetter(char: string): boolean {
+  return /[A-Za-z]/.test(char);
+}
+
+function isAsciiDigit(char: string): boolean {
+  return /[0-9]/.test(char);
+}
+
+function isPunctuationOrSymbol(char: string): boolean {
+  return /[\p{P}\p{S}]/u.test(char);
+}
+
+function appendPunctuation(units: LyricLine["alignment"], text: string) {
+  const previous = units.at(-1);
+  if (previous?.kind === "syllable") {
+    previous.text += text;
+  } else {
+    units.push({ kind: "syllable", text });
+  }
+}
+
+function autoLyricSyllables(text: string): LyricLine["alignment"] {
+  const units: LyricLine["alignment"] = [];
+  for (const segment of text.trim().split(/\s+/).filter(Boolean)) {
+    if (segment === "_" || segment === "~") {
+      units.push(segment === "_" ? { kind: "space" } : { kind: "merge" });
+      continue;
+    }
+
+    let index = 0;
+    while (index < segment.length) {
+      const char = segment[index]!;
+      if (isHanCharacter(char)) {
+        units.push({ kind: "syllable", text: char });
+        index += char.length;
+        continue;
+      }
+      if (isAsciiLetter(char)) {
+        const start = index;
+        index += 1;
+        while (index < segment.length && isAsciiLetter(segment[index]!)) {
+          index += 1;
+        }
+        const word = segment.slice(start, index);
+        if (segment[index] === "-" && isAsciiLetter(segment[index + 1] ?? "")) {
+          units.push({ kind: "syllable", text: `${word}-` });
+          index += 1;
+        } else {
+          units.push({ kind: "syllable", text: word });
+        }
+        continue;
+      }
+      if (isAsciiDigit(char)) {
+        const start = index;
+        index += 1;
+        while (index < segment.length && isAsciiDigit(segment[index]!)) {
+          index += 1;
+        }
+        units.push({ kind: "syllable", text: segment.slice(start, index) });
+        continue;
+      }
+      if (isPunctuationOrSymbol(char)) {
+        appendPunctuation(units, char);
+        index += char.length;
+        continue;
+      }
+      units.push({ kind: "syllable", text: char });
+      index += char.length;
+    }
+  }
+  return units;
+}
+
 class Parser {
   private index = 0;
   private diagnostics: Diagnostic[];
@@ -275,7 +352,7 @@ class Parser {
   }
 
   private isLyricLineStart(): boolean {
-    if (this.at("string")) {
+    if (this.at("string") || this.at("autoString")) {
       return true;
     }
     const label = this.current().value ?? this.current().text;
@@ -289,9 +366,9 @@ class Parser {
       label = this.current().value ?? this.current().text;
       this.index += 2;
     }
-    const text = this.consume("string", "Expected quoted lyric text.");
+    const text = this.at("autoString") ? this.match("autoString") : this.consume("string", "Expected quoted lyric text.");
     const lyricText = text?.value ?? "";
-    const alignment = this.lyricAlignment(lyricText, text?.range ?? start);
+    const alignment = text?.type === "autoString" ? this.autoLyricAlignment(lyricText, text.range) : this.lyricAlignment(lyricText, text?.range ?? start);
     return {
       label,
       text: lyricText,
@@ -327,6 +404,19 @@ class Parser {
       }
       units.push({ kind: "syllable", text: token });
       hasPreviousSyllable = true;
+    }
+    return units;
+  }
+
+  private autoLyricAlignment(text: string, range: SourceRange): LyricLine["alignment"] {
+    const units = autoLyricSyllables(text);
+    let hasPreviousSyllable = false;
+    for (const unit of units) {
+      if (unit.kind === "merge" && !hasPreviousSyllable) {
+        this.error("Lyric merge placeholder '~' must follow a visible syllable.", range);
+      } else if (unit.kind === "syllable") {
+        hasPreviousSyllable = true;
+      }
     }
     return units;
   }

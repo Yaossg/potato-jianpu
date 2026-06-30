@@ -131,14 +131,14 @@ export. It accepts melodic Program names or numbers up to `174`, with
 default track volume. Track-level `Tn.program` and `Tn.volume` override those
 defaults rather than stacking on top of them.
 
-Lyric lines such as `L1: "text"` or a bare `"text"` line attach to the
-preceding score group for rendering only. They do not create arrangement tracks
-and do not affect playback, MIDI, WAV, or MP3 timing. Header entries such as
-`L1.name: "Verse"` or the shorthand `L1: "Verse"` only control rendered lyric
-line names. Whitespace-separated lyric syllables may be visually aligned to
-main-voice notes by the renderer. Lyric alignment placeholders such as `_` and
-`~` are also visual-only; neither syllable alignment nor placeholders are part
-of playback or export scheduling.
+Lyric lines such as `L1: "text"`, `L1: @"text"`, or a bare quoted lyric line
+attach to the preceding score group for rendering only. They do not create
+arrangement tracks and do not affect playback, MIDI, WAV, or MP3 timing. Header
+entries such as `L1.name: "Verse"` or the shorthand `L1: "Verse"` only control
+rendered lyric line names. Manual or automatically tokenized lyric syllables may
+be visually aligned to main-voice notes by the renderer. Lyric alignment
+placeholders such as `_` and `~` are also visual-only; neither syllable
+alignment nor placeholders are part of playback or export scheduling.
 
 Repeat barlines and repeated endings are expanded independently inside each
 arrangement track.

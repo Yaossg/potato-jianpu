@@ -58,32 +58,3 @@ Implementation should start from a shared arrangement model so playback and all
 exports follow the same measure order. Tests should cover plain D.C./D.S. flows,
 Fine termination, Coda jumps, interaction with repeated endings, and invalid
 navigation graphs.
-
-### Automatic Lyrics Tokenization
-
-Automatically tokenize lyrics into syllables for alignment with Jianpu notes.
-This should cover Chinese lyrics entered naturally without manual spaces, and
-English words that use hyphens to mark syllable boundaries, such as
-`sev-en` or `glo-ri-a`.
-
-Design work should define:
-
-- Whether Chinese text splits Han characters one-by-one, uses a smarter
-  word-segmentation approach, or exposes both modes.
-- How hyphenated English words split into aligned syllables while preserving
-  the rendered word form or expected lyric typography.
-- How mixed Chinese, hyphenated Latin text, numbers, punctuation, and
-  whitespace are tokenized in one lyric line.
-- How authors can opt out of automatic tokenization or force manual grouping
-  when multiple Chinese characters or hyphenated word parts should align to one
-  note.
-- How automatic tokenization interacts with lyric placeholders, merge syntax,
-  rests, and the current partial-alignment behavior.
-- Diagnostics or warnings for ambiguous mixed-script input only when they help
-  authors fix a rendered alignment problem.
-
-Implementation should keep tokenization deterministic and shared by parser,
-renderer, docs examples, and tests. Tests should cover pure Chinese lyrics,
-hyphenated English words, mixed Chinese/English lyrics, punctuation, manually
-grouped phrases, and cases where automatic tokens exceed available main-voice
-notes.

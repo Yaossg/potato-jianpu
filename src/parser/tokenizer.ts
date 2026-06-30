@@ -3,6 +3,7 @@ import type { Diagnostic, SourcePosition, SourceRange } from "../core/index.js";
 export type TokenType =
   | "identifier"
   | "string"
+  | "autoString"
   | "note"
   | "digit"
   | "rest"
@@ -101,6 +102,45 @@ export function tokenize(source: string): { tokens: Token[]; diagnostics: Diagno
       const end = rest.search(/\r|\n/);
       const comment = end === -1 ? rest : rest.slice(0, end);
       pos = advance(pos, comment);
+      continue;
+    }
+
+    if (char === "@" && rest[1] === "\"") {
+      const start = clonePosition(pos);
+      let i = 2;
+      let closed = false;
+      while (i < rest.length) {
+        const current = rest[i]!;
+        if (current === "\r" || current === "\n") {
+          break;
+        }
+        if (current === "\\") {
+          i += 2;
+          continue;
+        }
+        if (current === "\"") {
+          i += 1;
+          closed = true;
+          break;
+        }
+        i += 1;
+      }
+      const text = rest.slice(0, i);
+      pos = advance(pos, text);
+      if (closed) {
+        tokens.push({
+          type: "autoString",
+          text,
+          value: text.slice(2, -1),
+          range: rangeFrom(start, pos),
+        });
+      } else {
+        diagnostics.push({
+          severity: "error",
+          message: "Unterminated string literal.",
+          range: rangeFrom(start, pos),
+        });
+      }
       continue;
     }
 
