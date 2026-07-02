@@ -7,6 +7,8 @@ import {
   type HairpinKind,
   type Header,
   type Measure,
+  type NavigationAfterMark,
+  type NavigationBeforeMark,
   type Note,
   type Pitch,
   type PitchNote,
@@ -31,6 +33,11 @@ type EndingBlock = { endings: number[]; startIndex: number; endIndex: number };
 type ActiveHairpin = { kind: HairpinKind; range: SourceRange };
 type DynamicHairpinSpan = { kind: HairpinKind; start: Note; end: Note };
 type NotePrefixes = { velocity?: number; hairpinStart?: HairpinKind; hairpinEnd?: HairpinKind };
+type BracketMark =
+  | { kind: "ending"; endings: number[]; range: SourceRange }
+  | { kind: "navigationBefore"; mark: NavigationBeforeMark; range: SourceRange }
+  | { kind: "navigationAfter"; mark: NavigationAfterMark; range: SourceRange };
+type MeasurePrefix = { ending?: number[]; navigationBefore?: NavigationBeforeMark[] };
 
 function mergeRange(start: SourceRange, end: SourceRange): SourceRange {
   return { start: start.start, end: end.end };
@@ -153,6 +160,7 @@ class Parser {
     this.normalizeFinalEnding(score);
     this.validateTies(score);
     this.validateRepeatedEndings(score);
+    this.validateNavigation(score);
     this.validateMeasureDurations(score, header.timeSignature.beatsPerMeasure / header.timeSignature.beatsPerWholeNote);
 
     if (this.diagnostics.some((diagnostic) => diagnostic.severity === "error")) {
@@ -439,9 +447,11 @@ class Parser {
       this.match("bar");
     }
     const measures: Measure[] = [];
-    let currentEnding = this.parseOptionalEnding() ?? this.activeEndings.get(trackKey);
-    const firstMeasure = this.parseMeasure(trackKey, leadingRepeatStart, currentEnding);
+    let prefix = this.parseMeasurePrefix(this.activeEndings.get(trackKey));
+    let currentEnding = prefix.ending;
+    const firstMeasure = this.parseMeasure(trackKey, leadingRepeatStart, currentEnding, prefix.navigationBefore);
     if (firstMeasure) {
+      this.parseMeasureSuffix(firstMeasure);
       measures.push(firstMeasure);
     }
     while (true) {
@@ -456,10 +466,12 @@ class Parser {
         if (previous) {
           previous.repeatEnd = true;
         }
-        currentEnding = this.parseOptionalEnding();
+        prefix = this.parseMeasurePrefix(undefined);
+        currentEnding = prefix.ending;
         this.activeEndings.set(trackKey, currentEnding);
-        const measure = this.parseMeasure(trackKey, true, currentEnding);
+        const measure = this.parseMeasure(trackKey, true, currentEnding, prefix.navigationBefore);
         if (measure) {
+          this.parseMeasureSuffix(measure);
           measures.push(measure);
         }
         continue;
@@ -471,27 +483,33 @@ class Parser {
         if (this.at("newline") || this.at("eof")) {
           break;
         }
-        currentEnding = this.parseOptionalEnding() ?? currentEnding;
+        prefix = this.parseMeasurePrefix(currentEnding);
+        currentEnding = prefix.ending;
         this.activeEndings.set(trackKey, currentEnding);
-        const measure = this.parseMeasure(trackKey, false, currentEnding);
+        const measure = this.parseMeasure(trackKey, false, currentEnding, prefix.navigationBefore);
         if (measure) {
+          this.parseMeasureSuffix(measure);
           measures.push(measure);
         }
         continue;
       }
       if (this.match("repeatStart")) {
-        currentEnding = this.parseOptionalEnding() ?? currentEnding;
+        prefix = this.parseMeasurePrefix(currentEnding);
+        currentEnding = prefix.ending;
         this.activeEndings.set(trackKey, currentEnding);
-        const measure = this.parseMeasure(trackKey, true, currentEnding);
+        const measure = this.parseMeasure(trackKey, true, currentEnding, prefix.navigationBefore);
         if (measure) {
+          this.parseMeasureSuffix(measure);
           measures.push(measure);
         }
         continue;
       }
-      currentEnding = this.parseOptionalEnding() ?? currentEnding;
+      prefix = this.parseMeasurePrefix(currentEnding);
+      currentEnding = prefix.ending;
       this.activeEndings.set(trackKey, currentEnding);
-      const measure = this.parseMeasure(trackKey, false, currentEnding);
+      const measure = this.parseMeasure(trackKey, false, currentEnding, prefix.navigationBefore);
       if (measure) {
+        this.parseMeasureSuffix(measure);
         measures.push(measure);
       }
     }
@@ -503,7 +521,7 @@ class Parser {
     };
   }
 
-  private parseMeasure(trackKey: string, repeatStart = false, ending?: number[]): Measure | null {
+  private parseMeasure(trackKey: string, repeatStart = false, ending?: number[], navigationBefore?: NavigationBeforeMark[]): Measure | null {
     const start = this.current().range;
     const octavePrefix = this.parseOptionalMeasureOctave();
     const notes: Note[] = [];
@@ -532,29 +550,92 @@ class Parser {
       return null;
     }
     const end = notes.at(-1)?.range ?? start;
-    return { notes, range: mergeRange(start, end), repeatStart, ending };
+    return { notes, range: mergeRange(start, end), repeatStart, ending, navigationBefore };
   }
 
-  private parseOptionalEnding(): number[] | undefined {
-    if (!this.match("lbracket")) {
-      return undefined;
-    }
-    const numbers: number[] = [];
-    const number = this.consume("note", "Expected ending number after '['.");
-    if (number) {
-      numbers.push(Number(number.value ?? number.text));
-    }
-    while (this.match("lower")) {
-      const nextNumber = this.consume("note", "Expected ending number after ','.");
-      if (nextNumber) {
-        numbers.push(Number(nextNumber.value ?? nextNumber.text));
+  private parseMeasurePrefix(inheritedEnding: number[] | undefined): MeasurePrefix {
+    let ending = inheritedEnding;
+    const navigationBefore: NavigationBeforeMark[] = [];
+    while (this.at("lbracket")) {
+      const mark = this.parseBracketMark();
+      if (!mark) {
+        continue;
+      }
+      switch (mark.kind) {
+        case "ending":
+          ending = mark.endings;
+          break;
+        case "navigationBefore":
+          navigationBefore.push(mark.mark);
+          break;
+        case "navigationAfter":
+          this.error(`Navigation instruction ${this.formatNavigationAfter(mark.mark)} must appear after a measure.`, mark.range);
+          break;
       }
     }
-    this.consume("rbracket", "Expected ']' after ending number.");
-    if (numbers.length === 0) {
-      return undefined;
+    return { ending, navigationBefore: navigationBefore.length > 0 ? navigationBefore : undefined };
+  }
+
+  private parseMeasureSuffix(measure: Measure) {
+    const navigationAfter: NavigationAfterMark[] = [];
+    while (this.at("lbracket")) {
+      const mark = this.parseBracketMark();
+      if (!mark) {
+        continue;
+      }
+      switch (mark.kind) {
+        case "navigationAfter":
+          navigationAfter.push(mark.mark);
+          break;
+        case "navigationBefore":
+          this.error(`Navigation target ${this.formatNavigationBefore(mark.mark)} must appear before a measure.`, mark.range);
+          break;
+        case "ending":
+          this.error("Ending markers such as [1] must appear before a measure.", mark.range);
+          break;
+      }
     }
-    return numbers;
+    if (navigationAfter.length > 0) {
+      measure.navigationAfter = navigationAfter;
+    }
+  }
+
+  private parseBracketMark(): BracketMark | null {
+    if (!this.match("lbracket")) {
+      return null;
+    }
+    const start = this.previous().range;
+    const parts: string[] = [];
+    while (!this.at("rbracket") && !this.at("newline") && !this.at("eof")) {
+      parts.push(this.current().text);
+      this.index += 1;
+    }
+    const end = this.consume("rbracket", "Expected ']' after bracket marker.")?.range ?? this.previous().range;
+    const range = mergeRange(start, end);
+    const text = parts.join("");
+    if (/^[1-7](,[1-7])*$/.test(text)) {
+      return { kind: "ending", endings: text.split(",").map(Number), range };
+    }
+    const normalized = text.replace(/\s+/g, "").toLowerCase();
+    switch (normalized) {
+      case "segno":
+        return { kind: "navigationBefore", mark: "segno", range };
+      case "coda":
+        return { kind: "navigationBefore", mark: "coda", range };
+      case "fine":
+        return { kind: "navigationAfter", mark: "fine", range };
+      case "d.c.":
+      case "dc":
+        return { kind: "navigationAfter", mark: "dc", range };
+      case "d.s.":
+      case "ds":
+        return { kind: "navigationAfter", mark: "ds", range };
+      case "tocoda":
+        return { kind: "navigationAfter", mark: "toCoda", range };
+      default:
+        this.error(`Unknown bracket marker [${text}].`, range);
+        return null;
+    }
   }
 
   private parseOptionalMeasureOctave(): number {
@@ -1065,6 +1146,28 @@ class Parser {
     return `[${endings.join(",")}]`;
   }
 
+  private formatNavigationBefore(mark: NavigationBeforeMark): string {
+    switch (mark) {
+      case "segno":
+        return "[Segno]";
+      case "coda":
+        return "[Coda]";
+    }
+  }
+
+  private formatNavigationAfter(mark: NavigationAfterMark): string {
+    switch (mark) {
+      case "dc":
+        return "[D.C.]";
+      case "ds":
+        return "[D.S.]";
+      case "toCoda":
+        return "[To Coda]";
+      case "fine":
+        return "[Fine]";
+    }
+  }
+
   private sameEnding(left: number[] | undefined, right: number[] | undefined): boolean {
     if (left === undefined || right === undefined) {
       return left === right;
@@ -1107,6 +1210,87 @@ class Parser {
   private validateRepeatedEndings(lines: ScoreLine[]) {
     for (const trackLines of this.trackLineGroups(lines)) {
       this.validateTrackRepeatedEndings(trackLines);
+    }
+  }
+
+  private validateNavigation(lines: ScoreLine[]) {
+    const primaryLines = this.primaryNavigationLines(lines);
+    const primaryMeasures = primaryLines.flatMap((line) => line.measures);
+    this.validatePrimaryNavigation(primaryMeasures);
+
+    const primaryLineSet = new Set(primaryLines);
+    for (const line of lines) {
+      if (primaryLineSet.has(line)) {
+        continue;
+      }
+      for (const measure of line.measures) {
+        if ((measure.navigationBefore?.length ?? 0) > 0 || (measure.navigationAfter?.length ?? 0) > 0) {
+          this.warning("Navigation marks on non-primary tracks are visual only; playback and export follow T1 navigation.", measure.range);
+        }
+      }
+    }
+  }
+
+  private primaryNavigationLines(lines: ScoreLine[]): ScoreLine[] {
+    if (!lines.some((line) => line.label !== undefined)) {
+      return lines;
+    }
+    return lines.filter((line) => line.label === undefined || line.label === "T1");
+  }
+
+  private validatePrimaryNavigation(measures: Measure[]) {
+    const targets = new Map<NavigationBeforeMark, Measure[]>();
+    const jumps = new Map<NavigationAfterMark, Measure[]>();
+    for (const measure of measures) {
+      for (const mark of measure.navigationBefore ?? []) {
+        targets.set(mark, [...(targets.get(mark) ?? []), measure]);
+      }
+      for (const mark of measure.navigationAfter ?? []) {
+        jumps.set(mark, [...(jumps.get(mark) ?? []), measure]);
+      }
+    }
+
+    for (const mark of ["segno", "coda"] as const) {
+      const marked = targets.get(mark) ?? [];
+      if (marked.length > 1) {
+        this.error(`Navigation target ${this.formatNavigationBefore(mark)} appears more than once.`, marked[1]!.range);
+      }
+    }
+
+    const fine = jumps.get("fine") ?? [];
+    if (fine.length > 1) {
+      this.error("Navigation target [Fine] appears more than once.", fine[1]!.range);
+    }
+
+    const dcOrDs = [...(jumps.get("dc") ?? []), ...(jumps.get("ds") ?? [])];
+    if (dcOrDs.length > 1) {
+      this.error("Only one [D.C.] or [D.S.] navigation jump is supported.", dcOrDs[1]!.range);
+    }
+
+    const toCoda = jumps.get("toCoda") ?? [];
+    if (toCoda.length > 1) {
+      this.error("Only one [To Coda] navigation jump is supported.", toCoda[1]!.range);
+    }
+    if ((jumps.get("ds")?.length ?? 0) > 0 && (targets.get("segno")?.length ?? 0) === 0) {
+      this.error("[D.S.] needs a [Segno] target.", jumps.get("ds")![0]!.range);
+    }
+    if (toCoda.length > 0 && (targets.get("coda")?.length ?? 0) === 0) {
+      this.error("[To Coda] needs a [Coda] target.", toCoda[0]!.range);
+    }
+    if (toCoda.length > 0 && dcOrDs.length === 0) {
+      this.error("[To Coda] needs a [D.C.] or [D.S.] jump.", toCoda[0]!.range);
+    }
+
+    const dsMeasure = jumps.get("ds")?.[0];
+    const segnoMeasure = targets.get("segno")?.[0];
+    if (dsMeasure && segnoMeasure && measures.indexOf(segnoMeasure) > measures.indexOf(dsMeasure)) {
+      this.error("[D.S.] would jump forward to [Segno]; move [Segno] before [D.S.].", dsMeasure.range);
+    }
+
+    const toCodaMeasure = toCoda[0];
+    const codaMeasure = targets.get("coda")?.[0];
+    if (toCodaMeasure && codaMeasure && measures.indexOf(codaMeasure) <= measures.indexOf(toCodaMeasure)) {
+      this.error("[To Coda] would jump backward to [Coda]; move [Coda] after [To Coda].", toCodaMeasure.range);
     }
   }
 

@@ -54,6 +54,10 @@ function paddingUpOf(note: Note, tieAfter: boolean, hasEnding: boolean): number 
   return height;
 }
 
+function navigationPaddingUp(measure: Measure): number {
+  return (measure.navigationBefore?.length ?? 0) > 0 || (measure.navigationAfter?.length ?? 0) > 0 ? DIMENSIONS.navigationHeight : 0;
+}
+
 function paddingDownOf(note: Note): number {
   let height = note.duration.halves * DIMENSIONS.underlineSpacing;
   if (note.kind === "pitch") {
@@ -83,7 +87,9 @@ function layoutMeasure(
       : DIMENSIONS.repeatLeadingPadding
     : 0;
   const leftPadding = DIMENSIONS.leftPadding + repeatStartPadding + (repeatStartAfterEnd ? DIMENSIONS.repeatBothRightPadding : 0) + extraLeftPadding;
-  const rightPadding = (measure.repeatEnd && !repeatEndBeforeStart ? DIMENSIONS.repeatEndRightPadding : 0) + extraRightPadding;
+  const rightPadding =
+    (measure.repeatEnd && !repeatEndBeforeStart ? DIMENSIONS.repeatEndRightPadding : 0) +
+    extraRightPadding;
   let totalWidth = 0;
   let paddingUp = 0;
   let paddingDown = 0;
@@ -94,7 +100,10 @@ function layoutMeasure(
       Array.from({ length: note.duration.dashes }, (_, index) => totalWidth + DIMENSIONS.dashSpacing * (index + 1)),
     );
     totalWidth += Math.max(widthOf(note), constraints?.minAdvanceByNote?.get(note) ?? 0);
-    paddingUp = Math.max(paddingUp, paddingUpOf(note, noteTieAfter(note, allNotes), note === measure.notes[0] && measure.ending !== undefined));
+    paddingUp = Math.max(
+      paddingUp,
+      paddingUpOf(note, noteTieAfter(note, allNotes), note === measure.notes[0] && measure.ending !== undefined) + navigationPaddingUp(measure),
+    );
     paddingDown = Math.max(paddingDown, paddingDownOf(note));
   }
 

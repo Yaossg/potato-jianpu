@@ -3,10 +3,10 @@ title: Repeats
 description: Write repeat barlines and repeated endings for playback and export.
 docId: syntax-repeats
 sectionIds:
-  - repeat-support
   - repeat-barlines
   - adjacent-repeats
   - repeated-endings
+  - navigation-marks
   - diagnostics
 ---
 
@@ -14,16 +14,6 @@ import JianpuExample from '../../../components/JianpuExample.astro';
 import JianpuSource from '../../../components/JianpuSource.astro';
 import RelatedLinks from '../../../components/RelatedLinks.astro';
 import ScorePreview from '../../../components/ScorePreview.astro';
-import SupportMatrix from '../../../components/SupportMatrix.astro';
-
-<SupportMatrix
-  title="Repeat Support"
-  features={[
-    { feature: 'Repeat barlines', parser: true, image: true, playback: true, export: true, cli: true },
-    { feature: 'Adjacent repeats', parser: true, image: true, playback: true, export: true, cli: true },
-    { feature: 'Repeated endings', parser: true, image: true, playback: true, export: true, cli: true },
-  ]}
-/>
 
 ## Repeat Barlines
 
@@ -109,6 +99,39 @@ Ending pass lists can also be non-contiguous.
 
 Every repeated-ending group must include an explicit final ending. When more measures follow a final ending marker, only the first measure after that marker is treated as part of the ending.
 
+## Navigation Marks
+
+Use `[Segno]` and `[Coda]` before a measure. Use `[Fine]`, `[D.C.]`, `[D.S.]`, and `[To Coda]` after a measure.
+
+<JianpuSource
+  title="D.C. al Fine source"
+  source={`time: 4/4
+===
+1 - - - [Fine] | 2 - - - [D.C.]`}
+/>
+
+<ScorePreview source={`time: 4/4
+===
+1 - - - [Fine] | 2 - - - [D.C.]`} />
+
+`[D.C.]` jumps once to the beginning. `[D.S.]` jumps once to `[Segno]`. After that jump, `[Fine]` stops playback and export.
+
+<JianpuSource
+  title="D.S. with coda source"
+  source={`time: 4/4
+===
+[Segno] 1 - - - | 2 - - - [To Coda] | 3 - - - [D.S.] | [Coda] 5 - - -`}
+/>
+
+<ScorePreview
+  title="D.S. with coda"
+  source={`time: 4/4
+===
+[Segno] 1 - - - | 2 - - - [To Coda] | 3 - - - [D.S.] | [Coda] 5 - - -`}
+/>
+
+Navigation marks are controlled by the primary timeline. In labeled scores, `T1` controls playback and export navigation; marks written on other tracks are rendered but produce a warning.
+
 ## Diagnostics
 
 <JianpuExample
@@ -123,6 +146,20 @@ Every repeated-ending group must include an explicit final ending. When more mea
   status="invalid"
   description="Ending numbers must cover the pass order without skipping required earlier passes."
   source={`|: 1 2 3 4 | [1] 5 - 5 - :| [3] 1 - - -`}
+/>
+
+<JianpuExample
+  title="Missing Segno"
+  status="invalid"
+  description="D.S. navigation needs one Segno target."
+  source={`1 2 3 4 [D.S.]`}
+/>
+
+<JianpuExample
+  title="Missing Coda"
+  status="invalid"
+  description="To Coda navigation needs one later Coda target."
+  source={`[Segno] 1 2 3 4 [To Coda] | 5 6 7 1' [D.S.]`}
 />
 
 Repeated-ending validation is scoped to each repeat section and to each labeled track. Non-final endings return with `:|`; the explicit final ending closes the group without a repeat end.

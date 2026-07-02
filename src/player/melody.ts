@@ -188,11 +188,69 @@ function expandRepeatedMeasures(measures: Measure[]): Measure[] {
   return expanded;
 }
 
-function compileMeasures(document: Document, measures: Measure[], program: number): Melody {
+function hasNavigationAfter(measure: Measure, mark: NonNullable<Measure["navigationAfter"]>[number]): boolean {
+  return measure.navigationAfter?.includes(mark) === true;
+}
+
+function hasNavigationBefore(measure: Measure, mark: NonNullable<Measure["navigationBefore"]>[number]): boolean {
+  return measure.navigationBefore?.includes(mark) === true;
+}
+
+function navigationAfterIndex(measures: Measure[], marks: Array<NonNullable<Measure["navigationAfter"]>[number]>): number {
+  return measures.findIndex((measure) => marks.some((mark) => hasNavigationAfter(measure, mark)));
+}
+
+function navigationBeforeIndex(measures: Measure[], mark: NonNullable<Measure["navigationBefore"]>[number]): number {
+  return measures.findIndex((measure) => hasNavigationBefore(measure, mark));
+}
+
+function expandNavigationMeasures(measures: Measure[]): Measure[] {
+  const jumpIndex = navigationAfterIndex(measures, ["dc", "ds"]);
+  if (jumpIndex < 0) {
+    return measures;
+  }
+
+  const jumpMeasure = measures[jumpIndex]!;
+  const targetIndex = hasNavigationAfter(jumpMeasure, "ds") ? navigationBeforeIndex(measures, "segno") : 0;
+  const codaIndex = navigationBeforeIndex(measures, "coda");
+  const expanded: Measure[] = [];
+  let jumped = false;
+  let codaJumped = false;
+  let index = 0;
+
+  while (index < measures.length) {
+    const measure = measures[index]!;
+    expanded.push(measure);
+
+    if (jumped && hasNavigationAfter(measure, "fine")) {
+      break;
+    }
+
+    if (jumped && !codaJumped && hasNavigationAfter(measure, "toCoda") && codaIndex >= 0) {
+      codaJumped = true;
+      index = codaIndex;
+      continue;
+    }
+
+    if (!jumped && index === jumpIndex && targetIndex >= 0) {
+      jumped = true;
+      index = targetIndex;
+      continue;
+    }
+
+    index += 1;
+  }
+
+  return expanded;
+}
+
+function compileMeasures(document: Document, measures: Measure[], program: number, options: { navigation?: boolean } = {}): Melody {
   const baseNoteMap = C_MAJOR_NOTE_MAP.map((note) => note + document.header.keySignature);
   const notes: MelodyNote[] = [];
   const sourceNotes: Note[] = [];
-  for (const measure of expandRepeatedMeasures(measures)) {
+  const repeatedMeasures = expandRepeatedMeasures(measures);
+  const playbackMeasures = options.navigation === false ? repeatedMeasures : expandNavigationMeasures(repeatedMeasures);
+  for (const measure of playbackMeasures) {
     compileMeasure(measure, baseNoteMap, program, notes, sourceNotes);
   }
   applyHairpinVelocities(notes, sourceNotes);
@@ -264,6 +322,65 @@ function arrangementLineGroups(lines: ScoreLine[]): ScoreLine[][] {
   return groups;
 }
 
+function primaryLineInGroup(group: ScoreLine[]): ScoreLine | undefined {
+  return group.find((line) => line.label === undefined || line.label === "T1") ?? group[0];
+}
+
+function groupHasNavigationAfter(group: ScoreLine[], mark: NonNullable<Measure["navigationAfter"]>[number]): boolean {
+  return primaryLineInGroup(group)?.measures.some((measure) => hasNavigationAfter(measure, mark)) === true;
+}
+
+function groupHasNavigationBefore(group: ScoreLine[], mark: NonNullable<Measure["navigationBefore"]>[number]): boolean {
+  return primaryLineInGroup(group)?.measures.some((measure) => hasNavigationBefore(measure, mark)) === true;
+}
+
+function navigationAfterGroupIndex(groups: ScoreLine[][], marks: Array<NonNullable<Measure["navigationAfter"]>[number]>): number {
+  return groups.findIndex((group) => marks.some((mark) => groupHasNavigationAfter(group, mark)));
+}
+
+function navigationBeforeGroupIndex(groups: ScoreLine[][], mark: NonNullable<Measure["navigationBefore"]>[number]): number {
+  return groups.findIndex((group) => groupHasNavigationBefore(group, mark));
+}
+
+function expandNavigationGroups(groups: ScoreLine[][]): ScoreLine[][] {
+  const jumpIndex = navigationAfterGroupIndex(groups, ["dc", "ds"]);
+  if (jumpIndex < 0) {
+    return groups;
+  }
+
+  const targetIndex = groupHasNavigationAfter(groups[jumpIndex]!, "ds") ? navigationBeforeGroupIndex(groups, "segno") : 0;
+  const codaIndex = navigationBeforeGroupIndex(groups, "coda");
+  const expanded: ScoreLine[][] = [];
+  let jumped = false;
+  let codaJumped = false;
+  let index = 0;
+
+  while (index < groups.length) {
+    const group = groups[index]!;
+    expanded.push(group);
+
+    if (jumped && groupHasNavigationAfter(group, "fine")) {
+      break;
+    }
+
+    if (jumped && !codaJumped && groupHasNavigationAfter(group, "toCoda") && codaIndex >= 0) {
+      codaJumped = true;
+      index = codaIndex;
+      continue;
+    }
+
+    if (!jumped && index === jumpIndex && targetIndex >= 0) {
+      jumped = true;
+      index = targetIndex;
+      continue;
+    }
+
+    index += 1;
+  }
+
+  return expanded;
+}
+
 interface ArrangementSegment {
   name: string;
   measures: Measure[];
@@ -288,12 +405,15 @@ export function compileArrangement(document: Document, program = 0): Arrangement
   const trackMeasures = new Map<string, Measure[]>();
   const segments: ArrangementSegment[] = [];
   let groupStart = 0;
-  for (const group of arrangementLineGroups(document.score)) {
+  for (const group of expandNavigationGroups(arrangementLineGroups(document.score))) {
     const lines = group.map((line) => ({
       name: line.label ?? "",
       measures: line.measures,
     }));
-    const groupDuration = Math.max(0, ...lines.map((line) => noteDuration(compileMeasures(document, line.measures, programForTrack(document, line.name, defaultProgram)).notes)));
+    const groupDuration = Math.max(
+      0,
+      ...lines.map((line) => noteDuration(compileMeasures(document, line.measures, programForTrack(document, line.name, defaultProgram), { navigation: false }).notes)),
+    );
     for (const line of lines) {
       segments.push({ ...line, start: groupStart });
     }
@@ -303,7 +423,7 @@ export function compileArrangement(document: Document, program = 0): Arrangement
   for (const segment of segments) {
     const measures = trackMeasures.get(segment.name) ?? [];
     const trackProgram = programForTrack(document, segment.name, defaultProgram);
-    const gap = segment.start - noteDuration(compileMeasures(document, measures, trackProgram).notes);
+    const gap = segment.start - noteDuration(compileMeasures(document, measures, trackProgram, { navigation: false }).notes);
     const firstMeasure = segment.measures[0];
     if (gap > 1e-9 && firstMeasure) {
       measures.push(restMeasure(gap, firstMeasure.range));
@@ -317,7 +437,7 @@ export function compileArrangement(document: Document, program = 0): Arrangement
       name,
       program: programForTrack(document, name, defaultProgram),
       volume: volumeForTrack(document, name),
-      notes: compileMeasures(document, measures, programForTrack(document, name, defaultProgram)).notes,
+      notes: compileMeasures(document, measures, programForTrack(document, name, defaultProgram), { navigation: false }).notes,
       ...base,
     })),
     ...base,

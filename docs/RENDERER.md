@@ -227,6 +227,8 @@ Renderer dimensions are centralized in the `DIMENSIONS` object:
 | `hairpinTopGap` | `16` | Gap between hairpins and the note row |
 | `hairpinTransitionGap` | `6` | Horizontal gap between opposite hairpins that meet on one note |
 | `hairpinVelocityClearance` | `8` | Extra upward offset when hairpins share a note with dynamic text |
+| `navigationHeight` | `20` | Vertical space reserved for the navigation mark lane |
+| `navigationTopOffset` | `10` | Vertical offset for navigation mark text |
 
 These constants are not yet exposed as a public theme API.
 
@@ -427,6 +429,19 @@ Bars are SVG line primitives, not music-font glyphs.
 
 The final bar is determined by object identity against the final measure in the
 document.
+
+### Navigation Marks
+
+Navigation target marks `[Segno]` and `[Coda]` render as the standard music
+symbols above the start of their measure. After-measure marks `[Fine]`,
+`[D.C.]`, `[D.S.]`, and `[To Coda]` render as italic text above the owning
+measure's end barline.
+The renderer shows the written score only; it does not visually expand the
+playback/export navigation order.
+
+Navigation marks render in a fixed lane at the top of the reserved vertical
+space so they do not collide with note rows, repeat brackets, dynamics, or
+hairpins.
 
 ### Ties
 

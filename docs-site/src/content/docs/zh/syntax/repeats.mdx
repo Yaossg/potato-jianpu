@@ -3,10 +3,10 @@ title: 反复
 description: 为播放和导出书写反复小节线与反复结尾。
 docId: syntax-repeats
 sectionIds:
-  - repeat-support
   - repeat-barlines
   - adjacent-repeats
   - repeated-endings
+  - navigation-marks
   - diagnostics
 ---
 
@@ -14,16 +14,6 @@ import JianpuExample from '../../../../components/JianpuExample.astro';
 import JianpuSource from '../../../../components/JianpuSource.astro';
 import RelatedLinks from '../../../../components/RelatedLinks.astro';
 import ScorePreview from '../../../../components/ScorePreview.astro';
-import SupportMatrix from '../../../../components/SupportMatrix.astro';
-
-<SupportMatrix
-  title="反复支持"
-  features={[
-    { feature: '反复小节线', parser: true, image: true, playback: true, export: true, cli: true },
-    { feature: '相邻反复', parser: true, image: true, playback: true, export: true, cli: true },
-    { feature: '反复结尾', parser: true, image: true, playback: true, export: true, cli: true },
-  ]}
-/>
 
 ## 反复小节线
 
@@ -107,6 +97,39 @@ import SupportMatrix from '../../../../components/SupportMatrix.astro';
 |: 1 2 3 4 | [1,3] 5 - 5 - :| [2] 3 - 3 - :| [4] 1 - - -`}
 />
 
+## 导航标记
+
+在小节前使用 `[Segno]` 和 `[Coda]`。在小节后使用 `[Fine]`、`[D.C.]`、`[D.S.]` 和 `[To Coda]`。
+
+<JianpuSource
+  title="D.C. 到 Fine 源码"
+  source={`time: 4/4
+===
+1 - - - [Fine] | 2 - - - [D.C.]`}
+/>
+
+<ScorePreview source={`time: 4/4
+===
+1 - - - [Fine] | 2 - - - [D.C.]`} />
+
+`[D.C.]` 会跳回开头一次。`[D.S.]` 会跳回 `[Segno]` 一次。发生跳转后，遇到 `[Fine]` 会停止播放和导出。
+
+<JianpuSource
+  title="带 Coda 的 D.S. 源码"
+  source={`time: 4/4
+===
+[Segno] 1 - - - | 2 - - - [To Coda] | 3 - - - [D.S.] | [Coda] 5 - - -`}
+/>
+
+<ScorePreview
+  title="带 Coda 的 D.S."
+  source={`time: 4/4
+===
+[Segno] 1 - - - | 2 - - - [To Coda] | 3 - - - [D.S.] | [Coda] 5 - - -`}
+/>
+
+导航标记由主时间线控制。在带标签的谱面中，`T1` 控制播放和导出导航；写在其他轨道上的标记会渲染出来，但会产生警告。
+
 ## 诊断
 
 每组反复结尾都必须明确写出最终结尾。当最终结尾标记后还有更多小节时，只有标记后的第一个小节会被视为该结尾的一部分。
@@ -126,6 +149,20 @@ import SupportMatrix from '../../../../components/SupportMatrix.astro';
 />
 
 反复结尾校验会按每个反复段落、每个带标签轨道分别进行。非最终结尾用 `:|` 返回；明确的最终结尾不用反复结束记号。
+
+<JianpuExample
+  title="缺少 Segno"
+  status="invalid"
+  description="D.S. 导航需要一个 Segno 目标。"
+  source={`1 2 3 4 [D.S.]`}
+/>
+
+<JianpuExample
+  title="缺少 Coda"
+  status="invalid"
+  description="To Coda 导航需要一个后续 Coda 目标。"
+  source={`[Segno] 1 2 3 4 [To Coda] | 5 6 7 1' [D.S.]`}
+/>
 
 <RelatedLinks
   title="相关页面"

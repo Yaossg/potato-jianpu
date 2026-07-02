@@ -81,12 +81,17 @@ export interface DrumNote extends BaseNote {
 
 export type Note = PitchNote | RestNote | DrumNote;
 
+export type NavigationBeforeMark = "segno" | "coda";
+export type NavigationAfterMark = "dc" | "ds" | "toCoda" | "fine";
+
 export interface Measure {
   notes: Note[];
   range: SourceRange;
   repeatStart?: boolean;
   repeatEnd?: boolean;
   ending?: number[];
+  navigationBefore?: NavigationBeforeMark[];
+  navigationAfter?: NavigationAfterMark[];
 }
 
 export type LyricAlignmentUnit =

@@ -12,8 +12,16 @@ import {
 } from "../core/index.js";
 import { DIMENSIONS } from "./dimensions.js";
 import { labelOffsetForTexts, lyricLineDisplayLabel, scoreLineDisplayLabel } from "./labels.js";
-import { flattenNotes, layoutLine, lineWidth, measureXOffset, type LineLayout, type LineLayoutConstraints, type MeasureLayout } from "./layout.js";
-import { chordHeight, maxAccidentalOffset, widthOf } from "./metrics.js";
+import {
+  flattenNotes,
+  layoutLine,
+  lineWidth,
+  measureXOffset,
+  type LineLayout,
+  type LineLayoutConstraints,
+  type MeasureLayout,
+} from "./layout.js";
+import { chordHeight, maxAccidentalOffset } from "./metrics.js";
 import type { JustifyMode } from "./options.js";
 import { escapeXml } from "./xml.js";
 
@@ -256,6 +264,62 @@ function renderEnding(ending: number[], startX: number, endX: number, noteY: num
   ].join("");
 }
 
+interface NavigationBeforeDisplay {
+  text: string;
+  className: string;
+  advance: number;
+  yOffset?: number;
+}
+
+function navigationBeforeDisplay(mark: NonNullable<Measure["navigationBefore"]>[number]): NavigationBeforeDisplay {
+  switch (mark) {
+    case "segno":
+      return { text: "&#119051;", className: "navigation-symbol", advance: 24 };
+    case "coda":
+      return { text: "&#119052;", className: "navigation-symbol navigation-coda-symbol", advance: 24, yOffset: 8 };
+  }
+}
+
+function navigationAfterLabel(mark: NonNullable<Measure["navigationAfter"]>[number]): string {
+  switch (mark) {
+    case "dc":
+      return "D.C.";
+    case "ds":
+      return "D.S.";
+    case "toCoda":
+      return "To Coda";
+    case "fine":
+      return "Fine";
+  }
+}
+
+function navigationLaneY(lineTopY: number): number {
+  return lineTopY + DIMENSIONS.navigationHeight - DIMENSIONS.navigationTopOffset;
+}
+
+function renderNavigationBefore(marks: NonNullable<Measure["navigationBefore"]>, x: number, lineTopY: number): string {
+  const y = navigationLaneY(lineTopY);
+  let cursor = x;
+  return marks
+    .map((mark) => {
+      const display = navigationBeforeDisplay(mark);
+      const text = `<text class="navigation-target ${display.className}" x="${cursor}" y="${y + (display.yOffset ?? 0)}" text-anchor="start">${display.text}</text>`;
+      cursor += display.advance;
+      return text;
+    })
+    .join("");
+}
+
+function renderNavigationAfter(marks: NonNullable<Measure["navigationAfter"]>, x: number, lineTopY: number): string {
+  const y = navigationLaneY(lineTopY);
+  return `<text class="navigation-instruction" x="${x}" y="${y}" text-anchor="middle">${marks.map(navigationAfterLabel).join(", ")}</text>`;
+}
+
+function renderFine(x: number, lineTopY: number): string {
+  const y = navigationLaneY(lineTopY);
+  return `<text class="navigation-target navigation-target-text" x="${x}" y="${y}" text-anchor="middle">Fine</text>`;
+}
+
 function measureFullness(measure: Measure, unit: number): boolean[] {
   let duration = 0;
   return measure.notes.map((note) => {
@@ -375,6 +439,19 @@ function renderLine(
     const previousMeasure = layout.measures[measureIndex - 1]?.measure;
     const nextMeasure = layout.measures[measureIndex + 1]?.measure;
     const naturalBarX = xOffset + measureLayout.width - measureLayout.rightPadding - DIMENSIONS.repeatRightPadding + 12;
+    const navigationBefore = measureLayout.measure.navigationBefore ?? [];
+    if (navigationBefore.length > 0) {
+      const navigationX = xOffset + measureLayout.leftPadding - DIMENSIONS.leftPadding / 2;
+      parts.push(renderNavigationBefore(navigationBefore, contentOffset + justifyX(navigationX), lineY));
+    }
+    const navigationAfter = measureLayout.measure.navigationAfter ?? [];
+    if (navigationAfter.includes("fine")) {
+      parts.push(renderFine(contentOffset + justifyX(naturalBarX), lineY));
+    }
+    const navigationInstructions = navigationAfter.filter((mark) => mark !== "fine");
+    if (navigationInstructions.length > 0) {
+      parts.push(renderNavigationAfter(navigationInstructions, contentOffset + justifyX(naturalBarX), lineY));
+    }
     if (measureLayout.measure.ending !== undefined && !sameEnding(previousMeasure?.ending, measureLayout.measure.ending)) {
       let endingEndMeasureIndex = measureIndex;
       while (sameEnding(layout.measures[endingEndMeasureIndex + 1]?.measure.ending, measureLayout.measure.ending)) {
@@ -725,7 +802,7 @@ function alignMeasureLayoutsByBeat(measureLayouts: MeasureLayout[], positionsByM
         continue;
       }
 
-      for (const [noteIndex, note] of layout.measure.notes.entries()) {
+      for (const [noteIndex] of layout.measure.notes.entries()) {
         const noteStart = positions.noteStarts[noteIndex]!;
         if (noteStart >= beatStart - 1e-9 && noteStart < beatEnd - 1e-9) {
           setTimelineWidth(widthsByRelativeStart, noteStart - beatStart, rhythmicSlotWidth(layout, noteIndex));
@@ -778,7 +855,7 @@ function alignMeasureLayouts(measureLayouts: MeasureLayout[], unit: number): Mea
 
   for (const [layoutIndex, layout] of measureLayouts.entries()) {
     const positions = positionsByMeasure[layoutIndex]!;
-    for (const [noteIndex, note] of layout.measure.notes.entries()) {
+    for (const [noteIndex] of layout.measure.notes.entries()) {
       setTimelineWidth(widthsByStart, positions.noteStarts[noteIndex]!, rhythmicSlotWidth(layout, noteIndex));
       for (const dashStart of positions.dashStarts[noteIndex]!) {
         setTimelineWidth(widthsByStart, dashStart, DIMENSIONS.dashSpacing);

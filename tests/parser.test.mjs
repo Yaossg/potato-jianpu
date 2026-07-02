@@ -102,6 +102,69 @@ test("parses non-contiguous passes in one repeated ending", () => {
   assert.deepEqual(result.value.score[0].measures[3].ending, [4]);
 });
 
+test("parses navigation marks before and after measures", () => {
+  const result = parse("[Segno] 1 | 2 [Fine] [To Coda] | 3 [D.S.] | [Coda] 4 [D.C.]");
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.diagnostics.map((diagnostic) => diagnostic.message).filter((message) => message.includes("Only one [D.C.]")), [
+    "Only one [D.C.] or [D.S.] navigation jump is supported.",
+  ]);
+
+  const valid = parse("[Segno] 1 | 2 [Fine] [To Coda] | 3 [D.S.] | [Coda] 4");
+  assert.equal(valid.ok, true);
+  assert.deepEqual(valid.value.score[0].measures[0].navigationBefore, ["segno"]);
+  assert.deepEqual(valid.value.score[0].measures[1].navigationAfter, ["fine", "toCoda"]);
+  assert.deepEqual(valid.value.score[0].measures[2].navigationAfter, ["ds"]);
+  assert.deepEqual(valid.value.score[0].measures[3].navigationBefore, ["coda"]);
+});
+
+test("keeps repeated ending markers distinct from navigation brackets", () => {
+  const result = parse("|: 1 | [1] 2 :| [2] 3 [Fine] [D.C.]");
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.value.score[0].measures[1].ending, [1]);
+  assert.deepEqual(result.value.score[0].measures[2].ending, [2]);
+  assert.deepEqual(result.value.score[0].measures[2].navigationAfter, ["fine", "dc"]);
+});
+
+test("rejects navigation marks in the wrong measure position", () => {
+  const prefixInstruction = parse("[D.C.] 1");
+  assert.equal(prefixInstruction.ok, false);
+  assert.match(prefixInstruction.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /must appear after a measure/);
+
+  const prefixFine = parse("[Fine] 1");
+  assert.equal(prefixFine.ok, false);
+  assert.match(prefixFine.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /must appear after a measure/);
+
+  const suffixTarget = parse("1 [Segno]");
+  assert.equal(suffixTarget.ok, false);
+  assert.match(suffixTarget.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /must appear before a measure/);
+
+  const suffixEnding = parse("1 [1]");
+  assert.equal(suffixEnding.ok, false);
+  assert.match(suffixEnding.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Ending markers such as \[1\] must appear before a measure/);
+});
+
+test("rejects invalid navigation graphs", () => {
+  const duplicateFine = parse("1 [Fine] | 2 [Fine]");
+  assert.equal(duplicateFine.ok, false);
+  assert.match(duplicateFine.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /\[Fine\] appears more than once/);
+
+  const missingSegno = parse("1 [D.S.]");
+  assert.equal(missingSegno.ok, false);
+  assert.match(missingSegno.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /\[D\.S\.\] needs a \[Segno\] target/);
+
+  const missingCoda = parse("[Segno] 1 | 2 [To Coda] | 3 [D.S.]");
+  assert.equal(missingCoda.ok, false);
+  assert.match(missingCoda.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /\[To Coda\] needs a \[Coda\] target/);
+
+  const duplicateToCoda = parse("[Segno] 1 | 2 [To Coda] | 3 [To Coda] | 4 [D.S.] | [Coda] 5");
+  assert.equal(duplicateToCoda.ok, false);
+  assert.match(duplicateToCoda.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Only one \[To Coda\]/);
+
+  const backwardCoda = parse("[Coda] 1 | [Segno] 2 | 3 [To Coda] | 4 [D.S.]");
+  assert.equal(backwardCoda.ok, false);
+  assert.match(backwardCoda.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /jump backward to \[Coda\]/);
+});
+
 test("rejects a repeated ending group without an explicit final pass", () => {
   const result = parse("1111|[1,2]2222:|");
   assert.equal(result.ok, false);

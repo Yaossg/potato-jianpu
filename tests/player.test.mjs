@@ -244,6 +244,46 @@ test("plays adjacent repeated ending groups independently", () => {
   );
 });
 
+test("plays D.C. navigation until Fine", () => {
+  const result = parse("1 [Fine] | 2 [D.C.] | 3");
+  assert.equal(result.ok, true);
+  const melody = compileMelody(result.value);
+  assert.deepEqual(
+    melody.notes.map((note) => note.chord),
+    [[60], [62], [60]],
+  );
+});
+
+test("plays D.S. navigation from Segno until Fine", () => {
+  const result = parse("[Segno] 1 | 2 [Fine] | 3 [D.S.] | 4");
+  assert.equal(result.ok, true);
+  const melody = compileMelody(result.value);
+  assert.deepEqual(
+    melody.notes.map((note) => note.chord),
+    [[60], [62], [64], [60], [62]],
+  );
+});
+
+test("plays To Coda after a D.S. jump", () => {
+  const result = parse("[Segno] 1 | 2 [To Coda] | 3 [D.S.] | [Coda] 4 | 5");
+  assert.equal(result.ok, true);
+  const melody = compileMelody(result.value);
+  assert.deepEqual(
+    melody.notes.map((note) => note.chord),
+    [[60], [62], [64], [60], [62], [65], [67]],
+  );
+});
+
+test("applies navigation after repeat expansion", () => {
+  const result = parse("|: 1 [Fine] | 2 :| 3 [D.C.]");
+  assert.equal(result.ok, true);
+  const melody = compileMelody(result.value);
+  assert.deepEqual(
+    melody.notes.map((note) => note.chord),
+    [[60], [62], [60], [62], [64], [60]],
+  );
+});
+
 test("keeps unlabeled scores as one sequential arrangement track", () => {
   const result = parse("1 2\n3 4");
   assert.equal(result.ok, true);
@@ -427,6 +467,23 @@ test("keeps later groups after earlier in-line repeats finish", () => {
     [
       [[60], [60], [62]],
       [[55], "rest", [57]],
+    ],
+  );
+});
+
+test("applies primary navigation order to labeled arrangement tracks", () => {
+  const result = parse("T1: 1 [Fine]\nP1: X\nT1: 2 [D.C.]\nP1: X");
+  assert.equal(result.ok, true);
+  const arrangement = compileArrangement(result.value);
+  assert.deepEqual(
+    arrangement.tracks.map((track) => track.name),
+    ["T1", "P1"],
+  );
+  assert.deepEqual(
+    arrangement.tracks.map((track) => track.notes.map((note) => note.chord)),
+    [
+      [[60], [62], [60]],
+      [[35], [35], [35]],
     ],
   );
 });

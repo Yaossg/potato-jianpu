@@ -140,8 +140,19 @@ be visually aligned to main-voice notes by the renderer. Lyric alignment
 placeholders such as `_` and `~` are also visual-only; neither syllable
 alignment nor placeholders are part of playback or export scheduling.
 
-Repeat barlines and repeated endings are expanded independently inside each
-arrangement track.
+Repeat barlines and repeated endings are expanded before navigation marks.
+Navigation marks use `[Segno]` and `[Coda]` before measures, and `[Fine]`,
+`[D.C.]`, `[D.S.]`, and `[To Coda]` after measures. `[D.C.]` jumps once to the
+beginning of the expanded written timeline, and `[D.S.]` jumps once to
+`[Segno]`. After that jump, `[Fine]` stops playback/export and `[To Coda]`
+jumps once to `[Coda]`. If the jumped playback path does not encounter
+`[Fine]` or `[To Coda]`, it continues to the written end.
+
+For unlabeled scores, the single score stream controls navigation. For labeled
+scores, navigation follows the primary `T1` timeline, including implicit `T1`
+lines in labeled mode. Other simultaneous tracks follow the same group order.
+Navigation marks written on non-primary tracks are visual-only and produce a
+parser warning.
 
 ## Pitch Mapping
 

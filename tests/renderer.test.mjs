@@ -73,6 +73,14 @@ function notePosition(svg, noteIndex) {
   return { x: Number(match[1]), y: Number(match[2]) };
 }
 
+function navigationY(svg, text) {
+  const match = svg.match(
+    new RegExp(`<text class="navigation-(?:target|instruction)[^"]*" x="[^"]+" y="([^"]+)" text-anchor="(?:start|middle)">${text}</text>`),
+  );
+  assert.ok(match, `navigation mark ${text} should render`);
+  return Number(match[1]);
+}
+
 function tiePaths(svg) {
   return [...svg.matchAll(/<path class="tie" d="([^"]+)"/g)].map((match) => match[1]);
 }
@@ -505,6 +513,62 @@ test("renders final endings open in multiple repeat sections", () => {
   const svg = renderSvg(result.value);
   const openEndings = [...svg.matchAll(/<path class="ending-line" d="M\d+,\d+ V\d+ H\d+"\/>/g)];
   assert.equal(openEndings.length, 2);
+});
+
+test("renders navigation marks before and after measures", () => {
+  const result = parse("[Segno] 1 | 2 [Fine] [To Coda] | 3 [D.S.] | [Coda] 4");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  assert.match(svg, /<text class="navigation-target navigation-symbol" x="\d+" y="\d+" text-anchor="start">&#119051;<\/text>/);
+  assert.match(svg, /<text class="navigation-target navigation-symbol navigation-coda-symbol" x="\d+" y="\d+" text-anchor="start">&#119052;<\/text>/);
+  assert.match(svg, /<text class="navigation-target navigation-target-text" x="\d+" y="\d+" text-anchor="middle">Fine<\/text>/);
+  assert.doesNotMatch(svg, />Segno<\/text>|>Coda<\/text>/);
+  assert.match(svg, /<text class="navigation-instruction" x="\d+" y="\d+" text-anchor="middle">To Coda<\/text>/);
+  assert.match(svg, /<text class="navigation-instruction" x="\d+" y="\d+" text-anchor="middle">D\.S\.<\/text>/);
+  assert.match(svg, /\.navigation-target, \.navigation-instruction \{[^}]*font-style: italic/);
+  assert.match(svg, /\.navigation-symbol \{[^}]*font-style: normal/);
+});
+
+test("keeps navigation marks visible on wrapped output", () => {
+  const result = parse("[Segno] 1 | 2 | 3 [D.S.] | 4 [Fine]");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 80 });
+  assert.match(svg, /class="navigation-target\b/);
+  assert.match(svg, /class="navigation-instruction"/);
+});
+
+test("keeps short navigation instructions from adding wide ghost space", () => {
+  const result = parse("[Segno] 1 [D.S.] | 2");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  assert.ok(noteX(svg, 1) < 80);
+});
+
+test("keeps navigation marks above dense upper measure decorations", () => {
+  const result = parse("[Segno] p < 1''' ~1''' f < 1''' [D.S.] | 2 [Fine]");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  const navigationBottom = Math.max(navigationY(svg, "&#119051;"), navigationY(svg, "D\\.S\\."));
+  const upperDecorationYs = [
+    ...[...svg.matchAll(/<circle class="dot" cx="[^"]+" cy="([^"]+)" r="2"\/>/g)].map((match) => Number(match[1])),
+    ...[...svg.matchAll(/<line class="hairpin" x1="[^"]+" y1="([^"]+)" x2="[^"]+" y2="([^"]+)"\/>/g)].flatMap((match) => [
+      Number(match[1]),
+      Number(match[2]),
+    ]),
+    ...[...svg.matchAll(/<text class="velocity" x="[^"]+" y="([^"]+)"/g)].map((match) => Number(match[1])),
+  ];
+  assert.ok(upperDecorationYs.length > 0);
+  assert.ok(navigationBottom + 6 < Math.min(...upperDecorationYs));
+});
+
+test("keeps navigation marks above repeated ending brackets", () => {
+  const result = parse("|: [Segno] [1] 1 :| [2] 2 [Fine]");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  const navigationBottom = Math.max(navigationY(svg, "&#119051;"), navigationY(svg, "Fine"));
+  const endingTop = Math.min(...[...svg.matchAll(/<path class="ending-line" d="M[^,]+,([^ ]+) /g)].map((match) => Number(match[1])));
+  assert.ok(Number.isFinite(endingTop));
+  assert.ok(navigationBottom + 6 < endingTop);
 });
 
 test("keeps repeat start spacing consistent at the beginning of a line", () => {

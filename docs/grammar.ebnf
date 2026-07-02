@@ -33,7 +33,7 @@ score = score_item, { NEWLINE, { NEWLINE }, score_item }, { NEWLINE } ;
 
 score_item = line | lyric_line | page_break ;
 
-line = [ track_label ], [ start_barline ], [ ending ], [ measure ], { measure_separator, [ ending ], [ measure ] }, [ end_barline ] ;
+line = [ track_label ], [ start_barline ], { measure_prefix }, [ measure ], { navigation_after }, { measure_separator, { measure_prefix }, [ measure ], { navigation_after } }, [ end_barline ] ;
 lyric_line = [ lyric_label ], lyric_string ;
 lyric_string = STRING | AUTO_STRING ;
 lyric_alignment_placeholder = "_" | "~" ;
@@ -43,7 +43,12 @@ start_barline = BAR | REPEAT_START ;
 measure_separator = BAR | REPEAT_START | REPEAT_BOTH ;
 end_barline = BAR | REPEAT_END ;
 
+measure_prefix = ending | navigation_before ;
 ending = "[", NOTE, { ",", NOTE }, "]" ;
+navigation_before = "[", navigation_target, "]" ;
+navigation_after = "[", navigation_instruction, "]" ;
+navigation_target = "Segno" | "Coda" ;
+navigation_instruction = "Fine" | "D.C." | "D.S." | "To Coda" ;
 
 measure = [ octave ], { durable_note } ;
 octave = LOWER, { LOWER } | HIGHER, { HIGHER } ;

@@ -13,6 +13,8 @@ export const DIMENSIONS = {
   endingHeight: 28,
   endingTopOffset: 20,
   endingLeftOverhang: 6,
+  navigationHeight: 20,
+  navigationTopOffset: 10,
   barVerticalOffset: -6,
   lyricTopPadding: 12,
   lyricLineHeight: 20,
