@@ -28,6 +28,24 @@ function lyricSyllableX(svg, text) {
   return Number(match[1]);
 }
 
+function lyricEstimatedWidth(text) {
+  return [...text].reduce((sum, char) => {
+    if (/\s/u.test(char)) {
+      return sum + 4.5;
+    }
+    if (/[\u3400-\u9fff\uf900-\ufaff]/u.test(char)) {
+      return sum + 17;
+    }
+    if (/[A-Za-z0-9]/u.test(char)) {
+      return sum + 8.5;
+    }
+    if (/[\p{P}\p{S}]/u.test(char)) {
+      return sum + 5;
+    }
+    return sum + 9;
+  }, 0);
+}
+
 function dashCenterX(svg, noteIndex) {
   const match = svg.match(new RegExp(`<g class="note-item(?: active)?" data-note-index="${noteIndex}">[\\s\\S]*?<line class="dash" x1="([^"]+)" y1="[^"]+" x2="([^"]+)"`));
   assert.ok(match, `note ${noteIndex} should render a dash`);
@@ -774,6 +792,31 @@ test("expands lyric syllable anchors to avoid English lyric overlap", () => {
   const wonderfulX = lyricSyllableX(svg, "wonderful");
   const eveningX = lyricSyllableX(svg, "evening");
   assert.ok(eveningX - wonderfulX >= 70);
+});
+
+test("reserves left space for the first aligned lyric syllable", () => {
+  const result = parse('1 2\n"wonderful evening"');
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 260 });
+  const leftEdge = lyricSyllableX(svg, "wonderful") - lyricEstimatedWidth("wonderful") / 2;
+  assert.ok(leftEdge >= 18);
+});
+
+test("keeps aligned lyric syllables inside page margins", () => {
+  const result = parse('1 2\n"wonderful evening"');
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 360, pageMargin: 40 });
+  assert.match(svg, /<g class="page-content" transform="translate\(40, 40\)">/);
+  const leftEdge = lyricSyllableX(svg, "wonderful") - lyricEstimatedWidth("wonderful") / 2;
+  assert.ok(leftEdge >= 18);
+});
+
+test("reserves right space for the final aligned lyric syllable", () => {
+  const result = parse('1 2\n"wonderful evening"');
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 260 });
+  const rightEdge = lyricSyllableX(svg, "evening") + lyricEstimatedWidth("evening") / 2;
+  assert.ok(rightEdge <= 260);
 });
 
 test("uses the widest lyric syllable in each aligned slot", () => {

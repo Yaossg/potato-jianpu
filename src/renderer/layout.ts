@@ -23,6 +23,12 @@ export interface LineLayout {
   maxPaddingUp: number;
 }
 
+export interface LineLayoutConstraints {
+  minAdvanceByNote?: Map<Note, number>;
+  lineStartPadding?: number;
+  lineEndPadding?: number;
+}
+
 export function flattenNotes(document: Document): Note[] {
   return document.score.flatMap((line) => line.measures).flatMap((measure) => measure.notes);
 }
@@ -62,10 +68,12 @@ function paddingDownOf(note: Note): number {
 function layoutMeasure(
   measure: Measure,
   allNotes: Note[],
-  minAdvanceByNote: Map<Note, number> | undefined,
+  constraints: LineLayoutConstraints | undefined,
   inlineRepeatStart = false,
   repeatStartAfterEnd = false,
   repeatEndBeforeStart = false,
+  extraLeftPadding = 0,
+  extraRightPadding = 0,
 ): MeasureLayout {
   const notePositions: number[] = [];
   const dashPositions: number[][] = [];
@@ -74,8 +82,8 @@ function layoutMeasure(
       ? DIMENSIONS.repeatInlineLeftPadding
       : DIMENSIONS.repeatLeadingPadding
     : 0;
-  const leftPadding = DIMENSIONS.leftPadding + repeatStartPadding + (repeatStartAfterEnd ? DIMENSIONS.repeatBothRightPadding : 0);
-  const rightPadding = measure.repeatEnd && !repeatEndBeforeStart ? DIMENSIONS.repeatEndRightPadding : 0;
+  const leftPadding = DIMENSIONS.leftPadding + repeatStartPadding + (repeatStartAfterEnd ? DIMENSIONS.repeatBothRightPadding : 0) + extraLeftPadding;
+  const rightPadding = (measure.repeatEnd && !repeatEndBeforeStart ? DIMENSIONS.repeatEndRightPadding : 0) + extraRightPadding;
   let totalWidth = 0;
   let paddingUp = 0;
   let paddingDown = 0;
@@ -85,7 +93,7 @@ function layoutMeasure(
     dashPositions.push(
       Array.from({ length: note.duration.dashes }, (_, index) => totalWidth + DIMENSIONS.dashSpacing * (index + 1)),
     );
-    totalWidth += Math.max(widthOf(note), minAdvanceByNote?.get(note) ?? 0);
+    totalWidth += Math.max(widthOf(note), constraints?.minAdvanceByNote?.get(note) ?? 0);
     paddingUp = Math.max(paddingUp, paddingUpOf(note, noteTieAfter(note, allNotes), note === measure.notes[0] && measure.ending !== undefined));
     paddingDown = Math.max(paddingDown, paddingDownOf(note));
   }
@@ -124,7 +132,7 @@ function buildLineLayout(line: ScoreLine, measures: MeasureLayout[], measureStar
   };
 }
 
-export function layoutLine(line: ScoreLine, allNotes: Note[], pageWidth: number, minAdvanceByNote?: Map<Note, number>): LineLayout[] {
+export function layoutLine(line: ScoreLine, allNotes: Note[], pageWidth: number, constraints?: LineLayoutConstraints): LineLayout[] {
   const layouts: LineLayout[] = [];
   let current: MeasureLayout[] = [];
   let currentWidth = 0;
@@ -136,15 +144,26 @@ export function layoutLine(line: ScoreLine, allNotes: Note[], pageWidth: number,
     let measure = layoutMeasure(
       measureNode,
       allNotes,
-      minAdvanceByNote,
+      constraints,
       current.length > 0,
       Boolean(previousMeasure?.repeatEnd && measureNode.repeatStart),
       Boolean(measureNode.repeatEnd && nextMeasure?.repeatStart),
+      measureIndex === 0 ? (constraints?.lineStartPadding ?? 0) : 0,
+      measureIndex === line.measures.length - 1 ? (constraints?.lineEndPadding ?? 0) : 0,
     );
     const nextWidth = current.length === 0 ? measure.width : currentWidth + DIMENSIONS.measureSpacing + measure.width;
     if (current.length > 0 && nextWidth > pageWidth) {
       layouts.push(buildLineLayout(line, current, currentStartIndex));
-      measure = layoutMeasure(measureNode, allNotes, minAdvanceByNote, false, false, Boolean(measureNode.repeatEnd && nextMeasure?.repeatStart));
+      measure = layoutMeasure(
+        measureNode,
+        allNotes,
+        constraints,
+        false,
+        false,
+        Boolean(measureNode.repeatEnd && nextMeasure?.repeatStart),
+        measureIndex === 0 ? (constraints?.lineStartPadding ?? 0) : 0,
+        measureIndex === line.measures.length - 1 ? (constraints?.lineEndPadding ?? 0) : 0,
+      );
       current = [measure];
       currentWidth = measure.width;
       currentStartIndex = measureIndex;

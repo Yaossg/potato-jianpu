@@ -12,7 +12,7 @@ import {
 } from "../core/index.js";
 import { DIMENSIONS } from "./dimensions.js";
 import { labelOffsetForTexts, lyricLineDisplayLabel, scoreLineDisplayLabel } from "./labels.js";
-import { flattenNotes, layoutLine, lineWidth, measureXOffset, type LineLayout, type MeasureLayout } from "./layout.js";
+import { flattenNotes, layoutLine, lineWidth, measureXOffset, type LineLayout, type LineLayoutConstraints, type MeasureLayout } from "./layout.js";
 import { chordHeight, maxAccidentalOffset, widthOf } from "./metrics.js";
 import type { JustifyMode } from "./options.js";
 import { escapeXml } from "./xml.js";
@@ -927,24 +927,35 @@ function renderedLyricSyllables(lyric: LyricLine): RenderedLyricSyllable[] {
   return syllables;
 }
 
-function lyricSyllableAdvanceMap(line: ScoreLine, lyrics: LyricLine[]): Map<Note, number> | undefined {
+function lyricLayoutConstraints(line: ScoreLine, lyrics: LyricLine[]): LineLayoutConstraints | undefined {
   const soundingNotes = notesInLine(line).filter((note) => note.kind !== "rest");
   if (soundingNotes.length <= 1) {
     return undefined;
   }
 
   const widths = Array.from({ length: soundingNotes.length }, () => 0);
+  let lineStartPadding = 0;
+  let lineEndPadding = 0;
   for (const lyric of lyrics) {
     if (lyric.alignment.length <= 1 || lyric.alignment.length > soundingNotes.length) {
       continue;
     }
-    for (const syllable of renderedLyricSyllables(lyric)) {
+    const syllables = renderedLyricSyllables(lyric);
+    for (const syllable of syllables) {
       const width = lyricTextWidth(syllable.text);
       widths[syllable.startIndex] = Math.max(widths[syllable.startIndex] ?? 0, width);
     }
+    const firstSyllable = syllables[0];
+    const lastSyllable = syllables.at(-1);
+    if (firstSyllable) {
+      lineStartPadding = Math.max(lineStartPadding, lyricTextWidth(firstSyllable.text) / 2);
+    }
+    if (lastSyllable) {
+      lineEndPadding = Math.max(lineEndPadding, lyricTextWidth(lastSyllable.text) / 2);
+    }
   }
 
-  if (widths.every((width) => width === 0)) {
+  if (widths.every((width) => width === 0) && lineStartPadding === 0 && lineEndPadding === 0) {
     return undefined;
   }
 
@@ -957,30 +968,30 @@ function lyricSyllableAdvanceMap(line: ScoreLine, lyrics: LyricLine[]): Map<Note
     const note = soundingNotes[index]!;
     minAdvanceByNote.set(note, Math.max(minAdvanceByNote.get(note) ?? 0, requiredAdvance));
   }
-  return minAdvanceByNote;
+  return { minAdvanceByNote, lineStartPadding, lineEndPadding };
 }
 
 function layoutGroupLines(group: ScoreLineGroup, allNotes: Note[], pageWidth: number, hasLabels: boolean): LineLayout[] {
-  const lyricAdvanceByLine = new Map<ScoreLine, Map<Note, number>>();
+  const lyricConstraintsByLine = new Map<ScoreLine, LineLayoutConstraints>();
   for (const line of group.lines) {
     if (!isPrimaryLyricLine(line, hasLabels)) {
       continue;
     }
-    const advances = lyricSyllableAdvanceMap(line, group.lyrics);
-    if (advances) {
-      lyricAdvanceByLine.set(line, advances);
+    const constraints = lyricLayoutConstraints(line, group.lyrics);
+    if (constraints) {
+      lyricConstraintsByLine.set(line, constraints);
     }
   }
 
   const buildLayouts = (useLyricAdvances: boolean): LineLayout[] =>
-    group.lines.flatMap((line) => layoutLine(line, allNotes, pageWidth, useLyricAdvances ? lyricAdvanceByLine.get(line) : undefined));
+    group.lines.flatMap((line) => layoutLine(line, allNotes, pageWidth, useLyricAdvances ? lyricConstraintsByLine.get(line) : undefined));
 
-  if (lyricAdvanceByLine.size === 0) {
+  if (lyricConstraintsByLine.size === 0) {
     return buildLayouts(false);
   }
 
   const expanded = buildLayouts(true);
-  const primaryLines = new Set(lyricAdvanceByLine.keys());
+  const primaryLines = new Set(lyricConstraintsByLine.keys());
   const expandedPrimaryLineCount = expanded.filter((layout) => primaryLines.has(layout.line)).length;
   return expandedPrimaryLineCount === primaryLines.size ? expanded : buildLayouts(false);
 }

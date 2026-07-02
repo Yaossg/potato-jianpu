@@ -180,11 +180,14 @@ placeholders renders at the center of the covered anchor span instead of
 staying on its first note; the covered `~` slots do not add extra spacing
 pressure of their own. Long aligned lyric syllables participate in score layout
 by increasing the horizontal advance between neighboring main-voice note
-anchors, so English words do not overlap adjacent syllables. If the lyric has
-more aligned slots than main voice notes, or if the expanded main voice wraps or
-must be horizontally scaled to fit the page, the lyric remains a normal
-left-aligned lyric line. In multi-voice groups, the renderer uses `T1` as the
-main voice; unlabeled lines in labeled scores also count as `T1`.
+anchors, so English words do not overlap adjacent syllables. The first and last
+aligned syllables also reserve enough line-edge padding for their visible text
+halves, so centered syllables stay inside the content box instead of spilling
+past the left or right edge. If the lyric has more aligned slots than main
+voice notes, or if the expanded main voice wraps or must be horizontally scaled
+to fit the page, the lyric remains a normal left-aligned lyric line. In
+multi-voice groups, the renderer uses `T1` as the main voice; unlabeled lines
+in labeled scores also count as `T1`.
 
 Track and lyric labels reserve horizontal space based on the rendered label
 text length plus padding. Visible labels come from typed header label fields,
