@@ -1,0 +1,87 @@
+---
+title: Ornaments
+description: Write note-attached mordents for rendering, playback, and export.
+docId: syntax-ornaments
+sectionIds:
+  - mordents
+  - playback-and-export
+  - diagnostics
+---
+
+import JianpuExample from '../../../components/JianpuExample.astro';
+import JianpuSource from '../../../components/JianpuSource.astro';
+import RelatedLinks from '../../../components/RelatedLinks.astro';
+import ScorePreview from '../../../components/ScorePreview.astro';
+
+## Mordents
+
+Modern Jianpu Markup currently supports upper and lower mordents. Write the ornament immediately after a single pitch note, before any duration suffix.
+
+Use `(^)` for an upper mordent and `(v)` for a lower mordent.
+
+<JianpuSource
+  title="Mordent source"
+  source={`time: 4/4
+===
+1(^) 2(v) 3 - | 5(^)/ 5(v)/ 1' - 0`}
+/>
+
+<ScorePreview
+  title="Rendered mordents"
+  source={`time: 4/4
+===
+1(^) 2(v) 3 - | 5(^)/ 5(v)/ 1' - 0`}
+/>
+
+The suffix comes before dashes, slashes, dots, or other duration marks.
+
+<JianpuSource title="Mordents before duration suffixes" source={`1(^)- 1(v)/ 2(^).`} />
+
+Mordents attach only to ordinary single pitch notes. They do not attach to rests, drum notes, chords, or tied notes in this version.
+
+## Playback And Export
+
+Playback, MIDI, WAV, and MP3 export expand each mordent into a short main-neighbor-main figure, followed by the remaining duration of the written note.
+
+The upper mordent uses the next scale degree. The lower mordent uses the previous scale degree. The neighbor pitch follows the current key signature and any active accidental for that scale degree in the measure.
+
+SVG, PNG, and PDF export render mordents above the note using the bundled SMuFL ornament font. Downloaded SVG and PDF output embed the font needed for these symbols.
+
+## Diagnostics
+
+<JianpuExample
+  title="Mordent on a rest"
+  status="invalid"
+  description="Ornaments can only be attached to pitch notes."
+  source={`0(^)`}
+/>
+
+<JianpuExample
+  title="Mordent on a chord"
+  status="invalid"
+  description="Chord-wide mordents are not supported yet."
+  source={`{1 3 5}(^)`}
+/>
+
+<JianpuExample
+  title="Mordent on a tied note"
+  status="invalid"
+  description="Ornaments cannot be attached to tied notes in this version."
+  source={`~1(^)`}
+/>
+
+<JianpuExample
+  title="Multiple ornaments"
+  status="invalid"
+  description="Only one ornament can be attached to a note."
+  source={`1(^)(v)`}
+/>
+
+<RelatedLinks
+  links={[
+    { href: '../notes/', label: 'Notes', description: 'Review pitch, rest, drum, and chord syntax.' },
+    { href: '../rhythm/', label: 'Rhythm', description: 'Place mordents before duration suffixes.' },
+    { href: '../../guide/playback/', label: 'Playback', description: 'Understand how written notes become sounding events.' },
+    { href: '../../reference/grammar/', label: 'Grammar Reference', description: 'Look up ornament grammar rules quickly.' },
+  ]}
+/>

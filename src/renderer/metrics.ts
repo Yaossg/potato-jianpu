@@ -24,6 +24,10 @@ export function widthOf(note: Note): number {
   return width;
 }
 
+export function ornamentRightWidthOf(_note: Note): number {
+  return 0;
+}
+
 export function chordHeight(note: Note): number {
   if (note.kind !== "pitch") {
     return DIMENSIONS.baseNoteHeight;

@@ -91,6 +91,13 @@ export default defineConfig({
               },
             },
             {
+              label: "Ornaments",
+              slug: "syntax/ornaments",
+              translations: {
+                "zh-CN": "装饰音",
+              },
+            },
+            {
               label: "Repeats",
               slug: "syntax/repeats",
               translations: {

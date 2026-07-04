@@ -27,8 +27,11 @@ export type TokenType =
   | "colon"
   | "lbrace"
   | "rbrace"
+  | "lparen"
+  | "rparen"
   | "lbracket"
   | "rbracket"
+  | "caret"
   | "velocity"
   | "crescendo"
   | "diminuendo"
@@ -299,11 +302,20 @@ export function tokenize(source: string): { tokens: Token[]; diagnostics: Diagno
       case "}":
         push("rbrace", char);
         break;
+      case "(":
+        push("lparen", char);
+        break;
+      case ")":
+        push("rparen", char);
+        break;
       case "[":
         push("lbracket", char);
         break;
       case "]":
         push("rbracket", char);
+        break;
+      case "^":
+        push("caret", char);
         break;
       default: {
         const start = clonePosition(pos);

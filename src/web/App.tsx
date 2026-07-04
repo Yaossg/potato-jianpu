@@ -23,6 +23,7 @@ import type { PageLayoutWarning } from "./page-warnings.js";
 import { PreviewPanel } from "./PreviewPanel.js";
 import { SettingsPanel } from "./SettingsPanel.js";
 import { SourceEditor } from "./SourceEditor.js";
+import { embedSvgDownloadFonts } from "./svg-fonts.js";
 import { Toolbar } from "./Toolbar.js";
 import { initialTheme, THEME_STORAGE_KEY, themeColors } from "./theme.js";
 import type { JustifyMode, Language, PageWidthMode, TranslationKey } from "./i18n.js";
@@ -480,17 +481,21 @@ export function App() {
     }
   }
 
-  function exportSvg() {
+  async function exportSvg() {
     if (!parsed.ok || !svg) {
       return;
     }
-    if (splitPages && svgPages) {
-      for (const [index, page] of svgPages.entries()) {
-        downloadBytes(page.svg, splitPageExportFilename(parsed.value.header.title, "svg", index + 1, svgPages.length), "image/svg+xml");
+    try {
+      if (splitPages && svgPages) {
+        for (const [index, page] of svgPages.entries()) {
+          downloadBytes(await embedSvgDownloadFonts(page.svg), splitPageExportFilename(parsed.value.header.title, "svg", index + 1, svgPages.length), "image/svg+xml");
+        }
+        return;
       }
-      return;
+      downloadBytes(await embedSvgDownloadFonts(svg), exportFilename(parsed.value.header.title, "svg"), "image/svg+xml");
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "Failed to export SVG.");
     }
-    downloadBytes(svg, exportFilename(parsed.value.header.title, "svg"), "image/svg+xml");
   }
 
   async function exportPng() {
@@ -752,7 +757,7 @@ export function App() {
           onSaveSource={saveSourceFile}
           onPlay={() => void play()}
           onStop={stop}
-          onExportSvg={exportSvg}
+          onExportSvg={() => void exportSvg()}
           onExportPng={() => void exportPng()}
           onExportPdf={() => void exportPdf()}
           onExportMidi={exportMidi}

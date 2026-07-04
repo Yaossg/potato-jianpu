@@ -32,6 +32,8 @@ export interface Pitch {
   range: SourceRange;
 }
 
+export type Ornament = { kind: "mordent"; direction: "upper" | "lower"; range: SourceRange };
+
 export interface DurationMark {
   dashes: number;
   halves: number;
@@ -69,6 +71,7 @@ export const VELOCITY_LABELS: Record<number, string> = Object.fromEntries(
 export interface PitchNote extends BaseNote {
   kind: "pitch";
   chord: Pitch[];
+  ornament?: Ornament;
 }
 
 export interface RestNote extends BaseNote {

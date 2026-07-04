@@ -24,16 +24,22 @@ const require = createRequire(import.meta.url);
 const PDFDocument = require("pdfkit") as PdfDocumentConstructor;
 const SVGtoPDF = require("svg-to-pdfkit") as SvgToPdf;
 const PDF_FONT_FAMILY = "NotoSansSC";
+const PDF_SMUFL_FONT_FAMILY = "Bravura";
 const PDF_TIME_SIGNATURE_LINE_Y_OFFSET = -6.84;
 const regularFontPath = require.resolve("@expo-google-fonts/noto-sans-sc/400Regular/NotoSansSC_400Regular.ttf");
 const boldFontPath = require.resolve("@expo-google-fonts/noto-sans-sc/700Bold/NotoSansSC_700Bold.ttf");
+const bravuraFontPath = require.resolve("@vexflow-fonts/bravura/bravura.otf");
 
 function registerPdfFonts(document: PDFKit.PDFDocument) {
   document.registerFont(PDF_FONT_FAMILY, regularFontPath);
   document.registerFont(`${PDF_FONT_FAMILY}-Bold`, boldFontPath);
+  document.registerFont(PDF_SMUFL_FONT_FAMILY, bravuraFontPath);
 }
 
-function pdfFontName(_family: string, bold: boolean): string {
+function pdfFontName(family: string, bold: boolean): string {
+  if (family.split(",").some((name) => name.trim().replace(/^["']|["']$/g, "") === PDF_SMUFL_FONT_FAMILY)) {
+    return PDF_SMUFL_FONT_FAMILY;
+  }
   return bold ? `${PDF_FONT_FAMILY}-Bold` : PDF_FONT_FAMILY;
 }
 

@@ -35,6 +35,30 @@ test("keeps accidentals for the current measure only", () => {
   );
 });
 
+test("expands mordents with key and accidental-aware auxiliary pitches", () => {
+  const result = parse("key: D\n===\n1(^) #1(v)");
+  assert.equal(result.ok, true);
+  const melody = compileMelody(result.value);
+  assert.deepEqual(
+    melody.notes.map((note) => note.chord),
+    [[62], [64], [62], [62], [63], [61], [63], [63]],
+  );
+  assert.equal(melody.notes.reduce((sum, note) => sum + note.duration, 0), 1 / 2);
+});
+
+test("exports ornament-expanded MIDI note-ons", () => {
+  const result = parse("1(^)");
+  assert.equal(result.ok, true);
+  const bytes = [...exportMidiBytes(result.value)];
+  const noteOns = [];
+  for (let index = 0; index < bytes.length - 2; index += 1) {
+    if (bytes[index] === 0x90) {
+      noteOns.push(bytes[index + 1]);
+    }
+  }
+  assert.deepEqual(noteOns, [60, 62, 60, 60]);
+});
+
 test("merges tied notes into previous melody note", () => {
   const result = parse("1 ~1/ 2");
   assert.equal(result.ok, true);

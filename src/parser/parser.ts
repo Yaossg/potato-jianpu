@@ -10,6 +10,7 @@ import {
   type NavigationAfterMark,
   type NavigationBeforeMark,
   type Note,
+  type Ornament,
   type Pitch,
   type PitchNote,
   type Result,
@@ -21,7 +22,7 @@ import { applyHeaderProperty, createDefaultHeader, isLyricLabel, isMelodicScoreT
 import { tokenize, type Token, type TokenType } from "./tokenizer.js";
 
 type DraftNote =
-  | { kind: "pitch"; chord: Pitch[] }
+  | { kind: "pitch"; chord: Pitch[]; chordSyntax: boolean }
   | { kind: "rest" }
   | { kind: "drum" };
 
@@ -739,9 +740,12 @@ class Parser {
     }
     const velocity = prefixes.velocity ?? this.parseVelocity();
     const note = this.parseGeneralNote(measureOctave);
+    const ornament = this.parseOrnamentSuffix(note, tie);
     const duration = this.parseDuration();
     const range = mergeRange(start, this.previous().range);
-    return { ...note, tie, velocity, ...prefixes, duration, index: this.noteIndex++, range } as Note;
+    const durableNote =
+      note.kind === "pitch" ? { kind: "pitch" as const, chord: note.chord, ...(ornament ? { ornament } : {}) } : note;
+    return { ...durableNote, tie, velocity, ...prefixes, duration, index: this.noteIndex++, range } as Note;
   }
 
   private parseGeneralNote(measureOctave: number): DraftNote {
@@ -772,9 +776,65 @@ class Parser {
         this.warning("Empty chord rendered as a rest.");
         return { kind: "rest" };
       }
-      return { kind: "pitch", chord };
+      return { kind: "pitch", chord, chordSyntax: true };
     }
-    return { kind: "pitch", chord: [this.parsePitch(measureOctave)] };
+    return { kind: "pitch", chord: [this.parsePitch(measureOctave)], chordSyntax: false };
+  }
+
+  private parseOrnamentSuffix(note: DraftNote, tie: boolean): Ornament | undefined {
+    let ornament: Ornament | undefined;
+    while (this.at("lparen")) {
+      const parsed = this.parseSingleOrnament();
+      if (note.kind !== "pitch") {
+        this.error("Ornaments can only be attached to pitch notes.", parsed.range);
+        continue;
+      }
+      if (note.chordSyntax) {
+        this.error("Ornaments cannot be attached to chords in this version.", parsed.range);
+        continue;
+      }
+      if (tie) {
+        this.error("Ornaments cannot be attached to tied notes in this version.", parsed.range);
+        continue;
+      }
+      if (ornament !== undefined) {
+        this.error("Only one ornament can be attached to a note.", parsed.range);
+        continue;
+      }
+      if (parsed.ornament !== undefined) {
+        ornament = parsed.ornament;
+      }
+    }
+    return ornament;
+  }
+
+  private parseSingleOrnament(): { ornament?: Ornament; range: SourceRange } {
+    const start = this.consume("lparen", "Expected '(' before ornament.")?.range ?? this.current().range;
+    let ornament: Ornament | undefined;
+
+    if (this.at("rparen")) {
+      this.error("Ornament parentheses cannot be empty.", mergeRange(start, this.current().range));
+    } else if (this.at("caret")) {
+      const token = this.current();
+      this.index += 1;
+      ornament = { kind: "mordent", direction: "upper", range: mergeRange(start, token.range) };
+    } else if (this.at("identifier") && this.current().text === "v") {
+      const token = this.current();
+      this.index += 1;
+      ornament = { kind: "mordent", direction: "lower", range: mergeRange(start, token.range) };
+    } else {
+      this.error("Expected '^' or 'v' inside ornament parentheses.", this.current().range);
+      while (!this.at("rparen") && !this.at("newline") && !this.at("eof")) {
+        this.index += 1;
+      }
+    }
+
+    const end = this.consume("rparen", "Expected ')' after ornament.")?.range ?? this.previous().range;
+    const range = mergeRange(start, end);
+    if (ornament) {
+      ornament = { ...ornament, range };
+    }
+    return { ornament, range };
   }
 
   private parsePitch(measureOctave: number): Pitch {
@@ -872,13 +932,23 @@ class Parser {
       this.index += 1;
       return;
     }
+    if (this.at("lparen")) {
+      const parsed = this.parseSingleOrnament();
+      this.error("Ornament suffix must follow a pitch note.", parsed.range);
+      return;
+    }
+    if (this.at("rparen")) {
+      this.error("Unexpected ')' without matching ornament start.");
+      this.index += 1;
+      return;
+    }
     if (this.at("lbracket") || this.at("rbracket")) {
       this.error("Ending markers such as [1] must appear before a measure.");
       this.index += 1;
       return;
     }
     if (this.at("half") || this.at("dot") || this.at("dash")) {
-      this.error("Duration mark must follow a note, rest, drum note, or chord.");
+      this.error("Duration mark must follow a note, rest, drum note, chord, or ornament suffix.");
       while (this.at("half") || this.at("dot") || this.at("dash")) {
         this.index += 1;
       }

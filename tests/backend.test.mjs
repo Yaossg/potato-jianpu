@@ -69,6 +69,14 @@ test("renders Unicode text to PDF with an embedded Unicode font", async () => {
   assert.match(text, /\/ToUnicode\b/);
 });
 
+test("embeds Bravura for SMuFL ornament glyphs in PDF", async () => {
+  const result = parse("1(^) 2(v)");
+  assert.equal(result.ok, true);
+  const pdf = await renderPdfBytes(renderSvgPages(result.value), { title: result.value.header.title });
+  const text = Buffer.from(pdf).toString("latin1");
+  assert.match(text, /Bravura/);
+});
+
 test("raises the PDF time signature fraction line", async () => {
   const result = parse(`time: 6/8\n===\n1 2 3`);
   assert.equal(result.ok, true);

@@ -44,11 +44,14 @@ The parser recognizes these tokens. Whitespace and comments are skipped between 
 | `REPEAT_BOTH` | `:\|:` |
 | `LBRACKET` | `[` |
 | `RBRACKET` | `]` |
+| `LPAREN` | `(` |
+| `RPAREN` | `)` |
 | `SHARPSHARP` | `##` |
 | `SHARP` | `#` |
 | `FLATFLAT` | `bb` |
 | `FLAT` | `b` |
 | `NATURAL` | `%` |
+| `CARET` | `^` |
 | `HALF` | `/` |
 | `DOT` | `.` |
 | `DASH` | `-` |
@@ -119,6 +122,8 @@ These diagrams are generated from `docs/grammar.ebnf`.
 <RailroadDiagram rule="tie" title="tie" caption="A tie marker before the tied note." />
 <RailroadDiagram rule="velocity" title="velocity" caption="An optional dynamic velocity marker before a durable note." />
 <RailroadDiagram rule="hairpin" title="hairpin" caption="A paired gradual dynamic hairpin marker before a durable note." />
+<RailroadDiagram rule="ornament" title="ornament" caption="A post-note upper (^) or lower (v) mordent suffix." />
+<RailroadDiagram rule="mordent" title="mordent" caption="An upper (^) or lower (v) mordent suffix." />
 <RailroadDiagram rule="general_note" title="general_note" caption="A sounding item: pitch note, chord, rest, or drum note." />
 <RailroadDiagram rule="pitch_note" title="pitch_note" caption="A numbered pitch with optional octave suffix and accidental." />
 <RailroadDiagram rule="accidental" title="accidental" caption="Sharp, flat, double accidental, or natural mark before a pitch note." />

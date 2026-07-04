@@ -381,6 +381,33 @@ test("parses chords, accidentals, rests, and drums", () => {
   assert.equal(notes[2].kind, "drum");
 });
 
+test("parses note-attached mordents before duration suffixes", () => {
+  const result = parse("1(^)- 1(v)/");
+  assert.equal(result.ok, true);
+  const notes = result.value.score[0].measures[0].notes;
+  assert.deepEqual(
+    notes.map((note) => note.ornament?.kind),
+    ["mordent", "mordent"],
+  );
+  assert.equal(notes[0].ornament.direction, "upper");
+  assert.equal(notes[1].ornament.direction, "lower");
+  assert.equal(notes[0].duration.dashes, 1);
+  assert.equal(notes[1].duration.halves, 1);
+});
+
+test("reports diagnostics for unsupported ornament attachments", () => {
+  const result = parse("0(^) X(^) {12}(^) ~1(^) 1(^)(v) 1() 1(q) 1(2) 1(2");
+  assert.equal(result.ok, false);
+  const messages = result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
+  assert.match(messages, /Ornaments can only be attached to pitch notes/);
+  assert.match(messages, /Ornaments cannot be attached to chords/);
+  assert.match(messages, /Ornaments cannot be attached to tied notes/);
+  assert.match(messages, /Only one ornament can be attached to a note/);
+  assert.match(messages, /Ornament parentheses cannot be empty/);
+  assert.match(messages, /Expected '\^' or 'v'/);
+  assert.match(messages, /Expected '\)' after ornament/);
+});
+
 test("parses adjacent drum notes independently", () => {
   const result = parse("XX X1");
   assert.equal(result.ok, true);

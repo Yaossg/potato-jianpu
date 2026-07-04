@@ -1,16 +1,20 @@
 import { jsPDF } from "jspdf";
 import { svg2pdf } from "svg2pdf.js";
+import bravuraUrl from "@vexflow-fonts/bravura/bravura.otf?url";
 import notoSansScBoldUrl from "@expo-google-fonts/noto-sans-sc/700Bold/NotoSansSC_700Bold.ttf?url";
 import notoSansScRegularUrl from "@expo-google-fonts/noto-sans-sc/400Regular/NotoSansSC_400Regular.ttf?url";
 import type { RenderedSvgPage } from "../renderer/index.js";
 
 const PDF_FONT_FAMILY = "NotoSansSC";
+const PDF_SMUFL_FONT_FAMILY = "Bravura";
 const PDF_TIME_SIGNATURE_LINE_Y_OFFSET = -6.84;
 const PDF_TEXT_FONT_OVERRIDE = `
-text,
+text:not(.smufl-symbol),
 .title,
 .subtitle,
 .metadata,
+.page-footer,
+.page-number,
 .line-label,
 .lyric-line,
 .lyric-syllable,
@@ -21,9 +25,12 @@ text,
 .tempo-value,
 .velocity {
   font-family: ${PDF_FONT_FAMILY}, sans-serif !important;
+}
+.smufl-symbol {
+  font-family: ${PDF_SMUFL_FONT_FAMILY} !important;
 }`;
 
-let pdfFontsPromise: Promise<{ regular: string; bold: string }> | null = null;
+let pdfFontsPromise: Promise<{ regular: string; bold: string; bravura: string }> | null = null;
 
 function orientation(width: number, height: number): "landscape" | "portrait" {
   return width > height ? "landscape" : "portrait";
@@ -48,10 +55,11 @@ async function fetchFontBase64(url: string): Promise<string> {
   return arrayBufferToBase64(await response.arrayBuffer());
 }
 
-async function pdfFonts(): Promise<{ regular: string; bold: string }> {
-  pdfFontsPromise ??= Promise.all([fetchFontBase64(notoSansScRegularUrl), fetchFontBase64(notoSansScBoldUrl)]).then(([regular, bold]) => ({
+async function pdfFonts(): Promise<{ regular: string; bold: string; bravura: string }> {
+  pdfFontsPromise ??= Promise.all([fetchFontBase64(notoSansScRegularUrl), fetchFontBase64(notoSansScBoldUrl), fetchFontBase64(bravuraUrl)]).then(([regular, bold, bravura]) => ({
     regular,
     bold,
+    bravura,
   }));
   return pdfFontsPromise;
 }
@@ -62,6 +70,8 @@ async function registerPdfFonts(pdf: jsPDF): Promise<void> {
   pdf.addFont("NotoSansSC-Regular.ttf", PDF_FONT_FAMILY, "normal");
   pdf.addFileToVFS("NotoSansSC-Bold.ttf", fonts.bold);
   pdf.addFont("NotoSansSC-Bold.ttf", PDF_FONT_FAMILY, "bold");
+  pdf.addFileToVFS("Bravura.otf", fonts.bravura);
+  pdf.addFont("Bravura.otf", PDF_SMUFL_FONT_FAMILY, "normal");
   pdf.setFont(PDF_FONT_FAMILY, "normal");
 }
 

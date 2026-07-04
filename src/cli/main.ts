@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { constants } from "node:fs";
 import { access, readFile, writeFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import {
   exportMp3Bytes,
   exportWavBytes,
@@ -12,11 +13,26 @@ import {
 } from "../backend/index.js";
 import { parse } from "../parser/index.js";
 import { exportMidiBytes } from "../player/index.js";
-import { PAPER_PRESET_LIST, isPageOrientation, isPaperPresetName, renderSvg, renderSvgPages, resolvePageSize } from "../renderer/index.js";
+import { PAPER_PRESET_LIST, embedBravuraFontFace, isPageOrientation, isPaperPresetName, renderSvg, renderSvgPages, resolvePageSize } from "../renderer/index.js";
 import type { PageOrientation, PaperPresetName, RenderOptions } from "../renderer/index.js";
 
+const require = createRequire(import.meta.url);
+const bravuraWoff2Path = require.resolve("@vexflow-fonts/bravura/bravura.woff2");
 const PAPER_PRESET_USAGE = PAPER_PRESET_LIST.map((preset) => preset.name).join("|");
 const PAPER_PRESET_MESSAGE = PAPER_PRESET_LIST.map((preset) => preset.name).join(", ");
+let bravuraWoff2Base64Promise: Promise<string> | null = null;
+
+async function bravuraWoff2Base64(): Promise<string> {
+  bravuraWoff2Base64Promise ??= readFile(bravuraWoff2Path).then((font) => font.toString("base64"));
+  return bravuraWoff2Base64Promise;
+}
+
+async function embedSvgDownloadFonts(svg: string): Promise<string> {
+  if (!svg.includes("smufl-symbol")) {
+    return svg;
+  }
+  return embedBravuraFontFace(svg, await bravuraWoff2Base64());
+}
 
 function usage(): string {
   return [
@@ -337,9 +353,10 @@ async function main(argv: string[]): Promise<number> {
     }
     if (flags.includes("--split-pages")) {
       const pages = renderSvgPages(result.value, renderOptions);
-      return (await writeSplitPageOutputs(splitSvgPageOutputs(pages, output))) ? 0 : 1;
+      const embeddedPages = await Promise.all(pages.map(async (page) => ({ ...page, svg: await embedSvgDownloadFonts(page.svg) })));
+      return (await writeSplitPageOutputs(splitSvgPageOutputs(embeddedPages, output))) ? 0 : 1;
     }
-    await writeFile(output, renderSvg(result.value, renderOptions), "utf8");
+    await writeFile(output, await embedSvgDownloadFonts(renderSvg(result.value, renderOptions)), "utf8");
     console.log(output);
   }
 

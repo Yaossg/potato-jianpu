@@ -21,8 +21,9 @@ import {
   type LineLayoutConstraints,
   type MeasureLayout,
 } from "./layout.js";
-import { chordHeight, maxAccidentalOffset } from "./metrics.js";
+import { chordHeight, maxAccidentalOffset, ornamentRightWidthOf } from "./metrics.js";
 import type { JustifyMode } from "./options.js";
+import { SMUFL_SYMBOLS } from "./smufl.js";
 import { escapeXml } from "./xml.js";
 
 const accidentalMap = new Map([
@@ -112,9 +113,21 @@ function renderPitchNote(note: PitchNote, x: number, y: number): string {
   return parts.join("");
 }
 
+function renderOrnament(note: PitchNote, x: number, y: number): string {
+  if (!note.ornament) {
+    return "";
+  }
+  const maxOffset = maxAccidentalOffset(note.chord);
+  const centerX = x + maxOffset;
+  const markY = y - chordHeight(note) - DIMENSIONS.ornamentTopGap;
+  const symbol = note.ornament.direction === "lower" ? SMUFL_SYMBOLS.ornamentMordent : SMUFL_SYMBOLS.ornamentShortTrill;
+  return `<text class="ornament mordent smufl-symbol" x="${centerX}" y="${markY}" text-anchor="middle">${symbol}</text>`;
+}
+
 function renderDuration(note: Note, x: number, y: number, full: boolean, dashAnchors: number[]): string {
   const parts: string[] = [];
   const maxOffset = note.kind === "pitch" ? maxAccidentalOffset(note.chord) : 0;
+  const ornamentOffset = ornamentRightWidthOf(note);
   for (let i = 0; i < note.duration.halves; i += 1) {
     const underlineY = y + DIMENSIONS.octaveDotBelowOffset + i * DIMENSIONS.underlineSpacing;
     const x2 = (full ? 10 : DIMENSIONS.underlineXEndOffset + note.duration.dots * DIMENSIONS.dotSpacing) + maxOffset;
@@ -123,10 +136,10 @@ function renderDuration(note: Note, x: number, y: number, full: boolean, dashAnc
     );
   }
   for (let i = 0; i < note.duration.dots; i += 1) {
-    parts.push(`<circle class="dot" cx="${x + DIMENSIONS.dotXOffset + i * DIMENSIONS.dotSpacing + maxOffset}" cy="${y - 9}" r="3"/>`);
+    parts.push(`<circle class="dot" cx="${x + DIMENSIONS.dotXOffset + i * DIMENSIONS.dotSpacing + maxOffset + ornamentOffset}" cy="${y - 9}" r="3"/>`);
   }
   for (const dashAnchor of dashAnchors) {
-    parts.push(`<line class="dash" x1="${dashAnchor - 10}" y1="${y - 9}" x2="${dashAnchor + 6}" y2="${y - 9}"/>`);
+    parts.push(`<line class="dash" x1="${dashAnchor - 10 + ornamentOffset}" y1="${y - 9}" x2="${dashAnchor + 6 + ornamentOffset}" y2="${y - 9}"/>`);
   }
   return parts.join("");
 }
@@ -590,6 +603,7 @@ function renderLine(
     }
     if (entry.note.kind === "pitch") {
       noteParts.push(renderPitchNote(entry.note, entry.x, entry.y));
+      noteParts.push(renderOrnament(entry.note, entry.x, entry.y));
     } else {
       noteParts.push(renderRestOrDrum(entry.note, entry.x, entry.y));
     }

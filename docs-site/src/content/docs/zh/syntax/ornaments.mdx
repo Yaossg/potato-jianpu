@@ -1,0 +1,87 @@
+---
+title: 装饰音
+description: 书写附着在音符上的波音，用于渲染、播放和导出。
+docId: syntax-ornaments
+sectionIds:
+  - mordents
+  - playback-and-export
+  - diagnostics
+---
+
+import JianpuExample from '../../../../components/JianpuExample.astro';
+import JianpuSource from '../../../../components/JianpuSource.astro';
+import RelatedLinks from '../../../../components/RelatedLinks.astro';
+import ScorePreview from '../../../../components/ScorePreview.astro';
+
+## 波音
+
+Modern Jianpu Markup 目前支持上波音和下波音。把装饰音紧接在单个音高音符后面，并写在所有时值后缀之前。
+
+使用 `(^)` 表示上波音，使用 `(v)` 表示下波音。
+
+<JianpuSource
+  title="波音源码"
+  source={`time: 4/4
+===
+1(^) 2(v) 3 - | 5(^)/ 5(v)/ 1' - 0`}
+/>
+
+<ScorePreview
+  title="渲染后的波音"
+  source={`time: 4/4
+===
+1(^) 2(v) 3 - | 5(^)/ 5(v)/ 1' - 0`}
+/>
+
+这个后缀要写在延音线、减时斜线、附点或其他时值标记之前。
+
+<JianpuSource title="波音写在时值后缀之前" source={`1(^)- 1(v)/ 2(^).`} />
+
+波音只能附着在普通的单个音高音符上。当前版本不支持把波音写在休止符、打击乐音符、和弦或连音音符上。
+
+## 播放与导出
+
+播放、MIDI、WAV 和 MP3 导出会把每个波音展开成很短的“主音-邻音-主音”，然后继续保留该音符剩余的时值。
+
+上波音使用上方相邻音级，下波音使用下方相邻音级。邻音会按照当前调号以及该小节内对同一音级生效的临时升降号来确定。
+
+SVG、PNG 和 PDF 导出会使用内置的 SMuFL 装饰音字体，把波音渲染在音符上方。下载的 SVG 和 PDF 会嵌入这些符号所需的字体。
+
+## 诊断
+
+<JianpuExample
+  title="休止符上的波音"
+  status="invalid"
+  description="装饰音只能附着在音高音符上。"
+  source={`0(^)`}
+/>
+
+<JianpuExample
+  title="和弦上的波音"
+  status="invalid"
+  description="当前还不支持作用于整个和弦的波音。"
+  source={`{1 3 5}(^)`}
+/>
+
+<JianpuExample
+  title="连音音符上的波音"
+  status="invalid"
+  description="当前版本不支持在连音音符上附着装饰音。"
+  source={`~1(^)`}
+/>
+
+<JianpuExample
+  title="多个装饰音"
+  status="invalid"
+  description="一个音符只能附着一个装饰音。"
+  source={`1(^)(v)`}
+/>
+
+<RelatedLinks
+  links={[
+    { href: '../notes/', label: '音符', description: '回顾音高、休止符、打击乐音符和和弦语法。' },
+    { href: '../rhythm/', label: '节奏', description: '了解为什么波音要写在时值后缀之前。' },
+    { href: '../../guide/playback/', label: '播放', description: '了解书写的音符如何变成实际发声事件。' },
+    { href: '../../reference/grammar/', label: '语法参考', description: '快速查找装饰音语法规则。' },
+  ]}
+/>

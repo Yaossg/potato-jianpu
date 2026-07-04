@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { parse } from "../dist/parser/index.js";
-import { analyzeScoreOverwidth, inferContentPageWidth, PAPER_PRESET_LIST, renderSvg, resolvePageSize } from "../dist/renderer/index.js";
+import { analyzeScoreOverwidth, embedBravuraFontFace, inferContentPageWidth, PAPER_PRESET_LIST, renderSvg, resolvePageSize } from "../dist/renderer/index.js";
 
 function readSnapshot(name) {
   return readFileSync(new URL(`./fixtures/snapshots/${name}`, import.meta.url), "utf8").replace(/\r\n/g, "\n").replace(/\n$/, "");
@@ -413,6 +413,26 @@ test("renders chord notes as stacked text instead of slash-joined text", () => {
   assert.match(svg, />1</);
   assert.match(svg, />3</);
   assert.match(svg, />5</);
+});
+
+test("renders compact note ornaments and keeps following notes spaced", () => {
+  const result = parse("#1'(^) 2(v)-");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 120 });
+  assert.doesNotMatch(svg, /data:font\/woff2;base64,/);
+  assert.match(svg, /<text class="ornament mordent smufl-symbol" x="[^"]+" y="[^"]+" text-anchor="middle">&#xE56D;<\/text>/);
+  assert.match(svg, /<text class="ornament mordent smufl-symbol" x="[^"]+" y="[^"]+" text-anchor="middle">&#xE56C;<\/text>/);
+  assert.doesNotMatch(svg, /<path class="ornament mordent"/);
+  assert.ok(noteX(svg, 1) - noteX(svg, 0) >= 24);
+});
+
+test("can embed Bravura into SVGs that use SMuFL symbols", () => {
+  const result = parse("1(^)");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  const embedded = embedBravuraFontFace(svg, "Zm9udA==");
+  assert.match(embedded, /@font-face \{ font-family: Bravura;/);
+  assert.match(embedded, /data:font\/woff2;base64,Zm9udA==/);
 });
 
 test("shortens underline at beat boundaries", () => {

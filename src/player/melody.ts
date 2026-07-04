@@ -44,25 +44,48 @@ function pitchToMidi(pitch: Pitch, noteMap: number[]): number {
   return noteMap[pitch.note - 1]! + pitch.octave * 12;
 }
 
-function compileNote(note: Note, noteMap: number[], program: number): MelodyNote {
+function adjacentPitch(pitch: Pitch, direction: "upper" | "lower"): Pitch {
+  if (direction === "upper") {
+    return pitch.note === 7 ? { ...pitch, note: 1, octave: pitch.octave + 1, accidental: undefined } : { ...pitch, note: (pitch.note + 1) as Pitch["note"], accidental: undefined };
+  }
+  return pitch.note === 1 ? { ...pitch, note: 7, octave: pitch.octave - 1, accidental: undefined } : { ...pitch, note: (pitch.note - 1) as Pitch["note"], accidental: undefined };
+}
+
+function compilePitchNoteEvents(note: Extract<Note, { kind: "pitch" }>, noteMap: number[]): MelodyNote[] {
+  const velocity = note.velocity;
+  const anchor = note.chord.map((pitch) => pitchToMidi(pitch, noteMap));
+  const base: MelodyNote = { chord: anchor, duration: note.duration.value, index: note.index, velocity };
+  if (!note.ornament) {
+    return [base];
+  }
+
+  const mainPitch = note.chord[0]!;
+  const auxiliary = pitchToMidi(adjacentPitch(mainPitch, note.ornament.direction), noteMap);
+  const ornamentDuration = note.duration.value / 2;
+  const segment = ornamentDuration / 3;
+  const sustain = note.duration.value - ornamentDuration;
+  return [
+    { chord: anchor, duration: segment, index: note.index, velocity },
+    { chord: [auxiliary], duration: segment, index: note.index, velocity },
+    { chord: anchor, duration: segment, index: note.index, velocity },
+    { chord: anchor, duration: sustain, index: note.index, velocity },
+  ];
+}
+
+function compileNoteEvents(note: Note, noteMap: number[], program: number): MelodyNote[] {
   const velocity = note.velocity;
   switch (note.kind) {
     case "rest":
-      return { chord: "rest", duration: note.duration.value, index: note.index, velocity };
+      return [{ chord: "rest", duration: note.duration.value, index: note.index, velocity }];
     case "drum":
-      return {
+      return [{
         chord: [program < 128 ? 60 : program - 128 + 35],
         duration: note.duration.value,
         index: note.index,
         velocity,
-      };
+      }];
     case "pitch":
-      return {
-        chord: note.chord.map((pitch) => pitchToMidi(pitch, noteMap)),
-        duration: note.duration.value,
-        index: note.index,
-        velocity,
-      };
+      return compilePitchNoteEvents(note, noteMap);
   }
 }
 
@@ -77,15 +100,15 @@ function compileMeasure(measure: Measure, baseNoteMap: number[], program: number
       }
     }
 
-    const melodyNote = compileNote(note, noteMap, program);
+    const melodyNotes = compileNoteEvents(note, noteMap, program);
     if (note.tie) {
       const previous = output.at(-1);
       if (previous) {
-        previous.duration += melodyNote.duration;
+        previous.duration += melodyNotes.reduce((sum, melodyNote) => sum + melodyNote.duration, 0);
       }
     } else {
-      output.push(melodyNote);
-      sourceNotes.push(note);
+      output.push(...melodyNotes);
+      sourceNotes.push(...melodyNotes.map(() => note));
     }
   }
 }

@@ -54,6 +54,22 @@ test("CLI export-svg accepts page width", async () => {
   assert.match(svg, /<svg[^>]+width="120"/);
 });
 
+test("CLI export-svg embeds Bravura for SMuFL ornaments", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
+  const input = join(dir, "score.jpu");
+  const output = join(dir, "score.svg");
+  await writeFile(input, "1(^) 2(v)", "utf8");
+
+  await execFileAsync(process.execPath, ["dist/cli/main.js", "export-svg", input, "-o", output], {
+    cwd: repoDir,
+  });
+
+  const svg = await readFile(output, "utf8");
+  assert.match(svg, /@font-face \{ font-family: Bravura;/);
+  assert.match(svg, /data:font\/woff2;base64,/);
+  assert.match(svg, /class="ornament mordent smufl-symbol"/);
+});
+
 test("CLI export-svg can paginate with explicit page height", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
   const input = join(dir, "score.jpu");

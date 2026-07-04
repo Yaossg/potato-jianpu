@@ -32,11 +32,13 @@
 .underline { stroke: currentColor; stroke-width: 2.5; }
 .dash { stroke: currentColor; stroke-width: 3; }
 .tie { fill: currentColor; stroke: currentColor; stroke-width: 1; }
+.ornament { fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.smufl-symbol { fill: currentColor; stroke: none; font-family: Bravura, "Noto Music", "Segoe UI Symbol", sans-serif; font-size: 22px; font-weight: 400; }
 .hairpin { stroke: currentColor; stroke-width: 1.8; stroke-linecap: butt; }
 .velocity { fill: currentColor; font-family: 'Georgia Pro', Georgia, 'DejaVu Serif', Times, 'Times New Roman', FreeSerif, 'DejaVu Math TeX', serif; font-size: 14px; font-style: italic; font-weight: bold; }
 .note-item { cursor: pointer; }
-.note-item.active .note, .note-item.active .accidental, .note-item.active .dot, .note-item.active .velocity { fill: #dc2626; }
-.note-item.active .underline, .note-item.active .dash { stroke: #dc2626; }
+.note-item.active .note, .note-item.active .accidental, .note-item.active .dot, .note-item.active .velocity, .note-item.active .smufl-symbol { fill: #dc2626; }
+.note-item.active .underline, .note-item.active .dash, .note-item.active .ornament { stroke: #dc2626; }
 </style>
 </defs>
 <rect class="page-background" x="0" y="0" width="420" height="187" fill="#ffffff"/>
