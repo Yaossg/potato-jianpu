@@ -1,9 +1,10 @@
 ---
 title: 装饰音
-description: 书写附着在音符上的波音，用于渲染、播放和导出。
+description: 书写附着在音符上的波音和倚音，用于渲染、播放和导出。
 docId: syntax-ornaments
 sectionIds:
   - mordents
+  - grace-notes
   - playback-and-export
   - diagnostics
 ---
@@ -39,13 +40,37 @@ Modern Jianpu Markup 目前支持上波音和下波音。把装饰音紧接在�
 
 波音只能附着在普通的单个音高音符上。当前版本不支持把波音写在休止符、打击乐音符、和弦或连音音符上。
 
+## 倚音
+
+倚音也写成音符后的装饰音后缀。后缀始终附着在左侧的音高音符上。使用 `(<...)` 表示渲染和播放在主音之前的前倚音，使用 `(>...)` 表示渲染和播放在主音之后的后倚音。
+
+<JianpuSource
+  title="倚音源码"
+  source={`time: 4/4
+===
+1(<2) 2(>3) 3(<45) 5(>6')`}
+/>
+
+<ScorePreview
+  title="渲染后的倚音"
+  source={`time: 4/4
+===
+1(<2) 2(>3) 3(<45) 5(>6')`}
+/>
+
+倚音后缀内部可以写 1、2、4 或其他 2 的幂个音高音符，并沿用普通的变音记号和八度语法。一个倚音渲染为带一条横线的八分音符，两个倚音渲染为各带两条横线的十六分音符，四个倚音渲染为各带三条横线，依此类推。不要在倚音后缀里写休止符、打击乐音符、和弦、延音线、力度或时值标记。
+
+和波音一样，当前版本的倚音只能附着在普通的单个音高音符上。
+
 ## 播放与导出
 
 播放、MIDI、WAV 和 MP3 导出会把每个波音展开成很短的“主音-邻音-主音”，然后继续保留该音符剩余的时值。
 
 上波音使用上方相邻音级，下波音使用下方相邻音级。邻音会按照当前调号以及该小节内对同一音级生效的临时升降号来确定。
 
-SVG、PNG 和 PDF 导出会使用内置的 SMuFL 装饰音字体，把波音渲染在音符上方。下载的 SVG 和 PDF 会嵌入这些符号所需的字体。
+播放、MIDI、WAV 和 MP3 导出会把倚音展开在主音的书写时值之内。前倚音先发声，再播放缩短后的主音；后倚音使用主音时值的尾部。多个倚音会平均分配倚音时值。
+
+SVG、PNG 和 PDF 导出会使用内置的 SMuFL 装饰音字体，把波音渲染在音符上方。倚音会渲染为主音旁的小号简谱数字：前倚音在左侧，后倚音在右侧。每组倚音下方带一条或多条短横线，横线下沿用四分之一圆弧连接到主音。下载的 SVG 和 PDF 会嵌入波音符号所需的字体。
 
 ## 诊断
 
@@ -71,6 +96,27 @@ SVG、PNG 和 PDF 导出会使用内置的 SMuFL 装饰音字体，把波音渲�
 />
 
 <JianpuExample
+  title="空倚音"
+  status="invalid"
+  description="倚音后缀必须至少包含一个音高音符。"
+  source={`1(<)`}
+/>
+
+<JianpuExample
+  title="倚音里的休止符"
+  status="invalid"
+  description="倚音后缀只接受音高音符。"
+  source={`1(>0)`}
+/>
+
+<JianpuExample
+  title="不支持的倚音数量"
+  status="invalid"
+  description="倚音后缀必须包含 1、2、4 或其他 2 的幂个音高音符。"
+  source={`1(<234)`}
+/>
+
+<JianpuExample
   title="多个装饰音"
   status="invalid"
   description="一个音符只能附着一个装饰音。"
@@ -80,7 +126,7 @@ SVG、PNG 和 PDF 导出会使用内置的 SMuFL 装饰音字体，把波音渲�
 <RelatedLinks
   links={[
     { href: '../notes/', label: '音符', description: '回顾音高、休止符、打击乐音符和和弦语法。' },
-    { href: '../rhythm/', label: '节奏', description: '了解为什么波音要写在时值后缀之前。' },
+    { href: '../rhythm/', label: '节奏', description: '了解为什么装饰音要写在时值后缀之前。' },
     { href: '../../guide/playback/', label: '播放', description: '了解书写的音符如何变成实际发声事件。' },
     { href: '../../reference/grammar/', label: '语法参考', description: '快速查找装饰音语法规则。' },
   ]}

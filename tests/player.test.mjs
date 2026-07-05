@@ -59,6 +59,21 @@ test("exports ornament-expanded MIDI note-ons", () => {
   assert.deepEqual(noteOns, [60, 62, 60, 60]);
 });
 
+test("expands before and after grace ornaments without changing total duration", () => {
+  const result = parse("1(<23) 4(>5)");
+  assert.equal(result.ok, true);
+  const melody = compileMelody(result.value);
+  assert.deepEqual(
+    melody.notes.map((note) => note.chord),
+    [[62], [64], [60], [65], [67]],
+  );
+  assert.deepEqual(
+    melody.notes.map((note) => note.duration),
+    [1 / 32, 1 / 32, 3 / 16, 3 / 16, 1 / 16],
+  );
+  assert.equal(melody.notes.reduce((sum, note) => sum + note.duration, 0), 1 / 2);
+});
+
 test("merges tied notes into previous melody note", () => {
   const result = parse("1 ~1/ 2");
   assert.equal(result.ok, true);

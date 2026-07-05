@@ -426,6 +426,86 @@ test("renders compact note ornaments and keeps following notes spaced", () => {
   assert.ok(noteX(svg, 1) - noteX(svg, 0) >= 24);
 });
 
+test("renders grace ornaments beside their anchor notes", () => {
+  const result = parse("1(<2) 3(>4)- 5");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 140 });
+  const firstAnchor = noteX(svg, 0);
+  const secondAnchor = noteX(svg, 1);
+  const followingAnchor = noteX(svg, 2);
+  const graceGroups = [...svg.matchAll(/<g class="grace-note-group" transform="translate\(([^,]+), ([^)]+)\) scale\(([^)]+)\)">([\s\S]*?)<\/g>/g)]
+    .map((match) => {
+      const localNote = match[4].match(/<text class="note" x="([^"]+)" y="[^"]+" text-anchor="middle">([1-7])<\/text>/);
+      const localUnderline = match[4].match(/<line class="underline" x1="([^"]+)" y1="([^"]+)" x2="([^"]+)" y2="[^"]+"\/>/);
+      assert.ok(localNote);
+      assert.ok(localUnderline);
+      const translateX = Number(match[1]);
+      const translateY = Number(match[2]);
+      const scale = Number(match[3]);
+      return {
+        text: localNote[2],
+        x: translateX + Number(localNote[1]) * scale,
+        underlineMiddleX: translateX + ((Number(localUnderline[1]) + Number(localUnderline[3])) / 2) * scale,
+        underlineBottomY: translateY + (Number(localUnderline[2]) + 1.25) * scale,
+      };
+    });
+  const beforeGrace = graceGroups.find((note) => note.text === "2");
+  const afterGrace = graceGroups.find((note) => note.text === "4");
+  assert.ok(beforeGrace);
+  assert.ok(afterGrace);
+  assert.ok(beforeGrace.x < firstAnchor);
+  assert.ok(afterGrace.x > secondAnchor);
+  assert.ok(followingAnchor > secondAnchor);
+  assert.equal(graceGroups.length, 2);
+  assert.match(svg, /<g class="grace-note-group" transform="translate\([^"]+\) scale\([^"]+\)">/);
+  assert.match(svg, /<line class="underline"/);
+  assert.match(svg, /\.grace-arc \{ stroke-width: 1\.4; stroke-linecap: butt; stroke-linejoin: miter; \}/);
+  const graceArcs = [...svg.matchAll(/<path class="ornament grace-arc" d="M([^,]+),([^ ]+) A([^,]+),\3 0 0 0 ([^,]+),([^"]+)"/g)]
+    .map((match) => ({
+      startX: Number(match[1]),
+      startY: Number(match[2]),
+      radius: Number(match[3]),
+      endX: Number(match[4]),
+      endY: Number(match[5]),
+    }));
+  assert.equal(graceArcs.length, 2);
+  assert.ok(Math.abs(graceArcs[0].startX - beforeGrace.underlineMiddleX) < 0.0001);
+  assert.ok(Math.abs(graceArcs[0].startY - beforeGrace.underlineBottomY) < 0.0001);
+  assert.ok(Math.abs(graceArcs[1].endX - afterGrace.underlineMiddleX) < 0.0001);
+  assert.ok(Math.abs(graceArcs[1].endY - afterGrace.underlineBottomY) < 0.0001);
+  assert.equal(graceArcs[0].endX - graceArcs[0].startX, graceArcs[0].radius);
+  assert.equal(graceArcs[0].endY - graceArcs[0].startY, graceArcs[0].radius);
+  assert.equal(graceArcs[1].endX - graceArcs[1].startX, graceArcs[1].radius);
+  assert.equal(graceArcs[1].startY - graceArcs[1].endY, graceArcs[1].radius);
+  assert.ok(noteX(svg, 2) - noteX(svg, 1) > 24);
+});
+
+test("renders grace note underline counts from the number of grace pitches", () => {
+  const result = parse("1(<23) 2(>4567)");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 180 });
+  const graceGroups = [...svg.matchAll(/<g class="grace-note-group" transform="[^"]+">([\s\S]*?)<\/g>/g)]
+    .map((match) => {
+      const localNote = match[1].match(/<text class="note" x="[^"]+" y="[^"]+" text-anchor="middle">([1-7])<\/text>/);
+      assert.ok(localNote);
+      return {
+        text: localNote[1],
+        underlines: [...match[1].matchAll(/<line class="underline"/g)].length,
+      };
+    });
+  assert.deepEqual(
+    graceGroups.map((note) => [note.text, note.underlines]),
+    [
+      ["2", 2],
+      ["3", 2],
+      ["4", 3],
+      ["5", 3],
+      ["6", 3],
+      ["7", 3],
+    ],
+  );
+});
+
 test("can embed Bravura into SVGs that use SMuFL symbols", () => {
   const result = parse("1(^)");
   assert.equal(result.ok, true);

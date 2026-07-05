@@ -54,6 +54,10 @@ function durationOf(dashes: number, halves: number, dots: number): number {
   return unit / 2 ** halves;
 }
 
+function isPowerOfTwo(value: number): boolean {
+  return Number.isInteger(value) && value > 0 && (value & (value - 1)) === 0;
+}
+
 function isHanCharacter(char: string): boolean {
   return /[\u3400-\u9fff\uf900-\ufaff]/u.test(char);
 }
@@ -740,7 +744,7 @@ class Parser {
     }
     const velocity = prefixes.velocity ?? this.parseVelocity();
     const note = this.parseGeneralNote(measureOctave);
-    const ornament = this.parseOrnamentSuffix(note, tie);
+    const ornament = this.parseOrnamentSuffix(note, tie, measureOctave);
     const duration = this.parseDuration();
     const range = mergeRange(start, this.previous().range);
     const durableNote =
@@ -781,10 +785,10 @@ class Parser {
     return { kind: "pitch", chord: [this.parsePitch(measureOctave)], chordSyntax: false };
   }
 
-  private parseOrnamentSuffix(note: DraftNote, tie: boolean): Ornament | undefined {
+  private parseOrnamentSuffix(note: DraftNote, tie: boolean, measureOctave: number): Ornament | undefined {
     let ornament: Ornament | undefined;
     while (this.at("lparen")) {
-      const parsed = this.parseSingleOrnament();
+      const parsed = this.parseSingleOrnament(measureOctave);
       if (note.kind !== "pitch") {
         this.error("Ornaments can only be attached to pitch notes.", parsed.range);
         continue;
@@ -808,7 +812,7 @@ class Parser {
     return ornament;
   }
 
-  private parseSingleOrnament(): { ornament?: Ornament; range: SourceRange } {
+  private parseSingleOrnament(measureOctave = 0): { ornament?: Ornament; range: SourceRange } {
     const start = this.consume("lparen", "Expected '(' before ornament.")?.range ?? this.current().range;
     let ornament: Ornament | undefined;
 
@@ -822,8 +826,30 @@ class Parser {
       const token = this.current();
       this.index += 1;
       ornament = { kind: "mordent", direction: "lower", range: mergeRange(start, token.range) };
+    } else if (this.at("crescendo") || this.at("diminuendo")) {
+      const token = this.current();
+      const placement = this.at("crescendo") ? "before" : "after";
+      const pitches: Pitch[] = [];
+      this.index += 1;
+      while (this.isPitchStart()) {
+        pitches.push(this.parsePitch(measureOctave));
+      }
+      if (pitches.length === 0) {
+        this.error("Grace ornaments must include at least one pitch note.", mergeRange(token.range, this.current().range));
+      } else if (!isPowerOfTwo(pitches.length)) {
+        this.error("Grace ornaments must contain 1, 2, 4, or another power-of-two number of pitch notes.", mergeRange(token.range, pitches.at(-1)!.range));
+      }
+      if (!this.at("rparen") && !this.at("newline") && !this.at("eof")) {
+        this.error("Grace ornament pitches must use note syntax 1-7 with optional accidental and octave marks.", this.current().range);
+        while (!this.at("rparen") && !this.at("newline") && !this.at("eof")) {
+          this.index += 1;
+        }
+      }
+      if (pitches.length > 0) {
+        ornament = { kind: "grace", placement, pitches, range: mergeRange(start, pitches.at(-1)!.range) };
+      }
     } else {
-      this.error("Expected '^' or 'v' inside ornament parentheses.", this.current().range);
+      this.error("Expected '^', 'v', '<', or '>' inside ornament parentheses.", this.current().range);
       while (!this.at("rparen") && !this.at("newline") && !this.at("eof")) {
         this.index += 1;
       }

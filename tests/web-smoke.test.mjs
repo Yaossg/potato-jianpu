@@ -164,7 +164,7 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(docsPlayback, /same playback compiler/);
   assert.match(zhDocsPlayback, /播放编译器/);
   assert.match(docsOverview, /syntax-token/);
-  assert.match(docsRepeats, /support-matrix/);
+  assert.match(docsRepeats, /Repeated Endings/);
   assert.match(docsRepeats, /related-links/);
   assert.match(docsRhythm, /Dash duration marks/);
   assert.match(appSource, /function updateSource/);

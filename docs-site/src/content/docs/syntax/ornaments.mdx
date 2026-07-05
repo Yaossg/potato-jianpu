@@ -1,9 +1,10 @@
 ---
 title: Ornaments
-description: Write note-attached mordents for rendering, playback, and export.
+description: Write note-attached mordents and grace notes for rendering, playback, and export.
 docId: syntax-ornaments
 sectionIds:
   - mordents
+  - grace-notes
   - playback-and-export
   - diagnostics
 ---
@@ -39,13 +40,37 @@ The suffix comes before dashes, slashes, dots, or other duration marks.
 
 Mordents attach only to ordinary single pitch notes. They do not attach to rests, drum notes, chords, or tied notes in this version.
 
+## Grace Notes
+
+Grace notes are also written as post-note ornament suffixes. The suffix always attaches to the pitch note on its left. Use `(<...)` for grace notes rendered and played before the anchor note, and `(>...)` for grace notes rendered and played after it.
+
+<JianpuSource
+  title="Grace note source"
+  source={`time: 4/4
+===
+1(<2) 2(>3) 3(<45) 5(>6')`}
+/>
+
+<ScorePreview
+  title="Rendered grace notes"
+  source={`time: 4/4
+===
+1(<2) 2(>3) 3(<45) 5(>6')`}
+/>
+
+Inside the grace-note suffix, write 1, 2, 4, or another power-of-two number of pitch notes using the normal accidental and octave syntax. A single grace note renders as an eighth note with one underline, two grace notes render as sixteenth notes with two underlines, four grace notes render with three underlines, and so on. Do not write rests, drum notes, chords, ties, dynamics, or duration marks inside the suffix.
+
+Like mordents, grace notes attach only to ordinary single pitch notes in this version.
+
 ## Playback And Export
 
 Playback, MIDI, WAV, and MP3 export expand each mordent into a short main-neighbor-main figure, followed by the remaining duration of the written note.
 
 The upper mordent uses the next scale degree. The lower mordent uses the previous scale degree. The neighbor pitch follows the current key signature and any active accidental for that scale degree in the measure.
 
-SVG, PNG, and PDF export render mordents above the note using the bundled SMuFL ornament font. Downloaded SVG and PDF output embed the font needed for these symbols.
+Playback, MIDI, WAV, and MP3 export expand grace notes inside the written duration of the anchor note. Before-grace notes sound first, followed by the shortened anchor note. After-grace notes use the end of the anchor duration. Multiple grace notes split the grace duration evenly.
+
+SVG, PNG, and PDF export render mordents above the note using the bundled SMuFL ornament font. Grace notes render as small Jianpu figures beside the anchor note: before-grace notes on the left, after-grace notes on the right. Each grace figure has one or more short underlines whose lower edge connects to the anchor note with a quarter-circle arc. Downloaded SVG and PDF output embed the font needed for SMuFL mordent symbols.
 
 ## Diagnostics
 
@@ -71,6 +96,27 @@ SVG, PNG, and PDF export render mordents above the note using the bundled SMuFL 
 />
 
 <JianpuExample
+  title="Empty grace note"
+  status="invalid"
+  description="A grace-note suffix must contain at least one pitch note."
+  source={`1(<)`}
+/>
+
+<JianpuExample
+  title="Rest inside a grace note"
+  status="invalid"
+  description="Grace-note suffixes accept pitch notes only."
+  source={`1(>0)`}
+/>
+
+<JianpuExample
+  title="Unsupported grace-note count"
+  status="invalid"
+  description="Grace-note suffixes must contain 1, 2, 4, or another power-of-two number of pitch notes."
+  source={`1(<234)`}
+/>
+
+<JianpuExample
   title="Multiple ornaments"
   status="invalid"
   description="Only one ornament can be attached to a note."
@@ -80,7 +126,7 @@ SVG, PNG, and PDF export render mordents above the note using the bundled SMuFL 
 <RelatedLinks
   links={[
     { href: '../notes/', label: 'Notes', description: 'Review pitch, rest, drum, and chord syntax.' },
-    { href: '../rhythm/', label: 'Rhythm', description: 'Place mordents before duration suffixes.' },
+    { href: '../rhythm/', label: 'Rhythm', description: 'Place ornaments before duration suffixes.' },
     { href: '../../guide/playback/', label: 'Playback', description: 'Understand how written notes become sounding events.' },
     { href: '../../reference/grammar/', label: 'Grammar Reference', description: 'Look up ornament grammar rules quickly.' },
   ]}

@@ -44,6 +44,10 @@ function pitchToMidi(pitch: Pitch, noteMap: number[]): number {
   return noteMap[pitch.note - 1]! + pitch.octave * 12;
 }
 
+function ornamentPitchToMidi(pitch: Pitch, noteMap: number[]): number {
+  return noteMap[pitch.note - 1]! + (pitch.accidental ?? 0) + pitch.octave * 12;
+}
+
 function adjacentPitch(pitch: Pitch, direction: "upper" | "lower"): Pitch {
   if (direction === "upper") {
     return pitch.note === 7 ? { ...pitch, note: 1, octave: pitch.octave + 1, accidental: undefined } : { ...pitch, note: (pitch.note + 1) as Pitch["note"], accidental: undefined };
@@ -57,6 +61,21 @@ function compilePitchNoteEvents(note: Extract<Note, { kind: "pitch" }>, noteMap:
   const base: MelodyNote = { chord: anchor, duration: note.duration.value, index: note.index, velocity };
   if (!note.ornament) {
     return [base];
+  }
+
+  if (note.ornament.kind === "grace") {
+    const ornamentDuration = note.duration.value / 4;
+    const segment = ornamentDuration / note.ornament.pitches.length;
+    const sustain = note.duration.value - ornamentDuration;
+    const graceNotes = note.ornament.pitches.map((pitch) => ({
+      chord: [ornamentPitchToMidi(pitch, noteMap)],
+      duration: segment,
+      index: note.index,
+      velocity,
+    }));
+    return note.ornament.placement === "before"
+      ? [...graceNotes, { ...base, duration: sustain }]
+      : [{ ...base, duration: sustain }, ...graceNotes];
   }
 
   const mainPitch = note.chord[0]!;

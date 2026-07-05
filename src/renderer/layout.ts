@@ -1,6 +1,6 @@
 import type { Document, Measure, Note, ScoreLine } from "../core/index.js";
 import { DIMENSIONS } from "./dimensions.js";
-import { noteTieAfter, widthOf } from "./metrics.js";
+import { noteTieAfter, ornamentLeftWidthOf, widthOf } from "./metrics.js";
 
 export interface MeasureLayout {
   measure: Measure;
@@ -98,9 +98,10 @@ function layoutMeasure(
   let paddingDown = 0;
 
   for (const note of measure.notes) {
+    const noteLeftOrnamentWidth = ornamentLeftWidthOf(note);
     notePositions.push(totalWidth);
     dashPositions.push(
-      Array.from({ length: note.duration.dashes }, (_, index) => totalWidth + DIMENSIONS.dashSpacing * (index + 1)),
+      Array.from({ length: note.duration.dashes }, (_, index) => totalWidth + noteLeftOrnamentWidth + DIMENSIONS.dashSpacing * (index + 1)),
     );
     totalWidth += Math.max(widthOf(note), constraints?.minAdvanceByNote?.get(note) ?? 0);
     paddingUp = Math.max(

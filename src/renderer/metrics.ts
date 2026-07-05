@@ -18,13 +18,30 @@ export function maxAccidentalOffset(chord: Pitch[] | undefined): number {
 
 export function widthOf(note: Note): number {
   let width = DIMENSIONS.baseNoteWidth;
+  width += ornamentLeftWidthOf(note) + ornamentRightWidthOf(note);
   width += note.duration.dashes * DIMENSIONS.dashSpacing;
   width += note.duration.dots * DIMENSIONS.dotSpacing;
   width += note.kind === "pitch" ? maxAccidentalOffset(note.chord) : 0;
   return width;
 }
 
-export function ornamentRightWidthOf(_note: Note): number {
+function graceWidth(pitches: Pitch[]): number {
+  return DIMENSIONS.graceNoteGap + pitches.length * DIMENSIONS.graceNoteAdvance;
+}
+
+export function ornamentLeftWidthOf(note: Note): number {
+  return note.kind === "pitch" && note.ornament?.kind === "grace" && note.ornament.placement === "before"
+    ? graceWidth(note.ornament.pitches)
+    : 0;
+}
+
+export function ornamentRightWidthOf(note: Note): number {
+  if (note.kind !== "pitch" || note.ornament === undefined) {
+    return 0;
+  }
+  if (note.ornament.kind === "grace") {
+    return note.ornament.placement === "after" ? graceWidth(note.ornament.pitches) : 0;
+  }
   return 0;
 }
 

@@ -21,7 +21,7 @@ import {
   type LineLayoutConstraints,
   type MeasureLayout,
 } from "./layout.js";
-import { chordHeight, maxAccidentalOffset, ornamentRightWidthOf } from "./metrics.js";
+import { chordHeight, maxAccidentalOffset, ornamentLeftWidthOf, ornamentRightWidthOf } from "./metrics.js";
 import type { JustifyMode } from "./options.js";
 import { SMUFL_SYMBOLS } from "./smufl.js";
 import { escapeXml } from "./xml.js";
@@ -113,9 +113,62 @@ function renderPitchNote(note: PitchNote, x: number, y: number): string {
   return parts.join("");
 }
 
+function renderGracePitches(note: PitchNote, x: number, y: number): string {
+  if (note.ornament?.kind !== "grace") {
+    return "";
+  }
+  const scale = DIMENSIONS.graceNoteFontSize / DIMENSIONS.baseNoteHeight;
+  const graceY = y - DIMENSIONS.graceNoteYOffset;
+  const anchorX = x + maxAccidentalOffset(note.chord);
+  const graceHalves = Math.log2(note.ornament.pitches.length) + 1;
+  const beforeGraceWidth = note.ornament.pitches.length * DIMENSIONS.graceNoteAdvance;
+  const startX = note.ornament.placement === "before"
+    ? anchorX - DIMENSIONS.graceNoteGap - DIMENSIONS.graceNoteBeforeXOffset - beforeGraceWidth + DIMENSIONS.graceNoteAdvance / 2
+    : anchorX + DIMENSIONS.graceNoteGap + DIMENSIONS.graceNoteAdvance / 2;
+  const gracePitches = note.ornament.pitches.map((pitch, index) => {
+    const centerX = startX + index * DIMENSIONS.graceNoteAdvance;
+    const pitchOffset = maxAccidentalOffset([pitch]);
+    const graceNote: PitchNote = {
+      kind: "pitch",
+      chord: [pitch],
+      duration: { dashes: 0, halves: graceHalves, dots: 0, value: 1 / 2 ** graceHalves },
+      tie: false,
+      index: note.index,
+      range: pitch.range,
+    };
+    const groupX = centerX - pitchOffset * scale;
+    const noteParts = [
+      renderPitchNote(graceNote, 0, 0),
+      renderDuration(graceNote, 0, 0, false, []),
+    ];
+    const underlineBottomOffset =
+      DIMENSIONS.octaveDotBelowOffset + (graceHalves - 1) * DIMENSIONS.underlineSpacing + DIMENSIONS.underlineSpacing / 4;
+    return {
+      svg: `<g class="grace-note-group" transform="translate(${groupX}, ${graceY}) scale(${scale})">${noteParts.join("")}</g>`,
+      underlineMiddleX: groupX + ((DIMENSIONS.underlineXStart + DIMENSIONS.underlineXEndOffset + pitchOffset) / 2) * scale,
+      underlineBottomY: graceY + underlineBottomOffset * scale,
+    };
+  });
+  const connectorPitch = note.ornament.placement === "before" ? gracePitches.at(-1)! : gracePitches[0]!;
+  const underlineMiddleX = connectorPitch.underlineMiddleX;
+  const underlineBottomY = connectorPitch.underlineBottomY;
+  const arcRadius = 6;
+  const arcStartX = note.ornament.placement === "before" ? underlineMiddleX : underlineMiddleX - arcRadius;
+  const arcEndX = note.ornament.placement === "before" ? underlineMiddleX + arcRadius : underlineMiddleX;
+  const arcStartY = note.ornament.placement === "before" ? underlineBottomY : underlineBottomY + arcRadius;
+  const arcEndY = note.ornament.placement === "before" ? underlineBottomY + arcRadius : underlineBottomY;
+  return [
+    ...gracePitches.map((pitch) => pitch.svg),
+    `<path class="ornament grace-arc" d="M${arcStartX},${arcStartY} A${arcRadius},${arcRadius} 0 0 0 ${arcEndX},${arcEndY}"/>`,
+  ].join("");
+}
+
 function renderOrnament(note: PitchNote, x: number, y: number): string {
   if (!note.ornament) {
     return "";
+  }
+  if (note.ornament.kind === "grace") {
+    return renderGracePitches(note, x, y);
   }
   const maxOffset = maxAccidentalOffset(note.chord);
   const centerX = x + maxOffset;
@@ -496,7 +549,7 @@ function renderLine(
     let groupStartX: number | null = null;
     let groupDuration = 0;
     for (const [noteIndex, note] of measureLayout.measure.notes.entries()) {
-      const naturalX = xOffset + measureLayout.notePositions[noteIndex]! + measureLayout.leftPadding;
+      const naturalX = xOffset + measureLayout.notePositions[noteIndex]! + ornamentLeftWidthOf(note) + measureLayout.leftPadding;
       groupStartX ??= naturalX;
       const groupShift = justifyX(groupStartX) - groupStartX;
       const dashAnchors = measureLayout.dashPositions[noteIndex]!.map((dashPosition) => {
