@@ -239,13 +239,14 @@ margin, paper preset, orientation, and justification settings as SVG and PNG
 download. Both PDF paths embed Noto Sans SC for Unicode text such as Chinese
 titles, composer names, and lyrics.
 
-PDF exporters embed Bravura for SMuFL ornament glyphs, such as mordents, in
-addition to Noto Sans SC for Unicode text.
+PDF exporters embed Bravura for SMuFL ornament glyphs, such as mordents and
+turns, in addition to Noto Sans SC for Unicode text.
 
 SVG export embeds the bundled Bravura `woff2` as an SVG-local `@font-face` when
 SMuFL ornament glyphs are present. Browser preview still loads Bravura as a
 normal application asset, so preview SVG strings stay lightweight while
-downloaded SVG files are self-contained for mordents in modern SVG viewers.
+downloaded SVG files are self-contained for SMuFL ornaments in modern SVG
+viewers.
 
 ## MIDI Export
 

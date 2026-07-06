@@ -79,6 +79,21 @@ function compilePitchNoteEvents(note: Extract<Note, { kind: "pitch" }>, noteMap:
   }
 
   const mainPitch = note.chord[0]!;
+  if (note.ornament.kind === "turn") {
+    const upper = pitchToMidi(adjacentPitch(mainPitch, "upper"), noteMap);
+    const lower = pitchToMidi(adjacentPitch(mainPitch, "lower"), noteMap);
+    const ornamentDuration = note.duration.value / 2;
+    const segment = ornamentDuration / 4;
+    const sustain = note.duration.value - ornamentDuration;
+    const turnChords = note.ornament.direction === "upper"
+      ? [[upper], anchor, [lower], anchor]
+      : [[lower], anchor, [upper], anchor];
+    return [
+      ...turnChords.map((chord) => ({ chord, duration: segment, index: note.index, velocity })),
+      { chord: anchor, duration: sustain, index: note.index, velocity },
+    ];
+  }
+
   const auxiliary = pitchToMidi(adjacentPitch(mainPitch, note.ornament.direction), noteMap);
   const ornamentDuration = note.duration.value / 2;
   const segment = ornamentDuration / 3;

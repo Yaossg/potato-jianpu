@@ -173,8 +173,10 @@ function renderOrnament(note: PitchNote, x: number, y: number): string {
   const maxOffset = maxAccidentalOffset(note.chord);
   const centerX = x + maxOffset;
   const markY = y - chordHeight(note) - DIMENSIONS.ornamentTopGap;
-  const symbol = note.ornament.direction === "lower" ? SMUFL_SYMBOLS.ornamentMordent : SMUFL_SYMBOLS.ornamentShortTrill;
-  return `<text class="ornament mordent smufl-symbol" x="${centerX}" y="${markY}" text-anchor="middle">${symbol}</text>`;
+  const symbol = note.ornament.kind === "turn"
+    ? note.ornament.direction === "lower" ? SMUFL_SYMBOLS.ornamentTurnInverted : SMUFL_SYMBOLS.ornamentTurn
+    : note.ornament.direction === "lower" ? SMUFL_SYMBOLS.ornamentMordent : SMUFL_SYMBOLS.ornamentShortTrill;
+  return `<text class="ornament ${note.ornament.kind} smufl-symbol" x="${centerX}" y="${markY}" text-anchor="middle">${symbol}</text>`;
 }
 
 function renderDuration(note: Note, x: number, y: number, full: boolean, dashAnchors: number[]): string {

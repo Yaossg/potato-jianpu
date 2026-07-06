@@ -186,6 +186,27 @@ Examples:
 The first two notes play as sharpened `4`; the note after the bar returns to the
 key-signature pitch.
 
+## Ornaments
+
+Mordents, turns, and grace notes compile inside the written duration of the
+anchor note.
+
+Mordents use the first half of the written duration for a
+main-neighbor-main figure, then sustain the anchor pitch for the remaining
+duration. Upper mordents use the next scale degree; lower mordents use the
+previous scale degree.
+
+Turns use the first half of the written duration for four equal segments, then
+sustain the anchor pitch for the remaining duration. A normal turn uses
+upper-anchor-lower-anchor. An inverted turn uses lower-anchor-upper-anchor.
+
+Grace notes use the first quarter of the written duration. Before-grace notes
+sound before the shortened anchor note; after-grace notes sound after it.
+Multiple grace pitches split the grace duration evenly.
+
+Auxiliary ornament pitches follow the current key signature and any active
+accidental for that scale degree in the measure.
+
 ## Ties
 
 The parser validates tie legality before successful playback/export:

@@ -229,8 +229,8 @@ Renderer dimensions are centralized in the `DIMENSIONS` object:
 | `hairpinVelocityClearance` | `8` | Extra upward offset when hairpins share a note with dynamic text |
 | `navigationHeight` | `20` | Vertical space reserved for the navigation mark lane |
 | `navigationTopOffset` | `10` | Vertical offset for navigation mark text |
-| `ornamentTopGap` | `3` | Gap between mordent ornaments and the note row |
-| `ornamentHeight` | `3` | Vertical space reserved above the note row for mordent ornaments |
+| `ornamentTopGap` | `3` | Gap between SMuFL ornaments and the note row |
+| `ornamentHeight` | `3` | Vertical space reserved above the note row for SMuFL ornaments |
 
 These constants are not yet exposed as a public theme API.
 
@@ -475,10 +475,10 @@ complete hairpin on each visual line.
 
 ### Ornaments
 
-Mordent ornaments render with SMuFL Private Use Area glyphs. Browser preview,
-browser PDF export, backend PNG export, and backend PDF export load the bundled
-Bravura font for these glyphs. Other notation symbols continue to use Unicode
-text or SVG primitives.
+Mordent and turn ornaments render with SMuFL Private Use Area glyphs. Browser
+preview, browser PDF export, backend PNG export, and backend PDF export load
+the bundled Bravura font for these glyphs. Other notation symbols continue to
+use Unicode text or SVG primitives.
 
 Grace-note ornaments render as small Jianpu number figures beside their anchor
 note. Each grace figure includes the small pitch number, octave dots or
@@ -489,8 +489,8 @@ group to the anchor note.
 Raw renderer SVG output references the Bravura font family but does not inline
 font data, so browser preview can stay lightweight. SVG file export embeds the
 bundled Bravura `woff2` as an SVG-local `@font-face` when SMuFL ornaments are
-present, making downloaded SVG files self-contained for mordents in modern SVG
-viewers.
+present, making downloaded SVG files self-contained for SMuFL ornaments in
+modern SVG viewers.
 
 ## Interactivity Metadata
 

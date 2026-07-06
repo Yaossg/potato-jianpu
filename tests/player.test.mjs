@@ -46,6 +46,17 @@ test("expands mordents with key and accidental-aware auxiliary pitches", () => {
   assert.equal(melody.notes.reduce((sum, note) => sum + note.duration, 0), 1 / 2);
 });
 
+test("expands turns with upper and lower auxiliary pitches", () => {
+  const result = parse("key: D\n===\n1(z) #1(s)");
+  assert.equal(result.ok, true);
+  const melody = compileMelody(result.value);
+  assert.deepEqual(
+    melody.notes.map((note) => note.chord),
+    [[64], [62], [61], [62], [62], [61], [63], [64], [63], [63]],
+  );
+  assert.equal(melody.notes.reduce((sum, note) => sum + note.duration, 0), 1 / 2);
+});
+
 test("exports ornament-expanded MIDI note-ons", () => {
   const result = parse("1(^)");
   assert.equal(result.ok, true);
