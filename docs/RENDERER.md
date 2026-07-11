@@ -236,6 +236,12 @@ Renderer dimensions are centralized in the `DIMENSIONS` object:
 | `trillExtensionWavelength` | `8` | Target long-trill wave cycle width |
 | `trillExtensionAmplitude` | `2` | Long-trill wave amplitude |
 | `trillExtensionYOffset` | `4` | Long-trill path offset above the trill glyph baseline |
+| `slideRadius` | `6` | Fixed radius of a slide arc |
+| `slideArrowLength` | `3` | Slide arrowhead length along the end tangent |
+| `slideArrowHalfWidth` | `2` | Half-width of the slide arrowhead base |
+| `slideXOffset` | `8` | Horizontal offset from the source note center to the slide arc |
+| `slideLowYOffset` | `15` | Vertical offset from the source note baseline to the low end of a slide arc |
+| `slideRightWidth` | `4` | Extra spacing that keeps duration dashes clear of a slide mark |
 
 These constants are not yet exposed as a public theme API.
 
@@ -491,6 +497,14 @@ extend the path through the same final layout coordinates. Without a duration
 dash, only the trill glyph renders and the parser reports a warning. The
 extension remains within the current visual line and the anchor note's written
 duration.
+
+Slides render in the source note's upper-right area as source-attached
+quarter-circle SVG arcs with an arrowhead at the arc end. Every rising or
+falling slide uses the same 6px radius regardless
+of the target note's position, duration spacing, justification, or visual-line
+wrapping. The target pitch determines only whether the fixed-size mark bends
+upward or downward. A slide between notes at the same sounding pitch produces
+a parser warning and is omitted.
 
 Browser preview, browser PDF export, backend PNG export, and backend PDF export
 load the bundled Bravura font for these glyphs. Other notation symbols

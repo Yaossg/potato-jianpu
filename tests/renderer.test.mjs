@@ -85,6 +85,42 @@ function tiePaths(svg) {
   return [...svg.matchAll(/<path class="tie" d="([^"]+)"/g)].map((match) => match[1]);
 }
 
+function slidePaths(svg) {
+  return [...svg.matchAll(/<path class="ornament slide" d="([^"]+)"\/>/g)].map((match) => match[1]);
+}
+
+function slideArrowPaths(svg) {
+  return [...svg.matchAll(/<path class="slide-arrow" d="([^"]+)"/g)].map((match) => match[1]);
+}
+
+function pathEnd(path) {
+  const match = path.match(/ ([^, ]+),([^ ]+)$/);
+  assert.ok(match, "slide path should have an endpoint");
+  return [Number(match[1]), Number(match[2])];
+}
+
+function pathStart(path) {
+  const match = path.match(/^M([^,]+),([^ ]+)/);
+  assert.ok(match, "slide path should have a start point");
+  return [Number(match[1]), Number(match[2])];
+}
+
+function pathPoints(path) {
+  return [...path.matchAll(/(?:M|L)([^,]+),([^ ]+)/g)].map((match) => [Number(match[1]), Number(match[2])]);
+}
+
+function arrowBaseCenter(path) {
+  const match = path.match(/M[^ ]+ L([^,]+),([^ ]+) L([^,]+),([^ ]+) Z$/);
+  assert.ok(match, "slide arrow should have two base corners");
+  return [(Number(match[1]) + Number(match[3])) / 2, (Number(match[2]) + Number(match[4])) / 2];
+}
+
+function slideArcRadii(path) {
+  const match = path.match(/ A([^,]+),([^ ]+) /);
+  assert.ok(match, "slide should use an SVG arc with explicit radii");
+  return [Number(match[1]), Number(match[2])];
+}
+
 function trillExtension(svg) {
   const match = svg.match(/<path class="ornament trill-extension" d="M([^,]+),([^ ]+) ([^"]+)"\/>/);
   assert.ok(match, "long trill extension should render");
@@ -112,6 +148,15 @@ test("renders a parse result as an SVG document", () => {
   assert.match(svg, /&#9839;/);
   assert.match(svg, /class="dash"/);
   assert.match(svg, /font-family: Arial, Helvetica, sans-serif/);
+});
+
+test('does not render slides between notes at the same pitch', () => {
+  const result = parse('1(~) 1 0 0');
+  assert.equal(result.ok, true);
+  assert.equal(result.diagnostics[0]?.severity, 'warning');
+  const svg = renderSvg(result.value);
+  assert.equal(slidePaths(svg).length, 0);
+  assert.equal(slideArrowPaths(svg).length, 0);
 });
 
 test("renders time signatures as stacked digits", () => {
@@ -441,6 +486,51 @@ test("renders compact note ornaments and keeps following notes spaced", () => {
   assert.match(svg, /<text class="ornament trill smufl-symbol" x="[^"]+" y="[^"]+" text-anchor="middle">&#xE566;<\/text>/);
   assert.doesNotMatch(svg, /<path class="ornament mordent"/);
   assert.ok(noteX(svg, 1) - noteX(svg, 0) >= 24);
+});
+
+test("renders rising, falling, and wrapped slide segments", () => {
+  const result = parse("1(~) 5 5(~) 1");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  const paths = slidePaths(svg);
+  assert.equal(paths.length, 2);
+  assert.match(paths[0], / A[^ ]+,[^ ]+ 0 0 0 /, "rising slide should use an upward quarter-circle arc");
+  assert.match(paths[1], / A[^ ]+,[^ ]+ 0 0 1 /, "falling slide should use a downward quarter-circle arc");
+  const arrows = slideArrowPaths(svg);
+  assert.equal(arrows.length, 2);
+  assert.deepEqual(pathEnd(paths[0]), arrowBaseCenter(arrows[0]));
+  assert.deepEqual(pathEnd(paths[1]), arrowBaseCenter(arrows[1]));
+  for (const [sourceIndex, slideIndex] of [[0, 0], [2, 1]]) {
+    const source = notePosition(svg, sourceIndex);
+    const points = [pathStart(paths[slideIndex]), pathEnd(paths[slideIndex]), ...pathPoints(arrows[slideIndex])];
+    assert.ok(Math.min(...points.map(([x]) => x)) > source.x, "slide mark should stay to the right of its source note");
+    assert.ok(Math.max(...points.map(([, y]) => y)) <= source.y - 12, "slide mark should stay in the source note's upper-right area");
+  }
+
+  const wrapped = parse("1 2 3 4(~) | 5 6 7 1'");
+  assert.equal(wrapped.ok, true);
+  const wrappedSvg = renderSvg(wrapped.value, { pageWidth: 120 });
+  const wrappedPaths = slidePaths(wrappedSvg);
+  assert.equal(wrappedPaths.length, 1);
+  assert.equal(slideArrowPaths(wrappedSvg).length, 1);
+});
+
+test("keeps slide radius fixed when the target note position changes", () => {
+  const compact = parse("1(~) 5");
+  const extended = parse("1(~)--- 5");
+  assert.equal(compact.ok, true);
+  assert.equal(extended.ok, true);
+  const compactPath = slidePaths(renderSvg(compact.value))[0];
+  const extendedPath = slidePaths(renderSvg(extended.value))[0];
+  const extendedSvg = renderSvg(extended.value);
+  const justifiedPath = slidePaths(renderSvg(compact.value, { pageWidth: 320, justifyMode: "all" }))[0];
+  assert.deepEqual(slideArcRadii(compactPath), [6, 6]);
+  assert.deepEqual(slideArcRadii(extendedPath), [6, 6]);
+  assert.deepEqual(slideArcRadii(justifiedPath), [6, 6]);
+  const extendedArrow = slideArrowPaths(extendedSvg)[0];
+  const arrowCoordinates = [...extendedArrow.matchAll(/(?:M|L)([^,]+),([^ ]+)/g)].map((match) => Number(match[1]));
+  const firstDashX = Number(extendedSvg.match(/<line class="dash" x1="([^"]+)"/)?.[1]);
+  assert.ok(firstDashX > Math.max(...arrowCoordinates), "duration dash should start after the fixed slide mark");
 });
 
 test("renders long trill extensions within their visual duration slots", () => {

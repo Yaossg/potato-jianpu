@@ -1,11 +1,12 @@
 ---
 title: Ornaments
-description: Write note-attached mordents, turns, trills, and grace notes for rendering, playback, and export.
+description: Write note-attached mordents, turns, trills, slides, and grace notes for rendering, playback, and export.
 docId: syntax-ornaments
 sectionIds:
   - mordents
   - turns
   - trills
+  - slides
   - grace-notes
   - playback-and-export
   - diagnostics
@@ -84,6 +85,26 @@ The long-trill line is drawn only when its anchor has at least one duration dash
 
 Trills attach only to ordinary single pitch notes. The upper auxiliary pitch follows the current key signature and any active accidental for that scale degree in the measure.
 
+## Slides
+
+Use `(~)` after a source pitch to slide into the immediately following pitch note in the same track. The suffix comes before any duration marks on the source note.
+
+<JianpuSource
+  title="Slide source"
+  source={`time: 4/4
+===
+1(~)- 5 3 | 5(~)- 1 0`}
+/>
+
+<ScorePreview
+  title="Rendered slides"
+  source={`time: 4/4
+===
+1(~)- 5 3 | 5(~)- 1 0`}
+/>
+
+The renderer infers the direction from the two pitches. Slides may cross a measure boundary, a source line, or an automatic visual-line wrap. Both source and target must be ordinary single pitch notes. A rest, drum note, chord, tied target, or missing target is invalid. When both notes have the same sounding pitch, the slide is ignored and produces a warning.
+
 ## Grace Notes
 
 Grace notes are also written as post-note ornament suffixes. The suffix always attaches to the pitch note on its left. Use `(<...)` for grace notes rendered and played before the anchor note, and `(>...)` for grace notes rendered and played after it.
@@ -116,9 +137,11 @@ Playback, MIDI, WAV, and MP3 export expand turns into a short four-note figure, 
 
 Playback, MIDI, WAV, and MP3 export expand a trill across the full written duration. It starts on the anchor, alternates with the upper auxiliary pitch at thirty-second-note density, and always keeps at least one complete anchor-upper pair. The `(tr)` and `(tr~)` forms produce identical playback events.
 
+Playback, MIDI, WAV, and MP3 export use the final quarter of the slide source's written duration for equal chromatic semitone steps through the target pitch. The following target note then keeps its own normal attack and duration.
+
 Playback, MIDI, WAV, and MP3 export expand grace notes inside the written duration of the anchor note. Before-grace notes sound first, followed by the shortened anchor note. After-grace notes use the end of the anchor duration. Multiple grace notes split the grace duration evenly.
 
-SVG, PNG, and PDF export render mordents, turns, and trills above the note using the bundled SMuFL ornament font. A `(tr~)` long trill adds a wavy path through the anchor note's written duration. Grace notes render as small Jianpu figures beside the anchor note: before-grace notes on the left, after-grace notes on the right. Each grace figure has one or more short underlines whose lower edge connects to the anchor note with a quarter-circle arc. Downloaded SVG and PDF output embed the font needed for SMuFL ornament symbols.
+SVG, PNG, and PDF export render mordents, turns, and trills above the note using the bundled SMuFL ornament font. A `(tr~)` long trill adds a wavy path through the anchor note's written duration. Slides render in the source note's upper-right area as fixed-radius rising or falling quarter-circle arcs with an arrowhead. The target pitch determines the direction but its position does not stretch the mark. Grace notes render as small Jianpu figures beside the anchor note: before-grace notes on the left, after-grace notes on the right. Each grace figure has one or more short underlines whose lower edge connects to the anchor note with a quarter-circle arc. Downloaded SVG and PDF output embed the font needed for SMuFL ornament symbols.
 
 ## Diagnostics
 
@@ -148,6 +171,20 @@ SVG, PNG, and PDF export render mordents, turns, and trills above the note using
   status="invalid"
   description="Ornaments cannot be attached to tied notes in this version."
   source={`~1(^)`}
+/>
+
+<JianpuExample
+  title="Slide without a target"
+  status="invalid"
+  description="A slide source must be followed by a pitch note in the same track."
+  source={`1 2 3(~)`}
+/>
+
+<JianpuExample
+  title="Slide into a rest"
+  status="invalid"
+  description="A slide target must be an ordinary single pitch note."
+  source={`1(~) 0`}
 />
 
 <JianpuExample

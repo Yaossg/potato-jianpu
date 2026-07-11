@@ -192,6 +192,9 @@ function renderOrnament(note: PitchNote, x: number, y: number, ornamentEndX: num
   if (note.ornament.kind === "grace") {
     return renderGracePitches(note, x, y);
   }
+  if (note.ornament.kind === "slide") {
+    return "";
+  }
   const maxOffset = maxAccidentalOffset(note.chord);
   const centerX = x + maxOffset;
   const markY = y - chordHeight(note) - DIMENSIONS.ornamentTopGap;
@@ -253,6 +256,30 @@ function renderTie(startX: number, endX: number, y: number, chordHeightValue: nu
 function tieYOf(y: number, chordHeightValue: number): number {
   const yOffset = chordHeightValue > DIMENSIONS.baseNoteHeight ? -(chordHeightValue - DIMENSIONS.baseNoteHeight) - 2 : 0;
   return y + yOffset;
+}
+
+function pitchHeight(pitch: Pitch): number {
+  const semitones = [0, 2, 4, 5, 7, 9, 11] as const;
+  return pitch.octave * 12 + semitones[pitch.note - 1]! + (pitch.accidental ?? 0);
+}
+
+function slideDirection(source: PitchNote, target: PitchNote): -1 | 0 | 1 {
+  return Math.sign(pitchHeight(target.chord[0]!) - pitchHeight(source.chord[0]!)) as -1 | 0 | 1;
+}
+
+function renderSlide(x: number, y: number, direction: -1 | 1): string {
+  const radius = DIMENSIONS.slideRadius;
+  const startX = x + DIMENSIONS.slideXOffset;
+  const startY = direction < 0 ? y - DIMENSIONS.slideLowYOffset - radius : y - DIMENSIONS.slideLowYOffset;
+  const pathEndX = startX + radius;
+  const pathEndY = startY - direction * radius;
+  const path = `M${startX},${startY} A${radius},${radius} 0 0 ${direction > 0 ? 0 : 1} ${pathEndX},${pathEndY}`;
+  const arrowLength = DIMENSIONS.slideArrowLength;
+  const arrowHalfWidth = DIMENSIONS.slideArrowHalfWidth;
+  const endX = pathEndX;
+  const endY = pathEndY - direction * arrowLength;
+  const arrowPath = `M${endX},${endY} L${pathEndX - arrowHalfWidth},${pathEndY} L${pathEndX + arrowHalfWidth},${pathEndY} Z`;
+  return `<path class="ornament slide" d="${path}"/><path class="slide-arrow" d="${arrowPath}" fill="currentColor" stroke="none"/>`;
 }
 
 function renderIncomingTie(edgeX: number, endX: number, y: number, chordHeightValue: number): string {
@@ -675,6 +702,17 @@ function renderLine(
   for (const entry of lineEntries) {
     const previousNote = previousNoteInSequence(trackNotes, entry.note);
     const previous = previousNote ? lineEntries.find((candidate) => candidate.note === previousNote) : undefined;
+    const nextNote = nextNoteInSequence(trackNotes, entry.note);
+    if (
+      entry.note.kind === "pitch" &&
+      entry.note.ornament?.kind === "slide" &&
+      nextNote?.kind === "pitch"
+    ) {
+      const direction = slideDirection(entry.note, nextNote);
+      if (direction !== 0) {
+        parts.push(renderSlide(entry.x + maxAccidentalOffset(entry.note.chord), entry.y, direction));
+      }
+    }
     if (entry.note.tie && previous) {
       const startX = previous.x + (previous.note.kind === "pitch" ? maxAccidentalOffset(previous.note.chord) : 0);
       const endX = entry.x + (entry.note.kind === "pitch" ? maxAccidentalOffset(entry.note.chord) : 0);
@@ -683,7 +721,6 @@ function renderLine(
       const endX = entry.x + (entry.note.kind === "pitch" ? maxAccidentalOffset(entry.note.chord) : 0);
       parts.push(renderIncomingTie(leftTieEdgeX, endX, lineY + layout.maxPaddingUp - DIMENSIONS.tiePadding, chordHeight(entry.note)));
     }
-    const nextNote = nextNoteInSequence(trackNotes, entry.note);
     const nextRendered = nextNote ? lineEntries.some((candidate) => candidate.note === nextNote) : false;
     if (nextNote?.tie && !nextRendered) {
       const startX = entry.x + (entry.note.kind === "pitch" ? maxAccidentalOffset(entry.note.chord) : 0);

@@ -25,6 +25,15 @@ test("compiles pitch notes to MIDI notes with key and octave", () => {
   );
 });
 
+test('plays ignored same-pitch slides as ordinary notes', () => {
+  const result = parse('time: 3/4\n===\n1(~)- 1');
+  assert.equal(result.ok, true);
+  assert.equal(result.diagnostics[0]?.severity, 'warning');
+  const melody = compileMelody(result.value);
+  assert.deepEqual(melody.notes.map((note) => note.chord), [[60], [60]]);
+  assert.deepEqual(melody.notes.map((note) => note.duration), [1 / 2, 1 / 4]);
+});
+
 test("keeps accidentals for the current measure only", () => {
   const result = parse("#4 4 | 4");
   assert.equal(result.ok, true);
@@ -44,6 +53,19 @@ test("expands mordents with key and accidental-aware auxiliary pitches", () => {
     [[62], [64], [62], [62], [63], [61], [63], [63]],
   );
   assert.equal(melody.notes.reduce((sum, note) => sum + note.duration, 0), 1 / 2);
+});
+
+test("expands slides chromatically through the final quarter of the source note", () => {
+  const result = parse("key: D\n===\n1(~)- #3");
+  assert.equal(result.ok, true);
+  const melody = compileMelody(result.value);
+  assert.deepEqual(
+    melody.notes.map((note) => note.chord),
+    [[62], [63], [64], [65], [66], [67], [67]],
+  );
+  assert.equal(melody.notes[0].duration, 3 / 8);
+  assert.equal(melody.notes.slice(1, 6).reduce((sum, note) => sum + note.duration, 0), 1 / 8);
+  assert.ok(Math.abs(melody.notes.reduce((sum, note) => sum + note.duration, 0) - 3 / 4) < 1e-9);
 });
 
 test("expands turns with upper and lower auxiliary pitches", () => {

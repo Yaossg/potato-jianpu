@@ -48,7 +48,7 @@ function paddingUpOf(note: Note, tieAfter: boolean, hasEnding: boolean): number 
   if (note.velocity !== undefined) {
     height += DIMENSIONS.velocityFontSize + DIMENSIONS.velocityTextGap;
   }
-  if (note.kind === "pitch" && note.ornament !== undefined) {
+  if (note.kind === "pitch" && note.ornament !== undefined && note.ornament.kind !== "slide") {
     height += DIMENSIONS.ornamentTopGap + DIMENSIONS.ornamentHeight;
   }
   if (note.hairpinStart !== undefined || note.hairpinEnd) {

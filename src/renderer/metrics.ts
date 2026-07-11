@@ -42,6 +42,9 @@ export function ornamentRightWidthOf(note: Note): number {
   if (note.ornament.kind === "grace") {
     return note.ornament.placement === "after" ? graceWidth(note.ornament.pitches) : 0;
   }
+  if (note.ornament.kind === "slide") {
+    return DIMENSIONS.slideRightWidth;
+  }
   return 0;
 }
 

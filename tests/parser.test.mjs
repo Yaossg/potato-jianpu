@@ -13,6 +13,23 @@ test("parses a header and unspaced score", () => {
   assert.equal(result.value.score[0].measures[1].notes[2].duration.dashes, 1);
 });
 
+test('warns and ignores slides between notes at the same pitch', () => {
+  for (const source of ['1(~) 1 0 0', '#1(~) 1 0 0', '#1(~) b2 0 0']) {
+    const result = parse(source);
+    assert.equal(result.ok, true);
+    assert.deepEqual(
+      result.diagnostics.map(({ severity, message }) => ({ severity, message })),
+      [{ severity: 'warning', message: 'Slide between notes at the same pitch is ignored.' }],
+    );
+    assert.equal(result.value.score[0].measures[0].notes[0].ornament, undefined);
+  }
+
+  const resetAccidental = parse('0 0 0 #1(~) | 1 0 0 0');
+  assert.equal(resetAccidental.ok, true);
+  assert.equal(resetAccidental.diagnostics.length, 0);
+  assert.equal(resetAccidental.value.score[0].measures[0].notes[3].ornament?.kind, 'slide');
+});
+
 test("parses score-only documents", () => {
   const result = parse("1 2 3 4 | 5 6 7 1' |");
   assert.equal(result.ok, true);
@@ -462,8 +479,26 @@ test("parses note-attached grace ornaments before duration suffixes", () => {
   assert.deepEqual(notes[3].ornament.pitches.map((pitch) => pitch.note), [2, 3, 4, 5]);
 });
 
+test("parses slides and validates their immediate targets", () => {
+  const result = parse("1(~) 5 | 5(~) 1");
+  assert.equal(result.ok, true);
+  const notes = result.value.score[0].measures.flatMap((measure) => measure.notes);
+  assert.deepEqual(notes.map((note) => note.ornament?.kind), ["slide", undefined, "slide", undefined]);
+
+  for (const [source, message] of [
+    ["1(~)", "Slide must be followed by a target pitch note"],
+    ["1(~) 0", "Slide target must be a single pitch note"],
+    ["1(~) {1 3}", "Slide target must be a single pitch note"],
+    ["1(~) ~2", "Slide target cannot be a tied note"],
+  ]) {
+    const invalid = parse(source);
+    assert.equal(invalid.ok, false);
+    assert.match(invalid.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), new RegExp(message));
+  }
+});
+
 test("reports diagnostics for unsupported ornament attachments", () => {
-  const result = parse("0(^) X(^) {12}(^) ~1(^) 0(tr~) X(tr~) {12}(tr~) ~1(tr~) 1(^)(v) 1() 1(q) 1(2) 1(2 1(<) 1(>0) 1(<234)");
+  const result = parse("0(^) X(^) {12}(^) ~1(^) 0(tr~) X(tr~) {12}(tr~) ~1(tr~) 1(^)(v) 1() 1(q) 1(gl) 1(2) 1(2 1(<) 1(>0) 1(<234)");
   assert.equal(result.ok, false);
   const messages = result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
   assert.match(messages, /Ornaments can only be attached to pitch notes/);
@@ -471,7 +506,7 @@ test("reports diagnostics for unsupported ornament attachments", () => {
   assert.match(messages, /Ornaments cannot be attached to tied notes/);
   assert.match(messages, /Only one ornament can be attached to a note/);
   assert.match(messages, /Ornament parentheses cannot be empty/);
-  assert.match(messages, /Expected '\^', 'v', 'z', 's', 'tr', '<', or '>'/);
+  assert.match(messages, /Expected '\^', 'v', 'z', 's', 'tr', '~', '<', or '>'/);
   assert.match(messages, /Grace ornaments must include at least one pitch note/);
   assert.match(messages, /Grace ornaments must contain 1, 2, 4, or another power-of-two number of pitch notes/);
   assert.match(messages, /Grace ornament pitches must use note syntax 1-7/);

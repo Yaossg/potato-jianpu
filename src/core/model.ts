@@ -36,6 +36,7 @@ export type Ornament =
   | { kind: "mordent"; direction: "upper" | "lower"; range: SourceRange }
   | { kind: "turn"; direction: "upper" | "lower"; range: SourceRange }
   | { kind: "trill"; extension?: "wavy"; range: SourceRange }
+  | { kind: "slide"; range: SourceRange }
   | { kind: "grace"; placement: "before" | "after"; pitches: Pitch[]; range: SourceRange };
 
 export interface DurationMark {

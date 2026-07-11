@@ -54,6 +54,14 @@ function durationOf(dashes: number, halves: number, dots: number): number {
   return unit / 2 ** halves;
 }
 
+function resolvedPitchHeight(pitch: Pitch, accidentals: Map<number, Accidental>): number {
+  const semitones = [0, 2, 4, 5, 7, 9, 11] as const;
+  if (pitch.accidental !== undefined) {
+    accidentals.set(pitch.note, pitch.accidental);
+  }
+  return pitch.octave * 12 + semitones[pitch.note - 1]! + (accidentals.get(pitch.note) ?? 0);
+}
+
 function isPowerOfTwo(value: number): boolean {
   return Number.isInteger(value) && value > 0 && (value & (value - 1)) === 0;
 }
@@ -164,6 +172,7 @@ class Parser {
     this.validateLyrics(score);
     this.normalizeFinalEnding(score);
     this.validateTies(score);
+    this.validateSlides(score);
     this.validateRepeatedEndings(score);
     this.validateNavigation(score);
     this.validateMeasureDurations(score, header.timeSignature.beatsPerMeasure / header.timeSignature.beatsPerWholeNote);
@@ -859,6 +868,10 @@ class Parser {
         ...(extension ? { extension: "wavy" as const } : {}),
         range: mergeRange(start, extension?.range ?? token.range),
       };
+    } else if (this.at("tie")) {
+      const token = this.current();
+      this.index += 1;
+      ornament = { kind: "slide", range: mergeRange(start, token.range) };
     } else if (this.at("crescendo") || this.at("diminuendo")) {
       const token = this.current();
       const placement = this.at("crescendo") ? "before" : "after";
@@ -882,7 +895,7 @@ class Parser {
         ornament = { kind: "grace", placement, pitches, range: mergeRange(start, pitches.at(-1)!.range) };
       }
     } else {
-      this.error("Expected '^', 'v', 'z', 's', 'tr', '<', or '>' inside ornament parentheses.", this.current().range);
+      this.error("Expected '^', 'v', 'z', 's', 'tr', '~', '<', or '>' inside ornament parentheses.", this.current().range);
       while (!this.at("rparen") && !this.at("newline") && !this.at("eof")) {
         this.index += 1;
       }
@@ -1211,6 +1224,42 @@ class Parser {
   private validateTies(lines: ScoreLine[]) {
     for (const trackLines of this.trackLineGroups(lines)) {
       this.validateTrackTies(trackLines);
+    }
+  }
+
+  private validateSlides(lines: ScoreLine[]) {
+    for (const trackLines of this.trackLineGroups(lines)) {
+      const notes = trackLines.flatMap((line) => line.measures).flatMap((measure) => {
+        const accidentals = new Map<number, Accidental>();
+        return measure.notes.map((note) => ({
+          note,
+          pitches: note.kind === 'pitch'
+            ? note.chord.map((pitch) => resolvedPitchHeight(pitch, accidentals))
+            : [],
+        }));
+      });
+      for (const [index, entry] of notes.entries()) {
+        const { note } = entry;
+        if (note.kind !== "pitch" || note.ornament?.kind !== "slide") {
+          continue;
+        }
+        const targetEntry = notes[index + 1];
+        const target = targetEntry?.note;
+        if (target === undefined) {
+          this.error("Slide must be followed by a target pitch note in the same track.", note.ornament.range);
+        } else if (target.kind !== "pitch" || target.chord.length !== 1) {
+          this.error("Slide target must be a single pitch note.", target.range);
+        } else if (target.tie) {
+          this.error("Slide target cannot be a tied note.", target.range);
+        } else if (note.chord.length === 1) {
+          const sourcePitch = entry.pitches[0];
+          const targetPitch = targetEntry.pitches[0];
+          if (sourcePitch === targetPitch) {
+            this.warning('Slide between notes at the same pitch is ignored.', note.ornament.range);
+            note.ornament = undefined;
+          }
+        }
+      }
     }
   }
 

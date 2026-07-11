@@ -188,8 +188,8 @@ key-signature pitch.
 
 ## Ornaments
 
-Mordents, turns, trills, and grace notes compile inside the written duration of the
-anchor note.
+Mordents, turns, trills, slides, and grace notes compile inside the written
+duration of the anchor note.
 
 Mordents use the first half of the written duration for a
 main-neighbor-main figure, then sustain the anchor pitch for the remaining
@@ -205,6 +205,14 @@ compiler targets one event per thirty-second note, uses an equal subdivision
 that fills the duration exactly, and keeps at least one complete pair for
 shorter notes. The `(tr)` and `(tr~)` spellings compile to identical events;
 the long-trill extension is engraving-only.
+
+Slides use the final quarter of the source note's written duration. The
+compiler keeps the source pitch for the first three quarters, then walks by
+equal chromatic semitone steps through the target pitch. The target note keeps
+its own normal attack and duration after the slide finishes. Ascending and
+descending slides use the same timing. A slide between notes at the same
+sounding pitch is ignored with a parser warning, so it plays as an ordinary
+source note.
 
 Grace notes use the first quarter of the written duration. Before-grace notes
 sound before the shortened anchor note; after-grace notes sound after it.
@@ -523,4 +531,3 @@ Browser audio export uses the current Program, volume, and initial-rest settings
 from the Settings panel unless the score header supplies its own `program` or
 `volume` defaults. Browser MP3 uses the same `lamejs` encoder bundled into the
 web build.
-

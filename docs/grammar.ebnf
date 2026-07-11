@@ -57,10 +57,11 @@ durable_note = [ velocity ], { hairpin }, [ tie ], [ velocity ], general_note, [
 tie = TIE ;
 velocity = VELOCITY ;
 hairpin = CRESCENDO | DIMINUENDO ;
-ornament = "(", ( mordent | turn | trill | grace ), ")" ;
+ornament = "(", ( mordent | turn | trill | slide | grace ), ")" ;
 mordent = CARET | "v" ;
 turn = "z" | "s" ;
 trill = "tr", [ TIE ] ;
+slide = "~" ;
 grace = grace_direction, pitch_note, { pitch_note } ;
 grace_direction = CRESCENDO | DIMINUENDO ;
 

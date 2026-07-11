@@ -56,12 +56,33 @@ function adjacentPitch(pitch: Pitch, direction: "upper" | "lower"): Pitch {
   return pitch.note === 1 ? { ...pitch, note: 7, octave: pitch.octave - 1, accidental: undefined } : { ...pitch, note: (pitch.note - 1) as Pitch["note"], accidental: undefined };
 }
 
-function compilePitchNoteEvents(note: Extract<Note, { kind: "pitch" }>, noteMap: number[]): MelodyNote[] {
+function compilePitchNoteEvents(note: Extract<Note, { kind: "pitch" }>, noteMap: number[], slideTarget?: number): MelodyNote[] {
   const velocity = note.velocity;
   const anchor = note.chord.map((pitch) => pitchToMidi(pitch, noteMap));
   const base: MelodyNote = { chord: anchor, duration: note.duration.value, index: note.index, velocity };
   if (!note.ornament) {
     return [base];
+  }
+
+  if (note.ornament.kind === "slide") {
+    const start = anchor[0]!;
+    const distance = slideTarget === undefined ? 0 : slideTarget - start;
+    const stepCount = Math.abs(distance);
+    if (stepCount === 0) {
+      return [base];
+    }
+    const slideDuration = note.duration.value / 4;
+    const sustain = note.duration.value - slideDuration;
+    const direction = Math.sign(distance);
+    return [
+      { ...base, duration: sustain },
+      ...Array.from({ length: stepCount }, (_, index) => ({
+        chord: [start + direction * (index + 1)],
+        duration: slideDuration / stepCount,
+        index: note.index,
+        velocity,
+      })),
+    ];
   }
 
   if (note.ornament.kind === "grace") {
@@ -119,7 +140,7 @@ function compilePitchNoteEvents(note: Extract<Note, { kind: "pitch" }>, noteMap:
   ];
 }
 
-function compileNoteEvents(note: Note, noteMap: number[], program: number): MelodyNote[] {
+function compileNoteEvents(note: Note, noteMap: number[], program: number, slideTarget?: number): MelodyNote[] {
   const velocity = note.velocity;
   switch (note.kind) {
     case "rest":
@@ -132,22 +153,54 @@ function compileNoteEvents(note: Note, noteMap: number[], program: number): Melo
         velocity,
       }];
     case "pitch":
-      return compilePitchNoteEvents(note, noteMap);
+      return compilePitchNoteEvents(note, noteMap, slideTarget);
   }
 }
 
-function compileMeasure(measure: Measure, baseNoteMap: number[], program: number, output: MelodyNote[], sourceNotes: Note[]) {
-  const noteMap = [...baseNoteMap];
-  for (const note of measure.notes) {
-    if (note.kind === "pitch") {
-      for (const pitch of note.chord) {
-        if (pitch.accidental !== undefined) {
-          noteMap[pitch.note - 1] = baseNoteMap[pitch.note - 1]! + pitch.accidental;
+interface PlaybackNoteContext {
+  note: Note;
+  noteMap: number[];
+  slideTarget?: number;
+}
+
+function resolvePlaybackNotes(measures: Measure[], baseNoteMap: number[]): PlaybackNoteContext[] {
+  const contexts: PlaybackNoteContext[] = [];
+  for (const measure of measures) {
+    const noteMap = [...baseNoteMap];
+    for (const note of measure.notes) {
+      if (note.kind === "pitch") {
+        for (const pitch of note.chord) {
+          if (pitch.accidental !== undefined) {
+            noteMap[pitch.note - 1] = baseNoteMap[pitch.note - 1]! + pitch.accidental;
+          }
         }
       }
+      contexts.push({ note, noteMap: [...noteMap] });
     }
+  }
+  for (const [index, context] of contexts.entries()) {
+    if (context.note.kind !== "pitch" || context.note.ornament?.kind !== "slide") {
+      continue;
+    }
+    const target = contexts[index + 1];
+    if (target?.note.kind === "pitch" && target.note.chord.length === 1) {
+      context.slideTarget = pitchToMidi(target.note.chord[0]!, target.noteMap);
+    }
+  }
+  return contexts;
+}
 
-    const melodyNotes = compileNoteEvents(note, noteMap, program);
+function compileMeasure(
+  measure: Measure,
+  program: number,
+  output: MelodyNote[],
+  sourceNotes: Note[],
+  contexts: PlaybackNoteContext[],
+  contextStart: number,
+) {
+  for (const [index, note] of measure.notes.entries()) {
+    const context = contexts[contextStart + index]!;
+    const melodyNotes = compileNoteEvents(note, context.noteMap, program, context.slideTarget);
     if (note.tie) {
       const previous = output.at(-1);
       if (previous) {
@@ -320,8 +373,11 @@ function compileMeasures(document: Document, measures: Measure[], program: numbe
   const sourceNotes: Note[] = [];
   const repeatedMeasures = expandRepeatedMeasures(measures);
   const playbackMeasures = options.navigation === false ? repeatedMeasures : expandNavigationMeasures(repeatedMeasures);
+  const contexts = resolvePlaybackNotes(playbackMeasures, baseNoteMap);
+  let contextStart = 0;
   for (const measure of playbackMeasures) {
-    compileMeasure(measure, baseNoteMap, program, notes, sourceNotes);
+    compileMeasure(measure, program, notes, sourceNotes, contexts, contextStart);
+    contextStart += measure.notes.length;
   }
   applyHairpinVelocities(notes, sourceNotes);
 
