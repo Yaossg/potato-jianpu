@@ -85,6 +85,20 @@ function tiePaths(svg) {
   return [...svg.matchAll(/<path class="tie" d="([^"]+)"/g)].map((match) => match[1]);
 }
 
+function trillExtension(svg) {
+  const match = svg.match(/<path class="ornament trill-extension" d="M([^,]+),([^ ]+) ([^"]+)"\/>/);
+  assert.ok(match, "long trill extension should render");
+  const end = match[3].match(/ ([^, ]+),([^ ]+)$/);
+  assert.ok(end, "long trill extension should end on its baseline");
+  return {
+    startX: Number(match[1]),
+    startY: Number(match[2]),
+    endX: Number(end[1]),
+    endY: Number(end[2]),
+    path: match[0],
+  };
+}
+
 test("renders a parse result as an SVG document", () => {
   const result = parse(`title: "Render Test"\nkey: F#\n===\n1 #4/ 5-|`);
   assert.equal(result.ok, true);
@@ -427,6 +441,56 @@ test("renders compact note ornaments and keeps following notes spaced", () => {
   assert.match(svg, /<text class="ornament trill smufl-symbol" x="[^"]+" y="[^"]+" text-anchor="middle">&#xE566;<\/text>/);
   assert.doesNotMatch(svg, /<path class="ornament mordent"/);
   assert.ok(noteX(svg, 1) - noteX(svg, 0) >= 24);
+});
+
+test("renders long trill extensions within their visual duration slots", () => {
+  const plain = parse("1(tr) 2");
+  assert.equal(plain.ok, true);
+  assert.doesNotMatch(renderSvg(plain.value), /<path class="ornament trill-extension"/);
+
+  const tooShort = parse("1(tr~) 2");
+  assert.equal(tooShort.ok, true);
+  assert.match(
+    tooShort.diagnostics.map((diagnostic) => diagnostic.message).join("\n"),
+    /Long trill extension needs at least one duration dash/,
+  );
+  assert.doesNotMatch(renderSvg(tooShort.value), /<path class="ornament trill-extension"/);
+
+  const beforeNote = parse("1(tr~)- 2-");
+  assert.equal(beforeNote.ok, true);
+  const beforeNoteSvg = renderSvg(beforeNote.value, { pageWidth: 180 });
+  const nextOnsetExtension = trillExtension(beforeNoteSvg);
+  const trillGlyphY = Number(
+    beforeNoteSvg.match(/<text class="ornament trill smufl-symbol" x="[^"]+" y="([^"]+)"/)?.[1],
+  );
+  assert.equal(nextOnsetExtension.startX, noteX(beforeNoteSvg, 0) + 9);
+  assert.equal(nextOnsetExtension.endX, noteX(beforeNoteSvg, 1) - 8);
+  assert.equal(nextOnsetExtension.startY, trillGlyphY - 4);
+  assert.equal(nextOnsetExtension.startY, nextOnsetExtension.endY);
+  assert.match(nextOnsetExtension.path, / Q/);
+
+  const short = parse("1(tr~)- | 2");
+  const long = parse("1(tr~)-- | 2");
+  assert.equal(short.ok, true);
+  assert.equal(long.ok, true);
+  const shortSvg = renderSvg(short.value, { pageWidth: 180 });
+  const longSvg = renderSvg(long.value, { pageWidth: 180 });
+  const shortExtension = trillExtension(shortSvg);
+  const longExtension = trillExtension(longSvg);
+  assert.ok(longExtension.endX - longExtension.startX > shortExtension.endX - shortExtension.startX);
+  const firstBarX = Number(longSvg.match(/<line class="bar-thin" x1="([^"]+)"/)?.[1]);
+  assert.equal(longExtension.endX, firstBarX - 8);
+
+  const final = parse("1(tr~)-");
+  assert.equal(final.ok, true);
+  const finalSvg = renderSvg(final.value, { pageWidth: 180 });
+  const finalBarX = Number(finalSvg.match(/<line class="bar-thin" x1="([^"]+)"/)?.[1]);
+  assert.equal(trillExtension(finalSvg).endX, finalBarX - 8);
+
+  const justified = parse("1(tr~)- 2- | 3");
+  assert.equal(justified.ok, true);
+  const justifiedSvg = renderSvg(justified.value, { pageWidth: 260, justifyMode: "all" });
+  assert.equal(trillExtension(justifiedSvg).endX, noteX(justifiedSvg, 1) - 8);
 });
 
 test("renders grace ornaments beside their anchor notes", () => {

@@ -60,7 +60,7 @@ hairpin = CRESCENDO | DIMINUENDO ;
 ornament = "(", ( mordent | turn | trill | grace ), ")" ;
 mordent = CARET | "v" ;
 turn = "z" | "s" ;
-trill = "tr" ;
+trill = "tr", [ TIE ] ;
 grace = grace_direction, pitch_note, { pitch_note } ;
 grace_direction = CRESCENDO | DIMINUENDO ;
 

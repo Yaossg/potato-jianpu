@@ -409,16 +409,34 @@ test("parses note-attached turns before duration suffixes", () => {
   assert.equal(notes[1].duration.halves, 1);
 });
 
-test("parses note-attached trills before duration suffixes", () => {
-  const result = parse("1(tr)- 2(tr)/");
+test("parses short and long trills before duration suffixes", () => {
+  const source = "1(tr) 2(tr~) 3(tr~)-";
+  const result = parse(source);
   assert.equal(result.ok, true);
   const notes = result.value.score[0].measures[0].notes;
   assert.deepEqual(
     notes.map((note) => note.ornament?.kind),
-    ["trill", "trill"],
+    ["trill", "trill", "trill"],
   );
-  assert.equal(notes[0].duration.dashes, 1);
-  assert.equal(notes[1].duration.halves, 1);
+  assert.equal(notes[0].ornament.extension, undefined);
+  assert.equal(notes[1].ornament.extension, "wavy");
+  assert.equal(notes[2].ornament.extension, "wavy");
+  assert.equal(notes[2].duration.dashes, 1);
+  const extensionOffset = source.indexOf("~");
+  assert.ok(notes[1].ornament.range.start.offset <= extensionOffset);
+  assert.ok(notes[1].ornament.range.end.offset > extensionOffset);
+  const shortExtensionWarning = result.diagnostics.find((diagnostic) =>
+    diagnostic.message.includes("Long trill extension needs at least one duration dash"),
+  );
+  assert.equal(shortExtensionWarning?.severity, "warning");
+  assert.deepEqual(shortExtensionWarning?.range, notes[1].ornament.range);
+
+  const duplicate = parse("1(tr~~)");
+  assert.equal(duplicate.ok, false);
+  assert.match(
+    duplicate.diagnostics.map((diagnostic) => diagnostic.message).join("\n"),
+    /Long trill accepts only one '~' extension marker/,
+  );
 
   const obsolete = parse("1(t)");
   assert.equal(obsolete.ok, false);
@@ -445,7 +463,7 @@ test("parses note-attached grace ornaments before duration suffixes", () => {
 });
 
 test("reports diagnostics for unsupported ornament attachments", () => {
-  const result = parse("0(^) X(^) {12}(^) ~1(^) 1(^)(v) 1() 1(q) 1(2) 1(2 1(<) 1(>0) 1(<234)");
+  const result = parse("0(^) X(^) {12}(^) ~1(^) 0(tr~) X(tr~) {12}(tr~) ~1(tr~) 1(^)(v) 1() 1(q) 1(2) 1(2 1(<) 1(>0) 1(<234)");
   assert.equal(result.ok, false);
   const messages = result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
   assert.match(messages, /Ornaments can only be attached to pitch notes/);

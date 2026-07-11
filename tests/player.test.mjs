@@ -72,6 +72,14 @@ test("expands trills at thirty-second-note density with accidental-aware upper p
   assert.equal(melody.notes.reduce((sum, note) => sum + note.duration, 0), 9 / 16);
 });
 
+test("plays short and long trill notation identically", () => {
+  const short = parse("f 1(tr)-");
+  const long = parse("f 1(tr~)-");
+  assert.equal(short.ok, true);
+  assert.equal(long.ok, true);
+  assert.deepEqual(compileMelody(long.value), compileMelody(short.value));
+});
+
 test("exports ornament-expanded MIDI note-ons", () => {
   const result = parse("1(^)");
   assert.equal(result.ok, true);

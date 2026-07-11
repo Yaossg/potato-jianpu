@@ -64,21 +64,23 @@ Like mordents, turns attach only to ordinary single pitch notes and come before 
 
 ## Trills
 
-Use `(tr)` for a trill. It follows the anchor pitch and comes before any duration suffix.
+Use `(tr)` for a trill. Use `(tr~)` for a long trill with a wavy extension line. Both forms follow the anchor pitch and come before any duration suffix.
 
 <JianpuSource
   title="Trill source"
   source={`time: 4/4
 ===
-1(tr) 2(tr) 3 - | 5(tr)/ 5(tr)/ 1' - 0`}
+1(tr) 2(tr~)- 0 | 5(tr)/ 5(tr)/ 1' - 0`}
 />
 
 <ScorePreview
   title="Rendered trills"
   source={`time: 4/4
 ===
-1(tr) 2(tr) 3 - | 5(tr)/ 5(tr)/ 1' - 0`}
+1(tr) 2(tr~)- 0 | 5(tr)/ 5(tr)/ 1' - 0`}
 />
+
+The long-trill line is drawn only when its anchor has at least one duration dash. It covers only that anchor's written duration, ends before the next onset or current measure barline, and does not span separate notes or tied-note groups. Without a duration dash, the renderer keeps the trill glyph, omits the extension line, and reports a warning.
 
 Trills attach only to ordinary single pitch notes. The upper auxiliary pitch follows the current key signature and any active accidental for that scale degree in the measure.
 
@@ -112,11 +114,11 @@ The upper mordent uses the next scale degree. The lower mordent uses the previou
 
 Playback, MIDI, WAV, and MP3 export expand turns into a short four-note figure, followed by the remaining duration of the written note. A normal turn plays upper-anchor-lower-anchor. An inverted turn plays lower-anchor-upper-anchor.
 
-Playback, MIDI, WAV, and MP3 export expand a trill across the full written duration. It starts on the anchor, alternates with the upper auxiliary pitch at thirty-second-note density, and always keeps at least one complete anchor-upper pair.
+Playback, MIDI, WAV, and MP3 export expand a trill across the full written duration. It starts on the anchor, alternates with the upper auxiliary pitch at thirty-second-note density, and always keeps at least one complete anchor-upper pair. The `(tr)` and `(tr~)` forms produce identical playback events.
 
 Playback, MIDI, WAV, and MP3 export expand grace notes inside the written duration of the anchor note. Before-grace notes sound first, followed by the shortened anchor note. After-grace notes use the end of the anchor duration. Multiple grace notes split the grace duration evenly.
 
-SVG, PNG, and PDF export render mordents, turns, and trills above the note using the bundled SMuFL ornament font. Grace notes render as small Jianpu figures beside the anchor note: before-grace notes on the left, after-grace notes on the right. Each grace figure has one or more short underlines whose lower edge connects to the anchor note with a quarter-circle arc. Downloaded SVG and PDF output embed the font needed for SMuFL ornament symbols.
+SVG, PNG, and PDF export render mordents, turns, and trills above the note using the bundled SMuFL ornament font. A `(tr~)` long trill adds a wavy path through the anchor note's written duration. Grace notes render as small Jianpu figures beside the anchor note: before-grace notes on the left, after-grace notes on the right. Each grace figure has one or more short underlines whose lower edge connects to the anchor note with a quarter-circle arc. Downloaded SVG and PDF output embed the font needed for SMuFL ornament symbols.
 
 ## Diagnostics
 
@@ -167,6 +169,20 @@ SVG, PNG, and PDF export render mordents, turns, and trills above the note using
   status="invalid"
   description="Grace-note suffixes must contain 1, 2, 4, or another power-of-two number of pitch notes."
   source={`1(<234)`}
+/>
+
+<JianpuExample
+  title="Long trill without extended duration"
+  status="warning"
+  description="The trill glyph remains, but a wavy extension needs at least one duration dash."
+  source={`1(tr~) 2 3 4`}
+/>
+
+<JianpuExample
+  title="Repeated long-trill marker"
+  status="invalid"
+  description="A long trill accepts one wavy extension marker."
+  source={`1(tr~~)`}
 />
 
 <JianpuExample

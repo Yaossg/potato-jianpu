@@ -203,7 +203,8 @@ upper-anchor-lower-anchor. An inverted turn uses lower-anchor-upper-anchor.
 Trills alternate anchor-upper pairs across the full written duration. The
 compiler targets one event per thirty-second note, uses an equal subdivision
 that fills the duration exactly, and keeps at least one complete pair for
-shorter notes.
+shorter notes. The `(tr)` and `(tr~)` spellings compile to identical events;
+the long-trill extension is engraving-only.
 
 Grace notes use the first quarter of the written duration. Before-grace notes
 sound before the shortened anchor note; after-grace notes sound after it.

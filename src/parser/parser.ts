@@ -746,6 +746,12 @@ class Parser {
     const note = this.parseGeneralNote(measureOctave);
     const ornament = this.parseOrnamentSuffix(note, tie, measureOctave);
     const duration = this.parseDuration();
+    if (ornament?.kind === "trill" && ornament.extension === "wavy" && duration.dashes === 0) {
+      this.warning(
+        "Long trill extension needs at least one duration dash; only the trill mark will be rendered.",
+        ornament.range,
+      );
+    }
     const range = mergeRange(start, this.previous().range);
     const durableNote =
       note.kind === "pitch" ? { kind: "pitch" as const, chord: note.chord, ...(ornament ? { ornament } : {}) } : note;
@@ -837,7 +843,22 @@ class Parser {
     } else if (this.at("identifier") && this.current().text === "tr") {
       const token = this.current();
       this.index += 1;
-      ornament = { kind: "trill", range: mergeRange(start, token.range) };
+      const extension = this.match("tie");
+      if (extension && this.at("tie")) {
+        const duplicateStart = this.current().range;
+        while (this.match("tie")) {
+          // Consume duplicate extension markers for one focused diagnostic.
+        }
+        this.error(
+          "Long trill accepts only one '~' extension marker.",
+          mergeRange(duplicateStart, this.previous().range),
+        );
+      }
+      ornament = {
+        kind: "trill",
+        ...(extension ? { extension: "wavy" as const } : {}),
+        range: mergeRange(start, extension?.range ?? token.range),
+      };
     } else if (this.at("crescendo") || this.at("diminuendo")) {
       const token = this.current();
       const placement = this.at("crescendo") ? "before" : "after";

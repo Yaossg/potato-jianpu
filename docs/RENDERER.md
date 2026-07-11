@@ -231,6 +231,11 @@ Renderer dimensions are centralized in the `DIMENSIONS` object:
 | `navigationTopOffset` | `10` | Vertical offset for navigation mark text |
 | `ornamentTopGap` | `3` | Gap between SMuFL ornaments and the note row |
 | `ornamentHeight` | `3` | Vertical space reserved above the note row for SMuFL ornaments |
+| `trillExtensionStartOffset` | `9` | Long-trill path offset right of the note center |
+| `trillExtensionEndGap` | `8` | Gap before the next onset or measure barline |
+| `trillExtensionWavelength` | `8` | Target long-trill wave cycle width |
+| `trillExtensionAmplitude` | `2` | Long-trill wave amplitude |
+| `trillExtensionYOffset` | `4` | Long-trill path offset above the trill glyph baseline |
 
 These constants are not yet exposed as a public theme API.
 
@@ -476,6 +481,17 @@ complete hairpin on each visual line.
 ### Ornaments
 
 Mordent, turn, and trill ornaments render with SMuFL Private Use Area glyphs.
+A `(tr~)` long trill keeps the trill glyph and, when the note has at least
+one duration dash, adds a wavy SVG path from 9px right of the note center to
+8px before the next onset or current measure barline. The path fills the
+available width with the nearest whole number of 8px target wavelength cycles
+at 2px amplitude, with its baseline 4px above the trill glyph baseline.
+Duration dashes, alignment, and justification therefore
+extend the path through the same final layout coordinates. Without a duration
+dash, only the trill glyph renders and the parser reports a warning. The
+extension remains within the current visual line and the anchor note's written
+duration.
+
 Browser preview, browser PDF export, backend PNG export, and backend PDF export
 load the bundled Bravura font for these glyphs. Other notation symbols
 continue to use Unicode text or SVG primitives.

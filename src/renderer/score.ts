@@ -53,6 +53,7 @@ interface LineEntry {
   y: number;
   full: boolean;
   dashAnchors: number[];
+  ornamentEndX: number;
 }
 
 interface HairpinSegment {
@@ -163,7 +164,28 @@ function renderGracePitches(note: PitchNote, x: number, y: number): string {
   ].join("");
 }
 
-function renderOrnament(note: PitchNote, x: number, y: number): string {
+function renderTrillExtension(startX: number, endX: number, y: number): string {
+  const width = endX - startX;
+  if (width <= 0) {
+    return "";
+  }
+  const cycles = Math.max(1, Math.round(width / DIMENSIONS.trillExtensionWavelength));
+  const cycleWidth = width / cycles;
+  const halfCycle = cycleWidth / 2;
+  const quarterCycle = cycleWidth / 4;
+  const amplitude = DIMENSIONS.trillExtensionAmplitude;
+  const commands = [`M${startX},${y}`];
+  for (let cycle = 0; cycle < cycles; cycle += 1) {
+    const cycleStart = startX + cycle * cycleWidth;
+    commands.push(
+      `Q${cycleStart + quarterCycle},${y - amplitude} ${cycleStart + halfCycle},${y}`,
+      `Q${cycleStart + halfCycle + quarterCycle},${y + amplitude} ${cycleStart + cycleWidth},${y}`,
+    );
+  }
+  return `<path class="ornament trill-extension" d="${commands.join(" ")}"/>`;
+}
+
+function renderOrnament(note: PitchNote, x: number, y: number, ornamentEndX: number): string {
   if (!note.ornament) {
     return "";
   }
@@ -181,7 +203,16 @@ function renderOrnament(note: PitchNote, x: number, y: number): string {
   } else {
     symbol = note.ornament.direction === "lower" ? SMUFL_SYMBOLS.ornamentMordent : SMUFL_SYMBOLS.ornamentShortTrill;
   }
-  return `<text class="ornament ${note.ornament.kind} smufl-symbol" x="${centerX}" y="${markY}" text-anchor="middle">${symbol}</text>`;
+  const glyph = `<text class="ornament ${note.ornament.kind} smufl-symbol" x="${centerX}" y="${markY}" text-anchor="middle">${symbol}</text>`;
+  if (note.ornament.kind !== "trill" || note.ornament.extension !== "wavy" || note.duration.dashes === 0) {
+    return glyph;
+  }
+  const extension = renderTrillExtension(
+    centerX + DIMENSIONS.trillExtensionStartOffset,
+    ornamentEndX - DIMENSIONS.trillExtensionEndGap,
+    markY - DIMENSIONS.trillExtensionYOffset,
+  );
+  return `${glyph}${extension}`;
 }
 
 function renderDuration(note: Note, x: number, y: number, full: boolean, dashAnchors: number[]): string {
@@ -512,6 +543,11 @@ function renderLine(
     const previousMeasure = layout.measures[measureIndex - 1]?.measure;
     const nextMeasure = layout.measures[measureIndex + 1]?.measure;
     const naturalBarX = xOffset + measureLayout.width - measureLayout.rightPadding - DIMENSIONS.repeatRightPadding + 12;
+    const renderedBarX = contentOffset + justifyX(
+      naturalBarX + (measureLayout.measure.repeatEnd ? DIMENSIONS.repeatEndLeftGap : 0),
+    );
+    const ornamentBarX =
+      renderedBarX - (measureLayout.measure.repeatEnd ? 2 : finalBarMeasures.has(measureLayout.measure) ? 5 : 0);
     const navigationBefore = measureLayout.measure.navigationBefore ?? [];
     if (navigationBefore.length > 0) {
       const navigationX = xOffset + measureLayout.leftPadding - DIMENSIONS.leftPadding / 2;
@@ -555,6 +591,7 @@ function renderLine(
     }
     let groupStartX: number | null = null;
     let groupDuration = 0;
+    const measureEntries: LineEntry[] = [];
     for (const [noteIndex, note] of measureLayout.measure.notes.entries()) {
       const naturalX = xOffset + measureLayout.notePositions[noteIndex]! + ornamentLeftWidthOf(note) + measureLayout.leftPadding;
       groupStartX ??= naturalX;
@@ -563,13 +600,20 @@ function renderLine(
         const naturalDashX = xOffset + dashPosition + measureLayout.leftPadding;
         return contentOffset + justifyX(naturalDashX);
       });
-      lineEntries.push({
+      const entry: LineEntry = {
         note,
         x: contentOffset + naturalX + groupShift,
         y: lineY + layout.maxPaddingUp,
         full: fullness[noteIndex] ?? false,
         dashAnchors,
-      });
+        ornamentEndX: ornamentBarX,
+      };
+      const previousEntry = measureEntries.at(-1);
+      if (previousEntry) {
+        previousEntry.ornamentEndX = entry.x + (note.kind === "pitch" ? maxAccidentalOffset(note.chord) : 0);
+      }
+      measureEntries.push(entry);
+      lineEntries.push(entry);
       groupDuration += note.duration.value;
       if (Math.abs(groupDuration % unit) < 1e-9) {
         groupStartX = null;
@@ -663,7 +707,7 @@ function renderLine(
     }
     if (entry.note.kind === "pitch") {
       noteParts.push(renderPitchNote(entry.note, entry.x, entry.y));
-      noteParts.push(renderOrnament(entry.note, entry.x, entry.y));
+      noteParts.push(renderOrnament(entry.note, entry.x, entry.y, entry.ornamentEndX));
     } else {
       noteParts.push(renderRestOrDrum(entry.note, entry.x, entry.y));
     }
