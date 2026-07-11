@@ -4,6 +4,7 @@ description: 了解计时、浏览器播放、Program、音量、鼓音和反复
 docId: guide-playback
 sectionIds:
   - playback-model
+  - ornaments
   - browser-playback
   - programs-and-drums
   - volumes-and-dynamics
@@ -21,6 +22,10 @@ import RelatedLinks from '../../../../components/RelatedLinks.astro';
 编译器会先把乐谱结构解析为计时事件，然后再应用 Program 选择、轨道音量、音符力度和鼓音映射，最后交给浏览器播放或音频/MIDI 导出。
 
 歌词只参与视觉渲染，不影响播放计时。
+
+## 装饰音
+
+波音、回音、颤音和倚音都会在主音的书写时值内展开成计时事件。颤音从主音开始，以三十二分音符密度和上方相邻音级交替。浏览器播放与 MIDI、WAV 和 MP3 导出使用同一套展开结果。
 
 ## 浏览器播放
 

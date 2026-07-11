@@ -416,14 +416,15 @@ test("renders chord notes as stacked text instead of slash-joined text", () => {
 });
 
 test("renders compact note ornaments and keeps following notes spaced", () => {
-  const result = parse("#1'(^) 2(v)- 3(z) 4(s)");
+  const result = parse("#1'(^) 2(v)- 3(z) 4(s) 5(tr)");
   assert.equal(result.ok, true);
-  const svg = renderSvg(result.value, { pageWidth: 180 });
+  const svg = renderSvg(result.value, { pageWidth: 220 });
   assert.doesNotMatch(svg, /data:font\/woff2;base64,/);
   assert.match(svg, /<text class="ornament mordent smufl-symbol" x="[^"]+" y="[^"]+" text-anchor="middle">&#xE56D;<\/text>/);
   assert.match(svg, /<text class="ornament mordent smufl-symbol" x="[^"]+" y="[^"]+" text-anchor="middle">&#xE56C;<\/text>/);
   assert.match(svg, /<text class="ornament turn smufl-symbol" x="[^"]+" y="[^"]+" text-anchor="middle">&#xE567;<\/text>/);
-  assert.match(svg, /<text class="ornament turn smufl-symbol" x="[^"]+" y="[^"]+" text-anchor="middle">&#xE568;<\/text>/);
+  assert.match(svg, /<text class="ornament turn smufl-symbol" x="[^"]+" y="[^"]+" text-anchor="middle">&#xE569;<\/text>/);
+  assert.match(svg, /<text class="ornament trill smufl-symbol" x="[^"]+" y="[^"]+" text-anchor="middle">&#xE566;<\/text>/);
   assert.doesNotMatch(svg, /<path class="ornament mordent"/);
   assert.ok(noteX(svg, 1) - noteX(svg, 0) >= 24);
 });

@@ -409,6 +409,22 @@ test("parses note-attached turns before duration suffixes", () => {
   assert.equal(notes[1].duration.halves, 1);
 });
 
+test("parses note-attached trills before duration suffixes", () => {
+  const result = parse("1(tr)- 2(tr)/");
+  assert.equal(result.ok, true);
+  const notes = result.value.score[0].measures[0].notes;
+  assert.deepEqual(
+    notes.map((note) => note.ornament?.kind),
+    ["trill", "trill"],
+  );
+  assert.equal(notes[0].duration.dashes, 1);
+  assert.equal(notes[1].duration.halves, 1);
+
+  const obsolete = parse("1(t)");
+  assert.equal(obsolete.ok, false);
+  assert.match(obsolete.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Expected.*'tr'/);
+});
+
 test("parses note-attached grace ornaments before duration suffixes", () => {
   const result = parse("1(<2)- 1(>23)/ 1(<#2') 1(<2345)");
   assert.equal(result.ok, true);
@@ -437,7 +453,7 @@ test("reports diagnostics for unsupported ornament attachments", () => {
   assert.match(messages, /Ornaments cannot be attached to tied notes/);
   assert.match(messages, /Only one ornament can be attached to a note/);
   assert.match(messages, /Ornament parentheses cannot be empty/);
-  assert.match(messages, /Expected '\^', 'v', 'z', 's', '<', or '>'/);
+  assert.match(messages, /Expected '\^', 'v', 'z', 's', 'tr', '<', or '>'/);
   assert.match(messages, /Grace ornaments must include at least one pitch note/);
   assert.match(messages, /Grace ornaments must contain 1, 2, 4, or another power-of-two number of pitch notes/);
   assert.match(messages, /Grace ornament pitches must use note syntax 1-7/);

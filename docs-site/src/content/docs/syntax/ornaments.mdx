@@ -1,10 +1,11 @@
 ---
 title: Ornaments
-description: Write note-attached mordents, turns, and grace notes for rendering, playback, and export.
+description: Write note-attached mordents, turns, trills, and grace notes for rendering, playback, and export.
 docId: syntax-ornaments
 sectionIds:
   - mordents
   - turns
+  - trills
   - grace-notes
   - playback-and-export
   - diagnostics
@@ -61,6 +62,26 @@ Turns use the same post-note suffix position. Use `(z)` for a normal turn and `(
 
 Like mordents, turns attach only to ordinary single pitch notes and come before any duration suffix.
 
+## Trills
+
+Use `(tr)` for a trill. It follows the anchor pitch and comes before any duration suffix.
+
+<JianpuSource
+  title="Trill source"
+  source={`time: 4/4
+===
+1(tr) 2(tr) 3 - | 5(tr)/ 5(tr)/ 1' - 0`}
+/>
+
+<ScorePreview
+  title="Rendered trills"
+  source={`time: 4/4
+===
+1(tr) 2(tr) 3 - | 5(tr)/ 5(tr)/ 1' - 0`}
+/>
+
+Trills attach only to ordinary single pitch notes. The upper auxiliary pitch follows the current key signature and any active accidental for that scale degree in the measure.
+
 ## Grace Notes
 
 Grace notes are also written as post-note ornament suffixes. The suffix always attaches to the pitch note on its left. Use `(<...)` for grace notes rendered and played before the anchor note, and `(>...)` for grace notes rendered and played after it.
@@ -91,9 +112,11 @@ The upper mordent uses the next scale degree. The lower mordent uses the previou
 
 Playback, MIDI, WAV, and MP3 export expand turns into a short four-note figure, followed by the remaining duration of the written note. A normal turn plays upper-anchor-lower-anchor. An inverted turn plays lower-anchor-upper-anchor.
 
+Playback, MIDI, WAV, and MP3 export expand a trill across the full written duration. It starts on the anchor, alternates with the upper auxiliary pitch at thirty-second-note density, and always keeps at least one complete anchor-upper pair.
+
 Playback, MIDI, WAV, and MP3 export expand grace notes inside the written duration of the anchor note. Before-grace notes sound first, followed by the shortened anchor note. After-grace notes use the end of the anchor duration. Multiple grace notes split the grace duration evenly.
 
-SVG, PNG, and PDF export render mordents and turns above the note using the bundled SMuFL ornament font. Grace notes render as small Jianpu figures beside the anchor note: before-grace notes on the left, after-grace notes on the right. Each grace figure has one or more short underlines whose lower edge connects to the anchor note with a quarter-circle arc. Downloaded SVG and PDF output embed the font needed for SMuFL ornament symbols.
+SVG, PNG, and PDF export render mordents, turns, and trills above the note using the bundled SMuFL ornament font. Grace notes render as small Jianpu figures beside the anchor note: before-grace notes on the left, after-grace notes on the right. Each grace figure has one or more short underlines whose lower edge connects to the anchor note with a quarter-circle arc. Downloaded SVG and PDF output embed the font needed for SMuFL ornament symbols.
 
 ## Diagnostics
 

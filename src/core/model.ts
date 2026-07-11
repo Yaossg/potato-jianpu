@@ -35,6 +35,7 @@ export interface Pitch {
 export type Ornament =
   | { kind: "mordent"; direction: "upper" | "lower"; range: SourceRange }
   | { kind: "turn"; direction: "upper" | "lower"; range: SourceRange }
+  | { kind: "trill"; range: SourceRange }
   | { kind: "grace"; placement: "before" | "after"; pitches: Pitch[]; range: SourceRange };
 
 export interface DurationMark {

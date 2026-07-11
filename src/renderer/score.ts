@@ -173,9 +173,14 @@ function renderOrnament(note: PitchNote, x: number, y: number): string {
   const maxOffset = maxAccidentalOffset(note.chord);
   const centerX = x + maxOffset;
   const markY = y - chordHeight(note) - DIMENSIONS.ornamentTopGap;
-  const symbol = note.ornament.kind === "turn"
-    ? note.ornament.direction === "lower" ? SMUFL_SYMBOLS.ornamentTurnInverted : SMUFL_SYMBOLS.ornamentTurn
-    : note.ornament.direction === "lower" ? SMUFL_SYMBOLS.ornamentMordent : SMUFL_SYMBOLS.ornamentShortTrill;
+  let symbol: string;
+  if (note.ornament.kind === "trill") {
+    symbol = SMUFL_SYMBOLS.ornamentTrill;
+  } else if (note.ornament.kind === "turn") {
+    symbol = note.ornament.direction === "lower" ? SMUFL_SYMBOLS.ornamentTurnInverted : SMUFL_SYMBOLS.ornamentTurn;
+  } else {
+    symbol = note.ornament.direction === "lower" ? SMUFL_SYMBOLS.ornamentMordent : SMUFL_SYMBOLS.ornamentShortTrill;
+  }
   return `<text class="ornament ${note.ornament.kind} smufl-symbol" x="${centerX}" y="${markY}" text-anchor="middle">${symbol}</text>`;
 }
 

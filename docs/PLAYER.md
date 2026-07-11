@@ -188,7 +188,7 @@ key-signature pitch.
 
 ## Ornaments
 
-Mordents, turns, and grace notes compile inside the written duration of the
+Mordents, turns, trills, and grace notes compile inside the written duration of the
 anchor note.
 
 Mordents use the first half of the written duration for a
@@ -199,6 +199,11 @@ previous scale degree.
 Turns use the first half of the written duration for four equal segments, then
 sustain the anchor pitch for the remaining duration. A normal turn uses
 upper-anchor-lower-anchor. An inverted turn uses lower-anchor-upper-anchor.
+
+Trills alternate anchor-upper pairs across the full written duration. The
+compiler targets one event per thirty-second note, uses an equal subdivision
+that fills the duration exactly, and keeps at least one complete pair for
+shorter notes.
 
 Grace notes use the first quarter of the written duration. Before-grace notes
 sound before the shortened anchor note; after-grace notes sound after it.

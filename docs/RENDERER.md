@@ -475,10 +475,10 @@ complete hairpin on each visual line.
 
 ### Ornaments
 
-Mordent and turn ornaments render with SMuFL Private Use Area glyphs. Browser
-preview, browser PDF export, backend PNG export, and backend PDF export load
-the bundled Bravura font for these glyphs. Other notation symbols continue to
-use Unicode text or SVG primitives.
+Mordent, turn, and trill ornaments render with SMuFL Private Use Area glyphs.
+Browser preview, browser PDF export, backend PNG export, and backend PDF export
+load the bundled Bravura font for these glyphs. Other notation symbols
+continue to use Unicode text or SVG primitives.
 
 Grace-note ornaments render as small Jianpu number figures beside their anchor
 note. Each grace figure includes the small pitch number, octave dots or

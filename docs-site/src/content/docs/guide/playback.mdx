@@ -4,6 +4,7 @@ description: Understand timing, browser playback, programs, volumes, drums, and 
 docId: guide-playback
 sectionIds:
   - playback-model
+  - ornaments
   - browser-playback
   - programs-and-drums
   - volumes-and-dynamics
@@ -21,6 +22,10 @@ Notes, rests, accidentals, octave marks, chords, ties, repeat barlines, repeated
 The compiler first resolves the score structure into timed events. It then applies Program selection, track volume, note dynamics, and drum mapping before browser playback or audio/MIDI export receives the result.
 
 Lyrics render visually but do not affect playback timing.
+
+## Ornaments
+
+Mordents, turns, trills, and grace notes expand into timed events inside the written duration of their anchor note. Trills start on the anchor and alternate with the upper scale-degree neighbor at thirty-second-note density. The same expansion is used by browser playback and MIDI, WAV, and MP3 export.
 
 ## Browser Playback
 

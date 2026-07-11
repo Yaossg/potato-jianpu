@@ -834,6 +834,10 @@ class Parser {
       const token = this.current();
       this.index += 1;
       ornament = { kind: "turn", direction: "lower", range: mergeRange(start, token.range) };
+    } else if (this.at("identifier") && this.current().text === "tr") {
+      const token = this.current();
+      this.index += 1;
+      ornament = { kind: "trill", range: mergeRange(start, token.range) };
     } else if (this.at("crescendo") || this.at("diminuendo")) {
       const token = this.current();
       const placement = this.at("crescendo") ? "before" : "after";
@@ -857,7 +861,7 @@ class Parser {
         ornament = { kind: "grace", placement, pitches, range: mergeRange(start, pitches.at(-1)!.range) };
       }
     } else {
-      this.error("Expected '^', 'v', 'z', 's', '<', or '>' inside ornament parentheses.", this.current().range);
+      this.error("Expected '^', 'v', 'z', 's', 'tr', '<', or '>' inside ornament parentheses.", this.current().range);
       while (!this.at("rparen") && !this.at("newline") && !this.at("eof")) {
         this.index += 1;
       }

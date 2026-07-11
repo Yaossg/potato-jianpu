@@ -57,6 +57,21 @@ test("expands turns with upper and lower auxiliary pitches", () => {
   assert.equal(melody.notes.reduce((sum, note) => sum + note.duration, 0), 1 / 2);
 });
 
+test("expands trills at thirty-second-note density with accidental-aware upper pitches", () => {
+  const result = parse("key: D\n===\n#2 1(tr) 7(tr)//");
+  assert.equal(result.ok, true);
+  const melody = compileMelody(result.value);
+  assert.deepEqual(
+    melody.notes.map((note) => note.chord),
+    [[65], [62], [65], [62], [65], [62], [65], [62], [65], [73], [74]],
+  );
+  assert.deepEqual(
+    melody.notes.slice(1).map((note) => note.duration),
+    Array(10).fill(1 / 32),
+  );
+  assert.equal(melody.notes.reduce((sum, note) => sum + note.duration, 0), 9 / 16);
+});
+
 test("exports ornament-expanded MIDI note-ons", () => {
   const result = parse("1(^)");
   assert.equal(result.ok, true);

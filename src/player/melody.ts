@@ -33,6 +33,7 @@ const MIN_PROGRAM = 0;
 const MAX_PROGRAM = 174;
 const DEFAULT_VELOCITY = 64;
 const HAIRPIN_DEFAULT_DELTA = 24;
+const TRILL_SEGMENT_DURATION = 1 / 32;
 
 function assertProgram(program: number) {
   if (!Number.isInteger(program) || program < MIN_PROGRAM || program > MAX_PROGRAM) {
@@ -79,6 +80,18 @@ function compilePitchNoteEvents(note: Extract<Note, { kind: "pitch" }>, noteMap:
   }
 
   const mainPitch = note.chord[0]!;
+  if (note.ornament.kind === "trill") {
+    const upper = pitchToMidi(adjacentPitch(mainPitch, "upper"), noteMap);
+    const pairCount = Math.max(1, Math.floor(note.duration.value / (TRILL_SEGMENT_DURATION * 2)));
+    const segment = note.duration.value / (pairCount * 2);
+    return Array.from({ length: pairCount * 2 }, (_, index) => ({
+      chord: index % 2 === 0 ? anchor : [upper],
+      duration: segment,
+      index: note.index,
+      velocity,
+    }));
+  }
+
   if (note.ornament.kind === "turn") {
     const upper = pitchToMidi(adjacentPitch(mainPitch, "upper"), noteMap);
     const lower = pitchToMidi(adjacentPitch(mainPitch, "lower"), noteMap);
