@@ -30,11 +30,18 @@ application without the documentation subsite.
 ```sh
 pnpm run check
 pnpm run test
+pnpm run test:coverage
 pnpm run web:build
 ```
 
 `pnpm run test` builds the backend TypeScript output, runs Node tests, and
 includes the frontend production-build smoke test.
+
+`pnpm run test:coverage` generates a local HTML report at
+`coverage/index.html` for the parser, renderer, player, backend, examples, and
+package tests. It remaps coverage to source files and excludes `dist/`,
+`dist-web/`, the bundled TinySynth adapter, and test files; it does not upload
+reports or enforce thresholds.
 
 Docs-site-specific commands live in `docs-site/docs/COMMANDS.md`.
 

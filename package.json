@@ -55,6 +55,7 @@
     "build": "tsc -p tsconfig.build.json",
     "check": "tsc -p tsconfig.json --noEmit",
     "test": "pnpm run build && node --test tests/*.test.mjs",
+    "test:coverage": "pnpm run build && c8 --exclude-after-remap --exclude='dist/**' --exclude='dist-web/**' --exclude='src/player/webaudio-tinysynth.js' --exclude='tests/**' --reporter=none node --test tests/backend.test.mjs tests/examples.test.mjs tests/package.test.mjs tests/parser.test.mjs tests/player.test.mjs tests/renderer.test.mjs && c8 report --exclude-after-remap --exclude='dist/**' --exclude='dist-web/**' --exclude='src/player/webaudio-tinysynth.js' --exclude='tests/**' --reporter=text --reporter=html",
     "cli": "pnpm run build && node dist/cli/main.js",
     "dev": "vite",
     "web:app": "vite build",
@@ -77,6 +78,7 @@
     "@types/react-dom": "^19.2.3",
     "@types/svg-to-pdfkit": "^0.1.4",
     "@vitejs/plugin-react": "^6.0.1",
+    "c8": "^11.0.0",
     "ebnf2railroad": "^1.14.2",
     "typescript": "^5.8.3",
     "vite": "^8.0.10"
