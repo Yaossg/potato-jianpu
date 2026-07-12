@@ -540,6 +540,10 @@ contains it, the wrapper becomes:
 The frontend uses `data-note-index` for click-to-play-from-note and active note
 highlighting.
 
+SMuFL ornament glyphs do not participate in pointer hit testing. Their font
+boxes can extend well beyond the visible mark, so ignoring those boxes keeps a
+later score line's ornament from intercepting clicks on the line above.
+
 Active highlighting changes fill/stroke to red for note digits, accidentals,
 dots, underlines, and dashes.
 

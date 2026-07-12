@@ -485,6 +485,7 @@ test("renders compact note ornaments and keeps following notes spaced", () => {
   assert.match(svg, /<text class="ornament turn smufl-symbol" x="[^"]+" y="[^"]+" text-anchor="middle">&#xE569;<\/text>/);
   assert.match(svg, /<text class="ornament trill smufl-symbol" x="[^"]+" y="[^"]+" text-anchor="middle">&#xE566;<\/text>/);
   assert.doesNotMatch(svg, /<path class="ornament mordent"/);
+  assert.match(svg, /\.smufl-symbol \{[^}]*pointer-events: none;/);
   assert.ok(noteX(svg, 1) - noteX(svg, 0) >= 24);
 });
 
