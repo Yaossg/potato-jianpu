@@ -183,6 +183,20 @@ export default defineConfig({
                 "zh-CN": "Program 参考",
               },
             },
+            {
+              label: "Visual Output Behavior",
+              slug: "reference/visual-output",
+              translations: {
+                "zh-CN": "视觉输出行为",
+              },
+            },
+            {
+              label: "Playback Behavior",
+              slug: "reference/playback-behavior",
+              translations: {
+                "zh-CN": "播放行为",
+              },
+            },
           ],
         },
       ],

@@ -1,0 +1,65 @@
+---
+title: Playback Behavior
+description: Understand how score notation becomes timing, sound, and exported MIDI or audio.
+docId: reference-playback-behavior
+sectionIds:
+  - source-to-sound
+  - ornaments-and-sustain
+  - repeats-and-navigation
+  - tracks-programs-and-dynamics
+  - initial-silence
+---
+
+import RelatedLinks from '../../../components/RelatedLinks.astro';
+
+Browser playback, MIDI, WAV, and MP3 use the same arrangement and timing model. This reference explains the audible result of notation after parsing; use the syntax pages to learn how to write each token.
+
+## Source To Sound
+
+The numbered scale starts in C major: `1` through `7` sound as MIDI notes `60`, `62`, `64`, `65`, `67`, `69`, and `71`. The score key shifts every degree, and each octave mark changes a pitch by 12 semitones.
+
+An explicit accidental changes that scale degree for the rest of its measure. Later notes of the same degree inherit it; the state resets at the next barline. Rests consume time as silence. Chords start all of their member pitches together. A valid tie merges the following duration into the preceding sounding note, so the tied note does not begin a new attack.
+
+Lyrics, lyric alignment, and lyric placeholders are visual-only. They do not add tracks or change playback, MIDI, WAV, or MP3 timing.
+
+## Ornaments And Sustain
+
+Every ornament fits inside the written duration of its anchor note:
+
+- Upper and lower mordents use the first half for a main-neighbor-main figure, then sustain the anchor pitch.
+- Turns use the first half for four equal notes, then sustain the anchor pitch. A normal turn is upper-anchor-lower-anchor; an inverted turn reverses that order.
+- Trills alternate the anchor and upper scale-degree neighbor through the full duration. `(tr)` and `(tr~)` sound the same; the wavy extension is engraving-only.
+- Slides keep the source pitch for the first three quarters, then move by equal chromatic steps during the final quarter. The target note still receives its own normal attack.
+- Before-grace and after-grace figures use the first quarter of the anchor duration. Multiple grace pitches divide that grace time evenly.
+
+Auxiliary ornament pitches follow the active key signature and any accidental currently active for that scale degree. A slide to the same sounding pitch is ignored with a warning.
+
+## Repeats And Navigation
+
+Repeat barlines and repeated endings expand before navigation marks are interpreted. `[Segno]` and `[Coda]` appear before a measure; `[Fine]`, `[D.C.]`, `[D.S.]`, and `[To Coda]` appear after one.
+
+`[D.C.]` jumps once to the beginning of the expanded written timeline. `[D.S.]` jumps once to `[Segno]`. After that jump, `[Fine]` stops playback or export, and `[To Coda]` jumps once to `[Coda]`. If the jumped path reaches neither, it continues to the written end.
+
+For an unlabeled score, its one score stream controls navigation. In a labeled arrangement, navigation follows the primary `T1` timeline, including an implicit `T1` line. Navigation marks on other simultaneous tracks remain visible but do not control playback and produce a warning.
+
+## Tracks, Programs, And Dynamics
+
+Lines within one track group play together; the next group begins when the previous group ends. Playback and export finish when the longest arrangement track finishes.
+
+For a melodic track, sound selection resolves from `Tn.program`, then the score-level `program`, then the browser or CLI default Program. `Pn.program` selects a percussion sound for a P track. Program values `0..127` are melodic; `128..174` select drum mode, where `X` maps to percussion note `program - 128 + 35`.
+
+Track volume resolves from `Tn.volume` or `Pn.volume`, then score-level `volume`, then `1`. It combines with the browser master volume or CLI audio amplitude. Per-note dynamics and hairpins set velocity before this track and master scaling, so relative balance is preserved.
+
+## Initial Silence
+
+When Omit initial rests is enabled, playback from the start and MIDI, WAV, or MP3 export remove the shared silence before the first sounding track. Other tracks retain any remaining rests that occur after that common trim. The setting changes the start time, not the written score or the relationship between tracks.
+
+Clicking a rendered note starts browser playback from that note. Active notes, including simultaneous notes in multiple tracks, are highlighted in the preview while they sound.
+
+<RelatedLinks
+  links={[
+    { href: '../../guide/playback/', label: 'Playback', description: 'Use browser playback controls and choose Programs or volume.' },
+    { href: '../../syntax/repeats/', label: 'Repeats', description: 'Write repeat, ending, and navigation syntax.' },
+    { href: '../../syntax/ornaments/', label: 'Ornaments', description: 'Write mordents, turns, trills, slides, and grace notes.' },
+  ]}
+/>
