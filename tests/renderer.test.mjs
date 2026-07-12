@@ -401,7 +401,7 @@ test("justifies all score lines by stretching note positions", () => {
   assert.match(natural, /<g class="note-item" data-note-index="1"><text class="note" x="42" y="104" text-anchor="middle">2<\/text>/);
   assert.match(natural, /<g class="note-item" data-note-index="5"><text class="note" x="162" y="104" text-anchor="middle">6<\/text>/);
   assert.match(natural, /<line class="dash" x1="128" y1="95" x2="144" y2="95"/);
-  assert.match(natural, /<line class="underline" x1="152" y1="109" x2="176" y2="109"/);
+  assert.match(natural, /<line class="underline" x1="152" y1="109" x2="172" y2="109"/);
   assert.match(natural, /<g class="note-item" data-note-index="8"><text class="note" x="42" y="158" text-anchor="middle">6<\/text><\/g>/);
 
   const justified = renderSvg(result.value, { pageWidth: 320, justifyMode: "except-last", background: "#ffffff" });
@@ -411,7 +411,7 @@ test("justifies all score lines by stretching note positions", () => {
   assert.match(justified, /<line class="dash" x1="[^"]+" y1="95" x2="[^"]+" y2="95"/);
   assert.doesNotMatch(justified, /<line class="dash" x1="128" y1="95" x2="144" y2="95"/);
   assert.match(justified, /<line class="underline" x1="[^"]+" y1="109" x2="[^"]+" y2="109"/);
-  assert.doesNotMatch(justified, /<line class="underline" x1="152" y1="109" x2="176" y2="109"/);
+  assert.doesNotMatch(justified, /<line class="underline" x1="152" y1="109" x2="172" y2="109"/);
   assert.match(justified, /<g class="note-item" data-note-index="8"><text class="note" x="42" y="158" text-anchor="middle">6<\/text><\/g>/);
   assert.match(justified, /<line class="bar-thin" x1="314"/);
 
@@ -683,6 +683,16 @@ test("renders grace note underline counts from the number of grace pitches", () 
   );
 });
 
+test("shortens the final underline in a grace-note group", () => {
+  const result = parse("1(<23)");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  const graceGroups = [...svg.matchAll(/<g class="grace-note-group" transform="[^"]+">([\s\S]*?)<\/g>/g)];
+  assert.equal(graceGroups.length, 2);
+  assert.match(graceGroups[0][1], /<line class="underline" x1="-10" y1="5" x2="14" y2="5"/);
+  assert.match(graceGroups[1][1], /<line class="underline" x1="-10" y1="5" x2="10" y2="5"/);
+});
+
 test("can embed Bravura into SVGs that use SMuFL symbols", () => {
   const result = parse("1(^)");
   assert.equal(result.ok, true);
@@ -698,6 +708,20 @@ test("shortens underline at beat boundaries", () => {
   const svg = renderSvg(result.value);
   assert.match(svg, /class="underline" x1="8" y1="109" x2="32" y2="109"/);
   assert.match(svg, /class="underline" x1="80" y1="109" x2="100" y2="109"/);
+});
+
+test("shortens underline before a note without underlines", () => {
+  const result = parse("1/21/");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  assert.match(svg, /class="underline" x1="8" y1="109" x2="28" y2="109"/);
+});
+
+test("shortens the final underline in an incomplete measure", () => {
+  const result = parse("1/");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  assert.match(svg, /class="underline" x1="8" y1="109" x2="28" y2="109"/);
 });
 
 test("distinguishes regular and final bars", () => {

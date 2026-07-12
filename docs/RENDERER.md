@@ -429,7 +429,10 @@ Dots render as dots to the right of the note.
 
 Dashes render as horizontal extension lines to the right of the note.
 
-Underline length is shortened at beat boundaries. The renderer uses
+Underline length is shortened at beat boundaries, before a following note that
+has no underline, and at the end of every measure. Otherwise adjacent
+underlined notes inside the same beat use touching line endpoints so their
+underlines appear continuous. The renderer uses
 `actualNotePerBeat(timeSignature)` from the core model to decide whether a note
 ends on a beat boundary.
 
@@ -514,7 +517,8 @@ Grace-note ornaments render as small Jianpu number figures beside their anchor
 note. Each grace figure includes the small pitch number, octave dots or
 accidentals when present, one or more short underlines based on the count of
 grace pitches, and a quarter-circle arc from the lower edge of the underline
-group to the anchor note.
+group to the anchor note. Adjacent grace figures use continuous underlines,
+while the final grace figure uses shortened underline endings.
 
 Raw renderer SVG output references the Bravura font family but does not inline
 font data, so browser preview can stay lightweight. SVG file export embeds the

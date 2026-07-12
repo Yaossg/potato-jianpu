@@ -118,15 +118,16 @@ function renderGracePitches(note: PitchNote, x: number, y: number): string {
   if (note.ornament?.kind !== "grace") {
     return "";
   }
+  const grace = note.ornament;
   const scale = DIMENSIONS.graceNoteFontSize / DIMENSIONS.baseNoteHeight;
   const graceY = y - DIMENSIONS.graceNoteYOffset;
   const anchorX = x + maxAccidentalOffset(note.chord);
-  const graceHalves = Math.log2(note.ornament.pitches.length) + 1;
-  const beforeGraceWidth = note.ornament.pitches.length * DIMENSIONS.graceNoteAdvance;
-  const startX = note.ornament.placement === "before"
+  const graceHalves = Math.log2(grace.pitches.length) + 1;
+  const beforeGraceWidth = grace.pitches.length * DIMENSIONS.graceNoteAdvance;
+  const startX = grace.placement === "before"
     ? anchorX - DIMENSIONS.graceNoteGap - DIMENSIONS.graceNoteBeforeXOffset - beforeGraceWidth + DIMENSIONS.graceNoteAdvance / 2
     : anchorX + DIMENSIONS.graceNoteGap + DIMENSIONS.graceNoteAdvance / 2;
-  const gracePitches = note.ornament.pitches.map((pitch, index) => {
+  const gracePitches = grace.pitches.map((pitch, index) => {
     const centerX = startX + index * DIMENSIONS.graceNoteAdvance;
     const pitchOffset = maxAccidentalOffset([pitch]);
     const graceNote: PitchNote = {
@@ -138,26 +139,28 @@ function renderGracePitches(note: PitchNote, x: number, y: number): string {
       range: pitch.range,
     };
     const groupX = centerX - pitchOffset * scale;
+    const endsGraceGroup = index === grace.pitches.length - 1;
+    const underlineEndOffset = (endsGraceGroup ? 10 : DIMENSIONS.underlineXEndOffset) + pitchOffset;
     const noteParts = [
       renderPitchNote(graceNote, 0, 0),
-      renderDuration(graceNote, 0, 0, false, []),
+      renderDuration(graceNote, 0, 0, endsGraceGroup, []),
     ];
     const underlineBottomOffset =
       DIMENSIONS.octaveDotBelowOffset + (graceHalves - 1) * DIMENSIONS.underlineSpacing + DIMENSIONS.underlineSpacing / 4;
     return {
       svg: `<g class="grace-note-group" transform="translate(${groupX}, ${graceY}) scale(${scale})">${noteParts.join("")}</g>`,
-      underlineMiddleX: groupX + ((DIMENSIONS.underlineXStart + DIMENSIONS.underlineXEndOffset + pitchOffset) / 2) * scale,
+      underlineMiddleX: groupX + ((DIMENSIONS.underlineXStart + underlineEndOffset) / 2) * scale,
       underlineBottomY: graceY + underlineBottomOffset * scale,
     };
   });
-  const connectorPitch = note.ornament.placement === "before" ? gracePitches.at(-1)! : gracePitches[0]!;
-  const underlineMiddleX = connectorPitch.underlineMiddleX - (note.ornament.pitches[0]!.octave < 0 ? 2 : 0);
+  const connectorPitch = grace.placement === "before" ? gracePitches.at(-1)! : gracePitches[0]!;
+  const underlineMiddleX = connectorPitch.underlineMiddleX - (grace.pitches[0]!.octave < 0 ? 1.25 : 0);
   const underlineBottomY = connectorPitch.underlineBottomY;
   const arcRadius = 4;
-  const arcStartX = note.ornament.placement === "before" ? underlineMiddleX : underlineMiddleX - arcRadius;
-  const arcEndX = note.ornament.placement === "before" ? underlineMiddleX + arcRadius : underlineMiddleX;
-  const arcStartY = note.ornament.placement === "before" ? underlineBottomY : underlineBottomY + arcRadius;
-  const arcEndY = note.ornament.placement === "before" ? underlineBottomY + arcRadius : underlineBottomY;
+  const arcStartX = grace.placement === "before" ? underlineMiddleX : underlineMiddleX - arcRadius;
+  const arcEndX = grace.placement === "before" ? underlineMiddleX + arcRadius : underlineMiddleX;
+  const arcStartY = grace.placement === "before" ? underlineBottomY : underlineBottomY + arcRadius;
+  const arcEndY = grace.placement === "before" ? underlineBottomY + arcRadius : underlineBottomY;
   return [
     ...gracePitches.map((pitch) => pitch.svg),
     `<path class="ornament grace-arc" d="M${arcStartX},${arcStartY} A${arcRadius},${arcRadius} 0 0 0 ${arcEndX},${arcEndY}"/>`,
@@ -620,6 +623,7 @@ function renderLine(
     let groupDuration = 0;
     const measureEntries: LineEntry[] = [];
     for (const [noteIndex, note] of measureLayout.measure.notes.entries()) {
+      const nextMeasureNote = measureLayout.measure.notes[noteIndex + 1];
       const naturalX = xOffset + measureLayout.notePositions[noteIndex]! + ornamentLeftWidthOf(note) + measureLayout.leftPadding;
       groupStartX ??= naturalX;
       const groupShift = justifyX(groupStartX) - groupStartX;
@@ -631,7 +635,7 @@ function renderLine(
         note,
         x: contentOffset + naturalX + groupShift,
         y: lineY + layout.maxPaddingUp,
-        full: fullness[noteIndex] ?? false,
+        full: (fullness[noteIndex] ?? false) || nextMeasureNote === undefined || nextMeasureNote.duration.halves === 0,
         dashAnchors,
         ornamentEndX: ornamentBarX,
       };
