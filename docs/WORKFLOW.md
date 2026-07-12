@@ -30,4 +30,5 @@ about process and repository hygiene, not a command reference. Use
   remaining risk.
 - After each conversation turn, if you made any repository changes, commit them
   inside this repository before finishing the turn.
-- Commit messages must contain exactly one simple English summary sentence.
+- Commit messages must contain exactly one simple English summary sentence and
+  must not end with a period.

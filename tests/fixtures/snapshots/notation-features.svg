@@ -33,7 +33,7 @@
 .dash { stroke: currentColor; stroke-width: 3; }
 .tie { fill: currentColor; stroke: currentColor; stroke-width: 1; }
 .ornament { fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-.grace-arc { stroke-width: 1.4; stroke-linecap: butt; stroke-linejoin: miter; }
+.grace-arc { stroke-width: 1; stroke-linecap: butt; stroke-linejoin: miter; }
 .smufl-symbol { fill: currentColor; stroke: none; font-family: Bravura, "Noto Music", "Segoe UI Symbol", sans-serif; font-size: 22px; font-weight: 400; pointer-events: none; }
 .hairpin { stroke: currentColor; stroke-width: 1.8; stroke-linecap: butt; }
 .velocity { fill: currentColor; font-family: 'Georgia Pro', Georgia, 'DejaVu Serif', Times, 'Times New Roman', FreeSerif, 'DejaVu Math TeX', serif; font-size: 14px; font-style: italic; font-weight: bold; }

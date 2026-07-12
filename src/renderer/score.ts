@@ -151,9 +151,9 @@ function renderGracePitches(note: PitchNote, x: number, y: number): string {
     };
   });
   const connectorPitch = note.ornament.placement === "before" ? gracePitches.at(-1)! : gracePitches[0]!;
-  const underlineMiddleX = connectorPitch.underlineMiddleX;
+  const underlineMiddleX = connectorPitch.underlineMiddleX - (note.ornament.pitches[0]!.octave < 0 ? 2 : 0);
   const underlineBottomY = connectorPitch.underlineBottomY;
-  const arcRadius = 6;
+  const arcRadius = 4;
   const arcStartX = note.ornament.placement === "before" ? underlineMiddleX : underlineMiddleX - arcRadius;
   const arcEndX = note.ornament.placement === "before" ? underlineMiddleX + arcRadius : underlineMiddleX;
   const arcStartY = note.ornament.placement === "before" ? underlineBottomY : underlineBottomY + arcRadius;

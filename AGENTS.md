@@ -58,3 +58,5 @@ Treat this directory as the project root.
   with `docs/grammar.ebnf`. Follow `docs/TRANSLATION.md`, then run `pnpm run grammar:railroad`.
 - After each conversation turn, if you made any repository changes, commit them
   inside this repository before finishing the turn.
+- Use exactly one simple English summary sentence for each commit message,
+  without a trailing period.

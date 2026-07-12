@@ -617,7 +617,7 @@ test("renders grace ornaments beside their anchor notes", () => {
   assert.equal(graceGroups.length, 2);
   assert.match(svg, /<g class="grace-note-group" transform="translate\([^"]+\) scale\([^"]+\)">/);
   assert.match(svg, /<line class="underline"/);
-  assert.match(svg, /\.grace-arc \{ stroke-width: 1\.4; stroke-linecap: butt; stroke-linejoin: miter; \}/);
+  assert.match(svg, /\.grace-arc \{ stroke-width: 1; stroke-linecap: butt; stroke-linejoin: miter; \}/);
   const graceArcs = [...svg.matchAll(/<path class="ornament grace-arc" d="M([^,]+),([^ ]+) A([^,]+),\3 0 0 0 ([^,]+),([^"]+)"/g)]
     .map((match) => ({
       startX: Number(match[1]),
@@ -636,6 +636,25 @@ test("renders grace ornaments beside their anchor notes", () => {
   assert.equal(graceArcs[1].endX - graceArcs[1].startX, graceArcs[1].radius);
   assert.equal(graceArcs[1].startY - graceArcs[1].endY, graceArcs[1].radius);
   assert.ok(noteX(svg, 2) - noteX(svg, 1) > 24);
+});
+
+test("offsets the grace arc only when the first grace pitch has a low-octave mark", () => {
+  const arcOffset = (source) => {
+    const result = parse(source);
+    assert.equal(result.ok, true);
+    const svg = renderSvg(result.value, { pageWidth: 140 });
+    const group = svg.match(/<g class="grace-note-group" transform="translate\(([^,]+), ([^)]+)\) scale\(([^)]+)\)">([\s\S]*?)<\/g>/);
+    const arc = svg.match(/<path class="ornament grace-arc" d="M([^,]+),[^ ]+ A[^ ]+ 0 0 0/);
+    assert.ok(group);
+    assert.ok(arc);
+    const underline = group[4].match(/<line class="underline" x1="([^"]+)" [^>]+ x2="([^"]+)"/);
+    assert.ok(underline);
+    const underlineMiddleX = Number(group[1]) + ((Number(underline[1]) + Number(underline[2])) / 2) * Number(group[3]);
+    return Number(arc[1]) - underlineMiddleX;
+  };
+
+  assert.ok(Math.abs(arcOffset("1(<2)") - 0) < 0.0001);
+  assert.ok(Math.abs(arcOffset("1(<2,)") + 2) < 0.0001);
 });
 
 test("renders grace note underline counts from the number of grace pitches", () => {
