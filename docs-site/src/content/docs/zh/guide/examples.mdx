@@ -1,0 +1,42 @@
+---
+title: 内置示例
+description: 从浏览器 App 和仓库随附的 .jpu 乐谱开始。
+docId: guide-examples
+sectionIds:
+  - using-examples
+  - example-catalog
+---
+
+import RelatedLinks from '../../../../components/RelatedLinks.astro';
+
+浏览器 App 的“示例”菜单会载入仓库 `examples/` 目录中随附的同一批 `.jpu` 文件。先把一份示例载入编辑器；如果要保留原始内容，用“保存”创建副本，然后编辑源码并通过诊断和预览探索记谱方式。
+
+## 使用示例
+
+按要学习的功能选择示例。短乐谱适合检查基本音符与节奏写法；较长乐谱适合在上下文中研究紧凑记谱、变音记号、休止符和八度标记。浏览器 App 会在替换已有草稿前要求确认。
+
+## 示例目录
+
+| 文件 | 可学习内容 |
+| --- | --- |
+| `scale.jpu` | 基本音高与八度标记。 |
+| `twinkle.jpu` | 带完整文件头的短紧凑乐谱。 |
+| `ode-to-joy.jpu` | 调号、附点、斜线和规则的 4/4 乐句。 |
+| `6-8-example.jpu` | `6/8` 拍号与复拍子时值。 |
+| `drums.jpu` | 打击乐 P 轨道、轨道标签和打击乐 Program。 |
+| `jingle-bells.jpu` | 在熟悉旋律中混合使用斜线和附点时值。 |
+| `happy-birthday.jpu` | 带低八度音符的短 `3/4` 乐谱。 |
+| `canon.jpu` | 多轨组、和弦、紧凑记谱与反复小节线。 |
+| `dear-little-wish.jpu` | 延音线、休止符、变音记号和多种时值。 |
+| `burning-field.jpu` | 休止符、八度标记与混合紧凑/带空格记谱。 |
+| `blocky-heroes.jpu` | 密集短时值、休止符、变音记号和延音线。 |
+| `shining-from-the-underground.jpu` | 密集八度写法、附点时值、休止符和手动分页。 |
+
+<RelatedLinks
+  title="相关页面"
+  links={[
+    { href: '../browser-app/', label: '浏览器 App', description: '在本地工作区载入和编辑示例。' },
+    { href: '../../syntax/overview/', label: '语法概览', description: '了解每份 .jpu 文档的结构。' },
+    { href: '../../reference/programs/', label: 'Program 参考', description: '查询打击乐示例使用的 Program 值。' },
+  ]}
+/>

@@ -1,0 +1,50 @@
+---
+title: Troubleshooting
+description: Find the right syntax, layout, export, or CLI reference when a score does not behave as expected.
+docId: guide-troubleshooting
+sectionIds:
+  - start-with-diagnostics
+  - source-and-arrangement
+  - preview-and-export
+  - automation
+---
+
+import RelatedLinks from '../../../components/RelatedLinks.astro';
+
+Use this page to move from a symptom to the focused reference that explains it. Parser errors stop a new preview or export; warnings leave the score usable but point out a result that needs review.
+
+## Start With Diagnostics
+
+In the browser app, click a diagnostic or its gutter marker to focus the affected source range. In the terminal, run `validate` before an export command. Read the line and column with the rule below; a small source change is easier to verify than changing several parts of a score at once.
+
+## Source And Arrangement
+
+| Symptom | First check | Next page |
+| --- | --- | --- |
+| Header fields are not treated as metadata. | The header must end with a line containing exactly `===`. | [Syntax Overview](../../syntax/overview/) |
+| A measure has a duration warning. | Confirm `time` and compare every note, rest, tie, and duration suffix in the measure. | [Rhythm](../../syntax/rhythm/) |
+| A tie is invalid or does not join notes. | A tie goes before the following matching sounding note. | [Rhythm](../../syntax/rhythm/) |
+| Lyrics are not aligned as expected. | Put a lyric after the score group it annotates, then check the number of lyric slots. | [Lyrics and Tracks](../../syntax/lyrics-tracks/) |
+| Labeled tracks do not form the intended group. | Start each group at `T1` and keep labels in ascending order. | [Lyrics and Tracks](../../syntax/lyrics-tracks/) |
+| A repeat or navigation mark does not play as expected. | Check repeat barlines, endings, and navigation marks separately. | [Repeats](../../syntax/repeats/) |
+
+## Preview And Export
+
+| Symptom | First check | Next page |
+| --- | --- | --- |
+| The browser preview is marked stale. | Fix parser errors in the editor; the app keeps the last valid preview until the new source parses. | [Browser App](../browser-app/) |
+| The score does not fit the intended paper layout. | Choose a paper preset, orientation, pagination, and margin before changing notation spacing. | [Browser App](../browser-app/) |
+| SVG, PNG, PDF, MIDI, WAV, or MP3 differs from the intended result. | First decide whether the issue concerns visual layout or playback timing. | [Export](../export/) |
+| An instrument or drum sound is unexpected. | Check score-level and per-track Program values. | [Program Reference](../../reference/programs/) |
+
+## Automation
+
+Use `pnpm run cli -- validate score.jpu --json` or `parse ... --json` when a script needs structured diagnostics. Check the exit code before continuing with an export: `0` means success, `1` means a score or export failure, and `2` means invalid command usage.
+
+<RelatedLinks
+  links={[
+    { href: '../cli/', label: 'CLI', description: 'Validate a score and use JSON output in scripts.' },
+    { href: '../examples/', label: 'Bundled Examples', description: 'Compare your source with a working score that uses a similar feature.' },
+    { href: '../../reference/grammar/', label: 'Grammar Reference', description: 'Look up the precise grammar after you identify the syntax topic.' },
+  ]}
+/>

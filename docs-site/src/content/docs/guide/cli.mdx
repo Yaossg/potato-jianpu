@@ -3,6 +3,7 @@ title: CLI
 description: Validate, inspect, and export .jpu scores from a terminal.
 docId: guide-cli
 sectionIds:
+  - setup
   - quick-start
   - validate-and-inspect
   - visual-export-commands
@@ -13,6 +14,16 @@ sectionIds:
 import RelatedLinks from '../../../components/RelatedLinks.astro';
 
 Use the CLI when you want repeatable checks, source inspection, and scripted exports. It reads the same `.jpu` files as the browser app and uses the same parser, renderer, playback model, and export paths.
+
+## Set Up
+
+The CLI runs from a checkout of this project. Install dependencies with the package-manager version recorded in `package.json`:
+
+```sh
+pnpm install
+```
+
+The project is currently distributed from its repository rather than as an npm package. `pnpm run cli -- ...` builds the CLI before it runs, so it is the recommended command during development. Run `pnpm run build` separately when you need the built files under `dist/` without executing a command.
 
 ## Quick Start
 
@@ -62,10 +73,26 @@ Use the CLI when the same score needs to be checked or exported repeatedly. A co
 
 Keep format-specific choices close to the export command: visual commands carry page and color options, MIDI/audio commands carry Program and audio-rendering options. For full output behavior, use the Export guide as the format reference.
 
+Use `validate --json` or `parse --json` when another program needs to read the result. JSON mode writes one JSON payload to standard output and does not add human-readable diagnostics on standard error.
+
+```sh
+pnpm run cli -- validate examples/twinkle.jpu --json
+pnpm run cli -- parse examples/twinkle.jpu --json
+```
+
+Commands use these exit codes:
+
+| Exit code | Meaning |
+| --- | --- |
+| `0` | The command succeeded. A score with warnings can still succeed. |
+| `1` | Parsing, validation, or export failed. |
+| `2` | Command usage is invalid, such as an unknown option or a missing required option value. |
+
 <RelatedLinks
   links={[
     { href: '../export/', label: 'Export', description: 'Review format-specific behavior before choosing an output.' },
     { href: '../playback/', label: 'Playback', description: 'Understand Program, drum, volume, dynamics, and repeat behavior.' },
+    { href: '../../reference/programs/', label: 'Program Reference', description: 'Look up exact melodic and percussion Program values.' },
     { href: '../../syntax/overview/', label: 'Syntax Overview', description: 'Use diagnostics with the syntax pages to find the relevant rule.' },
   ]}
 />

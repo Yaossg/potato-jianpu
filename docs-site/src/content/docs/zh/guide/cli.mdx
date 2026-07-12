@@ -3,6 +3,7 @@ title: 命令行
 description: 在终端中校验、查看并导出 .jpu 乐谱。
 docId: guide-cli
 sectionIds:
+  - setup
   - quick-start
   - validate-and-inspect
   - visual-export-commands
@@ -13,6 +14,16 @@ sectionIds:
 import RelatedLinks from '../../../../components/RelatedLinks.astro';
 
 需要可重复检查、源码检查和脚本化导出时，使用 CLI。它读取和浏览器 App 相同的 `.jpu` 文件，并使用同一套解析器、渲染器、播放模型和导出路径。
+
+## 准备环境
+
+命令行从本项目的检出目录运行。请使用 `package.json` 中记录的包管理器版本安装依赖：
+
+```sh
+pnpm install
+```
+
+本项目当前通过仓库本身分发，而不是作为 npm 包发布。在开发时，推荐使用 `pnpm run cli -- ...`：它会先构建 CLI 再运行命令。如果只需生成 `dist/` 下的构建文件而不执行命令，请单独运行 `pnpm run build`。
 
 ## 快速开始
 
@@ -62,11 +73,27 @@ MIDI、WAV 和 MP3 导出支持 `--program <number>` 和 `--omit-initial-rest`�
 
 把格式相关选择放在对应导出命令旁边：视觉命令携带页面和颜色选项，MIDI/音频命令携带 Program 和音频渲染选项。完整输出行为以“导出”指南为准。
 
+当其他程序需要读取结果时，使用 `validate --json` 或 `parse --json`。JSON 模式只向标准输出写入一个 JSON 负载，不会向标准错误输出人类可读的诊断信息。
+
+```sh
+pnpm run cli -- validate examples/twinkle.jpu --json
+pnpm run cli -- parse examples/twinkle.jpu --json
+```
+
+命令使用以下退出码：
+
+| 退出码 | 含义 |
+| --- | --- |
+| `0` | 命令成功。带有警告的乐谱仍然可以成功。 |
+| `1` | 解析、校验或导出失败。 |
+| `2` | 命令用法无效，例如未知选项或缺少必需选项值。 |
+
 <RelatedLinks
   title="相关页面"
   links={[
     { href: '../export/', label: '导出', description: '选择输出格式前，先查看各格式的行为。' },
     { href: '../playback/', label: '播放', description: '了解 Program、鼓音、音量、力度和反复行为。' },
+    { href: '../../reference/programs/', label: 'Program 参考', description: '查询准确的旋律和打击乐 Program 值。' },
     { href: '../../syntax/overview/', label: '语法概览', description: '把诊断和语法页面结合起来定位相关规则。' },
   ]}
 />

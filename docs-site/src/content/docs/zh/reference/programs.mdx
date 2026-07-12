@@ -1,0 +1,47 @@
+---
+title: Program 参考
+description: 查询用于播放和导出的准确旋律与打击乐 Program 值。
+docId: reference-programs
+sectionIds:
+  - using-programs
+  - melodic-programs
+  - percussion-programs
+---
+
+import JianpuSource from '../../../../components/JianpuSource.astro';
+import ProgramTable from '../../../../components/ProgramTable.astro';
+import RelatedLinks from '../../../../components/RelatedLinks.astro';
+
+使用 Program 为浏览器播放、MIDI、WAV 和 MP3 导出选择乐器音色。Program 值从零开始：`0` 是 Acoustic Grand Piano，而不是 `1`。
+
+## 使用 Program
+
+使用 `program` 设置全谱默认值，使用 `Tn.program` 设置一条旋律轨道，使用 `Pn.program` 设置一条打击乐轨道。旋律 Program 可以是 `0` 到 `127` 的数字，也可以是下表中的带引号名称。名称匹配会忽略大小写和首尾空白，但其余单词必须完全一致。打击乐 Program 使用 `128` 到 `174` 的数字值。
+
+<JianpuSource
+  title="Program 源码"
+  source={`program: "Violin"
+P1.program: 133
+===
+T1: 1 2 3 4 |
+P1: X/ X/ X/ X/ X/ X/ X/ X/`}
+/>
+
+`T1` 行使用 Violin。`P1` 行使用打击乐 Program `133`，即 Closed Hi-Hat。打击乐值对应一个 General MIDI 鼓音音高；表中的条目包含该音高编号。
+
+## 旋律 Program
+
+<ProgramTable kind="melodic" />
+
+## 打击乐 Program
+
+<ProgramTable kind="percussion" />
+
+<RelatedLinks
+  title="相关页面"
+  links={[
+    { href: '../../syntax/header/', label: '文件头', description: '在 .jpu 文件中设置乐谱级和逐轨道 Program 默认值。' },
+    { href: '../../syntax/lyrics-tracks/', label: '歌词与多轨', description: '编写旋律 T 轨道和打击乐 P 轨道。' },
+    { href: '../../guide/playback/', label: '播放', description: '了解 Program 如何影响浏览器播放和导出的音频。' },
+  ]}
+/>

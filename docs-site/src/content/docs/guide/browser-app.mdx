@@ -4,10 +4,11 @@ description: Edit, preview, play, and download scores in the browser.
 docId: guide-browser-app
 sectionIds:
   - workspace
+  - local-drafts
   - editing-diagnostics
   - preview-playback
   - examples
-  - settings
+  - page-layout-and-settings
   - downloads
   - help
 ---
@@ -23,6 +24,12 @@ Use Open to load a local `.jpu` file into the editor. If the editor already cont
 The editor keeps a browser-local draft on the current device. Reloading the page restores that draft, while Save creates a file you can keep, share, or pass to the CLI later.
 
 The clear action asks for confirmation before removing the current source.
+
+## Local Drafts
+
+The app stores its draft and display preferences in this browser on this device. It does not create an account or synchronize the draft to another browser or device. Clearing this site's browser data can remove the saved draft and preferences.
+
+Use Save to keep a `.jpu` file outside the browser. Saving a file is the right way to back up a score, move it to another device, share it, or use it with the CLI.
 
 ## Editing And Diagnostics
 
@@ -44,9 +51,13 @@ The examples panel loads bundled `.jpu` scores into the editor. If the editor al
 
 Examples are useful as editable starting points: load one, change the source, then use diagnostics and preview feedback to learn how the syntax behaves.
 
-## Settings
+## Page Layout And Settings
 
 Page settings control visual preview and visual downloads: paper preset, orientation, width mode, page size, page margin, page numbers, notation color, background, and justification. Header fields such as `paginate` and `footer` can also provide visual-output defaults for a score.
+
+Justification changes visual spacing only; it does not change the `.jpu` source, playback timing, or MIDI and audio output. Choose None to keep natural measure spacing, Except last line to expand every visual score line except the final one, or All lines to expand every visual score line. The selected mode is used by the preview and visual downloads.
+
+Choose a paper preset and orientation when the output should fit A4, B5, or Letter paper. Use custom width and height only when a target needs a specific page size. Pagination turns the preview and visual downloads into fixed-height pages; page margin, page numbers, and header-provided footer text then reserve space inside each page.
 
 Editor settings control source editing preferences: line wrapping, editor font size, line numbers, current-line highlight, and inline diagnostic highlights.
 

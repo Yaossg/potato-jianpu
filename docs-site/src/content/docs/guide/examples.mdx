@@ -1,0 +1,41 @@
+---
+title: Bundled Examples
+description: Start from the .jpu scores included with the browser app and repository.
+docId: guide-examples
+sectionIds:
+  - using-examples
+  - example-catalog
+---
+
+import RelatedLinks from '../../../components/RelatedLinks.astro';
+
+The browser app's Examples menu loads the same `.jpu` files that are included in the repository's `examples/` directory. Load one into the editor, make a copy with Save if you want to preserve it, then edit the source and use diagnostics and preview to explore the notation.
+
+## Using Examples
+
+Choose an example by the feature you want to learn. A short score is best for checking basic note and rhythm writing; a longer score is useful for studying compact notation, accidentals, rests, and octave marks in context. The browser app asks before replacing an existing draft.
+
+## Example Catalog
+
+| File | What to study |
+| --- | --- |
+| `scale.jpu` | Basic pitches and octave marks. |
+| `twinkle.jpu` | A short compact score with a complete file header. |
+| `ode-to-joy.jpu` | Key signature, dots, slashes, and regular 4/4 phrasing. |
+| `6-8-example.jpu` | A `6/8` time signature and compound-meter durations. |
+| `drums.jpu` | Percussion P tracks, track labels, and percussion Programs. |
+| `jingle-bells.jpu` | Mixed slash and dot durations in a familiar melody. |
+| `happy-birthday.jpu` | A short `3/4` score with lower-octave notes. |
+| `canon.jpu` | Multi-track groups, chords, compact notation, and repeat barlines. |
+| `dear-little-wish.jpu` | Ties, rests, accidentals, and varied durations. |
+| `burning-field.jpu` | Rests, octave marks, and mixed compact/spaced notation. |
+| `blocky-heroes.jpu` | Dense short durations, rests, accidentals, and ties. |
+| `shining-from-the-underground.jpu` | Dense octave writing, dotted durations, rests, and manual page breaks. |
+
+<RelatedLinks
+  links={[
+    { href: '../browser-app/', label: 'Browser App', description: 'Load and edit an example in the local workspace.' },
+    { href: '../../syntax/overview/', label: 'Syntax Overview', description: 'Learn how each .jpu document is structured.' },
+    { href: '../../reference/programs/', label: 'Program Reference', description: 'Look up the Program values used by percussion examples.' },
+  ]}
+/>

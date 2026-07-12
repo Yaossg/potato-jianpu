@@ -147,6 +147,13 @@ export default defineConfig({
                 "zh-CN": "导出",
               },
             },
+            {
+              label: "Troubleshooting",
+              slug: "guide/troubleshooting",
+              translations: {
+                "zh-CN": "排错",
+              },
+            },
           ],
         },
         {
@@ -156,10 +163,24 @@ export default defineConfig({
           },
           items: [
             {
+              label: "Bundled Examples",
+              slug: "guide/examples",
+              translations: {
+                "zh-CN": "内置示例",
+              },
+            },
+            {
               label: "Grammar",
               slug: "reference/grammar",
               translations: {
                 "zh-CN": "语法参考",
+              },
+            },
+            {
+              label: "Program Reference",
+              slug: "reference/programs",
+              translations: {
+                "zh-CN": "Program 参考",
               },
             },
           ],

@@ -1,0 +1,51 @@
+---
+title: 排错
+description: 当乐谱行为不符合预期时，找到对应的语法、布局、导出或 CLI 参考。
+docId: guide-troubleshooting
+sectionIds:
+  - start-with-diagnostics
+  - source-and-arrangement
+  - preview-and-export
+  - automation
+---
+
+import RelatedLinks from '../../../../components/RelatedLinks.astro';
+
+本页帮助你从现象跳转到解释该问题的专题参考。解析错误会阻止新预览或导出；警告不会阻止使用乐谱，但表示结果需要确认。
+
+## 从诊断开始
+
+在浏览器 App 中，点击一条诊断或行号旁的标记即可聚焦到受影响的源码范围。在终端中，请先于导出命令运行 `validate`。根据行和列定位规则；一次只修改少量源码，比同时改动乐谱多个部分更容易验证。
+
+## 源码与编排
+
+| 现象 | 先检查 | 下一页 |
+| --- | --- | --- |
+| 文件头字段没有被当作元数据。 | 文件头必须以只包含 `===` 的一行结束。 | [语法概览](../../syntax/overview/) |
+| 小节出现时值警告。 | 确认 `time`，并比较小节中的每个音符、休止符、延音线和时值后缀。 | [节奏](../../syntax/rhythm/) |
+| 延音线无效或没有连接音符。 | 延音线写在后一个、且音高相同的发声音符之前。 | [节奏](../../syntax/rhythm/) |
+| 歌词没有按预期对齐。 | 把歌词写在它注释的谱组之后，再检查歌词槽位数量。 | [歌词与多轨](../../syntax/lyrics-tracks/) |
+| 带标签轨道没有组成预期的组。 | 每组从 `T1` 开始，并让标签按升序排列。 | [歌词与多轨](../../syntax/lyrics-tracks/) |
+| 反复或导航标记没有按预期播放。 | 分别检查反复小节线、反复结尾和导航标记。 | [反复](../../syntax/repeats/) |
+
+## 预览与导出
+
+| 现象 | 先检查 | 下一页 |
+| --- | --- | --- |
+| 浏览器预览显示已过期。 | 修正编辑器中的解析错误；新源码解析成功前，App 会保留上一份有效预览。 | [浏览器 App](../browser-app/) |
+| 乐谱不适合目标纸张布局。 | 在改变记谱间距前，先选择纸张预设、方向、分页和页边距。 | [浏览器 App](../browser-app/) |
+| SVG、PNG、PDF、MIDI、WAV 或 MP3 与预期结果不同。 | 先判断问题属于视觉布局还是播放时值。 | [导出](../export/) |
+| 乐器或鼓音音色不正确。 | 检查乐谱级和逐轨道 Program 值。 | [Program 参考](../../reference/programs/) |
+
+## 自动化
+
+脚本需要结构化诊断时，使用 `pnpm run cli -- validate score.jpu --json` 或 `parse ... --json`。在继续导出前检查退出码：`0` 表示成功，`1` 表示乐谱或导出失败，`2` 表示命令用法无效。
+
+<RelatedLinks
+  title="相关页面"
+  links={[
+    { href: '../cli/', label: '命令行', description: '校验乐谱，并在脚本中使用 JSON 输出。' },
+    { href: '../examples/', label: '内置示例', description: '把自己的源码与使用了相近功能的有效乐谱对照。' },
+    { href: '../../reference/grammar/', label: '语法参考', description: '确定语法主题后，查询精确的文法。' },
+  ]}
+/>

@@ -1,0 +1,124 @@
+---
+import { DRUM_PROGRAMS, GM_PROGRAMS } from '../../../src/core/programs.ts';
+
+interface Props {
+  kind: 'melodic' | 'percussion';
+}
+
+const { kind } = Astro.props;
+const isChinesePage = Astro.url.pathname.includes('/zh/');
+const programs = kind === 'melodic' ? GM_PROGRAMS : DRUM_PROGRAMS;
+const programName = (label: string) => label.replace(/^\d+\s+-\s+/, '');
+const families = kind === 'melodic'
+  ? [
+      { start: 0, end: 7, label: isChinesePage ? '钢琴' : 'Pianos' },
+      { start: 8, end: 15, label: isChinesePage ? '半音打击乐器' : 'Chromatic Percussion' },
+      { start: 16, end: 23, label: isChinesePage ? '风琴' : 'Organs' },
+      { start: 24, end: 31, label: isChinesePage ? '吉他' : 'Guitars' },
+      { start: 32, end: 39, label: isChinesePage ? '贝斯' : 'Basses' },
+      { start: 40, end: 47, label: isChinesePage ? '弦乐' : 'Strings' },
+      { start: 48, end: 55, label: isChinesePage ? '合奏音色' : 'Ensembles' },
+      { start: 56, end: 63, label: isChinesePage ? '铜管' : 'Brass' },
+      { start: 64, end: 71, label: isChinesePage ? '簧管' : 'Reeds' },
+      { start: 72, end: 79, label: isChinesePage ? '吹管' : 'Pipes' },
+      { start: 80, end: 87, label: isChinesePage ? '合成器主音' : 'Synth Leads' },
+      { start: 88, end: 95, label: isChinesePage ? '合成器铺底' : 'Synth Pads' },
+      { start: 96, end: 103, label: isChinesePage ? '合成器效果' : 'Synth Effects' },
+      { start: 104, end: 111, label: isChinesePage ? '民族乐器' : 'Ethnic Instruments' },
+      { start: 112, end: 119, label: isChinesePage ? '打击乐器' : 'Percussive Instruments' },
+      { start: 120, end: 127, label: isChinesePage ? '音效' : 'Sound Effects' },
+    ]
+  : [
+      { start: 128, end: 133, label: isChinesePage ? '底鼓与军鼓' : 'Bass Drums and Snares' },
+      { start: 134, end: 152, label: isChinesePage ? '踩镲、桶鼓与钹' : 'Hi-Hats, Toms, and Cymbals' },
+      { start: 153, end: 162, label: isChinesePage ? '手持打击乐器' : 'Hand Percussion' },
+      { start: 163, end: 174, label: isChinesePage ? '拉丁打击乐器与效果音' : 'Latin Percussion and Effects' },
+    ];
+const groupedPrograms = families.map((family) => ({
+  ...family,
+  programs: programs.filter((program) => program.value >= family.start && program.value <= family.end),
+}));
+---
+
+<div class="program-groups">
+  {groupedPrograms.map((family) => (
+    <section class="program-family" aria-label={`${family.label}, ${family.start}–${family.end}`}>
+      <h3>{family.label}</h3>
+      <p class="program-range"><code>{family.start}–{family.end}</code></p>
+      <ul>
+        {family.programs.map((program) => (
+          <li>
+            <code class="program-value">{program.value}</code>
+            <code class="program-name">{programName(program.label)}</code>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
+</div>
+
+<style>
+  .program-groups {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 21rem), 1fr));
+    gap: 1rem;
+    margin: 1.25rem 0 2rem;
+  }
+
+  .program-family {
+    margin: 0;
+    overflow: hidden;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.625rem;
+    background: var(--sl-color-gray-6);
+  }
+
+  .program-family h3 {
+    margin: 0;
+    padding: 0.75rem 1rem 0.1rem;
+    color: var(--sl-color-text-accent);
+    font-size: 1rem;
+  }
+
+  .program-range {
+    margin: 0;
+    padding: 0 1rem 0.75rem;
+    color: var(--sl-color-gray-2);
+    font-size: 0.8rem;
+  }
+
+  .program-family ul {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1px;
+    margin: 0;
+    padding: 1px;
+    list-style: none;
+    background: var(--sl-color-gray-5);
+  }
+
+  .program-family li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    min-width: 0;
+    padding: 0.5rem 0.625rem;
+    background: var(--sl-color-bg);
+    line-height: 1.35;
+  }
+
+  .program-value {
+    flex: 0 0 auto;
+    color: var(--sl-color-text-accent);
+    font-size: 0.8rem;
+  }
+
+  .program-name {
+    overflow: hidden;
+    color: var(--sl-color-text);
+    font-size: 0.8rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+</style>

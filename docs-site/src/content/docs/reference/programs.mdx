@@ -1,0 +1,46 @@
+---
+title: Program Reference
+description: Look up exact melodic and percussion Program values for playback and export.
+docId: reference-programs
+sectionIds:
+  - using-programs
+  - melodic-programs
+  - percussion-programs
+---
+
+import JianpuSource from '../../../components/JianpuSource.astro';
+import ProgramTable from '../../../components/ProgramTable.astro';
+import RelatedLinks from '../../../components/RelatedLinks.astro';
+
+Use Programs to choose instrument sounds for browser playback, MIDI, WAV, and MP3 export. Program values are zero-based: `0` is Acoustic Grand Piano, not `1`.
+
+## Using Programs
+
+Use `program` for a score-wide default, `Tn.program` for one melodic track, and `Pn.program` for one percussion track. A melodic Program can be a number from `0` through `127` or a quoted name from the table below. Names ignore letter case and surrounding whitespace, but the words must otherwise match exactly. Percussion Programs use numeric values from `128` through `174`.
+
+<JianpuSource
+  title="Program source"
+  source={`program: "Violin"
+P1.program: 133
+===
+T1: 1 2 3 4 |
+P1: X/ X/ X/ X/ X/ X/ X/ X/`}
+/>
+
+The `T1` line uses Violin. The `P1` line uses percussion Program `133`, which selects Closed Hi-Hat. The percussion value corresponds to a General MIDI drum note; its table entry includes that note number.
+
+## Melodic Programs
+
+<ProgramTable kind="melodic" />
+
+## Percussion Programs
+
+<ProgramTable kind="percussion" />
+
+<RelatedLinks
+  links={[
+    { href: '../../syntax/header/', label: 'File Header', description: 'Set score-level and per-track Program defaults in a .jpu file.' },
+    { href: '../../syntax/lyrics-tracks/', label: 'Lyrics and Tracks', description: 'Write melodic T tracks and percussion P tracks.' },
+    { href: '../../guide/playback/', label: 'Playback', description: 'Understand how Programs affect browser playback and exported audio.' },
+  ]}
+/>
