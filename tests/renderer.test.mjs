@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { parse } from "../dist/parser/index.js";
-import { analyzeScoreOverwidth, embedBravuraFontFace, inferContentPageWidth, PAPER_PRESET_LIST, renderSvg, resolvePageSize } from "../dist/renderer/index.js";
+import { analyzeScoreOverwidth, embedBravuraFontFace, inferContentPageWidth, PAPER_PRESET_LIST, renderSvg, resolvePageSize, svgUsesSmuflSymbols } from "../dist/renderer/index.js";
 
 function readSnapshot(name) {
   return readFileSync(new URL(`./fixtures/snapshots/${name}`, import.meta.url), "utf8").replace(/\r\n/g, "\n").replace(/\n$/, "");
@@ -700,6 +700,15 @@ test("can embed Bravura into SVGs that use SMuFL symbols", () => {
   const embedded = embedBravuraFontFace(svg, "Zm9udA==");
   assert.match(embedded, /@font-face \{ font-family: Bravura;/);
   assert.match(embedded, /data:font\/woff2;base64,Zm9udA==/);
+});
+
+test("does not embed Bravura when the SVG only declares the SMuFL stylesheet", () => {
+  const result = parse("1 2");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  assert.match(svg, /\.smufl-symbol/);
+  assert.equal(svgUsesSmuflSymbols(svg), false);
+  assert.equal(embedBravuraFontFace(svg, "Zm9udA=="), svg);
 });
 
 test("shortens underline at beat boundaries", () => {

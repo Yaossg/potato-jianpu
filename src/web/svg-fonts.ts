@@ -1,5 +1,5 @@
 import bravuraWoff2Url from "@vexflow-fonts/bravura/bravura.woff2?url";
-import { embedBravuraFontFace } from "../renderer/index.js";
+import { embedBravuraFontFace, svgUsesSmuflSymbols } from "../renderer/index.js";
 
 let bravuraWoff2Base64Promise: Promise<string> | null = null;
 
@@ -23,7 +23,7 @@ async function fetchBravuraWoff2Base64(): Promise<string> {
 }
 
 export async function embedSvgDownloadFonts(svg: string): Promise<string> {
-  if (!svg.includes("smufl-symbol")) {
+  if (!svgUsesSmuflSymbols(svg)) {
     return svg;
   }
   bravuraWoff2Base64Promise ??= fetchBravuraWoff2Base64();

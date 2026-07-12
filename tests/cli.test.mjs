@@ -52,6 +52,7 @@ test("CLI export-svg accepts page width", async () => {
 
   const svg = await readFile(output, "utf8");
   assert.match(svg, /<svg[^>]+width="120"/);
+  assert.doesNotMatch(svg, /data:font\/woff2;base64,/);
 });
 
 test("CLI export-svg embeds Bravura for SMuFL ornaments", async () => {

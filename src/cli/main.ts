@@ -13,7 +13,7 @@ import {
 } from "../backend/index.js";
 import { parse } from "../parser/index.js";
 import { exportMidiBytes } from "../player/index.js";
-import { PAPER_PRESET_LIST, embedBravuraFontFace, isPageOrientation, isPaperPresetName, renderSvg, renderSvgPages, resolvePageSize } from "../renderer/index.js";
+import { PAPER_PRESET_LIST, embedBravuraFontFace, isPageOrientation, isPaperPresetName, renderSvg, renderSvgPages, resolvePageSize, svgUsesSmuflSymbols } from "../renderer/index.js";
 import type { PageOrientation, PaperPresetName, RenderOptions } from "../renderer/index.js";
 
 const require = createRequire(import.meta.url);
@@ -28,7 +28,7 @@ async function bravuraWoff2Base64(): Promise<string> {
 }
 
 async function embedSvgDownloadFonts(svg: string): Promise<string> {
-  if (!svg.includes("smufl-symbol")) {
+  if (!svgUsesSmuflSymbols(svg)) {
     return svg;
   }
   return embedBravuraFontFace(svg, await bravuraWoff2Base64());
