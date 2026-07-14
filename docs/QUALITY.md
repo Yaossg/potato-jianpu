@@ -5,18 +5,22 @@ expectations. Product behavior and implementation details live in the focused
 references such as `docs/ARCHITECTURE.md`, `docs/RENDERER.md`,
 `docs/PLAYER.md`, and `docs/EXPORTS.md`.
 
-## Testing Layers
+## Test Suite
 
-Current test coverage includes:
+The complete test suite run by `pnpm run test` includes:
 
 - parser unit tests
 - renderer SVG tests and golden snapshots
 - player melody/MIDI tests
-- backend PNG/WAV/MP3 tests
+- backend PNG/PDF/WAV/MP3 tests
 - CLI integration tests
 - examples tests
 - package metadata tests
 - frontend production-build smoke test
+
+The frontend smoke test builds both the browser app and the documentation site,
+then checks selected generated files and bundled behavior. It is not a
+real-browser interaction test.
 
 ## Testing Guidelines
 
@@ -28,6 +32,26 @@ Current test coverage includes:
 - Prefer source-level or build-level frontend checks unless browser automation
   policy changes.
 - Do not introduce Playwright or another browser automation dependency for now.
+
+## Coverage Reporting
+
+Run the focused instrumented test suite with:
+
+```sh
+pnpm run test:coverage
+```
+
+This command writes a local HTML report to `coverage/index.html`. It exercises
+the parser, renderer, player, backend, examples, and package tests, and remaps
+the results to shared source files, including core modules. It intentionally
+does not run the CLI integration tests or frontend production-build smoke test,
+so it complements rather than replaces `pnpm run test`.
+
+Coverage is a diagnostic aid, not a release gate. The repository does not
+upload reports or enforce a numeric threshold. Use uncovered statements and
+branches to find missing behavior tests, but prefer meaningful regression and
+edge-case assertions over increasing a percentage by itself. Generated
+coverage output is local-only and ignored by Git.
 
 ## Known Test Gaps
 

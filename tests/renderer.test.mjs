@@ -638,23 +638,83 @@ test("renders grace ornaments beside their anchor notes", () => {
   assert.ok(noteX(svg, 2) - noteX(svg, 1) > 24);
 });
 
-test("offsets the grace arc only when the first grace pitch has a low-octave mark", () => {
+test("keeps before and after grace ornament spacing symmetric", () => {
+  const innerGap = (source, placement) => {
+    const result = parse(source);
+    assert.equal(result.ok, true);
+    const svg = renderSvg(result.value);
+    const anchor = svg.match(/<g class="note-item" data-note-index="0"><text class="note" x="([^"]+)"/);
+    const group = svg.match(/<g class="grace-note-group" transform="translate\(([^,]+), [^)]+\) scale\(([^)]+)\)">[\s\S]*?<line class="underline" x1="([^"]+)" y1="[^"]+" x2="([^"]+)"/);
+    assert.ok(anchor);
+    assert.ok(group);
+    const anchorX = Number(anchor[1]);
+    const groupX = Number(group[1]);
+    const scale = Number(group[2]);
+    const edgeX = groupX + Number(placement === "before" ? group[4] : group[3]) * scale;
+    return placement === "before" ? anchorX - edgeX : edgeX - anchorX;
+  };
+
+  assert.ok(Math.abs(innerGap("1(<2)", "before") - innerGap("1(>2)", "after")) < 0.0001);
+});
+
+test("reserves twelve horizontal units per grace pitch minus six on either side", () => {
+  for (const [source, expectedAdvance] of [
+    ["1(>2) 3", 30],
+    ["1(>23) 4", 42],
+    ["1 2(<3)", 30],
+    ["1 2(<34)", 42],
+  ]) {
+    const result = parse(source);
+    assert.equal(result.ok, true);
+    const svg = renderSvg(result.value);
+    assert.equal(noteX(svg, 1) - noteX(svg, 0), expectedAdvance);
+  }
+});
+
+test("anchors grace arcs at the short underline midpoint", () => {
+  const arcEndX = (source, shortUnderlineEndX) => {
+    const result = parse(source);
+    assert.equal(result.ok, true);
+    const svg = renderSvg(result.value);
+    const group = svg.match(/<g class="grace-note-group" transform="translate\(([^,]+), [^)]+\) scale\(([^)]+)\)">([\s\S]*?)<\/g>/);
+    const arc = svg.match(/<path class="ornament grace-arc" d="M[^,]+,[^ ]+ A[^ ]+ 0 0 0 ([^,]+),/);
+    assert.ok(group);
+    assert.ok(arc);
+    assert.match(group[3], /<line class="underline" x1="-10" y1="5" x2="(?:14|24)" y2="5"/);
+    return {
+      actual: Number(arc[1]),
+      expected: Number(group[1]) + ((-10 + shortUnderlineEndX) / 2) * Number(group[2]),
+    };
+  };
+
+  const plain = arcEndX("1(>23)", 10);
+  assert.ok(Math.abs(plain.actual - plain.expected) < 0.0001);
+  const accidental = arcEndX("1(>#23)", 20);
+  assert.ok(Math.abs(accidental.actual - accidental.expected) < 0.0001);
+});
+
+test("offsets grace arcs away from a low-octave connector pitch", () => {
   const arcOffset = (source) => {
     const result = parse(source);
     assert.equal(result.ok, true);
     const svg = renderSvg(result.value, { pageWidth: 140 });
-    const group = svg.match(/<g class="grace-note-group" transform="translate\(([^,]+), ([^)]+)\) scale\(([^)]+)\)">([\s\S]*?)<\/g>/);
-    const arc = svg.match(/<path class="ornament grace-arc" d="M([^,]+),[^ ]+ A[^ ]+ 0 0 0/);
+    const graceGroups = [...svg.matchAll(/<g class="grace-note-group" transform="translate\(([^,]+), ([^)]+)\) scale\(([^)]+)\)">([\s\S]*?)<\/g>/g)];
+    const arc = svg.match(/<path class="ornament grace-arc" d="M([^,]+),[^ ]+ A[^ ]+ 0 0 0 ([^,]+),/);
+    const group = source.includes("(>") ? graceGroups[0] : graceGroups.at(-1);
     assert.ok(group);
     assert.ok(arc);
     const underline = group[4].match(/<line class="underline" x1="([^"]+)" [^>]+ x2="([^"]+)"/);
     assert.ok(underline);
     const underlineMiddleX = Number(group[1]) + ((Number(underline[1]) + Number(underline[2])) / 2) * Number(group[3]);
-    return Number(arc[1]) - underlineMiddleX;
+    const connectorX = source.includes("(>") ? Number(arc[2]) : Number(arc[1]);
+    return connectorX - underlineMiddleX;
   };
 
   assert.ok(Math.abs(arcOffset("1(<2)") - 0) < 0.0001);
-  assert.ok(Math.abs(arcOffset("1(<2,)") + 2) < 0.0001);
+  assert.ok(Math.abs(arcOffset("1(<2,3)") - 0) < 0.0001);
+  assert.ok(Math.abs(arcOffset("1(<23,)") - 1.4) < 0.0001);
+  assert.ok(Math.abs(arcOffset("1(>2)") - 0) < 0.0001);
+  assert.ok(Math.abs(arcOffset("1(>2,)") + 1.4) < 0.0001);
 });
 
 test("renders grace note underline counts from the number of grace pitches", () => {
@@ -691,6 +751,19 @@ test("shortens the final underline in a grace-note group", () => {
   assert.equal(graceGroups.length, 2);
   assert.match(graceGroups[0][1], /<line class="underline" x1="-10" y1="5" x2="14" y2="5"/);
   assert.match(graceGroups[1][1], /<line class="underline" x1="-10" y1="5" x2="10" y2="5"/);
+});
+
+test("joins adjacent grace note underlines without overlap", () => {
+  const result = parse("1(<23)");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  const underlines = [...svg.matchAll(/<g class="grace-note-group" transform="translate\(([^,]+), [^)]+\) scale\(([^)]+)\)">[\s\S]*?<line class="underline" x1="([^"]+)" y1="[^"]+" x2="([^"]+)"/g)]
+    .map((match) => ({
+      startX: Number(match[1]) + Number(match[3]) * Number(match[2]),
+      endX: Number(match[1]) + Number(match[4]) * Number(match[2]),
+    }));
+  assert.equal(underlines.length, 2);
+  assert.ok(Math.abs(underlines[0].endX - underlines[1].startX) < 0.0001);
 });
 
 test("can embed Bravura into SVGs that use SMuFL symbols", () => {

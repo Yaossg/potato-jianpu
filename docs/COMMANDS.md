@@ -37,11 +37,18 @@ pnpm run web:build
 `pnpm run test` builds the backend TypeScript output, runs Node tests, and
 includes the frontend production-build smoke test.
 
+`pnpm run check` type-checks the TypeScript source without emitting build
+output. `pnpm run web:build` is the focused production build command for the
+browser app and documentation site; it is also exercised by the frontend smoke
+test in `pnpm run test`.
+
 `pnpm run test:coverage` generates a local HTML report at
-`coverage/index.html` for the parser, renderer, player, backend, examples, and
-package tests. It remaps coverage to source files and excludes `dist/`,
-`dist-web/`, the bundled TinySynth adapter, and test files; it does not upload
-reports or enforce thresholds.
+`coverage/index.html`. It runs the parser, renderer, player, backend, examples,
+and package tests and remaps coverage to shared source files. It intentionally
+omits the CLI integration and frontend smoke tests, so run `pnpm run test` for
+the complete suite. Coverage excludes `dist/`, `dist-web/`, the bundled
+TinySynth adapter, and test files; it does not upload reports or enforce
+thresholds. See `docs/QUALITY.md` for the coverage policy.
 
 Docs-site-specific commands live in `docs-site/docs/COMMANDS.md`.
 

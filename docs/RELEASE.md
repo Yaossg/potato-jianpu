@@ -41,14 +41,17 @@ for the docs-site development server, and `pnpm run docs:verify` for the full
 verification suite including the production build. See
 `docs-site/docs/COMMANDS.md` for the complete command list.
 
-The full verification command is:
+The main automated test command is:
 
 ```sh
 pnpm run test
 ```
 
 `pnpm run test` builds the backend TypeScript output, runs all Node tests, and
-includes a frontend production-build smoke test.
+includes a frontend production-build smoke test. Type checking and the full
+docs-site checks remain separate commands; use the pre-release checklist below
+for the complete release verification set. Coverage reporting is diagnostic
+rather than a release gate; see `docs/QUALITY.md`.
 
 ## Backend CLI Package
 
@@ -114,11 +117,11 @@ Before cutting a release:
 
 - Use the package manager recorded in `package.json` (`pnpm@8.10.3`).
 - Run `pnpm install`.
+- Run `pnpm run check`.
 - Run `pnpm run test`.
-- Run `pnpm run web:build` if not already covered by the test output being
-  inspected.
-- When docs-site content changed, run the checks listed in
-  `docs-site/docs/COMMANDS.md`.
+- Run `pnpm run docs:verify`. The production docs build is also exercised by
+  `pnpm run test`, but this command adds the structural, translation, link,
+  table, CLI-example, and source-example checks.
 - Run `npm pack --dry-run --json` and inspect the file list. The package should
   include `dist/` backend/library output, `dist-web/` static frontend and docs
   output, and docs-site documentation source, but not `dist/web/`

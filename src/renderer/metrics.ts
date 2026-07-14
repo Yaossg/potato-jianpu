@@ -26,7 +26,7 @@ export function widthOf(note: Note): number {
 }
 
 function graceWidth(pitches: Pitch[]): number {
-  return DIMENSIONS.graceNoteGap + pitches.length * DIMENSIONS.graceNoteAdvance;
+  return pitches.length * DIMENSIONS.graceNoteLayoutAdvance - DIMENSIONS.graceNoteLayoutTrim;
 }
 
 export function ornamentLeftWidthOf(note: Note): number {

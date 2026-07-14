@@ -124,8 +124,10 @@ function renderGracePitches(note: PitchNote, x: number, y: number): string {
   const anchorX = x + maxAccidentalOffset(note.chord);
   const graceHalves = Math.log2(grace.pitches.length) + 1;
   const beforeGraceWidth = grace.pitches.length * DIMENSIONS.graceNoteAdvance;
-  const startX = grace.placement === "before"
-    ? anchorX - DIMENSIONS.graceNoteGap - DIMENSIONS.graceNoteBeforeXOffset - beforeGraceWidth + DIMENSIONS.graceNoteAdvance / 2
+  const shortUnderlineEndOffset = 10;
+  const isBeforeGrace = grace.placement === "before";
+  const startX = isBeforeGrace
+    ? anchorX - DIMENSIONS.graceNoteGap - beforeGraceWidth + DIMENSIONS.graceNoteAdvance / 2
     : anchorX + DIMENSIONS.graceNoteGap + DIMENSIONS.graceNoteAdvance / 2;
   const gracePitches = grace.pitches.map((pitch, index) => {
     const centerX = startX + index * DIMENSIONS.graceNoteAdvance;
@@ -140,7 +142,6 @@ function renderGracePitches(note: PitchNote, x: number, y: number): string {
     };
     const groupX = centerX - pitchOffset * scale;
     const endsGraceGroup = index === grace.pitches.length - 1;
-    const underlineEndOffset = (endsGraceGroup ? 10 : DIMENSIONS.underlineXEndOffset) + pitchOffset;
     const noteParts = [
       renderPitchNote(graceNote, 0, 0),
       renderDuration(graceNote, 0, 0, endsGraceGroup, []),
@@ -149,18 +150,22 @@ function renderGracePitches(note: PitchNote, x: number, y: number): string {
       DIMENSIONS.octaveDotBelowOffset + (graceHalves - 1) * DIMENSIONS.underlineSpacing + DIMENSIONS.underlineSpacing / 4;
     return {
       svg: `<g class="grace-note-group" transform="translate(${groupX}, ${graceY}) scale(${scale})">${noteParts.join("")}</g>`,
-      underlineMiddleX: groupX + ((DIMENSIONS.underlineXStart + underlineEndOffset) / 2) * scale,
+      shortUnderlineMiddleX: groupX + ((DIMENSIONS.underlineXStart + shortUnderlineEndOffset + pitchOffset) / 2) * scale,
       underlineBottomY: graceY + underlineBottomOffset * scale,
     };
   });
-  const connectorPitch = grace.placement === "before" ? gracePitches.at(-1)! : gracePitches[0]!;
-  const underlineMiddleX = connectorPitch.underlineMiddleX - (grace.pitches[0]!.octave < 0 ? 1.25 : 0);
+  const connectorPitch = isBeforeGrace ? gracePitches.at(-1)! : gracePitches[0]!;
+  const connectorGracePitch = isBeforeGrace ? grace.pitches.at(-1)! : grace.pitches[0]!;
+  const lowOctaveArcDirection = isBeforeGrace ? -1 : 1;
+  const lowOctaveArcOffset =
+    connectorGracePitch.octave < 0 ? lowOctaveArcDirection * DIMENSIONS.graceLowOctaveArcOffset : 0;
+  const underlineMiddleX = connectorPitch.shortUnderlineMiddleX - lowOctaveArcOffset;
   const underlineBottomY = connectorPitch.underlineBottomY;
   const arcRadius = 4;
-  const arcStartX = grace.placement === "before" ? underlineMiddleX : underlineMiddleX - arcRadius;
-  const arcEndX = grace.placement === "before" ? underlineMiddleX + arcRadius : underlineMiddleX;
-  const arcStartY = grace.placement === "before" ? underlineBottomY : underlineBottomY + arcRadius;
-  const arcEndY = grace.placement === "before" ? underlineBottomY + arcRadius : underlineBottomY;
+  const arcStartX = isBeforeGrace ? underlineMiddleX : underlineMiddleX - arcRadius;
+  const arcEndX = isBeforeGrace ? underlineMiddleX + arcRadius : underlineMiddleX;
+  const arcStartY = isBeforeGrace ? underlineBottomY : underlineBottomY + arcRadius;
+  const arcEndY = isBeforeGrace ? underlineBottomY + arcRadius : underlineBottomY;
   return [
     ...gracePitches.map((pitch) => pitch.svg),
     `<path class="ornament grace-arc" d="M${arcStartX},${arcStartY} A${arcRadius},${arcRadius} 0 0 0 ${arcEndX},${arcEndY}"/>`,

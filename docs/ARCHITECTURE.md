@@ -259,21 +259,14 @@ tests/
 
 The test suite uses Node's built-in test runner.
 
-Current coverage areas:
-
-- parser behavior and diagnostics
-- renderer SVG behavior
-- backend PNG, WAV, and MP3 export
-- CLI behavior
-- all examples parsing and exporting
-- melody compiler behavior
-- MIDI header, tempo, time signature, and drum behavior
-
 The package `test` script builds TypeScript before running tests:
 
 ```sh
 pnpm run test
 ```
+
+Detailed test layers and coverage policy live in `docs/QUALITY.md`.
+Verification commands live in `docs/COMMANDS.md`.
 
 ## Dependency Rules
 
@@ -301,4 +294,3 @@ Practical rules:
   needed by export adapters.
 - Web must not import backend modules.
 - CLI coordinates modules but should keep logic thin.
-

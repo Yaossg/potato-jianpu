@@ -242,6 +242,7 @@ Renderer dimensions are centralized in the `DIMENSIONS` object:
 | `slideXOffset` | `8` | Horizontal offset from the source note center to the slide arc |
 | `slideLowYOffset` | `15` | Vertical offset from the source note baseline to the low end of a slide arc |
 | `slideRightWidth` | `4` | Extra spacing that keeps duration dashes clear of a slide mark |
+| `graceLowOctaveArcOffset` | `1.4` | Horizontal arc-end clearance from a lower-octave grace dot |
 
 These constants are not yet exposed as a public theme API.
 
@@ -518,7 +519,9 @@ note. Each grace figure includes the small pitch number, octave dots or
 accidentals when present, one or more short underlines based on the count of
 grace pitches, and a quarter-circle arc from the lower edge of the underline
 group to the anchor note. Adjacent grace figures use continuous underlines,
-while the final grace figure uses shortened underline endings.
+while the final grace figure uses shortened underline endings. When the grace
+pitch connected to the arc has a lower-octave dot, the renderer shifts the arc
+endpoint 1.4 renderer units away from that dot.
 
 Raw renderer SVG output references the Bravura font family but does not inline
 font data, so browser preview can stay lightweight. SVG file export embeds the
