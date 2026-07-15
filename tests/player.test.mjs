@@ -6,6 +6,7 @@ import {
   compileArrangement,
   compileMelody,
   exportMidiBytes,
+  melodyPitchSpans,
   midiToFrequency,
   sampleWave,
   skipInitialArrangementRests,
@@ -53,6 +54,39 @@ test("expands mordents with key and accidental-aware auxiliary pitches", () => {
     [[62], [64], [62], [62], [63], [61], [63], [63]],
   );
   assert.equal(melody.notes.reduce((sum, note) => sum + note.duration, 0), 1 / 2);
+});
+
+test("ornaments the highest sounding chord member while sustaining the others", () => {
+  const result = parse("{5 1' 3}(^) {5 1' 3}(z) {5 1' 3}(tr)//");
+  assert.equal(result.ok, true);
+  const melody = compileMelody(result.value);
+  assert.deepEqual(
+    melody.notes.slice(0, 4).map((note) => note.chord),
+    [[67, 72, 64], [67, 74, 64], [67, 72, 64], [67, 72, 64]],
+  );
+  assert.deepEqual(
+    melody.notes.slice(4, 9).map((note) => note.chord),
+    [[67, 74, 64], [67, 72, 64], [67, 71, 64], [67, 72, 64], [67, 72, 64]],
+  );
+  assert.deepEqual(
+    melody.notes.slice(9).map((note) => note.chord),
+    [[67, 72, 64], [67, 74, 64]],
+  );
+
+  const spans = melodyPitchSpans(melody.notes.slice(0, 4));
+  assert.equal(spans.filter((span) => span.note === 67).length, 1);
+  assert.equal(spans.filter((span) => span.note === 64).length, 1);
+  assert.equal(spans.find((span) => span.note === 67)?.duration, 1 / 4);
+  assert.equal(spans.find((span) => span.note === 64)?.duration, 1 / 4);
+});
+
+test("connects grace notes to whole chord anchors", () => {
+  const result = parse("{1 3 5}(<2) {1 3 5}(>6)");
+  assert.equal(result.ok, true);
+  assert.deepEqual(
+    compileMelody(result.value).notes.map((note) => note.chord),
+    [[62], [60, 64, 67], [60, 64, 67], [69]],
+  );
 });
 
 test("expands slides chromatically through the final quarter of the source note", () => {
@@ -112,7 +146,20 @@ test("exports ornament-expanded MIDI note-ons", () => {
       noteOns.push(bytes[index + 1]);
     }
   }
-  assert.deepEqual(noteOns, [60, 62, 60, 60]);
+  assert.deepEqual(noteOns, [60, 62, 60]);
+});
+
+test("exports sustained chord members with one MIDI attack", () => {
+  const result = parse("{1 3 5}(^)");
+  assert.equal(result.ok, true);
+  const bytes = [...exportMidiBytes(result.value)];
+  const noteOns = [];
+  for (let index = 0; index < bytes.length - 2; index += 1) {
+    if (bytes[index] === 0x90) {
+      noteOns.push(bytes[index + 1]);
+    }
+  }
+  assert.deepEqual(noteOns, [60, 64, 67, 69, 67]);
 });
 
 test("expands before and after grace ornaments without changing total duration", () => {

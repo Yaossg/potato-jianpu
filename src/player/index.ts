@@ -7,7 +7,8 @@ export {
   skipInitialRests,
   trimArrangementAtNote,
 } from "./melody.js";
-export type { Arrangement, ArrangementTrack, Melody, MelodyNote } from "./melody.js";
+export type { Arrangement, ArrangementTrack, Melody, MelodyNote, MelodyPitchSpan } from "./melody.js";
+export { melodyPitchSpans } from "./melody.js";
 export { exportMidiBytes } from "./midi.js";
 export type { MidiExportOptions } from "./midi.js";
 export { DRUM_PROGRAMS, GM_PROGRAMS } from "./programs.js";

@@ -1,4 +1,4 @@
-import type { Arrangement, MelodyNote } from "../player/index.js";
+import { melodyPitchSpans, type Arrangement, type MelodyNote } from "../player/index.js";
 import WebAudioTinySynth from "../player/webaudio-tinysynth.js";
 
 const DEFAULT_VELOCITY = 64;
@@ -113,19 +113,15 @@ export class PreviewAudioPlayer {
   ) {
     const startTime = context.currentTime;
     let latestEndTime = startTime;
-    for (const item of this.noteSchedule(arrangement)) {
+    for (const item of this.pitchSchedule(arrangement)) {
       if (generation !== this.playGeneration) {
         return;
       }
       const noteStartTime = startTime + item.offset * secondsPerWholeNote;
       const currentTime = noteStartTime;
-      const duration = item.note.duration * secondsPerWholeNote;
-      if (item.note.chord !== "rest") {
-        for (const midiNote of item.note.chord) {
-          synth.noteOn(item.channel, midiNote, Math.max(0, Math.min(127, Math.round((item.note.velocity ?? DEFAULT_VELOCITY) * item.volume))), noteStartTime);
-          synth.noteOff(item.channel, midiNote, noteStartTime + duration);
-        }
-      }
+      const duration = item.duration * secondsPerWholeNote;
+      synth.noteOn(item.channel, item.note, Math.max(0, Math.min(127, Math.round((item.velocity ?? DEFAULT_VELOCITY) * item.volume))), noteStartTime);
+      synth.noteOff(item.channel, item.note, noteStartTime + duration);
       latestEndTime = Math.max(latestEndTime, noteStartTime + duration);
 
       if (currentTime > context.currentTime + SCHEDULE_AHEAD_SECONDS) {
@@ -135,6 +131,18 @@ export class PreviewAudioPlayer {
     if (generation === this.playGeneration) {
       await this.scheduleDelay.delay(latestEndTime - context.currentTime + END_GRACE_SECONDS);
     }
+  }
+
+  private pitchSchedule(arrangement: Arrangement): Array<{ note: number; offset: number; duration: number; velocity?: number; channel: number; volume: number }> {
+    const schedule: Array<{ note: number; offset: number; duration: number; velocity?: number; channel: number; volume: number }> = [];
+    const trackChannels = this.trackChannels(arrangement);
+    for (const [trackIndex, track] of arrangement.tracks.entries()) {
+      const channel = trackChannels[trackIndex] ?? MELODIC_CHANNELS[0];
+      for (const span of melodyPitchSpans(track.notes)) {
+        schedule.push({ ...span, channel, volume: track.volume });
+      }
+    }
+    return schedule.sort((left, right) => left.offset - right.offset || left.note - right.note);
   }
 
   private noteSchedule(arrangement: Arrangement): Array<{ note: MelodyNote; offset: number; channel: number; volume: number }> {

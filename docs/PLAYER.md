@@ -37,6 +37,7 @@ interface MelodyNote {
   duration: number;
   index: number;
   velocity?: number;
+  sustained?: number[];
 }
 
 interface Melody {
@@ -56,6 +57,11 @@ Durations are represented in whole-note units:
 
 `index` is the parsed note index from the core document. The frontend uses this
 for playback highlighting.
+
+`sustained` lists pitches that continue from the immediately preceding melody
+event without a new attack. Ornament-expanded chords use it to hold unchanged
+members while the highest sounding member moves. Playback and export resolve
+these transitions through `melodyPitchSpans()`.
 
 `compileMelody(document, program?)` keeps the legacy single-melody behavior and
 flattens score lines in source order.
@@ -214,12 +220,20 @@ descending slides use the same timing. A slide between notes at the same
 sounding pitch is ignored with a parser warning, so it plays as an ordinary
 source note.
 
-Grace notes use the first quarter of the written duration. Before-grace notes
-sound before the shortened anchor note; after-grace notes sound after it.
-Multiple grace pitches split the grace duration evenly.
+Grace notes reserve one quarter of the written duration. Before-grace notes
+use that time before the shortened anchor note; after-grace notes use it after
+the shortened anchor. Multiple grace pitches split the grace duration evenly.
 
 Auxiliary ornament pitches follow the current key signature and any active
 accidental for that scale degree in the measure.
+
+Mordents, turns, and trills may attach to a whole chord. The highest sounding
+member receives the ornament while every other member sustains without a new
+attack. Grace notes instead modify the onset of the whole chord: their sequence
+reserves one quarter of the chord's written duration, so every chord member
+shares the shortened remaining duration. Before-grace notes sound before that
+shortened chord; after-grace notes sound after it. Slides remain limited to a
+single-pitch source and target.
 
 ## Ties
 

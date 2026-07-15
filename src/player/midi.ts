@@ -1,6 +1,6 @@
 import type { Document } from "../core/index.js";
 import { actualNotePerBeat } from "../core/index.js";
-import { compileArrangement, skipInitialArrangementRests, type Arrangement, type Melody } from "./melody.js";
+import { compileArrangement, melodyPitchSpans, skipInitialArrangementRests, type Arrangement, type Melody } from "./melody.js";
 
 export interface MidiExportOptions {
   omitInitialRests?: boolean;
@@ -135,22 +135,22 @@ function buildMetaTrack(source: Pick<Melody, "tempo" | "beatsPerMeasure" | "beat
 function buildMusicTrack(melody: Melody & { volume?: number }, program: number, channel: number): number[] {
   const drum = program >= 128;
   const track = new MIDITrack(drum ? DRUM_CHANNEL : channel, drum ? null : program);
-  let delta = 0;
-  for (const note of melody.notes) {
-    if (note.chord === "rest") {
-      delta += note.duration;
-      continue;
+  const volume = "volume" in melody && typeof melody.volume === "number" ? melody.volume : 1;
+  const events = melodyPitchSpans(melody.notes)
+    .flatMap((span) => [
+      { offset: span.offset, kind: "on" as const, note: span.note, velocity: span.velocity },
+      { offset: span.offset + span.duration, kind: "off" as const, note: span.note, velocity: span.velocity },
+    ])
+    .sort((left, right) => left.offset - right.offset || (left.kind === right.kind ? 0 : left.kind === "off" ? -1 : 1));
+  let previousOffset = 0;
+  for (const event of events) {
+    const delta = event.offset - previousOffset;
+    if (event.kind === "on") {
+      track.noteOn(delta, event.note, Math.max(0, Math.min(127, Math.round((event.velocity ?? DEFAULT_VELOCITY) * volume))));
+    } else {
+      track.noteOff(delta, event.note);
     }
-    for (const midiNote of note.chord) {
-      const volume = "volume" in melody && typeof melody.volume === "number" ? melody.volume : 1;
-      track.noteOn(delta, midiNote, Math.max(0, Math.min(127, Math.round((note.velocity ?? DEFAULT_VELOCITY) * volume))));
-      delta = 0;
-    }
-    delta = note.duration;
-    for (const midiNote of note.chord) {
-      track.noteOff(delta, midiNote);
-      delta = 0;
-    }
+    previousOffset = event.offset;
   }
   return track.toBytes();
 }

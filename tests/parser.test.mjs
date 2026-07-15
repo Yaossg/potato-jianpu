@@ -479,6 +479,19 @@ test("parses note-attached grace ornaments before duration suffixes", () => {
   assert.deepEqual(notes[3].ornament.pitches.map((pitch) => pitch.note), [2, 3, 4, 5]);
 });
 
+test("parses ornaments attached to whole chords except slides", () => {
+  const result = parse("{1 3 5}(^) {1 3 5}(z) {1 3 5}(tr~)- {1 3 5}(<2) {1 3 5}(>6)");
+  assert.equal(result.ok, true);
+  assert.deepEqual(
+    result.value.score[0].measures[0].notes.map((note) => note.ornament?.kind),
+    ["mordent", "turn", "trill", "grace", "grace"],
+  );
+
+  const slide = parse("{1 3 5}(~) 6");
+  assert.equal(slide.ok, false);
+  assert.match(slide.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /Slides cannot be attached to chords/);
+});
+
 test("parses slides and validates their immediate targets", () => {
   const result = parse("1(~) 5 | 5(~) 1");
   assert.equal(result.ok, true);
@@ -498,11 +511,10 @@ test("parses slides and validates their immediate targets", () => {
 });
 
 test("reports diagnostics for unsupported ornament attachments", () => {
-  const result = parse("0(^) X(^) {12}(^) ~1(^) 0(tr~) X(tr~) {12}(tr~) ~1(tr~) 1(^)(v) 1() 1(q) 1(gl) 1(2) 1(2 1(<) 1(>0) 1(<234)");
+  const result = parse("0(^) X(^) ~1(^) 0(tr~) X(tr~) ~1(tr~) 1(^)(v) 1() 1(q) 1(gl) 1(2) 1(2 1(<) 1(>0) 1(<234)");
   assert.equal(result.ok, false);
   const messages = result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
   assert.match(messages, /Ornaments can only be attached to pitch notes/);
-  assert.match(messages, /Ornaments cannot be attached to chords/);
   assert.match(messages, /Ornaments cannot be attached to tied notes/);
   assert.match(messages, /Only one ornament can be attached to a note/);
   assert.match(messages, /Ornament parentheses cannot be empty/);

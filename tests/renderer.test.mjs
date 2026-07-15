@@ -489,6 +489,17 @@ test("renders compact note ornaments and keeps following notes spaced", () => {
   assert.ok(noteX(svg, 1) - noteX(svg, 0) >= 24);
 });
 
+test("renders whole-chord ornaments above the chord", () => {
+  const result = parse("{1 3 5}(^) {1 3 5}(tr~)- {1 3 5}(<2)");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  const chordTopY = Math.min(...[...svg.matchAll(/<text class="note" x="[^"]+" y="([^"]+)" text-anchor="middle">[135]<\/text>/g)].map((match) => Number(match[1])));
+  const ornamentY = Number(svg.match(/<text class="ornament mordent smufl-symbol" x="[^"]+" y="([^"]+)"/)?.[1]);
+  assert.ok(ornamentY < chordTopY);
+  assert.match(svg, /<text class="ornament trill smufl-symbol"/);
+  assert.match(svg, /<g class="grace-note-group"/);
+});
+
 test("renders rising, falling, and wrapped slide segments", () => {
   const result = parse("1(~) 5 5(~) 1");
   assert.equal(result.ok, true);

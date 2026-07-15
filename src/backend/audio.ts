@@ -1,6 +1,6 @@
 import { RenderingAudioContext } from "@descript/web-audio-js";
 import type { Document } from "../core/index.js";
-import { arrangementDuration, compileArrangement, skipInitialArrangementRests, type Arrangement, type MelodyNote } from "../player/index.js";
+import { arrangementDuration, compileArrangement, melodyPitchSpans, skipInitialArrangementRests, type Arrangement, type MelodyNote } from "../player/index.js";
 import WebAudioTinySynth from "../player/webaudio-tinysynth.js";
 
 export interface AudioRenderOptions {
@@ -37,18 +37,12 @@ function totalSeconds(arrangement: Arrangement): number {
 
 function scheduleTrack(synth: WebAudioTinySynth, notes: MelodyNote[], secondsPerWhole: number, channel: number, volume: number) {
   const context = synth.getAudioContext();
-  let currentTime = context.currentTime;
-
-  for (const note of notes) {
-    const duration = note.duration * secondsPerWhole;
-    if (note.chord !== "rest") {
-      const velocity = Math.max(0, Math.min(127, Math.round((note.velocity ?? DEFAULT_VELOCITY) * volume)));
-      for (const midiNote of note.chord) {
-        synth.noteOn(channel, midiNote, velocity, currentTime);
-        synth.noteOff(channel, midiNote, currentTime + duration);
-      }
-    }
-    currentTime += duration;
+  for (const span of melodyPitchSpans(notes)) {
+    const startTime = context.currentTime + span.offset * secondsPerWhole;
+    const duration = span.duration * secondsPerWhole;
+    const velocity = Math.max(0, Math.min(127, Math.round((span.velocity ?? DEFAULT_VELOCITY) * volume)));
+    synth.noteOn(channel, span.note, velocity, startTime);
+    synth.noteOff(channel, span.note, startTime + duration);
   }
 }
 

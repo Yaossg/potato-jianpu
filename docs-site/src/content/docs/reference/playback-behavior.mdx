@@ -30,9 +30,11 @@ Every ornament fits inside the written duration of its anchor note:
 - Turns use the first half for four equal notes, then sustain the anchor pitch. A normal turn is upper-anchor-lower-anchor; an inverted turn reverses that order.
 - Trills alternate the anchor and upper scale-degree neighbor through the full duration. `(tr)` and `(tr~)` sound the same; the wavy extension is engraving-only.
 - Slides keep the source pitch for the first three quarters, then move by equal chromatic steps during the final quarter. The target note still receives its own normal attack.
-- Before-grace and after-grace figures use the first quarter of the anchor duration. Multiple grace pitches divide that grace time evenly.
+- Before-grace and after-grace figures reserve one quarter of the anchor duration. Before-grace notes use it before the shortened anchor; after-grace notes use it after the shortened anchor. Multiple grace pitches divide that grace time evenly.
 
 Auxiliary ornament pitches follow the active key signature and any accidental currently active for that scale degree. A slide to the same sounding pitch is ignored with a warning.
+
+Chord ornaments use two distinct playback rules. For mordents, turns, and trills, the highest sounding member after resolving key, accidentals, and octave marks receives the ornament while the other members remain held without repeated attacks. Grace notes instead modify the onset of the whole chord: the grace sequence reserves one quarter of its written duration, so every member shares the shortened remaining duration. Slides still require single-pitch sources and targets.
 
 ## Repeats And Navigation
 

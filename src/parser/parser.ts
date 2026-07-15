@@ -808,8 +808,8 @@ class Parser {
         this.error("Ornaments can only be attached to pitch notes.", parsed.range);
         continue;
       }
-      if (note.chordSyntax) {
-        this.error("Ornaments cannot be attached to chords in this version.", parsed.range);
+      if (note.chordSyntax && parsed.ornament?.kind === "slide") {
+        this.error("Slides cannot be attached to chords in this version.", parsed.range);
         continue;
       }
       if (tie) {

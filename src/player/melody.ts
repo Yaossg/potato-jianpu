@@ -6,6 +6,15 @@ export interface MelodyNote {
   duration: number;
   index: number;
   velocity?: number;
+  sustained?: number[];
+}
+
+export interface MelodyPitchSpan {
+  note: number;
+  offset: number;
+  duration: number;
+  index: number;
+  velocity?: number;
 }
 
 export interface Melody {
@@ -56,6 +65,24 @@ function adjacentPitch(pitch: Pitch, direction: "upper" | "lower"): Pitch {
   return pitch.note === 1 ? { ...pitch, note: 7, octave: pitch.octave - 1, accidental: undefined } : { ...pitch, note: (pitch.note - 1) as Pitch["note"], accidental: undefined };
 }
 
+function withSustainedTransitions(notes: MelodyNote[]): MelodyNote[] {
+  return notes.map((note, index) => {
+    if (index === 0 || note.chord === "rest") {
+      return note;
+    }
+    const previous = notes[index - 1]?.chord;
+    if (previous === undefined || previous === "rest") {
+      return note;
+    }
+    const sustained = note.chord.filter((pitch) => previous.includes(pitch));
+    return sustained.length > 0 ? { ...note, sustained } : note;
+  });
+}
+
+function replaceChordPitch(chord: number[], index: number, pitch: number): number[] {
+  return chord.map((member, memberIndex) => memberIndex === index ? pitch : member);
+}
+
 function compilePitchNoteEvents(note: Extract<Note, { kind: "pitch" }>, noteMap: number[], slideTarget?: number): MelodyNote[] {
   const velocity = note.velocity;
   const anchor = note.chord.map((pitch) => pitchToMidi(pitch, noteMap));
@@ -100,17 +127,22 @@ function compilePitchNoteEvents(note: Extract<Note, { kind: "pitch" }>, noteMap:
       : [{ ...base, duration: sustain }, ...graceNotes];
   }
 
-  const mainPitch = note.chord[0]!;
+  const mainPitchIndex = anchor.reduce(
+    (highestIndex, pitch, index) => pitch > anchor[highestIndex]! ? index : highestIndex,
+    0,
+  );
+  const mainPitch = note.chord[mainPitchIndex]!;
   if (note.ornament.kind === "trill") {
     const upper = pitchToMidi(adjacentPitch(mainPitch, "upper"), noteMap);
+    const upperChord = replaceChordPitch(anchor, mainPitchIndex, upper);
     const pairCount = Math.max(1, Math.floor(note.duration.value / (TRILL_SEGMENT_DURATION * 2)));
     const segment = note.duration.value / (pairCount * 2);
-    return Array.from({ length: pairCount * 2 }, (_, index) => ({
-      chord: index % 2 === 0 ? anchor : [upper],
+    return withSustainedTransitions(Array.from({ length: pairCount * 2 }, (_, index) => ({
+      chord: index % 2 === 0 ? anchor : upperChord,
       duration: segment,
       index: note.index,
       velocity,
-    }));
+    })));
   }
 
   if (note.ornament.kind === "turn") {
@@ -119,25 +151,60 @@ function compilePitchNoteEvents(note: Extract<Note, { kind: "pitch" }>, noteMap:
     const ornamentDuration = note.duration.value / 2;
     const segment = ornamentDuration / 4;
     const sustain = note.duration.value - ornamentDuration;
+    const upperChord = replaceChordPitch(anchor, mainPitchIndex, upper);
+    const lowerChord = replaceChordPitch(anchor, mainPitchIndex, lower);
     const turnChords = note.ornament.direction === "upper"
-      ? [[upper], anchor, [lower], anchor]
-      : [[lower], anchor, [upper], anchor];
-    return [
+      ? [upperChord, anchor, lowerChord, anchor]
+      : [lowerChord, anchor, upperChord, anchor];
+    return withSustainedTransitions([
       ...turnChords.map((chord) => ({ chord, duration: segment, index: note.index, velocity })),
       { chord: anchor, duration: sustain, index: note.index, velocity },
-    ];
+    ]);
   }
 
   const auxiliary = pitchToMidi(adjacentPitch(mainPitch, note.ornament.direction), noteMap);
+  const auxiliaryChord = replaceChordPitch(anchor, mainPitchIndex, auxiliary);
   const ornamentDuration = note.duration.value / 2;
   const segment = ornamentDuration / 3;
   const sustain = note.duration.value - ornamentDuration;
-  return [
+  return withSustainedTransitions([
     { chord: anchor, duration: segment, index: note.index, velocity },
-    { chord: [auxiliary], duration: segment, index: note.index, velocity },
+    { chord: auxiliaryChord, duration: segment, index: note.index, velocity },
     { chord: anchor, duration: segment, index: note.index, velocity },
     { chord: anchor, duration: sustain, index: note.index, velocity },
-  ];
+  ]);
+}
+
+export function melodyPitchSpans(notes: MelodyNote[]): MelodyPitchSpan[] {
+  const spans: MelodyPitchSpan[] = [];
+  const active = new Map<number, MelodyPitchSpan>();
+  let offset = 0;
+
+  for (const note of notes) {
+    const chord = note.chord === "rest" ? [] : [...new Set(note.chord)];
+    const sustained = new Set(note.sustained ?? []);
+    const nextActive = new Map<number, MelodyPitchSpan>();
+
+    for (const pitch of chord) {
+      const current = active.get(pitch);
+      if (current && sustained.has(pitch)) {
+        current.duration += note.duration;
+        nextActive.set(pitch, current);
+      } else {
+        const span = { note: pitch, offset, duration: note.duration, index: note.index, velocity: note.velocity };
+        spans.push(span);
+        nextActive.set(pitch, span);
+      }
+    }
+
+    active.clear();
+    for (const [pitch, span] of nextActive) {
+      active.set(pitch, span);
+    }
+    offset += note.duration;
+  }
+
+  return spans;
 }
 
 function compileNoteEvents(note: Note, noteMap: number[], program: number, slideTarget?: number): MelodyNote[] {

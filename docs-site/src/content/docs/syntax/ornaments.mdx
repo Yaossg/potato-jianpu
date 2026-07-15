@@ -19,7 +19,7 @@ import ScorePreview from '../../../components/ScorePreview.astro';
 
 ## Mordents
 
-Modern Jianpu Markup currently supports upper and lower mordents. Write the ornament immediately after a single pitch note, before any duration suffix.
+Modern Jianpu Markup currently supports upper and lower mordents. Write the ornament immediately after a pitch note or closing chord brace, before any duration suffix.
 
 Use `(^)` for an upper mordent and `(v)` for a lower mordent.
 
@@ -41,7 +41,9 @@ The suffix comes before dashes, slashes, dots, or other duration marks.
 
 <JianpuSource title="Mordents before duration suffixes" source={`1(^)- 1(v)/ 2(^).`} />
 
-Mordents attach only to ordinary single pitch notes. They do not attach to rests, drum notes, chords, or tied notes in this version.
+Mordents attach to pitch notes and whole chords, but not to rests, drum notes, or tied notes. On a chord, the glyph appears above the whole chord and the highest sounding member receives the mordent while the other members sustain.
+
+For example, `{1 3 5}(^)` ornaments `5` in C major and keeps `1` and `3` sounding.
 
 ## Turns
 
@@ -61,7 +63,7 @@ Turns use the same post-note suffix position. Use `(z)` for a normal turn and `(
 1(z) 2(s) 3 - | 5(z)/ 5(s)/ 1' - 0`}
 />
 
-Like mordents, turns attach only to ordinary single pitch notes and come before any duration suffix.
+Like mordents, turns attach to pitch notes or whole chords and come before any duration suffix. A chord turn changes its highest sounding member while the other members sustain.
 
 ## Trills
 
@@ -83,7 +85,7 @@ Use `(tr)` for a trill. Use `(tr~)` for a long trill with a wavy extension line.
 
 The long-trill line is drawn only when its anchor has at least one duration dash. It covers only that anchor's written duration, ends before the next onset or current measure barline, and does not span separate notes or tied-note groups. Without a duration dash, the renderer keeps the trill glyph, omits the extension line, and reports a warning.
 
-Trills attach only to ordinary single pitch notes. The upper auxiliary pitch follows the current key signature and any active accidental for that scale degree in the measure.
+Trills attach to pitch notes or whole chords. The upper auxiliary pitch follows the current key signature and any active accidental for that scale degree in the measure. A chord trill alternates its highest sounding member while the other members sustain without repeated attacks.
 
 ## Slides
 
@@ -125,7 +127,7 @@ Grace notes are also written as post-note ornament suffixes. The suffix always a
 
 Inside the grace-note suffix, write 1, 2, 4, or another power-of-two number of pitch notes using the normal accidental and octave syntax. A single grace note renders as an eighth note with one underline, two grace notes render as sixteenth notes with two underlines, four grace notes render with three underlines, and so on. Do not write rests, drum notes, chords, ties, dynamics, or duration marks inside the suffix.
 
-Like mordents, grace notes attach only to ordinary single pitch notes in this version.
+Grace notes attach to pitch notes or whole chords. On a chord, the grace sequence modifies the onset of the whole chord rather than one member: it reserves one quarter of the chord's written duration, so every chord member is shortened equally. Before-grace notes lead into that shortened complete chord; after-grace notes begin after it. Chords are not accepted inside the grace-note suffix itself.
 
 ## Playback And Export
 
@@ -140,6 +142,8 @@ Playback, MIDI, WAV, and MP3 export expand a trill across the full written durat
 Playback, MIDI, WAV, and MP3 export use the final quarter of the slide source's written duration for equal chromatic semitone steps through the target pitch. The following target note then keeps its own normal attack and duration.
 
 Playback, MIDI, WAV, and MP3 export expand grace notes inside the written duration of the anchor note. Before-grace notes sound first, followed by the shortened anchor note. After-grace notes use the end of the anchor duration. Multiple grace notes split the grace duration evenly.
+
+Chord ornaments use two distinct playback rules. Mordents, turns, and trills ornament only the highest sounding member after resolving the key, accidentals, and octave marks; the other members remain held across the expanded events instead of receiving repeated attacks. Grace notes affect the whole chord onset, so all members share the shortened chord duration before or after the grace sequence.
 
 SVG, PNG, and PDF export render mordents, turns, and trills above the note using the bundled SMuFL ornament font. A `(tr~)` long trill adds a wavy path through the anchor note's written duration. Slides render in the source note's upper-right area as fixed-radius rising or falling quarter-circle arcs with an arrowhead. The target pitch determines the direction but its position does not stretch the mark. Grace notes render as small Jianpu figures beside the anchor note: before-grace notes on the left, after-grace notes on the right. Each grace figure has one or more short underlines whose lower edge connects to the anchor note with a quarter-circle arc. Downloaded SVG and PDF output embed the font needed for SMuFL ornament symbols.
 
@@ -160,10 +164,10 @@ SVG, PNG, and PDF export render mordents, turns, and trills above the note using
 />
 
 <JianpuExample
-  title="Mordent on a chord"
+  title="Slide on a chord"
   status="invalid"
-  description="Chord-wide mordents are not supported yet."
-  source={`{1 3 5}(^)`}
+  description="Slides still require a single-pitch source and target."
+  source={`{1 3 5}(~) 6`}
 />
 
 <JianpuExample

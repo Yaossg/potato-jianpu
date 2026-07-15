@@ -491,6 +491,7 @@ complete hairpin on each visual line.
 ### Ornaments
 
 Mordent, turn, and trill ornaments render with SMuFL Private Use Area glyphs.
+When the anchor is a chord, the glyph is centered above the whole chord.
 A `(tr~)` long trill keeps the trill glyph and, when the note has at least
 one duration dash, adds a wavy SVG path from 9px right of the note center to
 8px before the next onset or current measure barline. The path fills the
@@ -515,7 +516,7 @@ load the bundled Bravura font for these glyphs. Other notation symbols
 continue to use Unicode text or SVG primitives.
 
 Grace-note ornaments render as small Jianpu number figures beside their anchor
-note. Each grace figure includes the small pitch number, octave dots or
+note or chord. Each grace figure includes the small pitch number, octave dots or
 accidentals when present, one or more short underlines based on the count of
 grace pitches, and a quarter-circle arc from the lower edge of the underline
 group to the anchor note. Adjacent grace figures use continuous underlines,
