@@ -100,8 +100,8 @@ Validate result shape:
 Fatal parse, validation, or export errors return exit code `1`. Usage errors,
 such as a missing `-o`, invalid `--paper`, invalid `--orientation`, invalid
 `--page-width`, invalid `--page-height`, invalid `--page-margin`, invalid
-`--png-scale`, invalid `--sample-rate`, or invalid `--program`, return exit
-code `2`.
+`--color`, invalid `--background`, invalid `--png-scale`, invalid
+`--sample-rate`, or invalid `--program`, return exit code `2`.
 
 Unknown options and options missing their required value are rejected with exit
 code `2`.
@@ -141,8 +141,10 @@ Options:
   omitted, the renderer uses the parsed `footer` header value.
 - `--page-numbers`: renders centered page numbers as `current / total`. When
   omitted, the renderer uses the parsed `numbering` header value.
-- `--color <css>`: CSS color used for `currentColor` SVG notation elements.
-- `--background <css>`: CSS color used for SVG page background rectangles.
+- `--color <#RRGGBB>`: six-digit hexadecimal color used for `currentColor` SVG
+  notation elements.
+- `--background <#RRGGBB>`: six-digit hexadecimal color used for SVG page
+  background rectangles.
 - `--split-pages`: write one SVG file per rendered page instead of one combined
   SVG file.
 
@@ -189,10 +191,10 @@ Options:
 - `--page-margin <px>`: same behavior and validation as SVG export.
 - `--page-footer <text>`: same behavior as SVG export.
 - `--page-numbers`: same behavior as SVG export.
-- `--color <css>`: same behavior as SVG export.
-- `--background <css>`: draws the same page background as SVG export. PNG
-  always composites the rendered SVG over an opaque white base, so transparent
-  or partially transparent SVG backgrounds cannot produce transparent pixels.
+- `--color <#RRGGBB>`: same behavior as SVG export.
+- `--background <#RRGGBB>`: draws the same page background as SVG export. PNG
+  always composites the rendered SVG over an opaque white base, so uncovered
+  areas cannot produce transparent pixels.
 - `--png-scale <number>`: positive raster scale. Defaults to `2`; for example,
   an A4 page becomes `2380 x 3368` pixels. Scale changes pixel density without
   changing layout or page wrapping.
@@ -236,8 +238,8 @@ Options:
 - `--page-margin <px>`: same behavior and validation as SVG export.
 - `--page-footer <text>`: same behavior as SVG export.
 - `--page-numbers`: same behavior as SVG export.
-- `--color <css>`: same behavior as SVG export.
-- `--background <css>`: same behavior as SVG export.
+- `--color <#RRGGBB>`: same behavior as SVG export.
+- `--background <#RRGGBB>`: same behavior as SVG export.
 
 When pagination is enabled, each rendered SVG page becomes a separate PDF page
 with the configured width and height. Without pagination, the adaptive-height

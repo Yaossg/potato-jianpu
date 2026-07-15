@@ -16,6 +16,21 @@ export interface RenderOptions {
   background?: string;
 }
 
+const SIX_DIGIT_HEX_COLOR = /^#[0-9a-f]{6}$/i;
+
+export function isSixDigitHexColor(value: string): boolean {
+  return SIX_DIGIT_HEX_COLOR.test(value);
+}
+
+export function validateRenderColorOptions(options: RenderOptions): void {
+  if (options.color !== undefined && !isSixDigitHexColor(options.color)) {
+    throw new Error("Render color must be a six-digit hexadecimal color (#RRGGBB).");
+  }
+  if (options.background !== undefined && !isSixDigitHexColor(options.background)) {
+    throw new Error("Render background must be a six-digit hexadecimal color (#RRGGBB).");
+  }
+}
+
 export const DEFAULT_OPTIONS: Required<RenderOptions> = {
   pageWidth: DEFAULT_PAGE_SIZE.pageWidth,
   paginate: false,

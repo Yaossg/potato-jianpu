@@ -6,6 +6,7 @@ export { bravuraFontFaceCss, embedBravuraFontFace, svgUsesSmuflSymbols } from ".
 export { renderSvg } from "./svg.js";
 export { renderSvgPages } from "./svg.js";
 export type { RenderedSvgPage } from "./svg.js";
+export { isSixDigitHexColor } from "./options.js";
 export type { RenderOptions } from "./options.js";
 export { DEFAULT_PAGE_SIZE, PAGE_ORIENTATIONS, PAPER_PRESET_LIST, isPageOrientation, isPaperPresetName, resolvePageSize } from "./paper.js";
 export type { PageOrientation, PaperPresetName, PageSizeOptions, ResolvedPageSize } from "./paper.js";

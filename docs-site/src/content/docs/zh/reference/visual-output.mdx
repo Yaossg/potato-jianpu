@@ -49,7 +49,7 @@ SVG、PNG 和 PDF 都从同一份乐谱布局开始生成；浏览器预览也�
 | PNG | 使用内置导出字体和可配置像素倍率生成的、不透明的同一 SVG 布局栅格图像。 | 浏览器和 CLI 都支持在开启“拆分页”后按页生成 PNG。 |
 | PDF | 嵌入 Unicode 文本和装饰音字体的矢量 PDF 页面。 | 每个渲染页都会成为一个 PDF 页；PDF 不会拆成多个独立下载。 |
 
-浏览器下载使用当前页面设置和导出设置。CLI 将等价选择放在命令旁：`--paper`、`--orientation`、`--page-width`、`--page-height`、`--page-margin`、`--page-footer`、`--page-numbers`、`--paginate`、`--color` 和 `--background`。PNG 另外支持 `--png-scale`；SVG 和 PNG 支持 `--split-pages`。
+浏览器下载使用当前页面设置和导出设置。CLI 将等价选择放在命令旁：`--paper`、`--orientation`、`--page-width`、`--page-height`、`--page-margin`、`--page-footer`、`--page-numbers`、`--paginate`、`--color` 和 `--background`。颜色和背景只接受 `#RRGGBB`。PNG 另外支持 `--png-scale`；SVG 和 PNG 支持 `--split-pages`。
 
 <RelatedLinks
   title="相关页面"

@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { parse } from "../dist/parser/index.js";
-import { analyzeScoreOverwidth, embedBravuraFontFace, inferContentPageWidth, PAPER_PRESET_LIST, renderSvg, resolvePageSize, svgUsesSmuflSymbols } from "../dist/renderer/index.js";
+import { analyzeScoreOverwidth, embedBravuraFontFace, inferContentPageWidth, PAPER_PRESET_LIST, renderSvg, renderSvgPages, resolvePageSize, svgUsesSmuflSymbols } from "../dist/renderer/index.js";
 
 function readSnapshot(name) {
   return readFileSync(new URL(`./fixtures/snapshots/${name}`, import.meta.url), "utf8").replace(/\r\n/g, "\n").replace(/\n$/, "");
@@ -1318,6 +1318,15 @@ test("renders explicit export color and background", () => {
   const svg = renderSvg(result.value, { color: "#123456", background: "#f8fafc" });
   assert.match(svg, /<svg[^>]+style="color: #123456"/);
   assert.match(svg, /<rect class="page-background"[^>]+fill="#f8fafc"/);
+});
+
+test("rejects explicit colors outside six-digit hexadecimal syntax", () => {
+  const result = parse("1 2 3 4");
+  assert.equal(result.ok, true);
+  assert.throws(() => renderSvg(result.value, { color: "red; opacity: 0.2" }), /Render color must be a six-digit hexadecimal color/);
+  assert.throws(() => renderSvg(result.value, { color: "#123" }), /Render color must be a six-digit hexadecimal color/);
+  assert.throws(() => renderSvgPages(result.value, { background: "rgba(255, 255, 255, 0.5)" }), /Render background must be a six-digit hexadecimal color/);
+  assert.doesNotThrow(() => renderSvg(result.value, { color: "#ABCDEF", background: "#123456" }));
 });
 
 test("renders velocity text in SVG for notes with dynamic markings", () => {

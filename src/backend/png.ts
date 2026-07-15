@@ -1,5 +1,6 @@
 import { createRequire } from "node:module";
 import { Resvg } from "@resvg/resvg-js";
+import { isSixDigitHexColor } from "../renderer/index.js";
 
 export interface PngExportOptions {
   background?: string;
@@ -35,6 +36,9 @@ export function renderPngBytes(svg: string, options: PngExportOptions = {}): Uin
   const scale = options.scale ?? DEFAULT_PNG_SCALE;
   if (!Number.isFinite(scale) || scale <= 0) {
     throw new Error("PNG scale must be a positive number.");
+  }
+  if (options.background !== undefined && !isSixDigitHexColor(options.background)) {
+    throw new Error("PNG background must be a six-digit hexadecimal color (#RRGGBB).");
   }
   const renderer = new Resvg(svgForPng(svg, options.background), {
     background: "white",

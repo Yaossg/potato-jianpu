@@ -1,6 +1,6 @@
 import type { Document } from "../core/index.js";
 import { renderHeader } from "./header.js";
-import { DEFAULT_OPTIONS, type RenderOptions } from "./options.js";
+import { DEFAULT_OPTIONS, type RenderOptions, validateRenderColorOptions } from "./options.js";
 import { renderScore } from "./score.js";
 import { SVG_STYLE } from "./styles.js";
 import { escapeXml } from "./xml.js";
@@ -90,6 +90,7 @@ ${body}
 }
 
 export function renderSvgPages(document: Document, options: RenderOptions = {}): RenderedSvgPage[] {
+  validateRenderColorOptions(options);
   const resolved: Required<RenderOptions> = {
     ...resolvedRenderOptions(document, options),
   };
@@ -139,6 +140,7 @@ export function renderSvgPages(document: Document, options: RenderOptions = {}):
 }
 
 export function renderSvg(document: Document, options: RenderOptions = {}): string {
+  validateRenderColorOptions(options);
   const resolved = resolvedRenderOptions(document, options);
   const inset = pageContentInset(resolved);
   const pageContentWidth = contentWidth(resolved.pageWidth, resolved.pageMargin);

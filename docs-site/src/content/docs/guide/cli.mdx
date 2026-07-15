@@ -51,7 +51,7 @@ pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png
 pnpm run cli -- export-pdf examples/twinkle.jpu -o twinkle.pdf
 ```
 
-SVG, PNG, and PDF export accept `--paper <a4|b5|letter>`, `--orientation <portrait|landscape>`, `--page-width <px>`, `--page-height <px>`, `--page-margin <px>`, `--page-footer <text>`, `--page-numbers`, `--paginate`, `--color <css>`, and `--background <css>`. Explicit page width and height values override paper preset dimensions.
+SVG, PNG, and PDF export accept `--paper <a4|b5|letter>`, `--orientation <portrait|landscape>`, `--page-width <px>`, `--page-height <px>`, `--page-margin <px>`, `--page-footer <text>`, `--page-numbers`, `--paginate`, `--color <#RRGGBB>`, and `--background <#RRGGBB>`. Color values must contain exactly six hexadecimal digits; CSS names, short hex, alpha channels, and other CSS declarations are rejected. Explicit page width and height values override paper preset dimensions.
 
 PNG additionally accepts `--png-scale <number>`, which defaults to `2` and changes output pixel density without changing page layout. PNG output is always opaque. SVG and PNG also accept `--split-pages`. With `-o score.svg`, split output writes `score-01.svg`, `score-02.svg`, and so on without overwriting existing page files.
 

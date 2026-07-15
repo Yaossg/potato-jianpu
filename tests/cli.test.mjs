@@ -258,6 +258,30 @@ test("CLI export-svg accepts explicit color and background", async () => {
   assert.match(svg, /fill="#f8fafc"/);
 });
 
+test("CLI rejects colors outside six-digit hexadecimal syntax", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
+  const input = join(dir, "score.jpu");
+  const output = join(dir, "score.svg");
+  await writeFile(input, "1 2 3 4", "utf8");
+
+  await assert.rejects(
+    execFileAsync(process.execPath, ["dist/cli/main.js", "export-svg", input, "-o", output, "--color", "red; opacity: 0.2"], { cwd: repoDir }),
+    (error) => {
+      assert.equal(error.code, 2);
+      assert.match(String(error.stderr), /--color must be a six-digit hexadecimal color/);
+      return true;
+    },
+  );
+  await assert.rejects(
+    execFileAsync(process.execPath, ["dist/cli/main.js", "export-png", input, "-o", join(dir, "score.png"), "--background", "#fff"], { cwd: repoDir }),
+    (error) => {
+      assert.equal(error.code, 2);
+      assert.match(String(error.stderr), /--background must be a six-digit hexadecimal color/);
+      return true;
+    },
+  );
+});
+
 test("CLI export-svg accepts page footer and number options", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
   const input = join(dir, "score.jpu");

@@ -111,12 +111,16 @@ test("renders SVG output to PNG bytes", () => {
 test("renders deterministic opaque PNG output with bundled fonts", () => {
   const result = parse(`title: "茉莉花"\ncomposer: "中国民歌"\n===\n1(^) 2(v) 3(tr) 4 |`);
   assert.equal(result.ok, true);
-  const svg = renderSvg(result.value, { pageWidth: 320, background: "rgba(255, 0, 0, 0.5)" });
+  const svg = renderSvg(result.value, { pageWidth: 320, background: "#ff8080" });
   const png = renderPngBytes(svg);
   assert.deepEqual(pngDimensions(png), { width: 640, height: 340 });
   assert.equal(pngHasOnlyOpaquePixels(png), true);
   assert.equal(createHash("sha256").update(png).digest("hex"), "c461091d1a610a64726df7c3ecff744803863742c403bbf3eadeafa2fcbbcb66");
-  assert.equal(pngHasOnlyOpaquePixels(renderPngBytes(renderSvg(result.value, { pageWidth: 320 }), { background: "rgba(255, 0, 0, 0.5)", scale: 1 })), true);
+  assert.equal(pngHasOnlyOpaquePixels(renderPngBytes(renderSvg(result.value, { pageWidth: 320 }), { background: "#ff8080", scale: 1 })), true);
+  assert.throws(
+    () => renderPngBytes(renderSvg(result.value, { pageWidth: 320 }), { background: "rgba(255, 0, 0, 0.5)", scale: 1 }),
+    /PNG background must be a six-digit hexadecimal color/,
+  );
 });
 
 test("renders PNG output at an explicit scale", () => {

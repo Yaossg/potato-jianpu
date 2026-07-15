@@ -53,11 +53,11 @@ pnpm run cli -- export-pdf examples/twinkle.jpu -o twinkle.pdf --paper a4 --orie
 pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --paper a4 --paginate --split-pages
 ```
 
-所有视觉导出都支持纸张预设、方向、页面宽度、页面高度、颜色和背景选项。`--paper` 预设包括 `a4`、`b5` 和 `letter`；`--orientation` 可以是 `portrait` 或 `landscape`。显式 `--page-width` 和 `--page-height` 会在套用方向后覆盖预设尺寸。
+所有视觉导出都支持纸张预设、方向、页面宽度、页面高度、颜色和背景选项。CLI 的颜色和背景值只接受六位十六进制语法（`#RRGGBB`）。`--paper` 预设包括 `a4`、`b5` 和 `letter`；`--orientation` 可以是 `portrait` 或 `landscape`。显式 `--page-width` 和 `--page-height` 会在套用方向后覆盖预设尺寸。
 
 SVG 和 PNG 导出也支持 `--split-pages`，此时 `-o score.svg` 或 `-o score.png` 会被当作输出文件名前缀，写出 `score-01.svg` 或 `score-01.png` 这样的文件，并且不会覆盖已有分页文件。
 
-PNG 导出默认使用 `2x` 栅格倍率。可以用 CLI 的 `--png-scale <number>` 或浏览器里的 PNG 倍率控件改变像素密度，而不改变布局。A4 预设页面在默认倍率下为 `2380 × 3368` 像素。浏览器“导出设置”提供 `1x`、`2x`、`3x`，并显示生成的像素尺寸。PNG 输出不会带透明背景；透明或半透明页面颜色会合成到白底上。需要打印或与分辨率无关的输出时，优先使用 PDF 或 SVG。
+PNG 导出默认使用 `2x` 栅格倍率。可以用 CLI 的 `--png-scale <number>` 或浏览器里的 PNG 倍率控件改变像素密度，而不改变布局。A4 预设页面在默认倍率下为 `2380 × 3368` 像素。浏览器“导出设置”提供 `1x`、`2x`、`3x`，并显示生成的像素尺寸。PNG 输出不会带透明背景；所选页面背景没有覆盖的区域会使用不透明白色底层。需要打印或与分辨率无关的输出时，优先使用 PDF 或 SVG。
 
 ## 分页
 

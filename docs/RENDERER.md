@@ -68,10 +68,12 @@ interface RenderOptions {
   playback highlighting. When non-empty, it takes precedence over
   `activeNoteIndex`. Default: no active notes.
 - `color` sets the root SVG `color` style used by `currentColor` notation
-  elements. Default: `currentColor`.
-- `background` draws page background rectangles when non-empty. In unpaginated
-  output there is one adaptive-height rectangle; in paginated output there is
-  one fixed-height rectangle per page. Default: no SVG background rectangle.
+  elements. An explicit value must use six-digit hexadecimal syntax
+  (`#RRGGBB`). Default: `currentColor`.
+- `background` draws page background rectangles when non-empty. An explicit
+  value must use six-digit hexadecimal syntax (`#RRGGBB`). In unpaginated output
+  there is one adaptive-height rectangle; in paginated output there is one
+  fixed-height rectangle per page. Default: no SVG background rectangle.
 
 `renderSvg()` returns a complete SVG string with XML declaration, `<svg>`,
 inline `<style>`, header graphics, and score graphics. `renderSvgPages()`
@@ -567,8 +569,9 @@ font fallback.
 Most elements use `currentColor`, allowing the embedding page or PNG renderer to
 control color at the SVG root level.
 
-Export callers can pass `color` and `background` render options. The CLI exposes
-these as `--color` and `--background` for SVG and PNG export.
+Export callers can pass six-digit hexadecimal `color` and `background` render
+options. The CLI exposes these as `--color` and `--background` for SVG, PNG,
+and PDF export. Other CSS syntax is rejected before SVG serialization.
 
 The frontend also has a Theme toggle. It changes the application colors and
 sets the SVG preview/export `color` and `background` values to matching light or

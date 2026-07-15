@@ -13,7 +13,17 @@ import {
 } from "../backend/index.js";
 import { parse } from "../parser/index.js";
 import { exportMidiBytes } from "../player/index.js";
-import { PAPER_PRESET_LIST, embedBravuraFontFace, isPageOrientation, isPaperPresetName, renderSvg, renderSvgPages, resolvePageSize, svgUsesSmuflSymbols } from "../renderer/index.js";
+import {
+  PAPER_PRESET_LIST,
+  embedBravuraFontFace,
+  isPageOrientation,
+  isPaperPresetName,
+  isSixDigitHexColor,
+  renderSvg,
+  renderSvgPages,
+  resolvePageSize,
+  svgUsesSmuflSymbols,
+} from "../renderer/index.js";
 import type { PageOrientation, PaperPresetName, RenderOptions } from "../renderer/index.js";
 
 const require = createRequire(import.meta.url);
@@ -39,9 +49,9 @@ function usage(): string {
     "Usage:",
     "  jianpu validate <file> [--json]",
     "  jianpu parse <file> [--json]",
-    `  jianpu export-svg <file> -o <output.svg> [--paper <${PAPER_PRESET_USAGE}>] [--orientation <portrait|landscape>] [--page-width <px>] [--paginate] [--page-height <px>] [--page-margin <px>] [--page-footer <text>] [--page-numbers] [--color <css>] [--background <css>] [--split-pages]`,
-    `  jianpu export-png <file> -o <output.png> [--paper <${PAPER_PRESET_USAGE}>] [--orientation <portrait|landscape>] [--page-width <px>] [--paginate] [--page-height <px>] [--page-margin <px>] [--page-footer <text>] [--page-numbers] [--color <css>] [--background <css>] [--png-scale <number>] [--split-pages]`,
-    `  jianpu export-pdf <file> -o <output.pdf> [--paper <${PAPER_PRESET_USAGE}>] [--orientation <portrait|landscape>] [--page-width <px>] [--paginate] [--page-height <px>] [--page-margin <px>] [--page-footer <text>] [--page-numbers] [--color <css>] [--background <css>]`,
+    `  jianpu export-svg <file> -o <output.svg> [--paper <${PAPER_PRESET_USAGE}>] [--orientation <portrait|landscape>] [--page-width <px>] [--paginate] [--page-height <px>] [--page-margin <px>] [--page-footer <text>] [--page-numbers] [--color <#RRGGBB>] [--background <#RRGGBB>] [--split-pages]`,
+    `  jianpu export-png <file> -o <output.png> [--paper <${PAPER_PRESET_USAGE}>] [--orientation <portrait|landscape>] [--page-width <px>] [--paginate] [--page-height <px>] [--page-margin <px>] [--page-footer <text>] [--page-numbers] [--color <#RRGGBB>] [--background <#RRGGBB>] [--png-scale <number>] [--split-pages]`,
+    `  jianpu export-pdf <file> -o <output.pdf> [--paper <${PAPER_PRESET_USAGE}>] [--orientation <portrait|landscape>] [--page-width <px>] [--paginate] [--page-height <px>] [--page-margin <px>] [--page-footer <text>] [--page-numbers] [--color <#RRGGBB>] [--background <#RRGGBB>]`,
     "  jianpu export-midi <file> -o <output.mid> [--program <number>] [--omit-initial-rest]",
     "  jianpu export-wav <file> -o <output.wav> [--program <number>] [--sample-rate <hz>] [--amplitude <0-1>] [--omit-initial-rest]",
     "  jianpu export-mp3 <file> -o <output.mp3> [--program <number>] [--sample-rate <hz>] [--amplitude <0-1>] [--bit-rate <kbps>] [--omit-initial-rest]",
@@ -225,6 +235,16 @@ function readRenderOptions(flags: string[]): RenderOptions | null {
     console.error("error: --page-margin must be a non-negative number");
     return null;
   }
+  const color = readFlag(flags, "--color");
+  if (color !== undefined && !isSixDigitHexColor(color)) {
+    console.error("error: --color must be a six-digit hexadecimal color (#RRGGBB)");
+    return null;
+  }
+  const background = readFlag(flags, "--background");
+  if (background !== undefined && !isSixDigitHexColor(background)) {
+    console.error("error: --background must be a six-digit hexadecimal color (#RRGGBB)");
+    return null;
+  }
   const pageSize = resolvePageSize({
     paper: paperPreset,
     orientation: pageOrientation,
@@ -238,8 +258,8 @@ function readRenderOptions(flags: string[]): RenderOptions | null {
     pageMargin,
     pageFooter: readFlag(flags, "--page-footer"),
     pageNumbers: flags.includes("--page-numbers") ? true : undefined,
-    color: readFlag(flags, "--color"),
-    background: readFlag(flags, "--background"),
+    color,
+    background,
   };
 }
 
