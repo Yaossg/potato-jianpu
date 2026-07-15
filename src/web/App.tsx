@@ -14,7 +14,7 @@ import { DEFAULT_PAGE_SIZE, PAPER_PRESET_LIST, analyzeScoreOverwidth, inferConte
 import type { OverwideScoreLayoutWarning, PageOrientation, PaperPresetName } from "../renderer/index.js";
 import { PreviewAudioPlayer } from "./audio.js";
 import { waitForNextFrame } from "./browser-utils.js";
-import { downloadBlob, downloadBytes, svgToPngBlob } from "./downloads.js";
+import { DEFAULT_PNG_SCALE, downloadBlob, downloadBytes, pngPixelDimensions, svgToPngBlob } from "./downloads.js";
 import { ExamplesPanel } from "./ExamplesPanel.js";
 import { exportFilename, splitPageExportFilename } from "./export-filename.js";
 import { isLanguage, pageWidthModeLabels, translate } from "./i18n.js";
@@ -203,6 +203,7 @@ export function App() {
   const [program, setProgram] = useState(0);
   const [volume, setVolume] = useState(100);
   const [audioSampleRate, setAudioSampleRate] = useState(44100);
+  const [pngScale, setPngScale] = useState(DEFAULT_PNG_SCALE);
   const [splitPages, setSplitPages] = useState(false);
   const [omitInitialRests, setOmitInitialRests] = useState(true);
   const [exportingAudio, setExportingAudio] = useState<"wav" | "mp3" | null>(null);
@@ -318,6 +319,10 @@ export function App() {
     ],
   );
   const previewPageCount = useMemo(() => (svg ? Math.max(1, svg.match(/<g class="page" /g)?.length ?? 1) : 0), [svg]);
+  const pngDimensions = useMemo(() => {
+    const pngSvg = splitPages ? svgPages?.[0]?.svg : svg;
+    return pngSvg ? pngPixelDimensions(pngSvg, pngScale) : { width: 0, height: 0 };
+  }, [pngScale, splitPages, svg, svgPages]);
   const selectedPaperPreset = paperPreset === "custom" ? null : (PAPER_PRESET_LIST.find((preset) => preset.name === paperPreset) ?? null);
   const pageWidthModeLabel =
     selectedPaperPreset === null ? t(pageWidthModeLabels[pageWidthMode]) : `${selectedPaperPreset.label} ${t(pageOrientation)}`;
@@ -505,12 +510,12 @@ export function App() {
     try {
       if (splitPages && svgPages) {
         for (const [index, page] of svgPages.entries()) {
-          downloadBlob(await svgToPngBlob(page.svg), splitPageExportFilename(parsed.value.header.title, "png", index + 1, svgPages.length));
+          downloadBlob(await svgToPngBlob(page.svg, { scale: pngScale }), splitPageExportFilename(parsed.value.header.title, "png", index + 1, svgPages.length));
           await waitForNextFrame();
         }
         return;
       }
-      downloadBlob(await svgToPngBlob(svg), exportFilename(parsed.value.header.title, "png"));
+      downloadBlob(await svgToPngBlob(svg, { scale: pngScale }), exportFilename(parsed.value.header.title, "png"));
     } catch (error) {
       window.alert(error instanceof Error ? error.message : "Failed to export PNG.");
     }
@@ -793,6 +798,9 @@ export function App() {
           trackProgramOverrideCount={trackProgramOverrideCount}
           volume={volume}
           audioSampleRate={audioSampleRate}
+          pngScale={pngScale}
+          pngPixelWidth={pngDimensions.width}
+          pngPixelHeight={pngDimensions.height}
           splitPages={splitPages}
           omitInitialRests={omitInitialRests}
           sourceWrap={sourceWrap}
@@ -817,6 +825,7 @@ export function App() {
           onProgramChange={setProgram}
           onVolumeChange={setVolume}
           onAudioSampleRateChange={setAudioSampleRate}
+          onPngScaleChange={setPngScale}
           onSplitPagesChange={setSplitPages}
           onOmitInitialRestsChange={setOmitInitialRests}
           onSourceWrapChange={setSourceWrap}

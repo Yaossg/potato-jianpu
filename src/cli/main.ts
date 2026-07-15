@@ -40,7 +40,7 @@ function usage(): string {
     "  jianpu validate <file> [--json]",
     "  jianpu parse <file> [--json]",
     `  jianpu export-svg <file> -o <output.svg> [--paper <${PAPER_PRESET_USAGE}>] [--orientation <portrait|landscape>] [--page-width <px>] [--paginate] [--page-height <px>] [--page-margin <px>] [--page-footer <text>] [--page-numbers] [--color <css>] [--background <css>] [--split-pages]`,
-    `  jianpu export-png <file> -o <output.png> [--paper <${PAPER_PRESET_USAGE}>] [--orientation <portrait|landscape>] [--page-width <px>] [--paginate] [--page-height <px>] [--page-margin <px>] [--page-footer <text>] [--page-numbers] [--color <css>] [--background <css>] [--split-pages]`,
+    `  jianpu export-png <file> -o <output.png> [--paper <${PAPER_PRESET_USAGE}>] [--orientation <portrait|landscape>] [--page-width <px>] [--paginate] [--page-height <px>] [--page-margin <px>] [--page-footer <text>] [--page-numbers] [--color <css>] [--background <css>] [--png-scale <number>] [--split-pages]`,
     `  jianpu export-pdf <file> -o <output.pdf> [--paper <${PAPER_PRESET_USAGE}>] [--orientation <portrait|landscape>] [--page-width <px>] [--paginate] [--page-height <px>] [--page-margin <px>] [--page-footer <text>] [--page-numbers] [--color <css>] [--background <css>]`,
     "  jianpu export-midi <file> -o <output.mid> [--program <number>] [--omit-initial-rest]",
     "  jianpu export-wav <file> -o <output.wav> [--program <number>] [--sample-rate <hz>] [--amplitude <0-1>] [--omit-initial-rest]",
@@ -65,6 +65,7 @@ const VALUE_FLAGS = new Set([
   "--page-footer",
   "--color",
   "--background",
+  "--png-scale",
   "--program",
   "--sample-rate",
   "--amplitude",
@@ -97,6 +98,20 @@ function commandFlags(command: string): Set<string> {
     case "validate":
       return new Set(["--json"]);
     case "export-svg":
+      return new Set([
+        "-o",
+        "--paper",
+        "--orientation",
+        "--page-width",
+        "--paginate",
+        "--page-height",
+        "--page-margin",
+        "--page-footer",
+        "--page-numbers",
+        "--color",
+        "--background",
+        "--split-pages",
+      ]);
     case "export-png":
       return new Set([
         "-o",
@@ -110,6 +125,7 @@ function commandFlags(command: string): Set<string> {
         "--page-numbers",
         "--color",
         "--background",
+        "--png-scale",
         "--split-pages",
       ]);
     case "export-pdf":
@@ -301,6 +317,7 @@ async function main(argv: string[]): Promise<number> {
     "--page-footer",
     "--color",
     "--background",
+    "--png-scale",
     "--program",
     "--sample-rate",
     "--amplitude",
@@ -370,13 +387,17 @@ async function main(argv: string[]): Promise<number> {
     if (!renderOptions) {
       return 2;
     }
-    const background = readFlag(flags, "--background");
+    const scale = readPositiveNumberFlag(flags, "--png-scale");
+    if (Number.isNaN(scale)) {
+      console.error("error: --png-scale must be a positive number");
+      return 2;
+    }
     if (flags.includes("--split-pages")) {
       const pages = renderSvgPages(result.value, renderOptions);
-      return (await writeSplitPageOutputs(splitPngPageOutputs(pages, output, { background }))) ? 0 : 1;
+      return (await writeSplitPageOutputs(splitPngPageOutputs(pages, output, { scale }))) ? 0 : 1;
     }
     const svg = renderSvg(result.value, renderOptions);
-    await writeFile(output, renderPngBytes(svg, { background }));
+    await writeFile(output, renderPngBytes(svg, { scale }));
     console.log(output);
   }
 

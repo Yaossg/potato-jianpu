@@ -59,6 +59,8 @@ export type TranslationKey =
   | "drums"
   | "volume"
   | "audioSampleRate"
+  | "pngScale"
+  | "pngSize"
   | "splitPages"
   | "omitInitialRests"
   | "sourceWrap"
@@ -141,6 +143,8 @@ const translations: { en: Record<TranslationKey, string>; zh: Record<Translation
     drums: "Drums",
     volume: "Volume",
     audioSampleRate: "Audio sample rate (WAV/MP3)",
+    pngScale: "PNG scale",
+    pngSize: "PNG size: {width} × {height} px",
     splitPages: "Split pages (SVG/PNG)",
     omitInitialRests: "Omit initial rests",
     sourceWrap: "Wrap source lines",
@@ -222,6 +226,8 @@ const translations: { en: Record<TranslationKey, string>; zh: Record<Translation
     drums: "鼓组",
     volume: "音量",
     audioSampleRate: "音频采样率（WAV/MP3）",
+    pngScale: "PNG 倍率",
+    pngSize: "PNG 尺寸：{width} × {height} px",
     splitPages: "拆分页（SVG/PNG）",
     omitInitialRests: "忽略开头休止符",
     sourceWrap: "源码自动换行",
@@ -260,4 +266,3 @@ export const pageWidthModeLabels: Record<PageWidthMode, TranslationKey> = {
 export function translate(language: Language, key: TranslationKey, values: Record<string, string | number> = {}): string {
   return Object.entries(values).reduce((text, [name, value]) => text.replace(`{${name}}`, String(value)), translations[language][key] ?? translations.en[key]);
 }
-

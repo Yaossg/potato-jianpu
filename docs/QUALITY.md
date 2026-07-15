@@ -57,7 +57,7 @@ coverage output is local-only and ignored by Git.
 
 - No automated real-browser UI tests.
 - No automated audio perceptual comparison.
-- No PNG golden image comparison.
+- No automated browser PNG pixel comparison with the backend PNG golden.
 - No real-browser assertion that WAV/MP3 downloads complete successfully.
 
 Real-browser checks remain manual in the current phase.

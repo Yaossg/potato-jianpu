@@ -53,7 +53,7 @@ pnpm run cli -- export-pdf examples/twinkle.jpu -o twinkle.pdf
 
 SVG、PNG 和 PDF 导出支持 `--paper <a4|b5|letter>`、`--orientation <portrait|landscape>`、`--page-width <px>`、`--page-height <px>`、`--page-margin <px>`、`--page-footer <text>`、`--page-numbers`、`--paginate`、`--color <css>` 和 `--background <css>`。显式页面宽度和页面高度会覆盖纸张预设尺寸。
 
-SVG 和 PNG 导出还支持 `--split-pages`。使用 `-o score.svg` 时，拆页输出会写出 `score-01.svg`、`score-02.svg` 等文件，并且不会覆盖已有分页文件。
+PNG 另外支持 `--png-scale <number>`，默认值为 `2`；它只改变输出像素密度，不改变页面布局。PNG 输出始终不透明。SVG 和 PNG 还支持 `--split-pages`。使用 `-o score.svg` 时，拆页输出会写出 `score-01.svg`、`score-02.svg` 等文件，并且不会覆盖已有分页文件。
 
 ## MIDI 与音频导出命令
 

@@ -44,11 +44,11 @@ Use the browser app for interactive downloads from the current preview. Use the 
 
 ## Visual Exports
 
-SVG is deterministic text output from the renderer. PNG rasterizes the same rendered SVG. PDF converts rendered SVG pages to vector PDF pages and embeds Noto Sans SC so Unicode text such as Chinese titles and lyrics renders correctly.
+SVG is deterministic text output from the renderer. PNG rasterizes the same rendered SVG with bundled Noto Sans SC and Bravura fonts, then composites it over an opaque white base. PDF converts rendered SVG pages to vector PDF pages and embeds Noto Sans SC so Unicode text such as Chinese titles and lyrics renders correctly.
 
 ```sh
 pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --paper a4 --orientation portrait --paginate --color "#111827" --background "#ffffff"
-pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --paper a4 --orientation portrait --paginate --color "#111827" --background "#ffffff"
+pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --paper a4 --orientation portrait --paginate --color "#111827" --background "#ffffff" --png-scale 2
 pnpm run cli -- export-pdf examples/twinkle.jpu -o twinkle.pdf --paper a4 --orientation portrait --paginate --color "#111827" --background "#ffffff"
 pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --paper a4 --paginate --split-pages
 ```
@@ -56,6 +56,8 @@ pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --paper a4 --pagi
 All visual exports support paper presets, orientation, page width, page height, color, and background options. The `--paper` presets are `a4`, `b5`, and `letter`; `--orientation` can be `portrait` or `landscape`. Explicit `--page-width` and `--page-height` values override the preset dimensions after orientation is applied.
 
 SVG and PNG export also accept `--split-pages`, which interprets `-o score.svg` or `-o score.png` as a stem and writes files such as `score-01.svg` or `score-01.png` without overwriting existing page files.
+
+PNG export defaults to `2x` raster scale. Use CLI `--png-scale <number>` or the browser PNG scale control to change pixel density without changing layout. A preset A4 page is `2380 × 3368` pixels at the default scale. Browser Export Settings offers `1x`, `2x`, and `3x` and shows the resulting pixel dimensions. PNG output never has a transparent background; transparent or partially transparent page colors are composited over white. For print and resolution-independent output, prefer PDF or SVG.
 
 ## Pagination
 

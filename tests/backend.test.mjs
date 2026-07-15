@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { inflateSync } from "node:zlib";
 import { parse } from "../dist/parser/index.js";
 import { PAGE_ORIENTATIONS, PAPER_PRESET_LIST, renderSvg, renderSvgPages, resolvePageSize } from "../dist/renderer/index.js";
@@ -35,6 +36,61 @@ function pngDimensions(png) {
   };
 }
 
+function paethPredictor(left, up, upperLeft) {
+  const estimate = left + up - upperLeft;
+  const leftDistance = Math.abs(estimate - left);
+  const upDistance = Math.abs(estimate - up);
+  const upperLeftDistance = Math.abs(estimate - upperLeft);
+  return leftDistance <= upDistance && leftDistance <= upperLeftDistance ? left : upDistance <= upperLeftDistance ? up : upperLeft;
+}
+
+function pngHasOnlyOpaquePixels(png) {
+  const buffer = Buffer.from(png);
+  const width = buffer.readUInt32BE(16);
+  const height = buffer.readUInt32BE(20);
+  assert.equal(buffer[24], 8, "PNG opacity test expects 8-bit channels");
+  const colorType = buffer[25];
+  if (colorType === 2) {
+    return true;
+  }
+  assert.equal(colorType, 6, "PNG opacity test expects RGB or RGBA output");
+
+  const idatChunks = [];
+  for (let offset = 8; offset < buffer.length; ) {
+    const length = buffer.readUInt32BE(offset);
+    const type = buffer.toString("ascii", offset + 4, offset + 8);
+    if (type === "IDAT") {
+      idatChunks.push(buffer.subarray(offset + 8, offset + 8 + length));
+    }
+    offset += length + 12;
+  }
+  const raw = inflateSync(Buffer.concat(idatChunks));
+  const bytesPerPixel = 4;
+  const stride = width * bytesPerPixel;
+  let rawOffset = 0;
+  let previous = new Uint8Array(stride);
+  for (let y = 0; y < height; y += 1) {
+    const filter = raw[rawOffset++];
+    const row = new Uint8Array(stride);
+    for (let x = 0; x < stride; x += 1) {
+      const encoded = raw[rawOffset++];
+      const left = x >= bytesPerPixel ? row[x - bytesPerPixel] : 0;
+      const up = previous[x];
+      const upperLeft = x >= bytesPerPixel ? previous[x - bytesPerPixel] : 0;
+      const prediction =
+        filter === 0 ? 0 : filter === 1 ? left : filter === 2 ? up : filter === 3 ? Math.floor((left + up) / 2) : paethPredictor(left, up, upperLeft);
+      row[x] = (encoded + prediction) & 0xff;
+    }
+    for (let x = 3; x < stride; x += bytesPerPixel) {
+      if (row[x] !== 0xff) {
+        return false;
+      }
+    }
+    previous = row;
+  }
+  return true;
+}
+
 function pdfMediaBoxes(pdf) {
   const text = Buffer.from(pdf).toString("latin1");
   return [...text.matchAll(/\/MediaBox\s*\[\s*0\s+0\s+([0-9.]+)\s+([0-9.]+)\s*\]/g)].map((match) => ({
@@ -48,7 +104,28 @@ test("renders SVG output to PNG bytes", () => {
   assert.equal(result.ok, true);
   const png = renderPngBytes(renderSvg(result.value));
   assert.deepEqual([...png.slice(0, 8)], [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  assert.equal(pngDimensions(png).width, 2000);
   assert.ok(png.length > 100);
+});
+
+test("renders deterministic opaque PNG output with bundled fonts", () => {
+  const result = parse(`title: "茉莉花"\ncomposer: "中国民歌"\n===\n1(^) 2(v) 3(tr) 4 |`);
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 320, background: "rgba(255, 0, 0, 0.5)" });
+  const png = renderPngBytes(svg);
+  assert.deepEqual(pngDimensions(png), { width: 640, height: 340 });
+  assert.equal(pngHasOnlyOpaquePixels(png), true);
+  assert.equal(createHash("sha256").update(png).digest("hex"), "c461091d1a610a64726df7c3ecff744803863742c403bbf3eadeafa2fcbbcb66");
+  assert.equal(pngHasOnlyOpaquePixels(renderPngBytes(renderSvg(result.value, { pageWidth: 320 }), { background: "rgba(255, 0, 0, 0.5)", scale: 1 })), true);
+});
+
+test("renders PNG output at an explicit scale", () => {
+  const result = parse("1 2 3 4");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 240 });
+  assert.deepEqual(pngDimensions(renderPngBytes(svg, { scale: 1 })), { width: 240, height: 124 });
+  assert.deepEqual(pngDimensions(renderPngBytes(svg, { scale: 3 })), { width: 720, height: 372 });
+  assert.throws(() => renderPngBytes(svg, { scale: 0 }), /PNG scale must be a positive number/);
 });
 
 test("renders SVG pages to PDF bytes", async () => {
@@ -115,7 +192,7 @@ test("renders paper preset dimensions consistently for SVG, PNG, and PDF", async
         new RegExp(`<svg[^>]+width="${pageSize.pageWidth}" height="${pageSize.pageHeight}" viewBox="0 0 ${pageSize.pageWidth} ${pageSize.pageHeight}"`),
       );
 
-      assert.deepEqual(pngDimensions(renderPngBytes(pages[0].svg, { background: "#ffffff" })), {
+      assert.deepEqual(pngDimensions(renderPngBytes(pages[0].svg, { scale: 1 })), {
         width: pageSize.pageWidth,
         height: pageSize.pageHeight,
       });

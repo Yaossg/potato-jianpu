@@ -44,11 +44,11 @@ Modern Jianpu Markup 可以从浏览器 App 和 CLI 把同一份解析后的乐�
 
 ## 视觉导出
 
-SVG 是渲染器输出的确定性文本。PNG 会栅格化同一份渲染后的 SVG。PDF 会把渲染后的 SVG 页面转换为矢量 PDF 页面，并嵌入 Noto Sans SC，让中文标题和歌词等 Unicode 文本正确显示。
+SVG 是渲染器输出的确定性文本。PNG 会用内置 Noto Sans SC 和 Bravura 字体栅格化同一份渲染后的 SVG，再把结果合成到不透明白底上。PDF 会把渲染后的 SVG 页面转换为矢量 PDF 页面，并嵌入 Noto Sans SC，让中文标题和歌词等 Unicode 文本正确显示。
 
 ```sh
 pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --paper a4 --orientation portrait --paginate --color "#111827" --background "#ffffff"
-pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --paper a4 --orientation portrait --paginate --color "#111827" --background "#ffffff"
+pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --paper a4 --orientation portrait --paginate --color "#111827" --background "#ffffff" --png-scale 2
 pnpm run cli -- export-pdf examples/twinkle.jpu -o twinkle.pdf --paper a4 --orientation portrait --paginate --color "#111827" --background "#ffffff"
 pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --paper a4 --paginate --split-pages
 ```
@@ -56,6 +56,8 @@ pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --paper a4 --pagi
 所有视觉导出都支持纸张预设、方向、页面宽度、页面高度、颜色和背景选项。`--paper` 预设包括 `a4`、`b5` 和 `letter`；`--orientation` 可以是 `portrait` 或 `landscape`。显式 `--page-width` 和 `--page-height` 会在套用方向后覆盖预设尺寸。
 
 SVG 和 PNG 导出也支持 `--split-pages`，此时 `-o score.svg` 或 `-o score.png` 会被当作输出文件名前缀，写出 `score-01.svg` 或 `score-01.png` 这样的文件，并且不会覆盖已有分页文件。
+
+PNG 导出默认使用 `2x` 栅格倍率。可以用 CLI 的 `--png-scale <number>` 或浏览器里的 PNG 倍率控件改变像素密度，而不改变布局。A4 预设页面在默认倍率下为 `2380 × 3368` 像素。浏览器“导出设置”提供 `1x`、`2x`、`3x`，并显示生成的像素尺寸。PNG 输出不会带透明背景；透明或半透明页面颜色会合成到白底上。需要打印或与分辨率无关的输出时，优先使用 PDF 或 SVG。
 
 ## 分页
 

@@ -33,6 +33,7 @@ const commands = {
     "--page-numbers",
     "--color",
     "--background",
+    "--png-scale",
     "--split-pages",
   ]),
   "export-pdf": new Set([
@@ -62,6 +63,7 @@ const valueFlags = new Set([
   "--page-footer",
   "--color",
   "--background",
+  "--png-scale",
   "--program",
   "--sample-rate",
   "--amplitude",

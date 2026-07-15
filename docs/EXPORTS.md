@@ -29,7 +29,7 @@ pnpm run cli -- validate examples/twinkle.jpu --json
 pnpm run cli -- parse examples/twinkle.jpu --json
 pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --paper a4 --orientation portrait --paginate --page-margin 40 --page-footer "modern-jianpu" --page-numbers --color "#111827" --background "#ffffff"
 pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --paper a4 --paginate --split-pages
-pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --paper a4 --orientation portrait --paginate --page-margin 40 --page-footer "modern-jianpu" --page-numbers --color "#111827" --background "#ffffff"
+pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --paper a4 --orientation portrait --paginate --page-margin 40 --page-footer "modern-jianpu" --page-numbers --color "#111827" --background "#ffffff" --png-scale 2
 pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --paper a4 --paginate --split-pages
 pnpm run cli -- export-pdf examples/twinkle.jpu -o twinkle.pdf --paper a4 --orientation portrait --paginate --page-margin 40 --page-footer "modern-jianpu" --page-numbers --color "#111827" --background "#ffffff"
 pnpm run cli -- export-midi examples/twinkle.jpu -o twinkle.mid --program 0 --omit-initial-rest
@@ -100,7 +100,8 @@ Validate result shape:
 Fatal parse, validation, or export errors return exit code `1`. Usage errors,
 such as a missing `-o`, invalid `--paper`, invalid `--orientation`, invalid
 `--page-width`, invalid `--page-height`, invalid `--page-margin`, invalid
-`--sample-rate`, or invalid `--program`, return exit code `2`.
+`--png-scale`, invalid `--sample-rate`, or invalid `--program`, return exit
+code `2`.
 
 Unknown options and options missing their required value are rejected with exit
 code `2`.
@@ -174,7 +175,7 @@ page file.
 The backend CLI renders the same SVG output through the backend PNG adapter:
 
 ```sh
-pnpm run cli -- export-png input.jpu -o output.png --paper a4 --orientation portrait --paginate --page-margin 40
+pnpm run cli -- export-png input.jpu -o output.png --paper a4 --orientation portrait --paginate --page-margin 40 --png-scale 2
 pnpm run cli -- export-png input.jpu -o output.png --paper a4 --paginate --split-pages
 ```
 
@@ -189,18 +190,28 @@ Options:
 - `--page-footer <text>`: same behavior as SVG export.
 - `--page-numbers`: same behavior as SVG export.
 - `--color <css>`: same behavior as SVG export.
-- `--background <css>`: sets both the SVG background rectangle and the PNG
-  renderer background.
+- `--background <css>`: draws the same page background as SVG export. PNG
+  always composites the rendered SVG over an opaque white base, so transparent
+  or partially transparent SVG backgrounds cannot produce transparent pixels.
+- `--png-scale <number>`: positive raster scale. Defaults to `2`; for example,
+  an A4 page becomes `2380 x 3368` pixels. Scale changes pixel density without
+  changing layout or page wrapping.
 - `--split-pages`: write one PNG file per rendered page. `-o` uses the same
   stem, zero-padding, and no-overwrite behavior as split SVG export.
 
-PNG export uses the backend dependency `@resvg/resvg-js`. Font behavior is
-intended to match the SVG preview by using the same SVG text and style output.
+PNG export uses the backend dependency `@resvg/resvg-js`. It loads bundled Noto
+Sans SC Regular/Bold and Bravura fonts with system-font loading disabled, then
+applies an export-only font override. This keeps CLI PNG text and SMuFL ornament
+glyphs independent of fonts installed on the host.
 
 The frontend also exposes PNG download. Browser PNG export uses a different
 adapter: it turns the current SVG string into an SVG `Blob`, loads it into an
 `Image`, draws that image to a canvas, and downloads the canvas result as
-`jianpu-score.png`. It uses the same preview/export color, background, page
+`jianpu-score.png`. Before rasterization it embeds the same Noto Sans SC and
+Bravura fonts used by the backend PNG adapter. The canvas is filled white before
+the SVG is drawn, so browser PNG output is also always opaque. Export Settings
+offers `1x`, `2x`, and `3x` PNG scales, defaults to `2x`, and displays the final
+pixel dimensions. It uses the same preview/export color, background, page
 width, paper preset, orientation, pagination, page height, and page margin
 settings as SVG download. When Split pages is enabled in Export Settings, SVG
 and PNG downloads use the same per-page naming pattern as CLI split output and

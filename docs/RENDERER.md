@@ -559,8 +559,10 @@ dots, underlines, and dashes.
 
 ## Styling
 
-The SVG includes inline CSS. The renderer intentionally keeps the output
-self-contained so SVG export and PNG export see the same style rules.
+The SVG includes inline CSS. SVG and PNG export begin with the same renderer
+style rules. PNG adapters add an export-only font override so browser and CLI
+raster output use bundled Noto Sans SC and Bravura fonts instead of platform
+font fallback.
 
 Most elements use `currentColor`, allowing the embedding page or PNG renderer to
 control color at the SVG root level.

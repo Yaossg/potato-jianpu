@@ -4,6 +4,7 @@ import { DRUM_PROGRAMS, GM_PROGRAMS } from "../index.js";
 import { PAGE_ORIENTATIONS, PAPER_PRESET_LIST, isPageOrientation, isPaperPresetName, resolvePageSize } from "../renderer/index.js";
 import type { PageOrientation, PaperPresetName } from "../renderer/index.js";
 import type { JustifyMode, PageWidthMode, TranslationKey } from "./i18n.js";
+import { PNG_SCALE_OPTIONS } from "./downloads.js";
 
 type PaperSelection = PaperPresetName | "custom";
 
@@ -33,6 +34,9 @@ interface SettingsPanelProps {
   trackProgramOverrideCount: number;
   volume: number;
   audioSampleRate: number;
+  pngScale: number;
+  pngPixelWidth: number;
+  pngPixelHeight: number;
   splitPages: boolean;
   omitInitialRests: boolean;
   sourceWrap: boolean;
@@ -57,6 +61,7 @@ interface SettingsPanelProps {
   onProgramChange: (program: number) => void;
   onVolumeChange: (volume: number) => void;
   onAudioSampleRateChange: (sampleRate: number) => void;
+  onPngScaleChange: (scale: number) => void;
   onSplitPagesChange: (split: boolean) => void;
   onOmitInitialRestsChange: (omit: boolean) => void;
   onSourceWrapChange: (wrap: boolean) => void;
@@ -151,6 +156,9 @@ export function SettingsPanel({
   trackProgramOverrideCount,
   volume,
   audioSampleRate,
+  pngScale,
+  pngPixelWidth,
+  pngPixelHeight,
   splitPages,
   omitInitialRests,
   sourceWrap,
@@ -175,6 +183,7 @@ export function SettingsPanel({
   onProgramChange,
   onVolumeChange,
   onAudioSampleRateChange,
+  onPngScaleChange,
   onSplitPagesChange,
   onOmitInitialRestsChange,
   onSourceWrapChange,
@@ -406,6 +415,17 @@ export function SettingsPanel({
         <section className="settings-section">
           <h3>{t("exportSettings")}</h3>
           <div className="settings-grid page-settings-grid">
+            <label className="select-control">
+              {t("pngScale")}
+              <select value={pngScale} onChange={(event) => onPngScaleChange(Number(event.target.value))}>
+                {PNG_SCALE_OPTIONS.map((scale) => (
+                  <option key={scale} value={scale}>
+                    {scale}×
+                  </option>
+                ))}
+              </select>
+            </label>
+            <p className="settings-note">{t("pngSize", { width: pngPixelWidth, height: pngPixelHeight })}</p>
             <label className="checkbox-control">
               <input type="checkbox" checked={splitPages} onChange={(event) => onSplitPagesChange(event.target.checked)} />
               {t("splitPages")}

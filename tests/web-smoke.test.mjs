@@ -10,7 +10,12 @@ const repoDir = fileURLToPath(new URL("../", import.meta.url));
 
 async function runPnpmScript(script) {
   if (process.env.npm_execpath) {
-    await execFileAsync(process.execPath, [process.env.npm_execpath, "run", script], { cwd: repoDir });
+    const npmExecPath = process.env.npm_execpath;
+    if (/\.(?:c?js|mjs)$/i.test(npmExecPath)) {
+      await execFileAsync(process.execPath, [npmExecPath, "run", script], { cwd: repoDir });
+    } else {
+      await execFileAsync(npmExecPath, ["run", script], { cwd: repoDir });
+    }
     return;
   }
   if (process.platform === "win32") {
@@ -86,6 +91,10 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(script, /ResizeObserver/);
   assert.match(script, /Sound Settings/);
   assert.match(script, /Export Settings/);
+  assert.match(script, /PNG scale/);
+  assert.match(script, /PNG size:/);
+  assert.match(script, /fillRect/);
+  assert.match(script, /Noto Sans SC/);
   assert.match(script, /Split pages \(SVG\/PNG\)/);
   assert.match(script, /modern-jianpu-markup-theme/);
   assert.match(script, /modern-jianpu-markup-source/);

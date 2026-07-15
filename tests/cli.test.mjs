@@ -161,18 +161,21 @@ test("CLI export-svg accepts paper presets and orientation", async () => {
   assert.match(overriddenSvg, /<svg[^>]+width="700" height="900" viewBox="0 0 700 900"/);
 });
 
-test("CLI export-png accepts pagination options", async () => {
+test("CLI export-png accepts pagination and scale options", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
   const input = join(dir, "score.jpu");
   const output = join(dir, "score.png");
   await writeFile(input, "1 2 | 3 4 | 5 6 | 7 1' |\n1 2 | 3 4 | 5 6 | 7 1' |", "utf8");
 
-  await execFileAsync(process.execPath, ["dist/cli/main.js", "export-png", input, "-o", output, "--page-width", "120", "--paginate", "--page-height", "160"], {
-    cwd: repoDir,
-  });
+  await execFileAsync(
+    process.execPath,
+    ["dist/cli/main.js", "export-png", input, "-o", output, "--page-width", "120", "--paginate", "--page-height", "160", "--png-scale", "3"],
+    { cwd: repoDir },
+  );
 
   const png = await readFile(output);
   assert.equal(String.fromCharCode(...png.slice(1, 4)), "PNG");
+  assert.deepEqual(pngDimensions(png), { width: 360, height: 1920 });
 });
 
 test("CLI export-svg can split rendered pages", async () => {
@@ -216,8 +219,8 @@ test("CLI export-png can split rendered pages", async () => {
 
   const paths = stdout.trim().split(/\r?\n/);
   assert.deepEqual(paths, [join(dir, "score-01.png"), join(dir, "score-02.png")]);
-  assert.deepEqual(pngDimensions(await readFile(paths[0])), { width: 1584, height: 1224 });
-  assert.deepEqual(pngDimensions(await readFile(paths[1])), { width: 1584, height: 1224 });
+  assert.deepEqual(pngDimensions(await readFile(paths[0])), { width: 3168, height: 2448 });
+  assert.deepEqual(pngDimensions(await readFile(paths[1])), { width: 3168, height: 2448 });
 });
 
 test("CLI export-pdf accepts pagination options", async () => {
@@ -459,6 +462,22 @@ test("CLI rejects invalid and missing page height", async () => {
       assert.match(String(error.stderr), /--page-height requires a value/);
       return true;
     },
+  );
+});
+
+test("CLI rejects invalid and missing PNG scale", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
+  const input = join(dir, "score.jpu");
+  const output = join(dir, "score.png");
+  await writeFile(input, "1 2 3 4", "utf8");
+
+  await assert.rejects(
+    execFileAsync(process.execPath, ["dist/cli/main.js", "export-png", input, "-o", output, "--png-scale", "0"], { cwd: repoDir }),
+    /--png-scale must be a positive number/,
+  );
+  await assert.rejects(
+    execFileAsync(process.execPath, ["dist/cli/main.js", "export-png", input, "-o", output, "--png-scale"], { cwd: repoDir }),
+    /--png-scale requires a value/,
   );
 });
 
