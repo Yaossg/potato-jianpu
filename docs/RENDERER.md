@@ -491,6 +491,8 @@ complete hairpin on each visual line.
 ### Ornaments
 
 Mordent, turn, and trill ornaments render with SMuFL Private Use Area glyphs.
+Upper mordents use the plain mordent glyph, while lower mordents use the glyph
+with a vertical stroke.
 When the anchor is a chord, the glyph is centered above the whole chord.
 A `(tr~)` long trill keeps the trill glyph and, when the note has at least
 one duration dash, adds a wavy SVG path from 9px right of the note center to
