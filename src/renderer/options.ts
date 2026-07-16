@@ -42,5 +42,5 @@ export const DEFAULT_OPTIONS: Required<RenderOptions> = {
   activeNoteIndex: -1,
   activeNoteIndices: [],
   color: "currentColor",
-  background: "",
+  background: "#ffffff",
 };

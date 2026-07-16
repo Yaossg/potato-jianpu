@@ -45,7 +45,7 @@ Page footer text is drawn at the bottom-left of every page. Page numbers are cen
 
 | Format | Result | Pagination and splitting |
 | --- | --- | --- |
-| SVG | Deterministic vector score output. Downloaded SVG embeds needed ornament glyphs. | A paginated export is one combined SVG by default. Browser or CLI Split pages produces one SVG per page. CLI split output uses the `-o` value as a stem and refuses to overwrite a target. |
+| SVG | Deterministic vector score output with an opaque page background, white by default. Downloaded SVG embeds needed ornament glyphs. | A paginated export is one combined SVG by default. Browser or CLI Split pages produces one SVG per page. CLI split output uses the `-o` value as a stem and refuses to overwrite a target. |
 | PNG | Opaque raster image of the same SVG layout, using bundled export fonts and a configurable pixel scale. | Browser and CLI support one PNG per page when Split pages is enabled. |
 | PDF | Vector PDF pages with Unicode text and ornament fonts embedded. | Each rendered page becomes one PDF page. PDF is not split into separate downloads. |
 

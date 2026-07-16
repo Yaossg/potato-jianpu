@@ -1320,6 +1320,16 @@ test("renders explicit export color and background", () => {
   assert.match(svg, /<rect class="page-background"[^>]+fill="#f8fafc"/);
 });
 
+test("renders an opaque white page background by default", () => {
+  const result = parse("1 2 3 4");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  assert.match(svg, /<rect class="page-background"[^>]+fill="#ffffff"/);
+  const pages = renderSvgPages(result.value, { paginate: true, pageHeight: 180 });
+  assert.ok(pages.length > 0);
+  assert.ok(pages.every((page) => /<rect class="page-background"[^>]+fill="#ffffff"/.test(page.svg)));
+});
+
 test("rejects explicit colors outside six-digit hexadecimal syntax", () => {
   const result = parse("1 2 3 4");
   assert.equal(result.ok, true);

@@ -73,7 +73,7 @@ interface RenderOptions {
 - `background` draws page background rectangles when non-empty. An explicit
   value must use six-digit hexadecimal syntax (`#RRGGBB`). In unpaginated output
   there is one adaptive-height rectangle; in paginated output there is one
-  fixed-height rectangle per page. Default: no SVG background rectangle.
+  fixed-height rectangle per page. Default: `#ffffff`.
 
 `renderSvg()` returns a complete SVG string with XML declaration, `<svg>`,
 inline `<style>`, header graphics, and score graphics. `renderSvgPages()`

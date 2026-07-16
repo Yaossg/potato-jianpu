@@ -144,7 +144,7 @@ Options:
 - `--color <#RRGGBB>`: six-digit hexadecimal color used for `currentColor` SVG
   notation elements.
 - `--background <#RRGGBB>`: six-digit hexadecimal color used for SVG page
-  background rectangles.
+  background rectangles. Defaults to `#ffffff` when omitted.
 - `--split-pages`: write one SVG file per rendered page instead of one combined
   SVG file.
 
@@ -193,8 +193,8 @@ Options:
 - `--page-numbers`: same behavior as SVG export.
 - `--color <#RRGGBB>`: same behavior as SVG export.
 - `--background <#RRGGBB>`: draws the same page background as SVG export. PNG
-  always composites the rendered SVG over an opaque white base, so uncovered
-  areas cannot produce transparent pixels.
+  always composites the rendered SVG over an opaque white base as an additional
+  safeguard, so output pixels cannot be transparent.
 - `--png-scale <number>`: positive raster scale. Defaults to `2`; for example,
   an A4 page becomes `2380 x 3368` pixels. Scale changes pixel density without
   changing layout or page wrapping.
