@@ -27,7 +27,7 @@ export function ToolbarIcon({ name }: { name: ToolbarIconName }) {
     ) : name === "open" ? (
       <>
         <path d="M4 7.5A1.5 1.5 0 0 1 5.5 6H10l2 2h6.5A1.5 1.5 0 0 1 20 9.5V11h-2V10h-6.8l-2-2H6v10h6v2H5.5A1.5 1.5 0 0 1 4 18.5v-11Z" />
-        <path d="M16 12v5.2l2.2-2.2 1.4 1.4-4.6 4.6-4.6-4.6 1.4-1.4 2.2 2.2V12h2Z" />
+        <path d="M15 12h2v3h3v2h-3v3h-2v-3h-3v-2h3v-3Z" />
       </>
     ) : name === "save" ? (
       <>
