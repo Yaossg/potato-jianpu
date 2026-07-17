@@ -25,7 +25,7 @@ const PDFDocument = require("pdfkit") as PdfDocumentConstructor;
 const SVGtoPDF = require("svg-to-pdfkit") as SvgToPdf;
 const PDF_FONT_FAMILY = "NotoSansSC";
 const PDF_SMUFL_FONT_FAMILY = "Bravura";
-const PDF_TIME_SIGNATURE_LINE_Y_OFFSET = -6.84;
+const PDF_DEFAULT_COLOR = "#000000";
 const regularFontPath = require.resolve("@expo-google-fonts/noto-sans-sc/400Regular/NotoSansSC_400Regular.ttf");
 const boldFontPath = require.resolve("@expo-google-fonts/noto-sans-sc/700Bold/NotoSansSC_700Bold.ttf");
 const bravuraFontPath = require.resolve("@vexflow-fonts/bravura/bravura.otf");
@@ -44,17 +44,7 @@ function pdfFontName(family: string, bold: boolean): string {
 }
 
 function svgForPdf(svg: string): string {
-  return svg.replace(/<g class="time-signature">[\s\S]*?<\/g>/g, (group) => normalizeTimeSignatureForPdf(group));
-}
-
-function formatPdfNumber(value: number): string {
-  return Number.isInteger(value) ? String(value) : value.toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
-}
-
-function normalizeTimeSignatureForPdf(group: string): string {
-  return group.replace(/\b(y[12])="([^"]+)"/g, (_match, attribute: string, value: string) => {
-    return `${attribute}="${formatPdfNumber(Number(value) + PDF_TIME_SIGNATURE_LINE_Y_OFFSET)}"`;
-  });
+  return svg.replace(/(<svg\b[^>]*\bstyle="[^"]*\bcolor:\s*)currentColor\b/i, `$1${PDF_DEFAULT_COLOR}`);
 }
 
 export async function renderPdfBytes(pages: RenderedSvgPage[], options: PdfExportOptions = {}): Promise<Uint8Array> {

@@ -6,7 +6,7 @@ export const SVG_STYLE = `.title { fill: currentColor; font-family: Arial, Helve
 .key-signature .note { font-size: 20px; font-weight: 700; }
 .key-signature .metadata { font-size: 20px; font-weight: 400; }
 .time-signature { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 18px; font-weight: 700; }
-.time-signature line { stroke: currentColor; stroke-width: 1.5; stroke-linecap: butt; }
+.time-signature-line { stroke: currentColor; stroke-width: 1.5; stroke-linecap: butt; }
 .line-label { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: 700; }
 .lyric-line { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 17px; font-weight: 400; }
 .lyric-syllable { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 17px; font-weight: 400; }

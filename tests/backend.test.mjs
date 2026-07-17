@@ -158,11 +158,15 @@ test("embeds Bravura for SMuFL ornament glyphs in PDF", async () => {
   assert.match(text, /Bravura/);
 });
 
-test("raises the PDF time signature fraction line", async () => {
-  const result = parse(`time: 6/8\n===\n1 2 3`);
+test("preserves renderer line widths and time signature position in PDF", async () => {
+  const result = parse(`time: 6/8\n===\n1/ 2/ | 3 - ||`);
   assert.equal(result.ok, true);
   const pdf = await renderPdfBytes(renderSvgPages(result.value), { title: result.value.header.title });
-  assert.match(pdfContentStreams(pdf), /\b86 33\.16 m\s+102 33\.16 l\b/);
+  const content = pdfContentStreams(pdf);
+  assert.match(content, /\b1\.5 w\b/);
+  assert.match(content, /\b2\.5 w\b/);
+  assert.match(content, /\b5 w\b/);
+  assert.match(content, /\b86 40 m\s+102 40 l\b/);
 });
 
 test("renders paginated SVG pages to a multi-page PDF", async () => {

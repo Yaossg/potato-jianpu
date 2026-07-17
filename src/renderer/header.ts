@@ -85,7 +85,7 @@ function renderTimeSignature(beatsPerMeasure: number, beatsPerWholeNote: number,
   return [
     `<g class="time-signature">`,
     `<text x="${x}" y="${centerY - TIME_SIGNATURE_DIGIT_Y_OFFSET}" text-anchor="middle" dominant-baseline="central">${beatsPerMeasure}</text>`,
-    `<line x1="${x - 8}" y1="${centerY}" x2="${x + 8}" y2="${centerY}"/>`,
+    `<line class="time-signature-line" x1="${x - 8}" y1="${centerY}" x2="${x + 8}" y2="${centerY}"/>`,
     `<text x="${x}" y="${centerY + TIME_SIGNATURE_DIGIT_Y_OFFSET}" text-anchor="middle" dominant-baseline="central">${beatsPerWholeNote}</text>`,
     `</g>`,
   ].join("\n");

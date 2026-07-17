@@ -246,6 +246,9 @@ with the configured width and height. Without pagination, the adaptive-height
 SVG render becomes one PDF page.
 
 The backend CLI converts rendered SVG pages through PDFKit and SVG-to-PDFKit.
+Before conversion, the backend resolves the renderer's default `currentColor`
+to opaque black so SVG-to-PDFKit preserves the renderer's vector stroke widths.
+It keeps time-signature fraction lines at their native SVG coordinates.
 The frontend exposes PDF download through jsPDF and svg2pdf.js, using the same
 preview/export color, background, page width, pagination, page height, page
 margin, paper preset, orientation, and justification settings as SVG and PNG

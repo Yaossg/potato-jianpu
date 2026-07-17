@@ -165,7 +165,7 @@ test("renders time signatures as stacked digits", () => {
   const svg = renderSvg(result.value, { pageWidth: 360, color: "#111827", background: "#ffffff" });
   assert.match(svg, /<g class="time-signature">/);
   assert.match(svg, /<text x="\d+" y="30" text-anchor="middle" dominant-baseline="central">4<\/text>/);
-  assert.match(svg, /<line x1="\d+" y1="40" x2="\d+" y2="40"\/>/);
+  assert.match(svg, /<line class="time-signature-line" x1="\d+" y1="40" x2="\d+" y2="40"\/>/);
   assert.match(svg, /<text x="\d+" y="50" text-anchor="middle" dominant-baseline="central">4<\/text>/);
   assert.match(svg, /<text class="tempo-mark" x="\d+" y="40" dominant-baseline="central">/);
   assert.doesNotMatch(svg, />4\/4<\/text>/);
