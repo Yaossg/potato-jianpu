@@ -197,6 +197,9 @@ such as `T1.name: "Melody"`, `T1: "Melody"`, `L1.name: "Verse"`, or
 `L1: "Verse"`. A group uses the widest visible label in that group, so short
 labels do not consume the same left margin as long labels.
 
+Multi-voice groups render hexagonal side brackets with 3-unit vertical stems
+and slightly finer 2-unit beveled ends.
+
 For a score with a single unlabeled music line, `T1.name` still supplies the
 visible track label for that line, and `T1.program` still supplies the per-track
 Program used by playback and export.

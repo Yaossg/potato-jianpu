@@ -1048,7 +1048,9 @@ test("renders voice brackets around simultaneous track groups", () => {
   const bracketCount = svg.match(/class="voice-bracket"/g)?.length ?? 0;
   assert.equal(bracketCount, 2);
   assert.match(svg, /<text class="line-label" x="8" y="[^"]+" text-anchor="start">High<\/text>/);
-  assert.match(svg, /<path class="voice-bracket" d="M69,[^"]+ L60,[^"]+ V[^"]+ L69,[^"]+"\/>/);
+  assert.match(svg, /<path class="voice-bracket" d="M69,([^ ]+) L60,([^ ]+) V([^ ]+) L69,[^"]+"\/><path class="voice-bracket-stem" d="M60,\2 V\3"\/>/);
+  assert.match(svg, /\.voice-bracket \{[^}]*stroke-width: 2;/);
+  assert.match(svg, /\.voice-bracket-stem \{[^}]*stroke-width: 3;/);
   assert.match(svg, /<g class="note-item" data-note-index="0"><text class="note" x="86"/);
 });
 

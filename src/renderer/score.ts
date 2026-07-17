@@ -1280,7 +1280,7 @@ function renderVoiceBracket(x: number, y1: number, y2: number, side: "left" | "r
   const hook = 9;
   const bevel = 7;
   const innerX = side === "left" ? x + hook : x - hook;
-  return `<path class="voice-bracket" d="M${innerX},${y1} L${x},${y1 + bevel} V${y2 - bevel} L${innerX},${y2}"/>`;
+  return `<path class="voice-bracket" d="M${innerX},${y1} L${x},${y1 + bevel} V${y2 - bevel} L${innerX},${y2}"/><path class="voice-bracket-stem" d="M${x},${y1 + bevel} V${y2 - bevel}"/>`;
 }
 
 function renderLyrics(document: Document, lyrics: LyricLine[], contentX: number, y: number, targetTextWidth: number | undefined): string {
