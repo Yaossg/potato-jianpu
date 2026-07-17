@@ -2,7 +2,6 @@ export type Language = "en" | "zh";
 export type PageWidthMode = "panel" | "content" | "manual";
 export type JustifyMode = "none" | "except-last" | "all";
 export type TranslationKey =
-  | "tagline"
   | "language"
   | "english"
   | "chinese"
@@ -86,7 +85,6 @@ export type TranslationKey =
 
 const translations: { en: Record<TranslationKey, string>; zh: Record<TranslationKey, string> } = {
   en: {
-    tagline: "Browser preview for the parser, SVG renderer, and audio exporters.",
     language: "Language",
     english: "English",
     chinese: "中文",
@@ -169,7 +167,6 @@ const translations: { en: Record<TranslationKey, string>; zh: Record<Translation
     events: "events",
   } satisfies Record<TranslationKey, string>,
   zh: {
-    tagline: "用于解析器、SVG 渲染器和音频导出的浏览器预览。",
     language: "语言",
     english: "English",
     chinese: "中文",

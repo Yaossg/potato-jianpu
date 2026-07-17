@@ -740,9 +740,9 @@ export function App() {
   return (
     <main className={`app-shell theme-${theme}`}>
       <header className="topbar">
-        <div>
+        <div className="brand-lockup">
+          <img className="brand-mark" src="/favicon.svg" alt="" />
           <h1>Modern Jianpu Markup</h1>
-          <p>{t("tagline")}</p>
         </div>
         <Toolbar
           language={language}
