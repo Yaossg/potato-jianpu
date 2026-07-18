@@ -38,9 +38,6 @@ drum note, or tied note.
 1(.)- {1 3 5}(.) 2(.) | 0(.) X(.) 2 ~2(.)`}
 />
 
-Playback and MIDI, WAV, or MP3 export extend a fermata's attached item to 1.5
-times its written duration.
-
 ## Mordents
 
 Modern Jianpu Markup currently supports upper and lower mordents. Write the ornament immediately after a pitch note or closing chord brace, before any duration suffix.
@@ -156,20 +153,21 @@ Grace notes attach to pitch notes or whole chords. On a chord, the grace sequenc
 
 ## Playback And Export
 
-Fermatas extend their attached item's written duration by a factor of 1.5 in
-playback and export.
+The playback behavior below also applies to MIDI, WAV, and MP3 export.
 
-Playback, MIDI, WAV, and MP3 export expand each mordent into a short main-neighbor-main figure, followed by the remaining duration of the written note.
+Fermatas extend their attached item's written duration by a factor of 1.5.
+
+Each mordent expands into a short main-neighbor-main figure, followed by the remaining duration of the written note.
 
 The upper mordent uses the next scale degree. The lower mordent uses the previous scale degree. The neighbor pitch follows the current key signature and any active accidental for that scale degree in the measure.
 
-Playback, MIDI, WAV, and MP3 export expand turns into a short four-note figure, followed by the remaining duration of the written note. A normal turn plays upper-anchor-lower-anchor. An inverted turn plays lower-anchor-upper-anchor.
+Each turn expands into a short four-note figure, followed by the remaining duration of the written note. A normal turn plays upper-anchor-lower-anchor. An inverted turn plays lower-anchor-upper-anchor.
 
-Playback, MIDI, WAV, and MP3 export expand a trill across the full written duration. It starts on the anchor, alternates with the upper auxiliary pitch at thirty-second-note density, and always keeps at least one complete anchor-upper pair. The `(tr)` and `(tr~)` forms produce identical playback events.
+A trill expands across the full written duration. It starts on the anchor, alternates with the upper auxiliary pitch at thirty-second-note density, and always keeps at least one complete anchor-upper pair. The `(tr)` and `(tr~)` forms produce identical playback events.
 
-Playback, MIDI, WAV, and MP3 export use the final quarter of the slide source's written duration for equal chromatic semitone steps through the target pitch. The following target note then keeps its own normal attack and duration.
+A slide uses the final quarter of its source note's written duration for equal chromatic semitone steps through the target pitch. The following target note then keeps its own normal attack and duration.
 
-Playback, MIDI, WAV, and MP3 export expand grace notes inside the written duration of the anchor note. Before-grace notes sound first, followed by the shortened anchor note. After-grace notes use the end of the anchor duration. Multiple grace notes split the grace duration evenly.
+Grace notes expand inside the written duration of the anchor note. Before-grace notes sound first, followed by the shortened anchor note. After-grace notes use the end of the anchor duration. Multiple grace notes split the grace duration evenly.
 
 Chord ornaments use two distinct playback rules. Mordents, turns, and trills ornament only the highest sounding member after resolving the key, accidentals, and octave marks; the other members remain held across the expanded events instead of receiving repeated attacks. Grace notes affect the whole chord onset, so all members share the shortened chord duration before or after the grace sequence.
 
