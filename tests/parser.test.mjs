@@ -337,14 +337,63 @@ test("validates repeated endings independently for labeled tracks", () => {
   assert.doesNotMatch(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /appears more than once|out of order|should end with/);
 });
 
-test("warns and ignores empty measures between consecutive bars", () => {
+test("rejects empty measures between consecutive bars", () => {
   const result = parse("1 2 || 3 4");
+  assert.equal(result.ok, false);
+  const diagnostics = result.diagnostics.filter((item) => item.message.includes("Empty measures are not allowed"));
+  assert.equal(diagnostics.length, 1);
+  assert.equal(diagnostics[0]?.severity, "error");
+});
+
+test("reports one empty-measure error for each consecutive boundary run", () => {
+  const result = parse("1 ||| 2 || 3");
+  assert.equal(result.ok, false);
+  const diagnostics = result.diagnostics.filter((item) => item.message.includes("Empty measures are not allowed"));
+  assert.equal(diagnostics.length, 2);
+});
+
+test("rejects empty measures around repeat boundaries without diagnostic cascades", () => {
+  const result = parse("1111 :|: || 2222 :|");
+  assert.equal(result.ok, false);
+  const messages = result.diagnostics.map((item) => item.message);
+  assert.equal(messages.filter((message) => message.includes("Empty measures are not allowed")).length, 1);
+  assert.equal(messages.some((message) => message.includes("Repeated ending")), false);
+});
+
+test("distinguishes adjacent repeat boundaries from a combined repeat boundary", () => {
+  for (const source of ["1 |::| 2", "|::|", "1 :| |: 2"]) {
+    const result = parse(source);
+    assert.equal(result.ok, false, `${source} should contain an empty measure`);
+    const diagnostics = result.diagnostics.filter((item) => item.message.includes("Empty measures are not allowed"));
+    assert.equal(diagnostics.length, 1, `${source} should report one empty-measure error`);
+  }
+
+  const combined = parse("1 :|: 2");
+  assert.equal(combined.ok, true);
+  assert.equal(combined.value.score[0].measures[0].repeatEnd, true);
+  assert.equal(combined.value.score[0].measures[1].repeatStart, true);
+});
+
+test("continues parsing diagnostics after an empty measure", () => {
+  const result = parse("1111 || 2222 ? 3333");
+  assert.equal(result.ok, false);
+  const messages = result.diagnostics.map((item) => item.message).join("\n");
+  assert.match(messages, /Empty measures are not allowed/);
+  assert.match(messages, /Unexpected character '\?'/);
+});
+
+test("rejects a score line that contains only barlines", () => {
+  const result = parse("|");
+  assert.equal(result.ok, false);
+  assert.match(result.diagnostics.map((item) => item.message).join("\n"), /Empty measures are not allowed/);
+});
+
+test("uses explicit rests instead of empty measures for measure-long silence", () => {
+  const result = parse("0 - - - |");
   assert.equal(result.ok, true);
-  assert.equal(result.value.score[0].measures.length, 2);
-  assert.equal(result.value.score[0].measures[0].notes.length, 2);
-  assert.equal(result.value.score[0].measures[1].notes.length, 2);
-  const diagnostic = result.diagnostics.find((item) => item.message === "Empty measure ignored.");
-  assert.equal(diagnostic?.severity, "warning");
+  assert.equal(result.diagnostics.length, 0);
+  assert.equal(result.value.score[0].measures[0].notes[0].kind, "rest");
+  assert.equal(result.value.score[0].measures[0].notes[0].duration.value, 1);
 });
 
 test("keeps comment boundaries between header and score lines", () => {

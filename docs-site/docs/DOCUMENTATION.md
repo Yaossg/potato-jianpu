@@ -22,9 +22,6 @@ under `docs-site/`. Project-level documentation policy is covered by root
 - Avoid parser-internal wording unless it helps score authors understand a
   diagnostic or rule.
 - Use `.jpu` for score examples and filenames.
-- Do not imply that `||` is a standalone final-barline or score-ending syntax.
-  It may appear only when documenting consecutive bar tokens that create an
-  empty-measure warning.
 - Keep `docId` stable and unique. It should identify the page's documentation
   purpose and stay aligned between English and Simplified Chinese versions.
 - Keep `sectionIds` stable on pages with headings. These frontmatter keys

@@ -470,26 +470,61 @@ class Parser {
       label = "T1";
     }
     const trackKey = label ?? "";
-    const leadingRepeatStart = Boolean(this.match("repeatStart"));
-    if (!leadingRepeatStart) {
-      this.match("bar");
-    }
     const measures: Measure[] = [];
+    let boundaryCount = 0;
+    let boundaryRunStart: SourceRange | undefined;
+    let emptyMeasureReported = false;
+    const reportEmptyMeasure = (range: SourceRange) => {
+      if (emptyMeasureReported) {
+        return;
+      }
+      this.error("Empty measures are not allowed; use rests such as '0' for silence.", mergeRange(boundaryRunStart ?? range, range));
+      emptyMeasureReported = true;
+    };
+    const recordBoundary = (token: Token | null) => {
+      if (!token) {
+        return false;
+      }
+      if (boundaryCount === 0) {
+        boundaryRunStart = token.range;
+      }
+      boundaryCount += 1;
+      if (boundaryCount > 1) {
+        reportEmptyMeasure(token.range);
+      }
+      return true;
+    };
+    const appendMeasure = (measure: Measure | null) => {
+      if (!measure) {
+        reportEmptyMeasure(this.current().range);
+        return;
+      }
+      this.parseMeasureSuffix(measure);
+      measures.push(measure);
+      boundaryCount = 0;
+      boundaryRunStart = undefined;
+      emptyMeasureReported = false;
+    };
+    const leadingRepeatStart = recordBoundary(this.match("repeatStart"));
+    if (!leadingRepeatStart) {
+      recordBoundary(this.match("bar"));
+    }
     let prefix = this.parseMeasurePrefix(this.activeEndings.get(trackKey));
     let currentEnding = prefix.ending;
     const firstMeasure = this.parseMeasure(trackKey, leadingRepeatStart, currentEnding, prefix.navigationBefore);
-    if (firstMeasure) {
-      this.parseMeasureSuffix(firstMeasure);
-      measures.push(firstMeasure);
-    }
+    appendMeasure(firstMeasure);
     while (true) {
-      while (this.match("repeatEnd")) {
+      let repeatEnd: Token | null;
+      while ((repeatEnd = this.match("repeatEnd"))) {
+        recordBoundary(repeatEnd);
         const previous = measures.at(-1);
         if (previous) {
           previous.repeatEnd = true;
         }
       }
-      if (this.match("repeatBoth")) {
+      const repeatBoth = this.match("repeatBoth");
+      if (repeatBoth) {
+        recordBoundary(repeatBoth);
         const previous = measures.at(-1);
         if (previous) {
           previous.repeatEnd = true;
@@ -498,16 +533,15 @@ class Parser {
         currentEnding = prefix.ending;
         this.activeEndings.set(trackKey, currentEnding);
         const measure = this.parseMeasure(trackKey, true, currentEnding, prefix.navigationBefore);
-        if (measure) {
-          this.parseMeasureSuffix(measure);
-          measures.push(measure);
-        }
+        appendMeasure(measure);
         continue;
       }
       if (this.at("newline") || this.at("eof")) {
         break;
       }
-      if (this.match("bar")) {
+      const bar = this.match("bar");
+      if (bar) {
+        recordBoundary(bar);
         if (this.at("newline") || this.at("eof")) {
           break;
         }
@@ -515,31 +549,24 @@ class Parser {
         currentEnding = prefix.ending;
         this.activeEndings.set(trackKey, currentEnding);
         const measure = this.parseMeasure(trackKey, false, currentEnding, prefix.navigationBefore);
-        if (measure) {
-          this.parseMeasureSuffix(measure);
-          measures.push(measure);
-        }
+        appendMeasure(measure);
         continue;
       }
-      if (this.match("repeatStart")) {
+      const repeatStart = this.match("repeatStart");
+      if (repeatStart) {
+        recordBoundary(repeatStart);
         prefix = this.parseMeasurePrefix(currentEnding);
         currentEnding = prefix.ending;
         this.activeEndings.set(trackKey, currentEnding);
         const measure = this.parseMeasure(trackKey, true, currentEnding, prefix.navigationBefore);
-        if (measure) {
-          this.parseMeasureSuffix(measure);
-          measures.push(measure);
-        }
+        appendMeasure(measure);
         continue;
       }
       prefix = this.parseMeasurePrefix(currentEnding);
       currentEnding = prefix.ending;
       this.activeEndings.set(trackKey, currentEnding);
       const measure = this.parseMeasure(trackKey, false, currentEnding, prefix.navigationBefore);
-      if (measure) {
-        this.parseMeasureSuffix(measure);
-        measures.push(measure);
-      }
+      appendMeasure(measure);
     }
     this.activeEndings.set(trackKey, currentEnding);
     return {
@@ -591,7 +618,6 @@ class Parser {
       }
     }
     if (notes.length === 0) {
-      this.warning("Empty measure ignored.", start);
       return null;
     }
     const end = notes.at(-1)?.range ?? start;

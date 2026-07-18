@@ -159,7 +159,7 @@ test("embeds Bravura for SMuFL ornament glyphs in PDF", async () => {
 });
 
 test("preserves renderer line widths and time signature position in PDF", async () => {
-  const result = parse(`time: 6/8\n===\n1/ 2/ | 3 - ||`);
+  const result = parse(`time: 6/8\n===\n1/ 2/ | 3 - |`);
   assert.equal(result.ok, true);
   const pdf = await renderPdfBytes(renderSvgPages(result.value), { title: result.value.header.title });
   const content = pdfContentStreams(pdf);

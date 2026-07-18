@@ -47,9 +47,9 @@ Blank lines and leading newlines are ignored. A document may contain only a scor
 
 <JianpuSource title="Score-only document" source={`1 2 3 4 | 5 - 5 -`} />
 
-Measures are separated with <SyntaxToken token="|" label="barline" />. A line may begin with a barline or repeat start, and it may end with a barline or repeat end. Empty measures between consecutive bar tokens are ignored with a warning rather than becoming sounding music.
+Measures are separated with <SyntaxToken token="|" label="barline" />. A line may begin with a barline or repeat start, and it may end with a barline or repeat end. Every measure must contain a note, chord, rest, or drum note. Consecutive bar tokens create an invalid empty measure; write an explicit `0` when the score needs silence.
 
-<JianpuSource title="Empty-measure warning" status="warning" source={`1 2 || 3 4`} />
+<JianpuSource title="Invalid empty measure" status="invalid" source={`1 2 || 3 4`} />
 
 Line breaks are meaningful because they separate header fields, score lines, and lyric lines. Consecutive blank lines are collapsed, so a blank line between two score lines does not create an extra rendered row.
 
