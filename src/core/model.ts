@@ -128,6 +128,7 @@ export interface Slur {
   endNoteIndex: number;
   track: string;
   placement: "auto";
+  noteCount?: number;
   range: SourceRange;
 }
 

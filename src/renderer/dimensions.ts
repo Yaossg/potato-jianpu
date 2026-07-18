@@ -28,6 +28,8 @@ export const DIMENSIONS = {
   slurLaneGap: 10,
   slurEndpointGap: 4,
   slurEndpointOutset: 4,
+  slurCountFontSize: 12,
+  slurCountGap: 4,
   octaveSpacing: 5,
   noteBottomPadding: 10,
   underlineSpacing: 5,

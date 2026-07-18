@@ -89,6 +89,9 @@ Parse result shape:
 When present in the source header, score-level `program` and `volume` fields
 also appear in the parsed header JSON.
 
+Slurs opened with `$$(` include a `noteCount` field in their parsed
+JSON object. Ordinary `$(...)` slurs omit that optional field.
+
 Validate result shape:
 
 ```json

@@ -1,3 +1,5 @@
+import { DIMENSIONS } from "./dimensions.js";
+
 export const SVG_STYLE = `.title { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 32px; font-weight: 700; }
 .subtitle { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 20px; font-weight: 400; }
 .metadata { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 20px; font-weight: 400; }
@@ -30,6 +32,7 @@ export const SVG_STYLE = `.title { fill: currentColor; font-family: Arial, Helve
 .dash { stroke: currentColor; stroke-width: 3; }
 .tie { fill: currentColor; stroke: currentColor; stroke-width: 1; }
 .slur { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: butt; }
+.slur-count { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: ${DIMENSIONS.slurCountFontSize}px; font-weight: 700; }
 .ornament { fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .grace-arc { stroke-width: 1; stroke-linecap: butt; stroke-linejoin: miter; }
 .smufl-symbol { fill: currentColor; stroke: none; font-family: Bravura, "Noto Music", "Segoe UI Symbol", sans-serif; font-size: 22px; font-weight: 400; pointer-events: none; }

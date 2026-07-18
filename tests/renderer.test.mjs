@@ -90,6 +90,14 @@ function slurPaths(svg) {
   return [...svg.matchAll(/<path class="slur" d="([^"]+)"/g)].map((match) => match[1]);
 }
 
+function slurCounts(svg) {
+  return [...svg.matchAll(/<text class="slur-count" x="([^"]+)" y="([^"]+)"[^>]*>(\d+)<\/text>/g)].map((match) => ({
+    x: Number(match[1]),
+    y: Number(match[2]),
+    count: Number(match[3]),
+  }));
+}
+
 function slidePaths(svg) {
   return [...svg.matchAll(/<path class="ornament slide" d="([^"]+)"\/>/g)].map((match) => match[1]);
 }
@@ -389,6 +397,25 @@ test("stacks nested slurs in separate lanes", () => {
   assert.equal(pathEnd(paths[0])[1], pathEnd(paths[1])[1]);
 });
 
+test("renders a note count including endpoints in a gap on a counted slur platform", () => {
+  const result = parse("$$(1 {2 4} 3 4)");
+  const ordinary = parse("$(1 {2 4} 3 4)");
+  assert.equal(result.ok, true);
+  assert.equal(ordinary.ok, true);
+  const svg = renderSvg(result.value);
+  const ordinarySvg = renderSvg(ordinary.value);
+  assert.match(svg, /\.slur-count \{ fill: currentColor;[^}]*font-size: 12px;/);
+  assert.deepEqual(slurCounts(svg).map(({ count }) => count), [4]);
+  assert.match(slurPaths(svg)[0], /^M[^ ]+ Q[^ ]+ [^ ]+ L[^ ]+ M[^ ]+ L[^ ]+ Q[^ ]+ [^ ]+$/);
+  assert.equal(Number(svg.match(/<svg[^>]* height="([^"]+)"/)?.[1]), Number(ordinarySvg.match(/<svg[^>]* height="([^"]+)"/)?.[1]) + 6);
+
+  const nested = parse("$$($$(1 2 3) 4)");
+  assert.equal(nested.ok, true);
+  const nestedCounts = slurCounts(renderSvg(nested.value));
+  assert.deepEqual(nestedCounts.map(({ count }) => count), [4, 3]);
+  assert.notEqual(nestedCounts[0].y, nestedCounts[1].y);
+});
+
 test("splits slurs across visual lines and pages", () => {
   const result = parse("$(1 2 | 3 4 | 5 6 | 7 1')");
   assert.equal(result.ok, true);
@@ -401,6 +428,14 @@ test("splits slurs across visual lines and pages", () => {
   const paged = renderSvg(result.value, { pageWidth: 100, paginate: true, pageHeight: 100 });
   assert.ok((paged.match(/class="page" data-page=/g)?.length ?? 0) > 1);
   assert.equal(slurPaths(paged).length, wrappedPaths.length);
+});
+
+test("renders a counted slur label once on its midpoint visual line", () => {
+  const result = parse("$$(1 2 | 3 4 | 5 6 | 7 1')");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 100, justifyMode: "all" });
+  assert.deepEqual(slurCounts(svg).map(({ count }) => count), [8]);
+  assert.equal(slurPaths(svg).filter((path) => / M[^ ]+ L/.test(path)).length, 1);
 });
 
 test("keeps slurs on their own track in multi-voice groups", () => {

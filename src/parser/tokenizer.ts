@@ -24,6 +24,7 @@ export type TokenType =
   | "higher"
   | "tie"
   | "slurStart"
+  | "countedSlurStart"
   | "equals"
   | "colon"
   | "lbrace"
@@ -235,6 +236,10 @@ export function tokenize(source: string): { tokens: Token[]; diagnostics: Diagno
     }
 
     const three = rest.slice(0, 3);
+    if (three === "$$(") {
+      push("countedSlurStart", three);
+      continue;
+    }
     if (three === ":|:") {
       push("repeatBoth", three);
       continue;

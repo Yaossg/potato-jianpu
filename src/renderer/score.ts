@@ -51,6 +51,7 @@ interface RenderedLine {
 interface SlurLineSegment {
   slur: Slur;
   lane: number;
+  countLabel?: number;
   startNote?: Note;
   endNote?: Note;
 }
@@ -276,6 +277,7 @@ function renderSlur(
   laneOffset: number,
   startsHere: boolean,
   endsHere: boolean,
+  countLabel?: number,
 ): string {
   const width = Math.max(1, endX - startX);
   const height = Math.min(DIMENSIONS.slurMaxHeight, Math.max(DIMENSIONS.slurMinHeight, width * 0.12));
@@ -289,11 +291,21 @@ function renderSlur(
   if (startsHere) {
     parts.push(`Q${startX},${topY} ${straightStartX},${topY}`);
   }
-  parts.push(`L${straightEndX},${topY}`);
+  let label = "";
+  if (countLabel !== undefined) {
+    const text = String(countLabel);
+    const labelX = (straightStartX + straightEndX) / 2;
+    const desiredHalfGap = text.length * DIMENSIONS.slurCountFontSize * 0.3 + DIMENSIONS.slurCountGap;
+    const halfGap = Math.min(desiredHalfGap, Math.max(0, (straightEndX - straightStartX - 2) / 2));
+    parts.push(`L${labelX - halfGap},${topY}`, `M${labelX + halfGap},${topY}`, `L${straightEndX},${topY}`);
+    label = `<text class="slur-count" x="${labelX}" y="${topY}" text-anchor="middle" dominant-baseline="central">${text}</text>`;
+  } else {
+    parts.push(`L${straightEndX},${topY}`);
+  }
   if (endsHere) {
     parts.push(`Q${endX},${topY} ${endX},${endY}`);
   }
-  return `<path class="slur" d="${parts.join(" ")}"/>`;
+  return `<path class="slur" d="${parts.join(" ")}"/>${label}`;
 }
 
 function tieYOf(y: number, chordHeightValue: number): number {
@@ -666,9 +678,13 @@ function projectSlursToLine(
     if (start === undefined || end === undefined || end < first || start > last) {
       return [];
     }
+    const labelNote = slur.noteCount !== undefined
+      ? trackNotes[Math.floor((start + end) / 2)]
+      : undefined;
     return [{
       slur,
       lane: lanes.get(slur) ?? 0,
+      ...(labelNote && lineNoteIndexes.has(labelNote.index) ? { countLabel: slur.noteCount } : {}),
       ...(lineNoteIndexes.has(slur.startNoteIndex) ? { startNote: notesByIndex.get(slur.startNoteIndex) } : {}),
       ...(lineNoteIndexes.has(slur.endNoteIndex) ? { endNote: notesByIndex.get(slur.endNoteIndex) } : {}),
     }];
@@ -680,7 +696,10 @@ function withSlurLayout(layout: LineLayout, segments: SlurLineSegment[]): { layo
     return { layout, slurPadding: 0 };
   }
   const maxLane = Math.max(...segments.map((segment) => segment.lane));
-  const slurPadding = DIMENSIONS.slurEndpointGap + DIMENSIONS.slurMaxHeight + maxLane * DIMENSIONS.slurLaneGap;
+  const countPadding = segments.some((segment) => segment.countLabel !== undefined)
+    ? DIMENSIONS.slurCountFontSize / 2
+    : 0;
+  const slurPadding = DIMENSIONS.slurEndpointGap + DIMENSIONS.slurMaxHeight + maxLane * DIMENSIONS.slurLaneGap + countPadding;
   return {
     layout: {
       ...layout,
@@ -873,6 +892,7 @@ function renderLine(
         segment.lane * DIMENSIONS.slurLaneGap,
         startEntry !== undefined,
         endEntry !== undefined,
+        segment.countLabel,
       ),
     );
   }

@@ -33,7 +33,7 @@ type ResolvedTieTarget =
 
 type EndingBlock = { endings: number[]; startIndex: number; endIndex: number };
 type ActiveHairpin = { kind: HairpinKind; range: SourceRange };
-type ActiveSlur = { range: SourceRange; notes: Note[] };
+type ActiveSlur = { range: SourceRange; notes: Note[]; showNoteCount: boolean };
 type DynamicHairpinSpan = { kind: HairpinKind; start: Note; end: Note };
 type NotePrefixes = { velocity?: number; hairpinStart?: HairpinKind; hairpinEnd?: HairpinKind };
 type BracketMark =
@@ -567,13 +567,13 @@ class Parser {
         continue;
       }
       const slurStarts: Token[] = [];
-      while (this.at("slurStart")) {
+      while (this.isSlurStart()) {
         slurStarts.push(this.current());
         this.index += 1;
       }
       if (slurStarts.length > 0 && !this.isDurableNoteStart()) {
         for (const startToken of slurStarts) {
-          this.error("Slur start '$(' must be followed by a note on the same source line.", startToken.range);
+          this.error(`Slur start '${startToken.text}' must be followed by a note on the same source line.`, startToken.range);
         }
         continue;
       }
@@ -697,7 +697,7 @@ class Parser {
   }
 
   private isDurableNoteStart(): boolean {
-    if (this.at("slurStart")) {
+    if (this.isSlurStart()) {
       return true;
     }
     if (this.isHairpinToken()) {
@@ -710,6 +710,10 @@ class Parser {
       return true;
     }
     return this.isGeneralNoteStart();
+  }
+
+  private isSlurStart(): boolean {
+    return this.at("slurStart") || this.at("countedSlurStart");
   }
 
   private isDurableNoteCoreStart(): boolean {
@@ -1082,7 +1086,11 @@ class Parser {
       active.notes.push(note);
     }
     for (const start of starts) {
-      stack.push({ range: start.range, notes: [note] });
+      stack.push({
+        range: start.range,
+        notes: [note],
+        showNoteCount: start.type === "countedSlurStart",
+      });
     }
     if (stack.length > 0) {
       this.activeSlurs.set(trackKey, stack);
@@ -1093,7 +1101,7 @@ class Parser {
     const stack = this.activeSlurs.get(trackKey);
     const active = stack?.pop();
     if (!active) {
-      this.error("Unexpected ')' without matching slur start '$('.", close.range);
+      this.error("Unexpected ')' without matching slur start '$(' or '$$('.", close.range);
       return;
     }
     if (stack?.length === 0) {
@@ -1131,6 +1139,9 @@ class Parser {
       endNoteIndex: endNote.index,
       track: trackKey || "T1",
       placement: "auto",
+      ...(active.showNoteCount
+        ? { noteCount: active.notes.filter((note) => note.kind === "pitch").length }
+        : {}),
       range,
     });
   }

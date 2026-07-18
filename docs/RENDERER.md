@@ -226,6 +226,8 @@ Renderer dimensions are centralized in the `DIMENSIONS` object:
 | `slurLaneGap` | `10` | Vertical separation between nested slur lanes |
 | `slurEndpointGap` | `4` | Clearance between slur endpoints and the notation below |
 | `slurEndpointOutset` | `4` | Horizontal outward offset from an anchored note center |
+| `slurCountFontSize` | `12` | Font size for a counted-slur label |
+| `slurCountGap` | `4` | Clearance on each side of a counted-slur label |
 | `octaveSpacing` | `5` | Distance between octave dots |
 | `noteBottomPadding` | `10` | Baseline padding below notes |
 | `underlineSpacing` | `5` | Vertical distance between duration underlines |
@@ -498,6 +500,14 @@ crosses source wrapping or automatic wrapping is split into outgoing, middle,
 and incoming segments at the content edges. A split edge meets the horizontal
 section directly. Pagination reuses those visual-line segments, including
 across explicit page breaks.
+
+A slur opened with `$$(` has one numeric label centered on its horizontal
+section. The renderer splits the stroke around the label and places it only on
+the visual segment containing the span midpoint, including when the slur wraps
+across lines or pages. The label is the number of pitch notes or chords stored
+in `Slur.noteCount`, including both endpoints; rests are not counted. Half of
+the label font height is added to that visual line's reserved space so the
+centered text is not clipped or overlapped.
 
 Nested spans use separate vertical lanes for their horizontal sections. Inner
 slur platforms stay closer to the notation and outer platforms move upward,

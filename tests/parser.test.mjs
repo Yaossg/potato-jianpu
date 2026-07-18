@@ -386,7 +386,29 @@ test("tokenizes the contiguous slur opener as one token", () => {
     "rparen",
     "eof",
   ]);
+  assert.deepEqual(tokenize("$$(1 2 3)").tokens.map((token) => token.type), [
+    "countedSlurStart",
+    "note",
+    "note",
+    "note",
+    "rparen",
+    "eof",
+  ]);
   assert.equal(tokenize("$ (1 2)").diagnostics[0]?.message, "Unexpected character '$'.");
+  assert.equal(tokenize("$$ (1 2)").diagnostics.length, 2);
+});
+
+test("counts pitch notes and chords including endpoints for counted slurs", () => {
+  const result = parse("$$(1 {2 4} 0 3 4)");
+  assert.equal(result.ok, true);
+  assert.deepEqual(
+    result.value.slurs.map(({ startNoteIndex, endNoteIndex, noteCount }) => ({ startNoteIndex, endNoteIndex, noteCount })),
+    [{ startNoteIndex: 0, endNoteIndex: 4, noteCount: 4 }],
+  );
+
+  const nested = parse("$$($$(1 2 3) 4)");
+  assert.equal(nested.ok, true);
+  assert.deepEqual(nested.value.slurs.map((slur) => slur.noteCount), [4, 3]);
 });
 
 test("parses nested, chord, and independently tracked slurs", () => {
