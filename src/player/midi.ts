@@ -93,12 +93,12 @@ class MIDITrack {
     this.events.push(event);
   }
 
-  noteOn(delta: number, note: number, velocity: number) {
-    this.addEvent(new MIDINoteEvent(Math.round(delta * TICKS_PER_NOTE), MESSAGE_NOTEON_PREFIX, this.channel, note, velocity));
+  noteOn(deltaTicks: number, note: number, velocity: number) {
+    this.addEvent(new MIDINoteEvent(deltaTicks, MESSAGE_NOTEON_PREFIX, this.channel, note, velocity));
   }
 
-  noteOff(delta: number, note: number) {
-    this.addEvent(new MIDINoteEvent(Math.round(delta * TICKS_PER_NOTE), MESSAGE_NOTEOFF_PREFIX, this.channel, note, 0));
+  noteOff(deltaTicks: number, note: number) {
+    this.addEvent(new MIDINoteEvent(deltaTicks, MESSAGE_NOTEOFF_PREFIX, this.channel, note, 0));
   }
 
   toBytes(): number[] {
@@ -142,15 +142,16 @@ function buildMusicTrack(melody: Melody & { volume?: number }, program: number, 
       { offset: span.offset + span.duration, kind: "off" as const, note: span.note, velocity: span.velocity },
     ])
     .sort((left, right) => left.offset - right.offset || (left.kind === right.kind ? 0 : left.kind === "off" ? -1 : 1));
-  let previousOffset = 0;
+  let previousTick = 0;
   for (const event of events) {
-    const delta = event.offset - previousOffset;
+    const tick = Math.round(event.offset * TICKS_PER_NOTE);
+    const deltaTicks = tick - previousTick;
     if (event.kind === "on") {
-      track.noteOn(delta, event.note, Math.max(0, Math.min(127, Math.round((event.velocity ?? DEFAULT_VELOCITY) * volume))));
+      track.noteOn(deltaTicks, event.note, Math.max(0, Math.min(127, Math.round((event.velocity ?? DEFAULT_VELOCITY) * volume))));
     } else {
-      track.noteOff(delta, event.note);
+      track.noteOff(deltaTicks, event.note);
     }
-    previousOffset = event.offset;
+    previousTick = tick;
   }
   return track.toBytes();
 }

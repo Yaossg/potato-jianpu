@@ -16,6 +16,71 @@ import {
   waveformForProgram,
 } from "../dist/player/index.js";
 
+function readUint32(bytes, offset) {
+  return ((bytes[offset] << 24) | (bytes[offset + 1] << 16) | (bytes[offset + 2] << 8) | bytes[offset + 3]) >>> 0;
+}
+
+function readMidiVarInt(bytes, start) {
+  let value = 0;
+  let offset = start;
+  while (offset < bytes.length) {
+    const byte = bytes[offset++];
+    value = (value << 7) | (byte & 0x7f);
+    if ((byte & 0x80) === 0) break;
+  }
+  return { value, offset };
+}
+
+function midiNoteEvents(bytes) {
+  const events = [];
+  let chunkOffset = 8 + readUint32(bytes, 4);
+  let track = 0;
+  while (chunkOffset + 8 <= bytes.length) {
+    const type = String.fromCharCode(...bytes.slice(chunkOffset, chunkOffset + 4));
+    const length = readUint32(bytes, chunkOffset + 4);
+    let offset = chunkOffset + 8;
+    const end = offset + length;
+    if (type !== "MTrk") {
+      chunkOffset = end;
+      continue;
+    }
+    let tick = 0;
+    let runningStatus;
+    while (offset < end) {
+      const delta = readMidiVarInt(bytes, offset);
+      tick += delta.value;
+      offset = delta.offset;
+      let status = bytes[offset];
+      if (status >= 0x80) {
+        offset += 1;
+        if (status < 0xf0) runningStatus = status;
+      } else {
+        status = runningStatus;
+      }
+      if (status === undefined) throw new Error("MIDI running status is missing");
+      if (status === 0xff) {
+        offset += 1;
+        const metaLength = readMidiVarInt(bytes, offset);
+        offset = metaLength.offset + metaLength.value;
+        continue;
+      }
+      if (status === 0xf0 || status === 0xf7) {
+        const dataLength = readMidiVarInt(bytes, offset);
+        offset = dataLength.offset + dataLength.value;
+        continue;
+      }
+      const kind = status & 0xf0;
+      const note = bytes[offset++];
+      const data = kind === 0xc0 || kind === 0xd0 ? undefined : bytes[offset++];
+      if (kind === 0x90 && data !== 0) events.push({ track, tick, type: "on", note, velocity: data });
+      if (kind === 0x80 || (kind === 0x90 && data === 0)) events.push({ track, tick, type: "off", note });
+    }
+    track += 1;
+    chunkOffset = end;
+  }
+  return events;
+}
+
 test("compiles pitch notes to MIDI notes with key and octave", () => {
   const result = parse(`key: D\n===\n1 2 1'`);
   assert.equal(result.ok, true);
@@ -165,6 +230,31 @@ test("expands slides chromatically through the final quarter of the source note"
   assert.equal(melody.notes[0].duration, 3 / 8);
   assert.equal(melody.notes.slice(1, 6).reduce((sum, note) => sum + note.duration, 0), 1 / 8);
   assert.ok(Math.abs(melody.notes.reduce((sum, note) => sum + note.duration, 0) - 3 / 4) < 1e-9);
+});
+
+test("keeps MIDI slide subdivisions on the written target boundary", () => {
+  const cases = [
+    { source: "time: 2/4\n===\n1(~) 4", targetTick: 96, endTick: 192 },
+    { source: "time: 2/4\n===\n7(~) 1", targetTick: 96, endTick: 192 },
+    { source: "1(~)/ 4/", targetTick: 48, endTick: 96 },
+    { source: "1(~)// 4//", targetTick: 24, endTick: 48 },
+  ];
+  for (const { source, targetTick, endTick } of cases) {
+    const result = parse(source);
+    assert.equal(result.ok, true);
+    const events = midiNoteEvents(exportMidiBytes(result.value));
+    assert.equal(events.filter((event) => event.type === "on").at(-1)?.tick, targetTick, source);
+    assert.equal(Math.max(...events.filter((event) => event.type === "off").map((event) => event.tick)), endTick, source);
+  }
+});
+
+test("does not accumulate MIDI timing drift across consecutive slides", () => {
+  const result = parse("time: 4/4\n===\n1(~) 4 1(~) 4");
+  assert.equal(result.ok, true);
+  const events = midiNoteEvents(exportMidiBytes(result.value));
+  const noteOns = events.filter((event) => event.type === "on");
+  assert.deepEqual(noteOns.filter((event) => event.note === 65).map((event) => event.tick), [91, 96, 283, 288]);
+  assert.equal(Math.max(...events.filter((event) => event.type === "off").map((event) => event.tick)), 384);
 });
 
 test("expands turns with upper and lower auxiliary pitches", () => {
