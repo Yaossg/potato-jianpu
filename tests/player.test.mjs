@@ -26,29 +26,69 @@ test("compiles pitch notes to MIDI notes with key and octave", () => {
   );
 });
 
-test("keeps slurs visual-only for melody, arrangement, and MIDI", () => {
+test("plays slurs with legato overlap without changing the rhythmic timeline", () => {
   const plain = parse("1 2 3 4");
   const slurred = parse("$(1 2 3 4)");
   const counted = parse("$$(1 2 3 4)");
   assert.equal(plain.ok, true);
   assert.equal(slurred.ok, true);
   assert.equal(counted.ok, true);
-  assert.deepEqual(compileMelody(slurred.value), compileMelody(plain.value));
-  assert.deepEqual(compileArrangement(slurred.value), compileArrangement(plain.value));
-  assert.deepEqual(exportMidiBytes(slurred.value), exportMidiBytes(plain.value));
-  assert.deepEqual(compileMelody(counted.value), compileMelody(plain.value));
-  assert.deepEqual(compileArrangement(counted.value), compileArrangement(plain.value));
-  assert.deepEqual(exportMidiBytes(counted.value), exportMidiBytes(plain.value));
+  const plainMelody = compileMelody(plain.value);
+  const slurredMelody = compileMelody(slurred.value);
+  const countedMelody = compileMelody(counted.value);
+  assert.deepEqual(slurredMelody.notes.map((note) => note.duration), plainMelody.notes.map((note) => note.duration));
+  assert.deepEqual(slurredMelody.notes.map((note) => note.legatoToIndex), [1, 2, 3, undefined]);
+  assert.deepEqual(countedMelody, slurredMelody);
+  assert.deepEqual(
+    melodyPitchSpans(slurredMelody.notes).map((span) => span.offset),
+    [0, 1 / 4, 1 / 2, 3 / 4],
+  );
+  assert.deepEqual(
+    melodyPitchSpans(slurredMelody.notes).map((span) => span.duration),
+    [0.2625, 0.2625, 0.2625, 0.25],
+  );
+  assert.notDeepEqual(exportMidiBytes(slurred.value), exportMidiBytes(plain.value));
 });
 
-test("keeps fermatas visual-only for melody, arrangement, and MIDI", () => {
-  const plain = parse("1- {1 3 5} 0 X");
-  const fermatas = parse("1(.)- {1 3 5}(.) 0(.) X(.)");
-  assert.equal(plain.ok, true);
+test("extends fermata notes, chords, rests, drums, and tied segments", () => {
+  const fermatas = parse("1(.)- {1 3 5}(.) 0(.) X(.) 2 ~2(.)");
   assert.equal(fermatas.ok, true);
-  assert.deepEqual(compileMelody(fermatas.value), compileMelody(plain.value));
-  assert.deepEqual(compileArrangement(fermatas.value), compileArrangement(plain.value));
-  assert.deepEqual(exportMidiBytes(fermatas.value), exportMidiBytes(plain.value));
+  const melody = compileMelody(fermatas.value);
+  assert.deepEqual(melody.notes.map((note) => note.duration), [3 / 4, 3 / 8, 3 / 8, 3 / 8, 5 / 8]);
+  assert.equal(arrangementDuration(compileArrangement(fermatas.value)), 5 / 2);
+
+  const plain = parse("1- {1 3 5} 0 X 2 ~2");
+  assert.equal(plain.ok, true);
+  assert.notDeepEqual(exportMidiBytes(fermatas.value), exportMidiBytes(plain.value));
+});
+
+test("applies corresponding fermatas consistently across simultaneous tracks", () => {
+  const result = parse("T1: 1(.) 2\nT2: 5,(.) 6,");
+  assert.equal(result.ok, true);
+  const arrangement = compileArrangement(result.value);
+  assert.deepEqual(arrangement.tracks.map((track) => track.notes.map((note) => note.duration)), [
+    [3 / 8, 1 / 4],
+    [3 / 8, 1 / 4],
+  ]);
+  assert.equal(arrangementDuration(arrangement), 5 / 8);
+});
+
+test("breaks slur legato at rests and repeated pitches", () => {
+  const result = parse("$(1 0 2 3 3)");
+  assert.equal(result.ok, true);
+  const melody = compileMelody(result.value);
+  assert.deepEqual(melody.notes.map((note) => note.legatoToIndex), [undefined, undefined, 3, 4, undefined]);
+  assert.deepEqual(melodyPitchSpans(melody.notes).map((span) => span.duration), [1 / 4, 0.2625, 1 / 4, 1 / 4]);
+});
+
+test("keeps slur playback track-local and idempotent for nested spans", () => {
+  const result = parse("T1: $($(1 2) 3)\nT2: 5 6 7");
+  assert.equal(result.ok, true);
+  const arrangement = compileArrangement(result.value);
+  assert.deepEqual(
+    arrangement.tracks.map((track) => melodyPitchSpans(track.notes).map((span) => span.duration)),
+    [[0.2625, 0.2625, 0.25], [0.25, 0.25, 0.25]],
+  );
 });
 
 test('plays ignored same-pitch slides as ordinary notes', () => {

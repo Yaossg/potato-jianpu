@@ -22,12 +22,14 @@ An explicit accidental changes that scale degree for the rest of its measure. La
 
 Lyrics, lyric alignment, and lyric placeholders are visual-only. They do not add tracks or change playback, MIDI, WAV, or MP3 timing.
 
-Slurs written with `$(...)` or counted `$$(...)` syntax are also visual-only. Unlike a tie, a slur does not merge durations, suppress attacks, or change browser playback, MIDI, WAV, or MP3 output.
+Slurs written with `$(...)` or counted `$$(...)` syntax add a short legato overlap between adjacent different pitches. Unlike a tie, a slur does not merge rhythmic durations or suppress attacks: onset times stay on their written beats. Rests break the connection, and repeated pitches are rearticulated without overlap.
 
 ## Ornaments And Sustain
 
-Fermatas written as `(.)` are visual-only. They leave the written duration
-unchanged in browser playback and MIDI, WAV, or MP3 export.
+Fermatas written as `(.)` extend the attached note, chord, rest, drum note, or
+tied segment to 1.5 times its written duration in browser playback and MIDI,
+WAV, or MP3 export. The marker is track-local in a simultaneous arrangement,
+so each voice that should wait at that point needs its own fermata.
 
 Every ornament fits inside the written duration of its anchor note:
 

@@ -38,8 +38,8 @@ drum note, or tied note.
 1(.)- {1 3 5}(.) 2(.) | 0(.) X(.) 2 ~2(.)`}
 />
 
-Fermatas are currently visual-only. Playback and MIDI, WAV, or MP3 export keep
-the attached item's written duration unchanged.
+Playback and MIDI, WAV, or MP3 export extend a fermata's attached item to 1.5
+times its written duration.
 
 ## Mordents
 
@@ -156,8 +156,8 @@ Grace notes attach to pitch notes or whole chords. On a chord, the grace sequenc
 
 ## Playback And Export
 
-Fermatas do not change playback or export timing. They only appear in SVG,
-PNG, and PDF output.
+Fermatas extend their attached item's written duration by a factor of 1.5 in
+playback and export.
 
 Playback, MIDI, WAV, and MP3 export expand each mordent into a short main-neighbor-main figure, followed by the remaining duration of the written note.
 

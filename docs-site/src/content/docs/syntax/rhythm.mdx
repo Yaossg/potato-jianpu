@@ -183,7 +183,7 @@ $($(1 2)
 3 4)`}
 />
 
-A slur is visual-only: it does not merge durations or change browser playback, MIDI, WAV, or MP3 output. A tie uses `~`, connects compatible repeated pitches, and combines their sounding duration. Both may appear together, with the shorter tie drawn closer to the notes.
+A slur adds a short legato overlap between adjacent different pitches in browser playback and MIDI, WAV, or MP3 output, without moving their written onset times. Rests break that connection, and repeated pitches remain separately attacked. A tie uses `~`, connects compatible repeated pitches, and combines their sounding duration. Both may appear together, with the shorter tie drawn closer to the notes.
 
 <JianpuExample
   title="Slur containing a rest"

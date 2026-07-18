@@ -517,8 +517,9 @@ so page placement, lyrics, and multi-voice brackets include the reserved space.
 Justification and overwide-line scaling apply to slur coordinates together with
 their score line.
 
-Slurs are engraving-only. They do not change browser playback or MIDI, WAV,
-and MP3 export timing.
+Slurs also request a short legato overlap during browser playback and MIDI,
+WAV, and MP3 export without changing written onset times. Counted and ordinary
+slurs share the same playback behavior.
 
 ### Dynamics And Hairpins
 
@@ -537,8 +538,8 @@ complete hairpin on each visual line.
 ### Ornaments
 
 Fermatas written as `(.)` render above their attached note, chord, rest, or
-drum note with the SMuFL fermata-above glyph. They are visual-only and do not
-change playback or export timing.
+drum note with the SMuFL fermata-above glyph. Playback and export extend the
+attached item's written duration by a factor of 1.5.
 
 Mordent, turn, and trill ornaments render with SMuFL Private Use Area glyphs.
 Upper mordents use the plain mordent glyph, while lower mordents use the glyph

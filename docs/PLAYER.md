@@ -38,6 +38,7 @@ interface MelodyNote {
   index: number;
   velocity?: number;
   sustained?: number[];
+  legatoToIndex?: number;
 }
 
 interface Melody {
@@ -62,6 +63,11 @@ for playback highlighting.
 event without a new attack. Ornament-expanded chords use it to hold unchanged
 members while the highest sounding member moves. Playback and export resolve
 these transitions through `melodyPitchSpans()`.
+
+`legatoToIndex` connects the event to the next source note under a slur.
+`melodyPitchSpans()` keeps the next onset on its written beat while extending
+different outgoing pitches by 5% of the shorter adjacent event. Repeated
+pitches keep separate attacks without overlap.
 
 `compileMelody(document, program?)` keeps the legacy single-melody behavior and
 flattens score lines in source order.
@@ -194,9 +200,11 @@ key-signature pitch.
 
 ## Ornaments
 
-Fermatas written as `(.)` are visual-only. The melody and arrangement
-compilers preserve the attached item's written duration without adding pauses
-or changing MIDI, WAV, or MP3 timing.
+Fermatas written as `(.)` play the attached note, chord, rest, drum note, or
+tied segment for 1.5 times its written duration. This extended duration also
+advances later events in browser playback and MIDI, WAV, and MP3 export.
+In a simultaneous arrangement the marker applies to its own track; write a
+corresponding fermata in every voice that should wait at that point.
 
 Mordents, turns, trills, slides, and grace notes compile inside the written
 duration of the anchor note.
@@ -259,11 +267,11 @@ Example:
 
 This compiles to one melody note with duration `3/8`.
 
-Slurs written with `$(...)` or counted `$$(...)` are visual spans rather than
-ties. The player does
-not alter attacks, durations, velocities, or MIDI events for slurred notes, so
-browser playback and MIDI, WAV, and MP3 export sound the same with or without
-the slur markers.
+Slurs written with `$(...)` or counted `$$(...)` remain distinct from ties:
+they do not merge rhythmic durations or suppress attacks. The player instead
+adds a short legato overlap between adjacent different pitches while retaining
+their written onset times. Rests break the legato connection, repeated pitches
+are rearticulated without overlap, and nested slurs do not compound the effect.
 
 ## Rests
 

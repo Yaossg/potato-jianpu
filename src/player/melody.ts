@@ -7,6 +7,7 @@ export interface MelodyNote {
   index: number;
   velocity?: number;
   sustained?: number[];
+  legatoToIndex?: number;
 }
 
 export interface MelodyPitchSpan {
@@ -43,6 +44,8 @@ const MAX_PROGRAM = 174;
 const DEFAULT_VELOCITY = 64;
 const HAIRPIN_DEFAULT_DELTA = 24;
 const TRILL_SEGMENT_DURATION = 1 / 32;
+const FERMATA_DURATION_FACTOR = 1.5;
+const SLUR_OVERLAP_RATIO = 0.05;
 
 function assertProgram(program: number) {
   if (!Number.isInteger(program) || program < MIN_PROGRAM || program > MAX_PROGRAM) {
@@ -86,7 +89,8 @@ function replaceChordPitch(chord: number[], index: number, pitch: number): numbe
 function compilePitchNoteEvents(note: Extract<Note, { kind: "pitch" }>, noteMap: number[], slideTarget?: number): MelodyNote[] {
   const velocity = note.velocity;
   const anchor = note.chord.map((pitch) => pitchToMidi(pitch, noteMap));
-  const base: MelodyNote = { chord: anchor, duration: note.duration.value, index: note.index, velocity };
+  const duration = note.duration.value * (note.ornament?.kind === "fermata" ? FERMATA_DURATION_FACTOR : 1);
+  const base: MelodyNote = { chord: anchor, duration, index: note.index, velocity };
   if (!note.ornament) {
     return [base];
   }
@@ -184,7 +188,7 @@ export function melodyPitchSpans(notes: MelodyNote[]): MelodyPitchSpan[] {
   const active = new Map<number, MelodyPitchSpan>();
   let offset = 0;
 
-  for (const note of notes) {
+  for (const [noteIndex, note] of notes.entries()) {
     const chord = note.chord === "rest" ? [] : [...new Set(note.chord)];
     const sustained = new Set(note.sustained ?? []);
     const nextActive = new Map<number, MelodyPitchSpan>();
@@ -201,6 +205,17 @@ export function melodyPitchSpans(notes: MelodyNote[]): MelodyPitchSpan[] {
       }
     }
 
+    const next = notes[noteIndex + 1];
+    if (next && note.legatoToIndex === next.index && next.chord !== "rest") {
+      const nextChord = new Set(next.chord);
+      const overlap = Math.min(note.duration, next.duration) * SLUR_OVERLAP_RATIO;
+      for (const [pitch, span] of nextActive) {
+        if (!nextChord.has(pitch)) {
+          span.duration += overlap;
+        }
+      }
+    }
+
     active.clear();
     for (const [pitch, span] of nextActive) {
       active.set(pitch, span);
@@ -213,13 +228,14 @@ export function melodyPitchSpans(notes: MelodyNote[]): MelodyPitchSpan[] {
 
 function compileNoteEvents(note: Note, noteMap: number[], program: number, slideTarget?: number): MelodyNote[] {
   const velocity = note.velocity;
+  const duration = note.duration.value * (note.ornament?.kind === "fermata" ? FERMATA_DURATION_FACTOR : 1);
   switch (note.kind) {
     case "rest":
-      return [{ chord: "rest", duration: note.duration.value, index: note.index, velocity }];
+      return [{ chord: "rest", duration, index: note.index, velocity }];
     case "drum":
       return [{
         chord: [program < 128 ? 60 : program - 128 + 35],
-        duration: note.duration.value,
+        duration,
         index: note.index,
         velocity,
       }];
@@ -232,6 +248,28 @@ interface PlaybackNoteContext {
   note: Note;
   noteMap: number[];
   slideTarget?: number;
+}
+
+function slurTransitions(document: Document): Map<number, number> {
+  const transitions = new Map<number, number>();
+  const notesByTrack = new Map<string, Note[]>();
+  for (const line of document.score) {
+    const track = line.label ?? "T1";
+    notesByTrack.set(track, [...(notesByTrack.get(track) ?? []), ...line.measures.flatMap((measure) => measure.notes)]);
+  }
+  for (const slur of document.slurs) {
+    const notes = (notesByTrack.get(slur.track) ?? []).filter(
+      (note) => note.index >= slur.startNoteIndex && note.index <= slur.endNoteIndex,
+    );
+    for (let index = 0; index < notes.length - 1; index += 1) {
+      const current = notes[index]!;
+      const next = notes[index + 1]!;
+      if (current.kind === "pitch" && next.kind === "pitch") {
+        transitions.set(current.index, next.index);
+      }
+    }
+  }
+  return transitions;
 }
 
 function resolvePlaybackNotes(measures: Measure[], baseNoteMap: number[]): PlaybackNoteContext[] {
@@ -268,6 +306,7 @@ function compileMeasure(
   sourceNotes: Note[],
   contexts: PlaybackNoteContext[],
   contextStart: number,
+  transitions: Map<number, number>,
 ) {
   for (const [index, note] of measure.notes.entries()) {
     const context = contexts[contextStart + index]!;
@@ -280,6 +319,11 @@ function compileMeasure(
     } else {
       output.push(...melodyNotes);
       sourceNotes.push(...melodyNotes.map(() => note));
+    }
+    const legatoToIndex = transitions.get(note.index);
+    const finalEvent = output.at(-1);
+    if (legatoToIndex !== undefined && finalEvent) {
+      finalEvent.legatoToIndex = legatoToIndex;
     }
   }
 }
@@ -445,9 +489,10 @@ function compileMeasures(document: Document, measures: Measure[], program: numbe
   const repeatedMeasures = expandRepeatedMeasures(measures);
   const playbackMeasures = options.navigation === false ? repeatedMeasures : expandNavigationMeasures(repeatedMeasures);
   const contexts = resolvePlaybackNotes(playbackMeasures, baseNoteMap);
+  const transitions = slurTransitions(document);
   let contextStart = 0;
   for (const measure of playbackMeasures) {
-    compileMeasure(measure, program, notes, sourceNotes, contexts, contextStart);
+    compileMeasure(measure, program, notes, sourceNotes, contexts, contextStart, transitions);
     contextStart += measure.notes.length;
   }
   applyHairpinVelocities(notes, sourceNotes);
