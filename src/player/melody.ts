@@ -91,6 +91,10 @@ function compilePitchNoteEvents(note: Extract<Note, { kind: "pitch" }>, noteMap:
     return [base];
   }
 
+  if (note.ornament.kind === "fermata") {
+    return [base];
+  }
+
   if (note.ornament.kind === "slide") {
     const start = anchor[0]!;
     const distance = slideTarget === undefined ? 0 : slideTarget - start;

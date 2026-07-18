@@ -1,4 +1,5 @@
 export const SMUFL_SYMBOLS = {
+  fermataAbove: "&#xE4C0;",
   ornamentTrill: "&#xE566;",
   ornamentTurn: "&#xE567;",
   ornamentTurnInverted: "&#xE569;",

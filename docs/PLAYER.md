@@ -194,6 +194,10 @@ key-signature pitch.
 
 ## Ornaments
 
+Fermatas written as `(.)` are visual-only. The melody and arrangement
+compilers preserve the attached item's written duration without adding pauses
+or changing MIDI, WAV, or MP3 timing.
+
 Mordents, turns, trills, slides, and grace notes compile inside the written
 duration of the anchor note.
 

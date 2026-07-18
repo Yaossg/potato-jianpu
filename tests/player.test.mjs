@@ -41,6 +41,16 @@ test("keeps slurs visual-only for melody, arrangement, and MIDI", () => {
   assert.deepEqual(exportMidiBytes(counted.value), exportMidiBytes(plain.value));
 });
 
+test("keeps fermatas visual-only for melody, arrangement, and MIDI", () => {
+  const plain = parse("1- {1 3 5} 0 X");
+  const fermatas = parse("1(.)- {1 3 5}(.) 0(.) X(.)");
+  assert.equal(plain.ok, true);
+  assert.equal(fermatas.ok, true);
+  assert.deepEqual(compileMelody(fermatas.value), compileMelody(plain.value));
+  assert.deepEqual(compileArrangement(fermatas.value), compileArrangement(plain.value));
+  assert.deepEqual(exportMidiBytes(fermatas.value), exportMidiBytes(plain.value));
+});
+
 test('plays ignored same-pitch slides as ordinary notes', () => {
   const result = parse('time: 3/4\n===\n1(~)- 1');
   assert.equal(result.ok, true);

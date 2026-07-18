@@ -536,6 +536,10 @@ complete hairpin on each visual line.
 
 ### Ornaments
 
+Fermatas written as `(.)` render above their attached note, chord, rest, or
+drum note with the SMuFL fermata-above glyph. They are visual-only and do not
+change playback or export timing.
+
 Mordent, turn, and trill ornaments render with SMuFL Private Use Area glyphs.
 Upper mordents use the plain mordent glyph, while lower mordents use the glyph
 with a vertical stroke.

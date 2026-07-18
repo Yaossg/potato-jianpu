@@ -202,8 +202,17 @@ function renderTrillExtension(startX: number, endX: number, y: number): string {
   return `<path class="ornament trill-extension" d="${commands.join(" ")}"/>`;
 }
 
-function renderOrnament(note: PitchNote, x: number, y: number, ornamentEndX: number): string {
+function renderOrnament(note: Note, x: number, y: number, ornamentEndX: number): string {
   if (!note.ornament) {
+    return "";
+  }
+  const maxOffset = note.kind === "pitch" ? maxAccidentalOffset(note.chord) : 0;
+  const centerX = x + maxOffset;
+  const markY = y - chordHeight(note) - DIMENSIONS.ornamentTopGap;
+  if (note.ornament.kind === "fermata") {
+    return `<text class="ornament fermata smufl-symbol" x="${centerX}" y="${markY}" text-anchor="middle">${SMUFL_SYMBOLS.fermataAbove}</text>`;
+  }
+  if (note.kind !== "pitch") {
     return "";
   }
   if (note.ornament.kind === "grace") {
@@ -212,9 +221,6 @@ function renderOrnament(note: PitchNote, x: number, y: number, ornamentEndX: num
   if (note.ornament.kind === "slide") {
     return "";
   }
-  const maxOffset = maxAccidentalOffset(note.chord);
-  const centerX = x + maxOffset;
-  const markY = y - chordHeight(note) - DIMENSIONS.ornamentTopGap;
   let symbol: string;
   if (note.ornament.kind === "trill") {
     symbol = SMUFL_SYMBOLS.ornamentTrill;
@@ -942,10 +948,10 @@ function renderLine(
     }
     if (entry.note.kind === "pitch") {
       noteParts.push(renderPitchNote(entry.note, entry.x, entry.y));
-      noteParts.push(renderOrnament(entry.note, entry.x, entry.y, entry.ornamentEndX));
     } else {
       noteParts.push(renderRestOrDrum(entry.note, entry.x, entry.y));
     }
+    noteParts.push(renderOrnament(entry.note, entry.x, entry.y, entry.ornamentEndX));
     noteParts.push(renderDuration(entry.note, entry.x, entry.y, entry.full, entry.dashAnchors));
     parts.push(`<g class="${className}" data-note-index="${entry.note.index}">${noteParts.join("")}</g>`);
   }

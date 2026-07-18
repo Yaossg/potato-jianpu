@@ -33,6 +33,7 @@ export interface Pitch {
 }
 
 export type Ornament =
+  | { kind: "fermata"; range: SourceRange }
   | { kind: "mordent"; direction: "upper" | "lower"; range: SourceRange }
   | { kind: "turn"; direction: "upper" | "lower"; range: SourceRange }
   | { kind: "trill"; extension?: "wavy"; range: SourceRange }
@@ -48,6 +49,7 @@ export interface DurationMark {
 
 export interface BaseNote {
   tie: boolean;
+  ornament?: Ornament;
   duration: DurationMark;
   index: number;
   range: SourceRange;
@@ -76,7 +78,6 @@ export const VELOCITY_LABELS: Record<number, string> = Object.fromEntries(
 export interface PitchNote extends BaseNote {
   kind: "pitch";
   chord: Pitch[];
-  ornament?: Ornament;
 }
 
 export interface RestNote extends BaseNote {

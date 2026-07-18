@@ -514,6 +514,15 @@ test("parses note-attached turns before duration suffixes", () => {
   assert.equal(notes[1].duration.halves, 1);
 });
 
+test("parses visual-only fermatas on notes, chords, rests, drums, and tied notes", () => {
+  const result = parse("1(.)- {1 3 5}(.) 0(.) X(.) 2 ~2(.)");
+  assert.equal(result.ok, true);
+  const notes = result.value.score[0].measures[0].notes;
+  assert.deepEqual(notes.map((note) => note.ornament?.kind), ["fermata", "fermata", "fermata", "fermata", undefined, "fermata"]);
+  assert.equal(notes[0].duration.dashes, 1);
+  assert.equal(notes[5].tie, true);
+});
+
 test("parses short and long trills before duration suffixes", () => {
   const source = "1(tr) 2(tr~) 3(tr~)-";
   const result = parse(source);
@@ -606,7 +615,7 @@ test("reports diagnostics for unsupported ornament attachments", () => {
   assert.match(messages, /Ornaments cannot be attached to tied notes/);
   assert.match(messages, /Only one ornament can be attached to a note/);
   assert.match(messages, /Ornament parentheses cannot be empty/);
-  assert.match(messages, /Expected '\^', 'v', 'z', 's', 'tr', '~', '<', or '>'/);
+  assert.match(messages, /Expected '\.', '\^', 'v', 'z', 's', 'tr', '~', '<', or '>'/);
   assert.match(messages, /Grace ornaments must include at least one pitch note/);
   assert.match(messages, /Grace ornaments must contain 1, 2, 4, or another power-of-two number of pitch notes/);
   assert.match(messages, /Grace ornament pitches must use note syntax 1-7/);

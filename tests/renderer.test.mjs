@@ -592,6 +592,17 @@ test("renders conventional mordent glyphs and keeps ornaments spaced", () => {
   assert.ok(noteX(svg, 1) - noteX(svg, 0) >= 24);
 });
 
+test("renders fermatas above notes, chords, rests, and drums", () => {
+  const result = parse("1(.) {1 3 5}(.) 0(.) X(.)");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  const fermatas = [...svg.matchAll(/<text class="ornament fermata smufl-symbol" x="([^"]+)" y="([^"]+)" text-anchor="middle">&#xE4C0;<\/text>/g)];
+  assert.equal(fermatas.length, 4);
+  for (const match of fermatas) {
+    assert.ok(Number(match[2]) < notePosition(svg, fermatas.indexOf(match)).y);
+  }
+});
+
 test("renders whole-chord ornaments above the chord", () => {
   const result = parse("{1 3 5}(^) {1 3 5}(tr~)- {1 3 5}(<2)");
   assert.equal(result.ok, true);

@@ -26,6 +26,9 @@ Slurs written with `$(...)` or counted `$$(...)` syntax are also visual-only. Un
 
 ## Ornaments And Sustain
 
+Fermatas written as `(.)` are visual-only. They leave the written duration
+unchanged in browser playback and MIDI, WAV, or MP3 export.
+
 Every ornament fits inside the written duration of its anchor note:
 
 - Upper and lower mordents use the first half for a main-neighbor-main figure, then sustain the anchor pitch.
@@ -64,6 +67,6 @@ Clicking a rendered note starts browser playback from that note. Active notes, i
   links={[
     { href: '../../guide/playback/', label: 'Playback', description: 'Use browser playback controls and choose Programs or volume.' },
     { href: '../../syntax/repeats/', label: 'Repeats', description: 'Write repeat, ending, and navigation syntax.' },
-    { href: '../../syntax/ornaments/', label: 'Ornaments', description: 'Write mordents, turns, trills, slides, and grace notes.' },
+    { href: '../../syntax/ornaments/', label: 'Ornaments', description: 'Write fermatas, mordents, turns, trills, slides, and grace notes.' },
   ]}
 />

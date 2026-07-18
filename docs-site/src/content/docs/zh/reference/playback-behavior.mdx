@@ -26,6 +26,9 @@ import RelatedLinks from '../../../../components/RelatedLinks.astro';
 
 ## 装饰音与延续
 
+用 `(.)` 书写的延长记号只影响视觉效果。浏览器播放以及 MIDI、WAV、MP3
+导出都会保持原书写时值不变。
+
 每一种装饰音都在主音的书写时值内完成：
 
 - 上波音和下波音会在前半段形成主音-邻音-主音，再延续主音音高。
@@ -65,6 +68,6 @@ import RelatedLinks from '../../../../components/RelatedLinks.astro';
   links={[
     { href: '../../guide/playback/', label: '播放', description: '使用浏览器播放控件，并选择 Program 或音量。' },
     { href: '../../syntax/repeats/', label: '反复', description: '编写反复、结尾和导航语法。' },
-    { href: '../../syntax/ornaments/', label: '装饰音', description: '编写波音、回音、颤音、滑音和倚音。' },
+    { href: '../../syntax/ornaments/', label: '装饰音', description: '编写延长记号、波音、回音、颤音、滑音和倚音。' },
   ]}
 />

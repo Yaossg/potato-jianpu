@@ -800,8 +800,7 @@ class Parser {
       );
     }
     const range = mergeRange(start, this.previous().range);
-    const durableNote =
-      note.kind === "pitch" ? { kind: "pitch" as const, chord: note.chord, ...(ornament ? { ornament } : {}) } : note;
+    const durableNote = { ...note, ...(ornament ? { ornament } : {}) };
     return { ...durableNote, tie, velocity, ...prefixes, duration, index: this.noteIndex++, range } as Note;
   }
 
@@ -842,15 +841,15 @@ class Parser {
     let ornament: Ornament | undefined;
     while (this.at("lparen")) {
       const parsed = this.parseSingleOrnament(measureOctave);
-      if (note.kind !== "pitch") {
+      if (parsed.ornament?.kind !== "fermata" && note.kind !== "pitch") {
         this.error("Ornaments can only be attached to pitch notes.", parsed.range);
         continue;
       }
-      if (note.chordSyntax && parsed.ornament?.kind === "slide") {
+      if (note.kind === "pitch" && note.chordSyntax && parsed.ornament?.kind === "slide") {
         this.error("Slides cannot be attached to chords in this version.", parsed.range);
         continue;
       }
-      if (tie) {
+      if (tie && parsed.ornament?.kind !== "fermata") {
         this.error("Ornaments cannot be attached to tied notes in this version.", parsed.range);
         continue;
       }
@@ -871,6 +870,10 @@ class Parser {
 
     if (this.at("rparen")) {
       this.error("Ornament parentheses cannot be empty.", mergeRange(start, this.current().range));
+    } else if (this.at("dot")) {
+      const token = this.current();
+      this.index += 1;
+      ornament = { kind: "fermata", range: mergeRange(start, token.range) };
     } else if (this.at("caret")) {
       const token = this.current();
       this.index += 1;
@@ -933,7 +936,7 @@ class Parser {
         ornament = { kind: "grace", placement, pitches, range: mergeRange(start, pitches.at(-1)!.range) };
       }
     } else {
-      this.error("Expected '^', 'v', 'z', 's', 'tr', '~', '<', or '>' inside ornament parentheses.", this.current().range);
+      this.error("Expected '.', '^', 'v', 'z', 's', 'tr', '~', '<', or '>' inside ornament parentheses.", this.current().range);
       while (!this.at("rparen") && !this.at("newline") && !this.at("eof")) {
         this.index += 1;
       }
