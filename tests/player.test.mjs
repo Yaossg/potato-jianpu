@@ -971,6 +971,28 @@ test("compiles hairpins into gradual melody velocities", () => {
   );
 });
 
+test("applies one hairpin velocity to every event expanded from a source note", () => {
+  for (const ornament of ["(^)", "(z)", "(tr)", "(<3)", "(~)"]) {
+    const source = `p < 1 2${ornament} 3 f < 4`;
+    const result = parse(source);
+    assert.equal(result.ok, true, source);
+    const melody = compileMelody(result.value);
+    const velocitiesBySource = new Map();
+    for (const note of melody.notes) {
+      velocitiesBySource.set(note.index, [...(velocitiesBySource.get(note.index) ?? []), note]);
+    }
+    assert.deepEqual(
+      [...velocitiesBySource.entries()].map(([index, notes]) => [index, [...new Set(notes.map((note) => note.velocity))]]),
+      [[0, [49]], [1, [61]], [2, [73]], [3, [85]]],
+      source,
+    );
+    const midiVelocities = midiNoteEvents(exportMidiBytes(result.value))
+      .filter((event) => event.type === "on")
+      .map((event) => event.velocity);
+    assert.deepEqual([...new Set(midiVelocities)], [49, 61, 73, 85], source);
+  }
+});
+
 test("exports hairpin MIDI velocities", () => {
   const result = parse("f > 1 2 3 p > 4");
   assert.equal(result.ok, true);

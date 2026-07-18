@@ -414,7 +414,10 @@ Per-note dynamic markers (`ppp` through `fff`) set explicit MIDI-style
 velocities. Gradual dynamic hairpins use paired `<` markers for crescendo and
 paired `>` markers for diminuendo. For example, `p < 1 2 3 f < 4`
 interpolates from `p` on `1` to `f` on `4`. The shared melody compiler
-interpolates note velocities across the marked range. Explicit dynamic markers
+interpolates source-note velocities across the marked range. When an ornament
+expands one source note into several playback events, every expanded event
+inherits that source note's single resolved velocity and does not add extra
+hairpin interpolation steps. Explicit dynamic markers
 at the hairpin start or end become the interpolation endpoints; when the ending
 note has no explicit dynamic, the compiler applies a modest default rise or
 fall from the starting velocity. When both endpoints have explicit dynamic

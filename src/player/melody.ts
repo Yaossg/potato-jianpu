@@ -250,6 +250,12 @@ interface PlaybackNoteContext {
   slideTarget?: number;
 }
 
+interface SourceNoteEventGroup {
+  note: Note;
+  startIndex: number;
+  endIndex: number;
+}
+
 function slurTransitions(document: Document): Map<number, number> {
   const transitions = new Map<number, number>();
   const notesByTrack = new Map<string, Note[]>();
@@ -303,7 +309,7 @@ function compileMeasure(
   measure: Measure,
   program: number,
   output: MelodyNote[],
-  sourceNotes: Note[],
+  sourceGroups: SourceNoteEventGroup[],
   contexts: PlaybackNoteContext[],
   contextStart: number,
   transitions: Map<number, number>,
@@ -317,8 +323,9 @@ function compileMeasure(
         previous.duration += melodyNotes.reduce((sum, melodyNote) => sum + melodyNote.duration, 0);
       }
     } else {
+      const startIndex = output.length;
       output.push(...melodyNotes);
-      sourceNotes.push(...melodyNotes.map(() => note));
+      sourceGroups.push({ note, startIndex, endIndex: output.length - 1 });
     }
     const legatoToIndex = transitions.get(note.index);
     const finalEvent = output.at(-1);
@@ -332,20 +339,35 @@ function clampVelocity(velocity: number): number {
   return Math.max(0, Math.min(127, Math.round(velocity)));
 }
 
-function interpolateHairpin(notes: MelodyNote[], startIndex: number, endIndex: number, startVelocity: number, endVelocity: number) {
-  const span = Math.max(1, endIndex - startIndex);
-  for (let index = startIndex; index <= endIndex; index += 1) {
-    const amount = (index - startIndex) / span;
-    notes[index]!.velocity = clampVelocity(startVelocity + (endVelocity - startVelocity) * amount);
+function setGroupVelocity(notes: MelodyNote[], group: SourceNoteEventGroup, velocity: number) {
+  for (let index = group.startIndex; index <= group.endIndex; index += 1) {
+    notes[index]!.velocity = velocity;
   }
 }
 
-function applyHairpinVelocities(notes: MelodyNote[], sourceNotes: Note[]) {
-  let lastExplicitVelocity = DEFAULT_VELOCITY;
-  let active: { kind: NonNullable<Note["hairpinStart"]>; startIndex: number; startVelocity: number } | null = null;
+function interpolateHairpin(
+  notes: MelodyNote[],
+  sourceGroups: SourceNoteEventGroup[],
+  startGroupIndex: number,
+  endGroupIndex: number,
+  startVelocity: number,
+  endVelocity: number,
+) {
+  const span = Math.max(1, endGroupIndex - startGroupIndex);
+  for (let index = startGroupIndex; index <= endGroupIndex; index += 1) {
+    const amount = (index - startGroupIndex) / span;
+    const velocity = clampVelocity(startVelocity + (endVelocity - startVelocity) * amount);
+    setGroupVelocity(notes, sourceGroups[index]!, velocity);
+  }
+}
 
-  for (const [index, note] of sourceNotes.entries()) {
-    const melodyNote = notes[index]!;
+function applyHairpinVelocities(notes: MelodyNote[], sourceGroups: SourceNoteEventGroup[]) {
+  let lastExplicitVelocity = DEFAULT_VELOCITY;
+  let active: { kind: NonNullable<Note["hairpinStart"]>; startGroupIndex: number; startVelocity: number } | null = null;
+
+  for (const [groupIndex, group] of sourceGroups.entries()) {
+    const note = group.note;
+    const melodyNote = notes[group.startIndex]!;
     if (melodyNote.velocity !== undefined && active === null) {
       lastExplicitVelocity = melodyNote.velocity;
     }
@@ -354,15 +376,15 @@ function applyHairpinVelocities(notes: MelodyNote[], sourceNotes: Note[]) {
       const fallbackEndVelocity =
         active.kind === "crescendo" ? active.startVelocity + HAIRPIN_DEFAULT_DELTA : active.startVelocity - HAIRPIN_DEFAULT_DELTA;
       const endVelocity = melodyNote.velocity ?? fallbackEndVelocity;
-      interpolateHairpin(notes, active.startIndex, index, active.startVelocity, endVelocity);
+      interpolateHairpin(notes, sourceGroups, active.startGroupIndex, groupIndex, active.startVelocity, endVelocity);
       lastExplicitVelocity = clampVelocity(endVelocity);
       active = null;
     }
 
     if (note.hairpinStart !== undefined) {
       const startVelocity = melodyNote.velocity ?? lastExplicitVelocity;
-      active = { kind: note.hairpinStart, startIndex: index, startVelocity };
-      melodyNote.velocity = startVelocity;
+      active = { kind: note.hairpinStart, startGroupIndex: groupIndex, startVelocity };
+      setGroupVelocity(notes, group, startVelocity);
     } else if (melodyNote.velocity !== undefined && active === null) {
       lastExplicitVelocity = melodyNote.velocity;
     }
@@ -485,17 +507,17 @@ function expandNavigationMeasures(measures: Measure[]): Measure[] {
 function compileMeasures(document: Document, measures: Measure[], program: number, options: { navigation?: boolean } = {}): Melody {
   const baseNoteMap = C_MAJOR_NOTE_MAP.map((note) => note + document.header.keySignature);
   const notes: MelodyNote[] = [];
-  const sourceNotes: Note[] = [];
+  const sourceGroups: SourceNoteEventGroup[] = [];
   const repeatedMeasures = expandRepeatedMeasures(measures);
   const playbackMeasures = options.navigation === false ? repeatedMeasures : expandNavigationMeasures(repeatedMeasures);
   const contexts = resolvePlaybackNotes(playbackMeasures, baseNoteMap);
   const transitions = slurTransitions(document);
   let contextStart = 0;
   for (const measure of playbackMeasures) {
-    compileMeasure(measure, program, notes, sourceNotes, contexts, contextStart, transitions);
+    compileMeasure(measure, program, notes, sourceGroups, contexts, contextStart, transitions);
     contextStart += measure.notes.length;
   }
-  applyHairpinVelocities(notes, sourceNotes);
+  applyHairpinVelocities(notes, sourceGroups);
 
   return {
     notes,
