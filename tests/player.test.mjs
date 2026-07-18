@@ -26,6 +26,16 @@ test("compiles pitch notes to MIDI notes with key and octave", () => {
   );
 });
 
+test("keeps slurs visual-only for melody, arrangement, and MIDI", () => {
+  const plain = parse("1 2 3 4");
+  const slurred = parse("$(1 2 3 4)");
+  assert.equal(plain.ok, true);
+  assert.equal(slurred.ok, true);
+  assert.deepEqual(compileMelody(slurred.value), compileMelody(plain.value));
+  assert.deepEqual(compileArrangement(slurred.value), compileArrangement(plain.value));
+  assert.deepEqual(exportMidiBytes(slurred.value), exportMidiBytes(plain.value));
+});
+
 test('plays ignored same-pitch slides as ordinary notes', () => {
   const result = parse('time: 3/4\n===\n1(~)- 1');
   assert.equal(result.ok, true);

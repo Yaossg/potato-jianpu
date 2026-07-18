@@ -8,6 +8,7 @@ sectionIds:
   - slash-and-dot-durations
   - duration-table
   - ties
+  - slurs
   - diagnostics
 ---
 
@@ -136,6 +137,52 @@ import ScorePreview from '../../../../components/ScorePreview.astro';
   status="invalid"
   description="延音线不能出现在轨道开头，不能接在休止符之后，也不能改变目标音高。"
   source={`1 0 ~1`}
+/>
+
+## 圆滑线
+
+使用连续写成的 `$(` 起点和右括号 `)`，在两个或更多音高音符或和弦上绘制圆滑线。圆滑线可以跨小节、源码行、视觉换行和分页，也可以嵌套。
+
+<JianpuSource
+  title="圆滑线源码"
+  source={`time: 4/4
+===
+$(1(^) 2 {3 5} 4)`}
+/>
+
+<ScorePreview
+  title="渲染后的圆滑线"
+  source={`time: 4/4
+===
+$(1(^) 2 {3 5} 4)`}
+/>
+
+圆滑线两端必须是音高音符或和弦。内部可以出现休止符，此时会产生警告但仍绘制弧线；圆滑线内不接受鼓音。第一枚音高音符或和弦必须与 `$(` 写在同一源码行。
+
+<JianpuSource
+  title="嵌套且跨行的圆滑线"
+  source={`time: 2/4
+===
+$($(1 2)
+3 4)`}
+/>
+
+圆滑线只影响视觉效果，不会合并时值，也不会改变浏览器播放、MIDI、WAV 或 MP3 输出。延音线使用 `~`，连接兼容的重复音高并合并发声时值。两者可以同时出现，较短的延音线会画在更靠近音符的位置。
+
+<JianpuExample
+  title="圆滑线内含休止符"
+  status="warning"
+  description="弧线仍会渲染，但圆滑线内的休止符会产生警告。"
+  source={`time: 3/4
+===
+$(1 0 2)`}
+/>
+
+<JianpuExample
+  title="圆滑线内的鼓音"
+  status="invalid"
+  description="圆滑线接受音高音符和和弦，内部可以有休止符，但不能有鼓音。"
+  source={`$(1 X 2)`}
 />
 
 ## 诊断

@@ -50,9 +50,11 @@ navigation_after = "[", navigation_instruction, "]" ;
 navigation_target = "Segno" | "Coda" ;
 navigation_instruction = "Fine" | "D.C." | "D.S." | "To Coda" ;
 
-measure = [ octave ], { durable_note } ;
+measure = [ octave ], { slur_open | slur_close | durable_note } ;
 octave = LOWER, { LOWER } | HIGHER, { HIGHER } ;
 
+slur_open = SLUR_START ;
+slur_close = RPAREN ;
 durable_note = [ velocity ], { hairpin }, [ tie ], [ velocity ], general_note, [ ornament ], [ length ] ;
 tie = TIE ;
 velocity = VELOCITY ;
@@ -118,6 +120,7 @@ DASH = "-" ;
 LOWER = "," ;
 HIGHER = "'" ;
 TIE = "~" ;
+SLUR_START = "$(" ;
 VELOCITY = "ppp" | "pp" | "p" | "mp" | "mf" | "f" | "ff" | "fff" ;
 CRESCENDO = "<" ;
 DIMINUENDO = ">" ;

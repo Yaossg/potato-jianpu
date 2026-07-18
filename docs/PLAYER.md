@@ -255,6 +255,11 @@ Example:
 
 This compiles to one melody note with duration `3/8`.
 
+Slurs written with `$(...)` are visual spans rather than ties. The player does
+not alter attacks, durations, velocities, or MIDI events for slurred notes, so
+browser playback and MIDI, WAV, and MP3 export sound the same with or without
+the slur markers.
+
 ## Rests
 
 Rests compile to:

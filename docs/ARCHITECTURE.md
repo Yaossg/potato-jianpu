@@ -69,7 +69,7 @@ Responsibilities:
 - document model
 - header model
 - shared General MIDI Program option data and melodic Program name resolution
-- score line, measure, note, pitch, and duration models
+- score line, measure, note, pitch, duration, and slur-span models
 - time signature helper functions
 
 Core has no dependency on React, DOM, Web Audio, filesystem APIs, CLI APIs, or
@@ -96,6 +96,7 @@ Responsibilities:
 - parse score-level default Program/volume, per-track melodic Program/volume,
   and P-track percussion Program/volume header properties
 - parse per-note velocity markers
+- parse and validate track-local visual slur spans
 - validate tie semantics
 - warn on measure duration mismatches
 - preserve source ranges for diagnostics
@@ -125,6 +126,7 @@ Responsibilities:
 - measure notes and measures
 - wrap measures according to `pageWidth`
 - render header and score as deterministic SVG output
+- project slur spans across visual lines and pages
 - attach note metadata for frontend interaction
 - apply active-note highlighting
 - define shared paper preset dimensions and orientation-based page-size

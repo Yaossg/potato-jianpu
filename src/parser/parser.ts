@@ -16,6 +16,7 @@ import {
   type Result,
   type LyricLine,
   type ScoreLine,
+  type Slur,
   type SourceRange,
 } from "../core/index.js";
 import { applyHeaderProperty, createDefaultHeader, isLyricLabel, isMelodicScoreTrackLabel, isPercussionTrackLabel, type HeaderValue } from "./header.js";
@@ -32,6 +33,7 @@ type ResolvedTieTarget =
 
 type EndingBlock = { endings: number[]; startIndex: number; endIndex: number };
 type ActiveHairpin = { kind: HairpinKind; range: SourceRange };
+type ActiveSlur = { range: SourceRange; notes: Note[] };
 type DynamicHairpinSpan = { kind: HairpinKind; start: Note; end: Note };
 type NotePrefixes = { velocity?: number; hairpinStart?: HairpinKind; hairpinEnd?: HairpinKind };
 type BracketMark =
@@ -149,6 +151,8 @@ class Parser {
   private noteIndex = 0;
   private activeEndings = new Map<string, number[] | undefined>();
   private activeHairpins = new Map<string, ActiveHairpin>();
+  private activeSlurs = new Map<string, ActiveSlur[]>();
+  private slurs: Slur[] = [];
   private labeledScoreMode = false;
 
   constructor(
@@ -165,6 +169,7 @@ class Parser {
     this.labeledScoreMode = this.scoreHasTrackLabelsAhead();
     const score = this.at("eof") ? [] : this.parseScore();
     this.validateIncompleteHairpins();
+    this.validateIncompleteSlurs();
     this.validateHairpinDynamics(score);
     this.validateTrackLabelOrder(score);
     this.validatePageBreaks(score);
@@ -180,7 +185,16 @@ class Parser {
     if (this.diagnostics.some((diagnostic) => diagnostic.severity === "error")) {
       return { ok: false, diagnostics: this.diagnostics };
     }
-    return { ok: true, value: { header, score, diagnostics: this.diagnostics }, diagnostics: this.diagnostics };
+    return {
+      ok: true,
+      value: {
+        header,
+        score,
+        slurs: [...this.slurs].sort((left, right) => left.range.start.offset - right.range.start.offset),
+        diagnostics: this.diagnostics,
+      },
+      diagnostics: this.diagnostics,
+    };
   }
 
   private current(): Token {
@@ -552,12 +566,29 @@ class Parser {
         this.parseUnexpectedScoreToken();
         continue;
       }
+      const slurStarts: Token[] = [];
+      while (this.at("slurStart")) {
+        slurStarts.push(this.current());
+        this.index += 1;
+      }
+      if (slurStarts.length > 0 && !this.isDurableNoteStart()) {
+        for (const startToken of slurStarts) {
+          this.error("Slur start '$(' must be followed by a note on the same source line.", startToken.range);
+        }
+        continue;
+      }
       const prefixes = this.parseDurablePrefixes(trackKey);
       if (!this.isDurableNoteCoreStart()) {
         this.error("Hairpin markers must be followed by a note, rest, drum note, chord, or tie.");
         continue;
       }
-      notes.push(this.parseDurableNote(octavePrefix, prefixes));
+      const note = this.parseDurableNote(octavePrefix, prefixes);
+      notes.push(note);
+      this.recordSlurNote(trackKey, note, slurStarts);
+      while (this.at("rparen")) {
+        this.closeSlur(trackKey, note, this.current());
+        this.index += 1;
+      }
     }
     if (notes.length === 0) {
       this.warning("Empty measure ignored.", start);
@@ -666,6 +697,9 @@ class Parser {
   }
 
   private isDurableNoteStart(): boolean {
+    if (this.at("slurStart")) {
+      return true;
+    }
     if (this.isHairpinToken()) {
       return true;
     }
@@ -1010,7 +1044,7 @@ class Parser {
       return;
     }
     if (this.at("rparen")) {
-      this.error("Unexpected ')' without matching ornament start.");
+      this.error("Unexpected ')' without matching slur or ornament start.");
       this.index += 1;
       return;
     }
@@ -1039,6 +1073,73 @@ class Parser {
     for (const active of this.activeHairpins.values()) {
       const marker = active.kind === "crescendo" ? "<" : ">";
       this.error(`Hairpin must end with a matching '${marker}'.`, active.range);
+    }
+  }
+
+  private recordSlurNote(trackKey: string, note: Note, starts: Token[]) {
+    const stack = this.activeSlurs.get(trackKey) ?? [];
+    for (const active of stack) {
+      active.notes.push(note);
+    }
+    for (const start of starts) {
+      stack.push({ range: start.range, notes: [note] });
+    }
+    if (stack.length > 0) {
+      this.activeSlurs.set(trackKey, stack);
+    }
+  }
+
+  private closeSlur(trackKey: string, endNote: Note, close: Token) {
+    const stack = this.activeSlurs.get(trackKey);
+    const active = stack?.pop();
+    if (!active) {
+      this.error("Unexpected ')' without matching slur start '$('.", close.range);
+      return;
+    }
+    if (stack?.length === 0) {
+      this.activeSlurs.delete(trackKey);
+    }
+
+    const range = mergeRange(active.range, close.range);
+    const startNote = active.notes[0]!;
+    let valid = true;
+    if (startNote.kind !== "pitch") {
+      this.error("Slur must start on a pitch note or chord.", startNote.range);
+      valid = false;
+    }
+    if (endNote.kind !== "pitch") {
+      this.error("Slur must end on a pitch note or chord.", endNote.range);
+      valid = false;
+    }
+    const drum = active.notes.find((note) => note.kind === "drum");
+    if (drum) {
+      this.error("Slurs cannot contain drum notes.", drum.range);
+      valid = false;
+    }
+    if (active.notes.filter((note) => note.kind === "pitch").length < 2) {
+      this.error("Slur must contain at least two pitch notes or chords.", range);
+      valid = false;
+    }
+    if (!valid) {
+      return;
+    }
+    if (active.notes.some((note) => note.kind === "rest")) {
+      this.warning("Slur contains a rest; the arc will still be rendered.", range);
+    }
+    this.slurs.push({
+      startNoteIndex: startNote.index,
+      endNoteIndex: endNote.index,
+      track: trackKey || "T1",
+      placement: "auto",
+      range,
+    });
+  }
+
+  private validateIncompleteSlurs() {
+    for (const stack of this.activeSlurs.values()) {
+      for (const active of stack) {
+        this.error("Unclosed slur; expected ')' after the final note.", active.range);
+      }
     }
   }
 

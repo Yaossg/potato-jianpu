@@ -607,6 +607,7 @@ test("CLI parse JSON keeps diagnostics machine-readable", async () => {
   const payload = JSON.parse(stdout);
   assert.equal(stderr, "");
   assert.equal(payload.ok, true);
+  assert.deepEqual(payload.value.slurs, []);
   assert.equal(payload.diagnostics[0].severity, "warning");
   assert.match(payload.diagnostics[0].message, /Measure duration/);
 });

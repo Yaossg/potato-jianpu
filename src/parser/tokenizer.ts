@@ -23,6 +23,7 @@ export type TokenType =
   | "lower"
   | "higher"
   | "tie"
+  | "slurStart"
   | "equals"
   | "colon"
   | "lbrace"
@@ -240,6 +241,10 @@ export function tokenize(source: string): { tokens: Token[]; diagnostics: Diagno
     }
 
     const two = rest.slice(0, 2);
+    if (two === "$(") {
+      push("slurStart", two);
+      continue;
+    }
     if (two === "|:") {
       push("repeatStart", two);
       continue;

@@ -8,6 +8,7 @@ sectionIds:
   - slash-and-dot-durations
   - duration-table
   - ties
+  - slurs
   - diagnostics
 ---
 
@@ -136,6 +137,52 @@ The tie target must be compatible with the previous sounding pitch. A tied note 
   status="invalid"
   description="A tie cannot start a track, follow a rest, or change pitch target."
   source={`1 0 ~1`}
+/>
+
+## Slurs
+
+Use the contiguous opening marker `$(` and a closing `)` to draw a slur over two or more pitch notes or chords. Slurs may cross barlines, source lines, visual wrapping, and page breaks, and they may be nested.
+
+<JianpuSource
+  title="Slur source"
+  source={`time: 4/4
+===
+$(1(^) 2 {3 5} 4)`}
+/>
+
+<ScorePreview
+  title="Rendered slur"
+  source={`time: 4/4
+===
+$(1(^) 2 {3 5} 4)`}
+/>
+
+The slur endpoints must be pitch notes or chords. A rest may occur inside a slur, but it produces a warning while the arc still renders. Drum notes are not accepted inside slurs. The first pitch note or chord must follow `$(` on the same source line.
+
+<JianpuSource
+  title="Nested and cross-line slurs"
+  source={`time: 2/4
+===
+$($(1 2)
+3 4)`}
+/>
+
+A slur is visual-only: it does not merge durations or change browser playback, MIDI, WAV, or MP3 output. A tie uses `~`, connects compatible repeated pitches, and combines their sounding duration. Both may appear together, with the shorter tie drawn closer to the notes.
+
+<JianpuExample
+  title="Slur containing a rest"
+  status="warning"
+  description="The arc still renders, but a rest inside a slur produces a warning."
+  source={`time: 3/4
+===
+$(1 0 2)`}
+/>
+
+<JianpuExample
+  title="Drum note inside a slur"
+  status="invalid"
+  description="Slurs accept pitch notes and chords, with optional interior rests, but not drum notes."
+  source={`$(1 X 2)`}
 />
 
 ## Diagnostics

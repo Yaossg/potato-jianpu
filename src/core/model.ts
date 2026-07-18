@@ -123,6 +123,14 @@ export interface ScoreLine {
   range: SourceRange;
 }
 
+export interface Slur {
+  startNoteIndex: number;
+  endNoteIndex: number;
+  track: string;
+  placement: "auto";
+  range: SourceRange;
+}
+
 export interface TimeSignature {
   beatsPerMeasure: 2 | 3 | 4 | 6 | 9 | 12;
   beatsPerWholeNote: 2 | 4 | 8 | 16;
@@ -153,6 +161,7 @@ export interface Header {
 export interface Document {
   header: Header;
   score: ScoreLine[];
+  slurs: Slur[];
   diagnostics: Diagnostic[];
 }
 

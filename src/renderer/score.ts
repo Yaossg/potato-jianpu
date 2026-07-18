@@ -8,6 +8,7 @@ import {
   type Pitch,
   type PitchNote,
   type ScoreLine,
+  type Slur,
   type SourceRange,
 } from "../core/index.js";
 import { DIMENSIONS } from "./dimensions.js";
@@ -45,6 +46,13 @@ const PAGINATED_PAGE_CONTENT_TOP = 12;
 interface RenderedLine {
   svg: string;
   lyricAnchors: number[];
+}
+
+interface SlurLineSegment {
+  slur: Slur;
+  lane: number;
+  startNote?: Note;
+  endNote?: Note;
 }
 
 interface LineEntry {
@@ -259,6 +267,33 @@ function renderTie(startX: number, endX: number, y: number, chordHeightValue: nu
   const yOffset = chordHeightValue > DIMENSIONS.baseNoteHeight ? -(chordHeightValue - DIMENSIONS.baseNoteHeight) - 2 : 0;
   const tieY = y + yOffset;
   return `<path class="tie" d="M${startX},${tieY} Q${midX},${tieY - DIMENSIONS.tieHeight} ${endX},${tieY} Q${midX},${tieY - DIMENSIONS.tieCurveHeight} ${startX},${tieY} Z"/>`;
+}
+
+function renderSlur(
+  startX: number,
+  endX: number,
+  endpointY: number,
+  laneOffset: number,
+  startsHere: boolean,
+  endsHere: boolean,
+): string {
+  const width = Math.max(1, endX - startX);
+  const height = Math.min(DIMENSIONS.slurMaxHeight, Math.max(DIMENSIONS.slurMinHeight, width * 0.12));
+  const topY = endpointY - height - laneOffset;
+  const arcWidth = Math.min(height, width / 4);
+  const startY = startsHere ? endpointY : topY;
+  const endY = endsHere ? endpointY : topY;
+  const straightStartX = startsHere ? startX + arcWidth : startX;
+  const straightEndX = endsHere ? endX - arcWidth : endX;
+  const parts = [`M${startX},${startY}`];
+  if (startsHere) {
+    parts.push(`Q${startX},${topY} ${straightStartX},${topY}`);
+  }
+  parts.push(`L${straightEndX},${topY}`);
+  if (endsHere) {
+    parts.push(`Q${endX},${topY} ${endX},${endY}`);
+  }
+  return `<path class="slur" d="${parts.join(" ")}"/>`;
 }
 
 function tieYOf(y: number, chordHeightValue: number): number {
@@ -547,6 +582,115 @@ function lineNotesByTrack(document: Document): Map<ScoreLine, Note[]> {
   return new Map(document.score.map((line) => [line, notesByTrack.get(line.label ?? "") ?? notesInLine(line)]));
 }
 
+function effectiveTrackLabel(line: ScoreLine): string {
+  return line.label ?? "T1";
+}
+
+function slurLaneMap(document: Document, notesByLine: Map<ScoreLine, Note[]>): Map<Slur, number> {
+  const lanes = new Map<Slur, number>();
+  const trackNotes = new Map<string, Note[]>();
+  for (const line of document.score) {
+    const label = effectiveTrackLabel(line);
+    if (!trackNotes.has(label)) {
+      trackNotes.set(label, notesByLine.get(line) ?? notesInLine(line));
+    }
+  }
+
+  const slursByTrack = new Map<string, Slur[]>();
+  for (const slur of document.slurs) {
+    slursByTrack.set(slur.track, [...(slursByTrack.get(slur.track) ?? []), slur]);
+  }
+  for (const [track, slurs] of slursByTrack) {
+    const notes = trackNotes.get(track) ?? [];
+    const ordinal = new Map(notes.map((note, index) => [note.index, index]));
+    const ordered = [...slurs].sort((left, right) => {
+      const leftStart = ordinal.get(left.startNoteIndex) ?? 0;
+      const leftEnd = ordinal.get(left.endNoteIndex) ?? leftStart;
+      const rightStart = ordinal.get(right.startNoteIndex) ?? 0;
+      const rightEnd = ordinal.get(right.endNoteIndex) ?? rightStart;
+      const widthDifference = leftEnd - leftStart - (rightEnd - rightStart);
+      return widthDifference || left.range.end.offset - left.range.start.offset - (right.range.end.offset - right.range.start.offset);
+    });
+    for (const slur of ordered) {
+      const start = ordinal.get(slur.startNoteIndex);
+      const end = ordinal.get(slur.endNoteIndex);
+      if (start === undefined || end === undefined) {
+        continue;
+      }
+      let lane = 0;
+      for (const inner of ordered) {
+        const innerLane = lanes.get(inner);
+        if (innerLane === undefined || inner === slur) {
+          continue;
+        }
+        const innerStart = ordinal.get(inner.startNoteIndex);
+        const innerEnd = ordinal.get(inner.endNoteIndex);
+        if (innerStart === undefined || innerEnd === undefined) {
+          continue;
+        }
+        const containsAnchors = start <= innerStart && end >= innerEnd;
+        const containsSource = slur.range.start.offset < inner.range.start.offset && slur.range.end.offset > inner.range.end.offset;
+        if (containsAnchors && (start < innerStart || end > innerEnd || containsSource)) {
+          lane = Math.max(lane, innerLane + 1);
+        }
+      }
+      lanes.set(slur, lane);
+    }
+  }
+  return lanes;
+}
+
+function projectSlursToLine(
+  document: Document,
+  layout: LineLayout,
+  notesByLine: Map<ScoreLine, Note[]>,
+  lanes: Map<Slur, number>,
+): SlurLineSegment[] {
+  const lineNotes = layout.measures.flatMap((measure) => measure.measure.notes);
+  if (lineNotes.length === 0) {
+    return [];
+  }
+  const trackNotes = notesByLine.get(layout.line) ?? notesInLine(layout.line);
+  const ordinal = new Map(trackNotes.map((note, index) => [note.index, index]));
+  const notesByIndex = new Map(trackNotes.map((note) => [note.index, note]));
+  const first = Math.min(...lineNotes.map((note) => ordinal.get(note.index) ?? Number.POSITIVE_INFINITY));
+  const last = Math.max(...lineNotes.map((note) => ordinal.get(note.index) ?? Number.NEGATIVE_INFINITY));
+  const lineNoteIndexes = new Set(lineNotes.map((note) => note.index));
+
+  return document.slurs.flatMap((slur): SlurLineSegment[] => {
+    if (slur.track !== effectiveTrackLabel(layout.line)) {
+      return [];
+    }
+    const start = ordinal.get(slur.startNoteIndex);
+    const end = ordinal.get(slur.endNoteIndex);
+    if (start === undefined || end === undefined || end < first || start > last) {
+      return [];
+    }
+    return [{
+      slur,
+      lane: lanes.get(slur) ?? 0,
+      ...(lineNoteIndexes.has(slur.startNoteIndex) ? { startNote: notesByIndex.get(slur.startNoteIndex) } : {}),
+      ...(lineNoteIndexes.has(slur.endNoteIndex) ? { endNote: notesByIndex.get(slur.endNoteIndex) } : {}),
+    }];
+  });
+}
+
+function withSlurLayout(layout: LineLayout, segments: SlurLineSegment[]): { layout: LineLayout; slurPadding: number } {
+  if (segments.length === 0) {
+    return { layout, slurPadding: 0 };
+  }
+  const maxLane = Math.max(...segments.map((segment) => segment.lane));
+  const slurPadding = DIMENSIONS.slurEndpointGap + DIMENSIONS.slurMaxHeight + maxLane * DIMENSIONS.slurLaneGap;
+  return {
+    layout: {
+      ...layout,
+      maxPaddingUp: layout.maxPaddingUp + slurPadding,
+      height: layout.height + slurPadding,
+    },
+    slurPadding,
+  };
+}
+
 function renderLine(
   layout: LineLayout,
   lineY: number,
@@ -559,6 +703,8 @@ function renderLine(
   defaultTrackLabel: string,
   finalBarMeasures: Set<Measure>,
   notesByLine: Map<ScoreLine, Note[]>,
+  slurSegments: SlurLineSegment[],
+  slurPadding: number,
 ): RenderedLine {
   const parts: string[] = [];
   const lineEntries: LineEntry[] = [];
@@ -708,6 +854,29 @@ function renderLine(
     parts.push(renderHairpin(segment.kind, startX, endX, hairpinY));
   }
 
+  const contentTopY = lineY + slurPadding;
+  for (const segment of slurSegments) {
+    const startEntry = segment.startNote
+      ? lineEntries.find((entry) => entry.note === segment.startNote)
+      : undefined;
+    const endEntry = segment.endNote
+      ? lineEntries.find((entry) => entry.note === segment.endNote)
+      : undefined;
+    const startX = startEntry ? startEntry.x - DIMENSIONS.slurEndpointOutset : leftTieEdgeX;
+    const endX = endEntry ? endEntry.x + DIMENSIONS.slurEndpointOutset : rightTieEdgeX;
+    const endpointY = contentTopY - DIMENSIONS.slurEndpointGap;
+    parts.push(
+      renderSlur(
+        startX,
+        Math.max(startX + 1, endX),
+        endpointY,
+        segment.lane * DIMENSIONS.slurLaneGap,
+        startEntry !== undefined,
+        endEntry !== undefined,
+      ),
+    );
+  }
+
   for (const entry of lineEntries) {
     const previousNote = previousNoteInSequence(trackNotes, entry.note);
     const previous = previousNote ? lineEntries.find((candidate) => candidate.note === previousNote) : undefined;
@@ -781,6 +950,8 @@ interface RenderLineLayout {
   labelOffset: number;
   bracketOffset: number;
   groupVisualWidth: number;
+  slurSegments: SlurLineSegment[];
+  slurPadding: number;
 }
 
 interface ScoreLayoutContext {
@@ -1329,17 +1500,24 @@ function layoutScore(document: Document, pageWidth: number): ScoreLayoutContext 
   const groups = scoreLineGroups(document);
   const hasLabels = document.score.some((line) => line.label !== undefined);
   const notesByLine = lineNotesByTrack(document);
+  const slurLanes = slurLaneMap(document, notesByLine);
   const finalMeasures = finalBarMeasures(groups);
   const layouts = groups.flatMap((group, groupIndex) => {
     const groupLayouts = alignLineLayouts(layoutGroupLines(group, allNotes, Math.max(1, pageWidth - group.labelOffset - group.bracketOffset * 2), hasLabels), unit);
     const groupVisualWidth = Math.max(0, lyricNaturalWidth(group), ...groupLayouts.map((layout) => layout.width + group.labelOffset + group.bracketOffset * 2));
-    return groupLayouts.map((layout) => ({
-      layout,
-      groupIndex,
-      labelOffset: group.labelOffset,
-      bracketOffset: group.bracketOffset,
-      groupVisualWidth,
-    }));
+    return groupLayouts.map((lineLayout) => {
+      const slurSegments = projectSlursToLine(document, lineLayout, notesByLine, slurLanes);
+      const adjusted = withSlurLayout(lineLayout, slurSegments);
+      return {
+        layout: adjusted.layout,
+        groupIndex,
+        labelOffset: group.labelOffset,
+        bracketOffset: group.bracketOffset,
+        groupVisualWidth,
+        slurSegments,
+        slurPadding: adjusted.slurPadding,
+      };
+    });
   });
 
   return { groups, layouts, hasLabels, finalMeasures, notesByLine };
@@ -1481,6 +1659,8 @@ function renderScorePlacements(
       context.hasLabels ? "" : "T1",
       context.finalMeasures,
       context.notesByLine,
+      item.slurSegments,
+      item.slurPadding,
     );
     parts.push(scaled ? `<g class="score-line scaled" transform="scale(${scaleX},1)">${renderedLine.svg}</g>` : renderedLine.svg);
     const groupPageKey = `${pageIndex}:${item.groupIndex}`;

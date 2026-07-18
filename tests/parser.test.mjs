@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { parse } from "../dist/parser/index.js";
+import { parse, tokenize } from "../dist/parser/index.js";
 
 test("parses a header and unspaced score", () => {
   const result = parse(`title: "Twinkle"\nkey: D\ntime: 4/4\ntempo: 180\n===\n1155|665-|\n`);
@@ -362,6 +362,72 @@ test("parses manual page breaks before score lines", () => {
   assert.equal(result.value.score.length, 2);
   assert.equal(result.value.score[0].pageBreakBefore, undefined);
   assert.equal(result.value.score[1].pageBreakBefore, true);
+});
+
+test("parses slurs as document-level track spans", () => {
+  const source = `$(1(^) 2 | 3 ~3
+"one two three four"
+---
+4 5)`;
+  const result = parse(source);
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.value.slurs.map(({ startNoteIndex, endNoteIndex, track, placement }) => ({ startNoteIndex, endNoteIndex, track, placement })), [
+    { startNoteIndex: 0, endNoteIndex: 5, track: "T1", placement: "auto" },
+  ]);
+  assert.equal(result.value.slurs[0].range.start.offset, 0);
+  assert.equal(result.value.slurs[0].range.end.offset, source.length);
+});
+
+test("tokenizes the contiguous slur opener as one token", () => {
+  assert.deepEqual(tokenize("$(1 2)").tokens.map((token) => token.type), [
+    "slurStart",
+    "note",
+    "note",
+    "rparen",
+    "eof",
+  ]);
+  assert.equal(tokenize("$ (1 2)").diagnostics[0]?.message, "Unexpected character '$'.");
+});
+
+test("parses nested, chord, and independently tracked slurs", () => {
+  const nested = parse(`$($(1 2) {3 5})`);
+  assert.equal(nested.ok, true);
+  assert.deepEqual(nested.value.slurs.map((slur) => [slur.startNoteIndex, slur.endNoteIndex]), [[0, 2], [0, 1]]);
+
+  const tracked = parse(`T1: $(1 2)
+T2: $({1 3} {2 4})`);
+  assert.equal(tracked.ok, true);
+  assert.deepEqual(tracked.value.slurs.map((slur) => slur.track), ["T1", "T2"]);
+});
+
+test("warns for rests inside slurs while keeping the visual span", () => {
+  const result = parse("$(1 0 2)");
+  assert.equal(result.ok, true);
+  assert.equal(result.value.slurs.length, 1);
+  assert.deepEqual(result.diagnostics.map((diagnostic) => [diagnostic.severity, diagnostic.message]), [
+    ["warning", "Slur contains a rest; the arc will still be rendered."],
+    ["warning", "Measure duration 0.75 does not match time signature duration 1."],
+  ]);
+});
+
+test("reports invalid and unmatched slur syntax", () => {
+  const cases = [
+    ["$ (1 2)", /Unexpected character '\$'/],
+    ["$()", /must be followed by a note/],
+    ["$(1)", /at least two pitch notes or chords/],
+    ["$(0 1)", /must start on a pitch note or chord/],
+    ["$(1 0)", /must end on a pitch note or chord/],
+    ["$(1 X 2)", /cannot contain drum notes/],
+    ["1 2)", /without matching slur start/],
+    ["$(1 2", /Unclosed slur/],
+    [`T1: $(1 2
+T2: 5 6)`, /without matching slur start/],
+  ];
+  for (const [source, expected] of cases) {
+    const result = parse(source);
+    assert.equal(result.ok, false, source);
+    assert.match(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), expected, source);
+  }
 });
 
 test("rejects manual page breaks before lyrics", () => {

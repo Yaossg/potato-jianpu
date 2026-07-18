@@ -6,7 +6,7 @@ Current renderer modules:
 
 - `svg.ts`: top-level SVG document serialization.
 - `header.ts`: title, subtitle, key, time, tempo, and composer drawing.
-- `score.ts`: score, note, rest, drum, duration, bar, and tie drawing.
+- `score.ts`: score, note, rest, drum, duration, bar, tie, and slur drawing.
 - `layout.ts`: measure and line layout, including page-width wrapping.
 - `metrics.ts`: note width, chord height, accidental offset, and tie lookahead.
 - `dimensions.ts`: shared renderer layout constants.
@@ -125,12 +125,13 @@ The renderer follows a measurement-first pipeline:
    width.
 7. Optionally justify line coordinates when `justifyMode` enables it.
 8. Reserve page-adornment space for optional page footers and page numbers.
-9. Optionally paginate completed visual lines into fixed-height page boxes,
+9. Project slur spans into visual-line segments and reserve their vertical lanes.
+10. Optionally paginate completed visual lines into fixed-height page boxes,
    honoring manual page breaks from the parsed score.
-10. Draw bars, ties, notes, duration marks, and attached lyric lines or
+11. Draw bars, ties, slurs, notes, duration marks, and attached lyric lines or
     syllables.
-11. Compute final SVG height from either the adaptive content height or the fixed
-   page height multiplied by page count.
+12. Compute final SVG height from either the adaptive content height or the fixed
+    page height multiplied by page count.
 
 The main internal layout records are:
 
@@ -220,6 +221,11 @@ Renderer dimensions are centralized in the `DIMENSIONS` object:
 | `tieHeight` | `16` | Tie arc height |
 | `tieCurveHeight` | `13` | Inner tie curve height |
 | `tiePadding` | `24` | Tie vertical offset above notes |
+| `slurMinHeight` | `12` | Minimum slur curve height |
+| `slurMaxHeight` | `24` | Maximum slur curve height and base reserved lane height |
+| `slurLaneGap` | `10` | Vertical separation between nested slur lanes |
+| `slurEndpointGap` | `4` | Clearance between slur endpoints and the notation below |
+| `slurEndpointOutset` | `4` | Horizontal outward offset from an anchored note center |
 | `octaveSpacing` | `5` | Distance between octave dots |
 | `noteBottomPadding` | `10` | Baseline padding below notes |
 | `underlineSpacing` | `5` | Vertical distance between duration underlines |
@@ -479,6 +485,31 @@ draws an outgoing partial tie.
 This is a pragmatic cross-line rendering strategy, not full engraving-quality
 tie layout.
 
+### Slurs
+
+Slurs render as thin, flat-topped stroked paths above the notation: a curved
+rise, a horizontal middle section, and a curved descent keep them visually
+distinct from the filled, continuously curved tie paths. The renderer resolves
+each document-level slur against the ordered notes of its own track, so
+interleaved multi-voice note indexes do not join unrelated voices. A slur on
+one visual line places its endpoints just outside its source and destination
+note centers; a slur that
+crosses source wrapping or automatic wrapping is split into outgoing, middle,
+and incoming segments at the content edges. A split edge meets the horizontal
+section directly. Pagination reuses those visual-line segments, including
+across explicit page breaks.
+
+Nested spans use separate vertical lanes for their horizontal sections. Inner
+slur platforms stay closer to the notation and outer platforms move upward,
+while every anchored curved end still reaches its note. Ties remain closer to
+their notes than slur platforms. Slur lane height is added before pagination,
+so page placement, lyrics, and multi-voice brackets include the reserved space.
+Justification and overwide-line scaling apply to slur coordinates together with
+their score line.
+
+Slurs are engraving-only. They do not change browser playback or MIDI, WAV,
+and MP3 export timing.
+
 ### Dynamics And Hairpins
 
 Per-note dynamic markers render as italic text above their attached note.
@@ -590,7 +621,7 @@ The renderer is deterministic but still intentionally simple:
 - layout constants are internal, not configurable
 - measure wrapping only occurs between measures
 - overwide lines use line-level scaling instead of note re-spacing
-- no full collision avoidance for dense chords and ties
+- no full collision avoidance for dense chords, ties, and slurs
 - no zip packaging for split per-page browser downloads
 - no staff or engraving model beyond the current Jianpu notation
 

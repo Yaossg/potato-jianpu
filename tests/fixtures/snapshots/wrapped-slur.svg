@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="100" height="296" viewBox="0 0 100 296" style="color: #111827">
+<defs>
+<style>
+.title { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 32px; font-weight: 700; }
+.subtitle { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 20px; font-weight: 400; }
+.metadata { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 20px; font-weight: 400; }
+.page-footer, .page-number { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-weight: 400; }
+.page-number { font-variant-numeric: tabular-nums; }
+.key-signature .note { font-size: 20px; font-weight: 700; }
+.key-signature .metadata { font-size: 20px; font-weight: 400; }
+.time-signature { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 18px; font-weight: 700; }
+.time-signature-line { stroke: currentColor; stroke-width: 1.5; stroke-linecap: butt; }
+.line-label { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: 700; }
+.lyric-line { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 17px; font-weight: 400; }
+.lyric-syllable { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 17px; font-weight: 400; }
+.voice-bracket { stroke: currentColor; stroke-width: 2; fill: none; stroke-linecap: butt; stroke-linejoin: miter; }
+.voice-bracket-stem { stroke: currentColor; stroke-width: 3; fill: none; stroke-linecap: butt; }
+.note { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 24px; font-weight: 700; }
+.accidental { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-weight: 700; text-anchor: middle; }
+.dot { fill: currentColor; }
+.bar-thin { stroke: currentColor; stroke-width: 2.5; stroke-linecap: butt; }
+.bar-final { stroke: currentColor; stroke-width: 5; stroke-linecap: butt; }
+.repeat-dot { fill: currentColor; }
+.ending-line { stroke: currentColor; stroke-width: 2; fill: none; }
+.ending-label { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-weight: 700; }
+.navigation-target, .navigation-instruction { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: italic; font-weight: 700; }
+.navigation-symbol { font-family: "Noto Music", "Segoe UI Symbol", "Noto Sans Symbols 2", "DejaVu Sans", Arial, Helvetica, sans-serif; font-size: 18px; font-style: normal; font-weight: 400; }
+.navigation-coda-symbol { font-size: 28px; }
+.navigation-target-text { font-size: 14px; }
+.tempo-mark { fill: currentColor; font-family: "Segoe UI Symbol", "Noto Music", "Noto Sans Symbols 2", Arial, Helvetica, sans-serif; font-size: 22px; font-weight: 400; }
+.tempo-value { font-size: 20px; }
+.underline { stroke: currentColor; stroke-width: 2.5; }
+.dash { stroke: currentColor; stroke-width: 3; }
+.tie { fill: currentColor; stroke: currentColor; stroke-width: 1; }
+.slur { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: butt; }
+.ornament { fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.grace-arc { stroke-width: 1; stroke-linecap: butt; stroke-linejoin: miter; }
+.smufl-symbol { fill: currentColor; stroke: none; font-family: Bravura, "Noto Music", "Segoe UI Symbol", sans-serif; font-size: 22px; font-weight: 400; pointer-events: none; }
+.hairpin { stroke: currentColor; stroke-width: 1.8; stroke-linecap: butt; }
+.velocity { fill: currentColor; font-family: 'Georgia Pro', Georgia, 'DejaVu Serif', Times, 'Times New Roman', FreeSerif, 'DejaVu Math TeX', serif; font-size: 14px; font-style: italic; font-weight: bold; }
+.note-item { cursor: pointer; }
+.note-item.active .note, .note-item.active .accidental, .note-item.active .dot, .note-item.active .velocity, .note-item.active .smufl-symbol { fill: #dc2626; }
+.note-item.active .underline, .note-item.active .dash, .note-item.active .ornament { stroke: #dc2626; }
+</style>
+</defs>
+<rect class="page-background" x="0" y="0" width="100" height="296" fill="#ffffff"/>
+<g class="key-signature">
+<text class="note" x="10" y="40" text-anchor="start" dominant-baseline="central">1</text>
+<text class="metadata" x="28" y="40" dominant-baseline="central"> = C</text>
+</g>
+<g class="time-signature">
+<text x="94" y="30" text-anchor="middle" dominant-baseline="central">4</text>
+<line class="time-signature-line" x1="86" y1="40" x2="102" y2="40"/>
+<text x="94" y="50" text-anchor="middle" dominant-baseline="central">4</text>
+</g>
+<text class="tempo-mark" x="128" y="40" dominant-baseline="central">♩<tspan class="tempo-value"> = 120</tspan></text>
+<line class="bar-thin" x1="64" y1="108" x2="64" y2="140"/>
+<path class="slur" d="M14,104 Q14,92 26,92 L64,92"/>
+<g class="note-item" data-note-index="0"><text class="note" x="18" y="132" text-anchor="middle">1</text></g>
+<g class="note-item" data-note-index="1"><text class="note" x="42" y="132" text-anchor="middle">2</text></g>
+<line class="bar-thin" x1="64" y1="180" x2="64" y2="212"/>
+<path class="slur" d="M0,164 L64,164"/>
+<g class="note-item" data-note-index="2"><text class="note" x="18" y="204" text-anchor="middle">3</text></g>
+<g class="note-item" data-note-index="3"><text class="note" x="42" y="204" text-anchor="middle">4</text></g>
+<line class="bar-thin" x1="59" y1="252" x2="59" y2="284"/><line class="bar-final" x1="66" y1="252" x2="66" y2="284"/>
+<path class="slur" d="M0,236 L34.5,236 Q46,236 46,248"/>
+<g class="note-item" data-note-index="4"><text class="note" x="18" y="276" text-anchor="middle">5</text></g>
+<g class="note-item" data-note-index="5"><text class="note" x="42" y="276" text-anchor="middle">6</text></g>
+</svg>

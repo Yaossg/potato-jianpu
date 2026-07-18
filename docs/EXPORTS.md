@@ -79,6 +79,7 @@ Parse result shape:
       "lyricLabels": {}
     },
     "score": [],
+    "slurs": [],
     "diagnostics": []
   },
   "diagnostics": []

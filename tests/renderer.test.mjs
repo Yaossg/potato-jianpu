@@ -13,6 +13,7 @@ const fullHeaderSnapshot = readSnapshot("full-header.svg");
 const hiddenHeaderSnapshot = readSnapshot("hidden-header.svg");
 const notationFeaturesSnapshot = readSnapshot("notation-features.svg");
 const wrappedTieSnapshot = readSnapshot("wrapped-tie.svg");
+const wrappedSlurSnapshot = readSnapshot("wrapped-slur.svg");
 
 function noteX(svg, noteIndex) {
   const match = svg.match(
@@ -83,6 +84,10 @@ function navigationY(svg, text) {
 
 function tiePaths(svg) {
   return [...svg.matchAll(/<path class="tie" d="([^"]+)"/g)].map((match) => match[1]);
+}
+
+function slurPaths(svg) {
+  return [...svg.matchAll(/<path class="slur" d="([^"]+)"/g)].map((match) => match[1]);
 }
 
 function slidePaths(svg) {
@@ -231,6 +236,13 @@ test("matches the wrapped tie SVG snapshot", () => {
   assert.equal(svg, wrappedTieSnapshot);
 });
 
+test("matches the wrapped slur SVG snapshot", () => {
+  const result = parse("$(1 2 | 3 4 | 5 6)");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 100, color: "#111827", background: "#ffffff" });
+  assert.equal(svg, wrappedSlurSnapshot);
+});
+
 test("paginates visual lines into fixed-height page groups", () => {
   const result = parse(`title: "Paged"\n===\n1 2 | 3 4 | 5 6 | 7 1' |\n1 2 | 3 4 | 5 6 | 7 1' |\n1 2 | 3 4 | 5 6 | 7 1' |`);
   assert.equal(result.ok, true);
@@ -346,6 +358,61 @@ test("renders cross-line ties as cut halves after justification", () => {
   const svg = renderSvg(result.value, { pageWidth: 160, justifyMode: "all", background: "#ffffff" });
   assert.match(svg, /<path class="tie" d="M[^"]+ Q[^"]+ [^,]+,88 L[^,]+,89\.5 Q[^"]+ Z"/);
   assert.match(svg, /<path class="tie" d="M[^,]+,148 Q[^"]+ Q[^"]+ [^,]+,149\.5 Z"/);
+});
+
+test("renders slurs outside ties and ornaments", () => {
+  const result = parse("$(1(^) 2 ~2 3)");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  assert.match(svg, /\.slur \{ fill: none; stroke: currentColor; stroke-width: 1\.5; stroke-linecap: butt; \}/);
+  assert.equal(slurPaths(svg).length, 1);
+  assert.equal(tiePaths(svg).length, 1);
+  const slurPath = slurPaths(svg)[0];
+  const startNote = notePosition(svg, 0);
+  const endNote = notePosition(svg, 3);
+  assert.match(slurPath, /^M[^ ]+ Q[^ ]+ [^ ]+ L[^ ]+ Q[^ ]+ [^ ]+$/);
+  assert.match(slurPath, new RegExp(`^M${startNote.x - 4},`));
+  assert.match(slurPath, new RegExp(` ${endNote.x + 4},[^ ]+$`));
+  const slurControlY = Number(slurPath.match(/Q[^,]+,([^ ]+)/)?.[1]);
+  const tieTopY = Math.min(...tiePaths(svg)[0].match(/-?\d+(?:\.\d+)?/g).map(Number).filter((_, index) => index % 2 === 1));
+  assert.ok(slurControlY < tieTopY);
+});
+
+test("stacks nested slurs in separate lanes", () => {
+  const result = parse("$($(1 2) 3 4)");
+  assert.equal(result.ok, true);
+  const paths = slurPaths(renderSvg(result.value));
+  assert.equal(paths.length, 2);
+  const controlYs = paths.map((path) => Number(path.match(/Q[^,]+,([^ ]+)/)?.[1]));
+  assert.ok(Math.min(...controlYs) < Math.max(...controlYs));
+  assert.equal(pathStart(paths[0])[1], pathStart(paths[1])[1]);
+  assert.equal(pathEnd(paths[0])[1], pathEnd(paths[1])[1]);
+});
+
+test("splits slurs across visual lines and pages", () => {
+  const result = parse("$(1 2 | 3 4 | 5 6 | 7 1')");
+  assert.equal(result.ok, true);
+  const wrapped = renderSvg(result.value, { pageWidth: 100, justifyMode: "all" });
+  const wrappedPaths = slurPaths(wrapped);
+  assert.ok(wrappedPaths.length > 1);
+  assert.match(wrappedPaths[0], /^M[^ ]+ Q[^ ]+ [^ ]+ L[^ ]+$/);
+  assert.ok(wrappedPaths.some((path) => /^M[^ ]+ L[^ ]+$/.test(path)));
+  assert.match(wrappedPaths.at(-1), /^M[^ ]+ L[^ ]+ Q[^ ]+ [^ ]+$/);
+  const paged = renderSvg(result.value, { pageWidth: 100, paginate: true, pageHeight: 100 });
+  assert.ok((paged.match(/class="page" data-page=/g)?.length ?? 0) > 1);
+  assert.equal(slurPaths(paged).length, wrappedPaths.length);
+});
+
+test("keeps slurs on their own track in multi-voice groups", () => {
+  const result = parse(`T1: 1 2
+T2: $(5, 6,
+T1: 3 4
+T2: 7, 1)`);
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 220 });
+  assert.equal(slurPaths(svg).length, 2);
+  const firstT2 = notePosition(svg, 2);
+  assert.match(slurPaths(svg)[0], new RegExp(`^M${firstT2.x - 4},`));
 });
 
 test("connects ties to the previous note in the same track", () => {
