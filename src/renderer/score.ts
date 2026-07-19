@@ -14,7 +14,6 @@ import {
 import { DIMENSIONS } from "./dimensions.js";
 import { labelOffsetForTexts, lyricLineDisplayLabel, scoreLineDisplayLabel } from "./labels.js";
 import {
-  flattenNotes,
   layoutLine,
   lineWidth,
   measureXOffset,
@@ -25,6 +24,7 @@ import {
 import { chordHeight, maxAccidentalOffset, ornamentLeftWidthOf, ornamentRightWidthOf } from "./metrics.js";
 import type { JustifyMode } from "./options.js";
 import { SMUFL_SYMBOLS } from "./smufl.js";
+import { planVerticalLine, type VerticalItem, type VerticalLinePlan, type VerticalPlacement } from "./vertical-layout.js";
 import { escapeXml } from "./xml.js";
 
 const accidentalMap = new Map([
@@ -49,6 +49,7 @@ interface RenderedLine {
 }
 
 interface SlurLineSegment {
+  id: string;
   slur: Slur;
   lane: number;
   countLabel?: number;
@@ -202,13 +203,15 @@ function renderTrillExtension(startX: number, endX: number, y: number): string {
   return `<path class="ornament trill-extension" d="${commands.join(" ")}"/>`;
 }
 
-function renderOrnament(note: Note, x: number, y: number, ornamentEndX: number): string {
+function renderOrnament(note: Note, x: number, y: number, ornamentEndX: number, placement?: VerticalPlacement): string {
   if (!note.ornament) {
     return "";
   }
   const maxOffset = note.kind === "pitch" ? maxAccidentalOffset(note.chord) : 0;
   const centerX = x + maxOffset;
-  const markY = y - chordHeight(note) - DIMENSIONS.ornamentTopGap;
+  const markY = placement
+    ? y - placement.anchor - DIMENSIONS.ornamentTextDescent
+    : y - chordHeight(note) - DIMENSIONS.verticalLaneGap - DIMENSIONS.ornamentTextDescent;
   if (note.ornament.kind === "fermata") {
     return `<text class="ornament fermata smufl-symbol" x="${centerX}" y="${markY}" text-anchor="middle">${SMUFL_SYMBOLS.fermataAbove}</text>`;
   }
@@ -216,7 +219,9 @@ function renderOrnament(note: Note, x: number, y: number, ornamentEndX: number):
     return "";
   }
   if (note.ornament.kind === "grace") {
-    return renderGracePitches(note, x, y);
+    const intrinsicBottom = graceVerticalBounds(note).bottom;
+    const shift = Math.max(0, (placement?.anchor ?? intrinsicBottom) - intrinsicBottom);
+    return renderGracePitches(note, x, y - shift);
   }
   if (note.ornament.kind === "slide") {
     return "";
@@ -266,13 +271,11 @@ function renderRestOrDrum(note: Note, x: number, y: number): string {
   return `<text class="note" x="${x}" y="${y}" text-anchor="middle">${text}</text>`;
 }
 
-function renderTie(startX: number, endX: number, y: number, chordHeightValue: number): string {
+function renderTie(startX: number, endX: number, tieY: number): string {
   if (endX <= startX) {
     return "";
   }
   const midX = (startX + endX) / 2;
-  const yOffset = chordHeightValue > DIMENSIONS.baseNoteHeight ? -(chordHeightValue - DIMENSIONS.baseNoteHeight) - 2 : 0;
-  const tieY = y + yOffset;
   return `<path class="tie" d="M${startX},${tieY} Q${midX},${tieY - DIMENSIONS.tieHeight} ${endX},${tieY} Q${midX},${tieY - DIMENSIONS.tieCurveHeight} ${startX},${tieY} Z"/>`;
 }
 
@@ -280,14 +283,14 @@ function renderSlur(
   startX: number,
   endX: number,
   endpointY: number,
-  laneOffset: number,
+  platformY: number,
   startsHere: boolean,
   endsHere: boolean,
   countLabel?: number,
 ): string {
   const width = Math.max(1, endX - startX);
-  const height = Math.min(DIMENSIONS.slurMaxHeight, Math.max(DIMENSIONS.slurMinHeight, width * 0.12));
-  const topY = endpointY - height - laneOffset;
+  const topY = Math.min(endpointY, platformY);
+  const height = Math.max(1, endpointY - topY);
   const arcWidth = Math.min(height, width / 4);
   const startY = startsHere ? endpointY : topY;
   const endY = endsHere ? endpointY : topY;
@@ -314,11 +317,6 @@ function renderSlur(
   return `<path class="slur" d="${parts.join(" ")}"/>${label}`;
 }
 
-function tieYOf(y: number, chordHeightValue: number): number {
-  const yOffset = chordHeightValue > DIMENSIONS.baseNoteHeight ? -(chordHeightValue - DIMENSIONS.baseNoteHeight) - 2 : 0;
-  return y + yOffset;
-}
-
 function pitchHeight(pitch: Pitch): number {
   const semitones = [0, 2, 4, 5, 7, 9, 11] as const;
   return pitch.octave * 12 + semitones[pitch.note - 1]! + (pitch.accidental ?? 0);
@@ -343,11 +341,10 @@ function renderSlide(x: number, y: number, direction: -1 | 1): string {
   return `<path class="ornament slide" d="${path}"/><path class="slide-arrow" d="${arrowPath}" fill="currentColor" stroke="none"/>`;
 }
 
-function renderIncomingTie(edgeX: number, endX: number, y: number, chordHeightValue: number): string {
+function renderIncomingTie(edgeX: number, endX: number, tieY: number): string {
   if (endX <= edgeX) {
     return "";
   }
-  const tieY = tieYOf(y, chordHeightValue);
   const topCutX = edgeX;
   const topCutY = tieY - DIMENSIONS.tieHeight / 2;
   const bottomCutX = edgeX;
@@ -357,11 +354,10 @@ function renderIncomingTie(edgeX: number, endX: number, y: number, chordHeightVa
   return `<path class="tie" d="M${topCutX},${topCutY} Q${topControlX},${topCutY} ${endX},${tieY} Q${bottomControlX},${bottomCutY} ${bottomCutX},${bottomCutY} Z"/>`;
 }
 
-function renderOutgoingTie(startX: number, edgeX: number, y: number, chordHeightValue: number): string {
+function renderOutgoingTie(startX: number, edgeX: number, tieY: number): string {
   if (edgeX <= startX) {
     return "";
   }
-  const tieY = tieYOf(y, chordHeightValue);
   const topCutX = edgeX;
   const topCutY = tieY - DIMENSIONS.tieHeight / 2;
   const bottomCutX = edgeX;
@@ -446,8 +442,9 @@ function formatEnding(endings: number[]): string {
   return endings.join(",");
 }
 
-function renderEnding(ending: number[], startX: number, endX: number, noteY: number, openEnd = false): string {
-  const y = noteY - DIMENSIONS.baseNoteHeight - DIMENSIONS.endingTopOffset;
+function renderEnding(ending: number[], startX: number, endX: number, noteY: number, placement: VerticalPlacement | undefined, openEnd = false): string {
+  const topY = placement ? noteY - placement.top : noteY - DIMENSIONS.baseNoteHeight - DIMENSIONS.endingTopOffset - 14;
+  const y = topY + 14;
   const labelX = startX + 4;
   const path = openEnd ? `M${startX},${y + 8} V${y} H${endX}` : `M${startX},${y + 8} V${y} H${endX} V${y + 8}`;
   return [
@@ -485,12 +482,8 @@ function navigationAfterLabel(mark: NonNullable<Measure["navigationAfter"]>[numb
   }
 }
 
-function navigationLaneY(lineTopY: number): number {
-  return lineTopY + DIMENSIONS.navigationHeight - DIMENSIONS.navigationTopOffset;
-}
-
-function renderNavigationBefore(marks: NonNullable<Measure["navigationBefore"]>, x: number, lineTopY: number): string {
-  const y = navigationLaneY(lineTopY);
+function renderNavigationBefore(marks: NonNullable<Measure["navigationBefore"]>, x: number, baselineY: number): string {
+  const y = baselineY;
   let cursor = x;
   return marks
     .map((mark) => {
@@ -502,14 +495,12 @@ function renderNavigationBefore(marks: NonNullable<Measure["navigationBefore"]>,
     .join("");
 }
 
-function renderNavigationAfter(marks: NonNullable<Measure["navigationAfter"]>, x: number, lineTopY: number): string {
-  const y = navigationLaneY(lineTopY);
-  return `<text class="navigation-instruction" x="${x}" y="${y}" text-anchor="middle">${marks.map(navigationAfterLabel).join(", ")}</text>`;
+function renderNavigationAfter(marks: NonNullable<Measure["navigationAfter"]>, x: number, baselineY: number): string {
+  return `<text class="navigation-instruction" x="${x}" y="${baselineY}" text-anchor="middle">${marks.map(navigationAfterLabel).join(", ")}</text>`;
 }
 
-function renderFine(x: number, lineTopY: number): string {
-  const y = navigationLaneY(lineTopY);
-  return `<text class="navigation-target navigation-target-text" x="${x}" y="${y}" text-anchor="middle">Fine</text>`;
+function renderFine(x: number, baselineY: number): string {
+  return `<text class="navigation-target navigation-target-text" x="${x}" y="${baselineY}" text-anchor="middle">Fine</text>`;
 }
 
 function measureFullness(measure: Measure, unit: number): boolean[] {
@@ -688,6 +679,7 @@ function projectSlursToLine(
       ? trackNotes[Math.floor((start + end) / 2)]
       : undefined;
     return [{
+      id: `slur:${slur.range.start.offset}:${slur.range.end.offset}:${layout.line.range.start.offset}:${layout.measureStartIndex}`,
       slur,
       lane: lanes.get(slur) ?? 0,
       ...(labelNote && lineNoteIndexes.has(labelNote.index) ? { countLabel: slur.noteCount } : {}),
@@ -697,22 +689,322 @@ function projectSlursToLine(
   });
 }
 
-function withSlurLayout(layout: LineLayout, segments: SlurLineSegment[]): { layout: LineLayout; slurPadding: number } {
-  if (segments.length === 0) {
-    return { layout, slurPadding: 0 };
+interface NaturalLineEntry {
+  note: Note;
+  x: number;
+  ornamentEndX: number;
+}
+
+interface NaturalLineGeometry {
+  entries: NaturalLineEntry[];
+  leftEdgeX: number;
+  rightEdgeX: number;
+}
+
+function naturalLineGeometry(layout: LineLayout, labelOffset: number, bracketOffset: number): NaturalLineGeometry {
+  const contentOffset = labelOffset + bracketOffset;
+  const entries: NaturalLineEntry[] = [];
+  for (const [measureIndex, measureLayout] of layout.measures.entries()) {
+    const xOffset = measureXOffset(layout.measures, measureIndex);
+    const naturalBarX = xOffset + measureLayout.width - measureLayout.rightPadding - DIMENSIONS.repeatRightPadding + 12;
+    const renderedBarX = contentOffset + naturalBarX + (measureLayout.measure.repeatEnd ? DIMENSIONS.repeatEndLeftGap : 0);
+    const ornamentBarX = renderedBarX - (measureLayout.measure.repeatEnd ? 2 : 5);
+    const measureEntries: NaturalLineEntry[] = [];
+    for (const [noteIndex, note] of measureLayout.measure.notes.entries()) {
+      const x =
+        contentOffset +
+        xOffset +
+        measureLayout.notePositions[noteIndex]! +
+        ornamentLeftWidthOf(note) +
+        measureLayout.leftPadding;
+      const entry = { note, x, ornamentEndX: ornamentBarX };
+      const previous = measureEntries.at(-1);
+      if (previous) {
+        previous.ornamentEndX = x + (note.kind === "pitch" ? maxAccidentalOffset(note.chord) : 0);
+      }
+      measureEntries.push(entry);
+      entries.push(entry);
+    }
   }
-  const maxLane = Math.max(...segments.map((segment) => segment.lane));
-  const countPadding = segments.some((segment) => segment.countLabel !== undefined)
-    ? DIMENSIONS.slurCountFontSize / 2
-    : 0;
-  const slurPadding = DIMENSIONS.slurEndpointGap + DIMENSIONS.slurMaxHeight + maxLane * DIMENSIONS.slurLaneGap + countPadding;
   return {
-    layout: {
-      ...layout,
-      maxPaddingUp: layout.maxPaddingUp + slurPadding,
-      height: layout.height + slurPadding,
-    },
-    slurPadding,
+    entries,
+    leftEdgeX: contentOffset,
+    rightEdgeX: contentOffset + layout.width - DIMENSIONS.leftPadding + 12,
+  };
+}
+
+function slurHeight(width: number): number {
+  return Math.min(DIMENSIONS.slurMaxHeight, Math.max(DIMENSIONS.slurMinHeight, Math.max(1, width) * 0.12));
+}
+
+function noteBodyItem(entry: NaturalLineEntry): VerticalItem {
+  const accidental = entry.note.kind === "pitch" ? maxAccidentalOffset(entry.note.chord) : 0;
+  return {
+    id: `body:${entry.note.index}`,
+    band: "body",
+    x1: entry.x - DIMENSIONS.baseNoteWidth / 2,
+    x2: entry.x + accidental + DIMENSIONS.baseNoteWidth / 2,
+    height: chordHeight(entry.note),
+    sourceOrder: entry.note.range.start.offset,
+    fixed: true,
+  };
+}
+
+function graceVerticalBounds(note: PitchNote): { bottom: number; height: number } {
+  if (note.ornament?.kind !== "grace") {
+    return { bottom: 0, height: 0 };
+  }
+  const scale = DIMENSIONS.graceNoteFontSize / DIMENSIONS.baseNoteHeight;
+  const upperOctaves = Math.max(0, ...note.ornament.pitches.map((pitch) => pitch.octave));
+  const lowerOctaves = Math.max(0, ...note.ornament.pitches.map((pitch) => -pitch.octave));
+  const halves = Math.log2(note.ornament.pitches.length) + 1;
+  const upperExtent = Math.max(
+    DIMENSIONS.baseNoteHeight,
+    DIMENSIONS.octaveDotVerticalOffset + upperOctaves * DIMENSIONS.octaveSpacing + 2,
+  );
+  const lowerExtent = Math.max(
+    DIMENSIONS.baseNoteHeight * 0.2,
+    DIMENSIONS.octaveDotBelowOffset + lowerOctaves * DIMENSIONS.octaveSpacing + 2,
+    DIMENSIONS.octaveDotBelowOffset + (halves - 1) * DIMENSIONS.underlineSpacing + DIMENSIONS.underlineSpacing / 4,
+  );
+  const bottom = Math.max(0, DIMENSIONS.graceNoteYOffset - lowerExtent * scale);
+  const top = DIMENSIONS.graceNoteYOffset + upperExtent * scale;
+  return { bottom, height: top - bottom };
+}
+
+function ornamentItem(entry: NaturalLineEntry): VerticalItem | undefined {
+  const note = entry.note;
+  if (!note.ornament) {
+    return undefined;
+  }
+  const accidental = note.kind === "pitch" ? maxAccidentalOffset(note.chord) : 0;
+  const centerX = entry.x + accidental;
+  if (note.ornament.kind === "grace") {
+    if (note.kind !== "pitch") {
+      return undefined;
+    }
+    const bounds = graceVerticalBounds(note);
+    return {
+      id: `ornament:${note.index}`,
+      band: "ornament",
+      x1: entry.x - ornamentLeftWidthOf(note) - DIMENSIONS.graceNoteGap,
+      x2: entry.x + ornamentRightWidthOf(note) + DIMENSIONS.graceNoteGap,
+      height: bounds.height,
+      gap: DIMENSIONS.verticalLaneGap,
+      preferredBottom: bounds.bottom,
+      sourceOrder: note.range.start.offset,
+    };
+  }
+  if (note.ornament.kind === "slide") {
+    return {
+      id: `ornament:${note.index}`,
+      band: "ornament",
+      x1: centerX + DIMENSIONS.slideXOffset,
+      x2: centerX + DIMENSIONS.slideXOffset + DIMENSIONS.slideRadius + DIMENSIONS.slideArrowHalfWidth,
+      height: DIMENSIONS.slideLowYOffset,
+      gap: DIMENSIONS.verticalLaneGap,
+      sourceOrder: note.range.start.offset,
+    };
+  }
+  return {
+    id: `ornament:${note.index}`,
+    band: "ornament",
+    x1: centerX - DIMENSIONS.ornamentHeight / 2,
+    x2:
+      note.ornament.kind === "trill" && note.ornament.extension === "wavy" && note.duration.dashes > 0
+        ? Math.max(centerX + DIMENSIONS.ornamentHeight / 2, entry.ornamentEndX)
+        : centerX + DIMENSIONS.ornamentHeight / 2,
+    height: DIMENSIONS.ornamentHeight,
+    gap: DIMENSIONS.verticalLaneGap,
+    sourceOrder: note.range.start.offset,
+  };
+}
+
+function textWidth(text: string, fontSize: number): number {
+  return Math.max(fontSize, text.length * fontSize * 0.62);
+}
+
+function hairpinSegmentId(segment: HairpinSegment, layout: LineLayout): string {
+  return `hairpin:${segment.kind}:${segment.start.index}:${segment.end.index}:${layout.line.range.start.offset}:${layout.measureStartIndex}`;
+}
+
+function endingItemId(measure: Measure): string {
+  return `ending:${measure.range.start.offset}`;
+}
+
+function navigationBeforeId(measure: Measure): string {
+  return `navigation-before:${measure.range.start.offset}`;
+}
+
+function navigationAfterId(measure: Measure, kind: "fine" | "instruction"): string {
+  return `navigation-after:${kind}:${measure.range.start.offset}`;
+}
+
+function collectVerticalItems(
+  layout: LineLayout,
+  labelOffset: number,
+  bracketOffset: number,
+  notesByLine: Map<ScoreLine, Note[]>,
+  slurSegments: SlurLineSegment[],
+): VerticalItem[] {
+  const geometry = naturalLineGeometry(layout, labelOffset, bracketOffset);
+  const entryByNote = new Map(geometry.entries.map((entry) => [entry.note, entry]));
+  const trackNotes = notesByLine.get(layout.line) ?? notesInLine(layout.line);
+  const items: VerticalItem[] = geometry.entries.map(noteBodyItem);
+
+  for (const entry of geometry.entries) {
+    const previousNote = previousNoteInSequence(trackNotes, entry.note);
+    const previous = previousNote ? entryByNote.get(previousNote) : undefined;
+    const nextNote = nextNoteInSequence(trackNotes, entry.note);
+    const next = nextNote ? entryByNote.get(nextNote) : undefined;
+    if (entry.note.tie) {
+      items.push({
+        id: `tie:${entry.note.index}`,
+        band: "tie",
+        x1: previous?.x ?? geometry.leftEdgeX,
+        x2: entry.x + (entry.note.kind === "pitch" ? maxAccidentalOffset(entry.note.chord) : 0),
+        height: DIMENSIONS.tieHeight + DIMENSIONS.tieStrokeWidth,
+        gap: DIMENSIONS.verticalLaneGap,
+        sourceOrder: entry.note.range.start.offset,
+      });
+    }
+    if (nextNote?.tie && !next) {
+      items.push({
+        id: `tie:${nextNote.index}`,
+        band: "tie",
+        x1: entry.x,
+        x2: geometry.rightEdgeX,
+        height: DIMENSIONS.tieHeight + DIMENSIONS.tieStrokeWidth,
+        gap: DIMENSIONS.verticalLaneGap,
+        sourceOrder: nextNote.range.start.offset,
+      });
+    }
+    const ornament = ornamentItem(entry);
+    if (ornament) {
+      items.push(ornament);
+    }
+    if (entry.note.velocity !== undefined) {
+      const label = VELOCITY_LABELS[entry.note.velocity] ?? "";
+      items.push({
+        id: `velocity:${entry.note.index}`,
+        band: "velocity",
+        x1: entry.x - textWidth(label, DIMENSIONS.velocityFontSize) / 2,
+        x2: entry.x + textWidth(label, DIMENSIONS.velocityFontSize) / 2,
+        height: DIMENSIONS.velocityFontSize,
+        gap: DIMENSIONS.verticalLaneGap,
+        sourceOrder: entry.note.range.start.offset,
+      });
+    }
+  }
+
+  const lineTrackIndexes = geometry.entries.map((entry) => trackNotes.indexOf(entry.note)).filter((index) => index >= 0);
+  const firstLineTrackIndex = Math.min(...lineTrackIndexes);
+  const lastLineTrackIndex = Math.max(...lineTrackIndexes);
+  for (const segment of hairpinSegments(trackNotes)) {
+    const startIndex = trackNotes.indexOf(segment.start);
+    const endIndex = trackNotes.indexOf(segment.end);
+    if (startIndex < 0 || endIndex < 0 || endIndex < firstLineTrackIndex || startIndex > lastLineTrackIndex) {
+      continue;
+    }
+    const start = entryByNote.get(segment.start);
+    const end = entryByNote.get(segment.end);
+    const containsInterior = geometry.entries.some((entry) => {
+      const index = trackNotes.indexOf(entry.note);
+      return index > startIndex && index < endIndex;
+    });
+    if (!start && !end && !containsInterior) {
+      continue;
+    }
+    items.push({
+      id: hairpinSegmentId(segment, layout),
+      band: "hairpin",
+      x1: start?.x ?? geometry.leftEdgeX,
+      x2: end?.x ?? geometry.rightEdgeX,
+      height: DIMENSIONS.hairpinHeight + DIMENSIONS.hairpinStrokeWidth,
+      gap: DIMENSIONS.verticalLaneGap,
+      sourceOrder: segment.start.range.start.offset,
+    });
+  }
+
+  const slurItems: Array<VerticalItem & { lane: number }> = slurSegments.map((segment) => {
+    const start = segment.startNote ? entryByNote.get(segment.startNote) : undefined;
+    const end = segment.endNote ? entryByNote.get(segment.endNote) : undefined;
+    const x1 = start ? start.x - DIMENSIONS.slurEndpointOutset : geometry.leftEdgeX;
+    const x2 = end ? end.x + DIMENSIONS.slurEndpointOutset : geometry.rightEdgeX;
+    return {
+      id: segment.id,
+      band: "slur",
+      x1,
+      x2,
+      height:
+        slurHeight(x2 - x1) +
+        Math.max(DIMENSIONS.slurStrokeWidth / 2, segment.countLabel !== undefined ? DIMENSIONS.slurCountFontSize / 2 : 0),
+      gap: DIMENSIONS.verticalLaneGap,
+      sourceOrder: segment.slur.range.start.offset,
+      lane: segment.lane,
+    };
+  });
+  for (const item of slurItems) {
+    item.dependsOn = slurItems
+      .filter((inner) => inner.lane < item.lane && inner.x1 < item.x2 && item.x1 < inner.x2)
+      .map((inner) => inner.id);
+    items.push(item);
+  }
+
+  const contentOffset = labelOffset + bracketOffset;
+  for (const [measureIndex, measureLayout] of layout.measures.entries()) {
+    const measure = measureLayout.measure;
+    const xOffset = measureXOffset(layout.measures, measureIndex);
+    const naturalBarX = xOffset + measureLayout.width - measureLayout.rightPadding - DIMENSIONS.repeatRightPadding + 12;
+    const previousMeasure = layout.measures[measureIndex - 1]?.measure;
+    if (measure.ending !== undefined && !sameEnding(previousMeasure?.ending, measure.ending)) {
+      let endingEndMeasureIndex = measureIndex;
+      while (sameEnding(layout.measures[endingEndMeasureIndex + 1]?.measure.ending, measure.ending)) {
+        endingEndMeasureIndex += 1;
+      }
+      const endLayout = layout.measures[endingEndMeasureIndex]!;
+      const endOffset = measureXOffset(layout.measures, endingEndMeasureIndex);
+      const endingEndX = endOffset + endLayout.width - endLayout.rightPadding - DIMENSIONS.repeatRightPadding + 12;
+      items.push({
+        id: endingItemId(measure),
+        band: "ending",
+        x1: contentOffset + xOffset + measureLayout.leftPadding - DIMENSIONS.leftPadding / 2 - DIMENSIONS.endingLeftOverhang,
+        x2: contentOffset + endingEndX + (endLayout.measure.repeatEnd ? DIMENSIONS.repeatEndLeftGap : 0),
+        height: DIMENSIONS.endingHeight,
+        gap: DIMENSIONS.verticalLaneGap,
+        sourceOrder: measure.range.start.offset,
+      });
+    }
+    const before = measure.navigationBefore ?? [];
+    if (before.length > 0) {
+      const x = contentOffset + xOffset + measureLayout.leftPadding - DIMENSIONS.leftPadding / 2;
+      const width = before.reduce((sum, mark) => sum + navigationBeforeDisplay(mark).advance, 0);
+      items.push({ id: navigationBeforeId(measure), band: "navigation", x1: x, x2: x + width, height: DIMENSIONS.navigationFontHeight, gap: DIMENSIONS.verticalLaneGap, sourceOrder: measure.range.start.offset });
+    }
+    const after = measure.navigationAfter ?? [];
+    if (after.includes("fine")) {
+      const x = contentOffset + naturalBarX;
+      const width = textWidth("Fine", DIMENSIONS.navigationTextFontSize);
+      items.push({ id: navigationAfterId(measure, "fine"), band: "navigation", x1: x - width / 2, x2: x + width / 2, height: DIMENSIONS.navigationFontHeight, gap: DIMENSIONS.verticalLaneGap, sourceOrder: measure.range.end.offset });
+    }
+    const instructions = after.filter((mark) => mark !== "fine");
+    if (instructions.length > 0) {
+      const labels = instructions.map(navigationAfterLabel).join(", ");
+      const x = contentOffset + naturalBarX;
+      const width = textWidth(labels, DIMENSIONS.navigationTextFontSize);
+      items.push({ id: navigationAfterId(measure, "instruction"), band: "navigation", x1: x - width / 2, x2: x + width / 2, height: DIMENSIONS.navigationFontHeight, gap: DIMENSIONS.verticalLaneGap, sourceOrder: measure.range.end.offset });
+    }
+  }
+  return items;
+}
+
+function withVerticalLayout(layout: LineLayout, plan: VerticalLinePlan): LineLayout {
+  const paddingDown = Math.max(0, layout.height - layout.maxPaddingUp - DIMENSIONS.noteBottomPadding);
+  return {
+    ...layout,
+    maxPaddingUp: plan.aboveHeight,
+    height: plan.aboveHeight + paddingDown + DIMENSIONS.noteBottomPadding,
+    verticalPlan: plan,
   };
 }
 
@@ -729,7 +1021,6 @@ function renderLine(
   finalBarMeasures: Set<Measure>,
   notesByLine: Map<ScoreLine, Note[]>,
   slurSegments: SlurLineSegment[],
-  slurPadding: number,
 ): RenderedLine {
   const parts: string[] = [];
   const lineEntries: LineEntry[] = [];
@@ -757,15 +1048,22 @@ function renderLine(
     const navigationBefore = measureLayout.measure.navigationBefore ?? [];
     if (navigationBefore.length > 0) {
       const navigationX = xOffset + measureLayout.leftPadding - DIMENSIONS.leftPadding / 2;
-      parts.push(renderNavigationBefore(navigationBefore, contentOffset + justifyX(navigationX), lineY));
+      const placement = layout.verticalPlan?.placements.get(navigationBeforeId(measureLayout.measure));
+      const navigationY =
+        lineY + layout.maxPaddingUp - (placement?.anchor ?? 0) - DIMENSIONS.navigationTextDescent;
+      parts.push(renderNavigationBefore(navigationBefore, contentOffset + justifyX(navigationX), navigationY));
     }
     const navigationAfter = measureLayout.measure.navigationAfter ?? [];
     if (navigationAfter.includes("fine")) {
-      parts.push(renderFine(contentOffset + justifyX(naturalBarX), lineY));
+      const placement = layout.verticalPlan?.placements.get(navigationAfterId(measureLayout.measure, "fine"));
+      const y = lineY + layout.maxPaddingUp - (placement?.anchor ?? 0) - DIMENSIONS.navigationTextDescent;
+      parts.push(renderFine(contentOffset + justifyX(naturalBarX), y));
     }
     const navigationInstructions = navigationAfter.filter((mark) => mark !== "fine");
     if (navigationInstructions.length > 0) {
-      parts.push(renderNavigationAfter(navigationInstructions, contentOffset + justifyX(naturalBarX), lineY));
+      const placement = layout.verticalPlan?.placements.get(navigationAfterId(measureLayout.measure, "instruction"));
+      const y = lineY + layout.maxPaddingUp - (placement?.anchor ?? 0) - DIMENSIONS.navigationTextDescent;
+      parts.push(renderNavigationAfter(navigationInstructions, contentOffset + justifyX(naturalBarX), y));
     }
     if (measureLayout.measure.ending !== undefined && !sameEnding(previousMeasure?.ending, measureLayout.measure.ending)) {
       let endingEndMeasureIndex = measureIndex;
@@ -786,6 +1084,7 @@ function renderLine(
           contentOffset + justifyX(endingStartX),
           contentOffset + justifyX(endingEndX),
           lineY + layout.maxPaddingUp,
+          layout.verticalPlan?.placements.get(endingItemId(measureLayout.measure)),
           openEnd,
         ),
       );
@@ -848,15 +1147,6 @@ function renderLine(
   const lineTrackIndexes = lineEntries.map((entry) => trackNotes.indexOf(entry.note)).filter((index) => index >= 0);
   const firstLineTrackIndex = Math.min(...lineTrackIndexes);
   const lastLineTrackIndex = Math.max(...lineTrackIndexes);
-  const lineHasDynamicHairpinCollision = lineEntries.some(
-    (entry) => entry.note.velocity !== undefined && (entry.note.hairpinStart !== undefined || entry.note.hairpinEnd !== undefined),
-  );
-  const hairpinY =
-    lineY +
-    layout.maxPaddingUp -
-    DIMENSIONS.baseNoteHeight -
-    DIMENSIONS.hairpinTopGap -
-    (lineHasDynamicHairpinCollision ? DIMENSIONS.hairpinVelocityClearance : 0);
   for (const segment of hairpinSegments(trackNotes)) {
     const startIndex = trackNotes.indexOf(segment.start);
     const endIndex = trackNotes.indexOf(segment.end);
@@ -876,11 +1166,20 @@ function renderLine(
       (startEntry?.x ?? leftTieEdgeX) + (startEntry && isHairpinTransition(segment.start) ? DIMENSIONS.hairpinTransitionGap / 2 : 0);
     const endX =
       (endEntry?.x ?? rightTieEdgeX) - (endEntry && isHairpinTransition(segment.end) ? DIMENSIONS.hairpinTransitionGap / 2 : 0);
-    parts.push(renderHairpin(segment.kind, startX, endX, hairpinY));
+    const placement = layout.verticalPlan?.placements.get(hairpinSegmentId(segment, layout));
+    const centerOffset = placement
+      ? (placement.bottom + placement.top) / 2
+      : DIMENSIONS.baseNoteHeight + DIMENSIONS.verticalLaneGap + DIMENSIONS.hairpinHeight / 2;
+    parts.push(renderHairpin(segment.kind, startX, endX, lineY + layout.maxPaddingUp - centerOffset));
   }
 
-  const contentTopY = lineY + slurPadding;
   const slurEdgeInset = DIMENSIONS.slurStrokeWidth / 2;
+  const bodyTop = Math.max(
+    DIMENSIONS.baseNoteHeight,
+    ...[...(layout.verticalPlan?.placements.values() ?? [])]
+      .filter((placement) => placement.band === "body")
+      .map((placement) => placement.top),
+  );
   for (const segment of slurSegments) {
     const startEntry = segment.startNote
       ? lineEntries.find((entry) => entry.note === segment.startNote)
@@ -890,13 +1189,23 @@ function renderLine(
       : undefined;
     const startX = startEntry ? startEntry.x - DIMENSIONS.slurEndpointOutset : leftTieEdgeX + slurEdgeInset;
     const endX = endEntry ? endEntry.x + DIMENSIONS.slurEndpointOutset : rightTieEdgeX - slurEdgeInset;
-    const endpointY = contentTopY - DIMENSIONS.slurEndpointGap;
+    const placement = layout.verticalPlan?.placements.get(segment.id);
+    const baselineY = lineY + layout.maxPaddingUp;
+    const endpointY = baselineY - bodyTop - DIMENSIONS.slurEndpointGap;
+    const platformTopPadding = Math.max(
+      DIMENSIONS.slurStrokeWidth / 2,
+      segment.countLabel !== undefined ? DIMENSIONS.slurCountFontSize / 2 : 0,
+    );
+    const platformOffset = placement
+      ? placement.top - platformTopPadding
+      : bodyTop + DIMENSIONS.slurEndpointGap + slurHeight(endX - startX);
+    const platformY = baselineY - platformOffset;
     parts.push(
       renderSlur(
         startX,
         Math.max(startX + 1, endX),
         endpointY,
-        segment.lane * DIMENSIONS.slurLaneGap,
+        platformY,
         startEntry !== undefined,
         endEntry !== undefined,
         segment.countLabel,
@@ -915,21 +1224,32 @@ function renderLine(
     ) {
       const direction = slideDirection(entry.note, nextNote);
       if (direction !== 0) {
-        parts.push(renderSlide(entry.x + maxAccidentalOffset(entry.note.chord), entry.y, direction));
+        const placement = layout.verticalPlan?.placements.get(`ornament:${entry.note.index}`);
+        const intrinsicBottom = direction > 0
+          ? DIMENSIONS.slideLowYOffset
+          : DIMENSIONS.slideLowYOffset - DIMENSIONS.slideArrowLength;
+        const shift = Math.max(0, (placement?.anchor ?? intrinsicBottom) - intrinsicBottom);
+        parts.push(renderSlide(entry.x + maxAccidentalOffset(entry.note.chord), entry.y - shift, direction));
       }
     }
     if (entry.note.tie && previous) {
       const startX = previous.x + (previous.note.kind === "pitch" ? maxAccidentalOffset(previous.note.chord) : 0);
       const endX = entry.x + (entry.note.kind === "pitch" ? maxAccidentalOffset(entry.note.chord) : 0);
-      parts.push(renderTie(startX, endX, lineY + layout.maxPaddingUp - DIMENSIONS.tiePadding, Math.max(chordHeight(previous.note), chordHeight(entry.note))));
+      const placement = layout.verticalPlan?.placements.get(`tie:${entry.note.index}`);
+      const tieOffset = (placement?.anchor ?? chordHeight(entry.note) + DIMENSIONS.verticalLaneGap) + DIMENSIONS.tieStrokeWidth / 2;
+      parts.push(renderTie(startX, endX, entry.y - tieOffset));
     } else if (entry.note.tie) {
       const endX = entry.x + (entry.note.kind === "pitch" ? maxAccidentalOffset(entry.note.chord) : 0);
-      parts.push(renderIncomingTie(leftTieEdgeX, endX, lineY + layout.maxPaddingUp - DIMENSIONS.tiePadding, chordHeight(entry.note)));
+      const placement = layout.verticalPlan?.placements.get(`tie:${entry.note.index}`);
+      const tieOffset = (placement?.anchor ?? chordHeight(entry.note) + DIMENSIONS.verticalLaneGap) + DIMENSIONS.tieStrokeWidth / 2;
+      parts.push(renderIncomingTie(leftTieEdgeX, endX, entry.y - tieOffset));
     }
     const nextRendered = nextNote ? lineEntries.some((candidate) => candidate.note === nextNote) : false;
     if (nextNote?.tie && !nextRendered) {
       const startX = entry.x + (entry.note.kind === "pitch" ? maxAccidentalOffset(entry.note.chord) : 0);
-      parts.push(renderOutgoingTie(startX, rightTieEdgeX, lineY + layout.maxPaddingUp - DIMENSIONS.tiePadding, chordHeight(entry.note)));
+      const placement = layout.verticalPlan?.placements.get(`tie:${nextNote.index}`);
+      const tieOffset = (placement?.anchor ?? chordHeight(entry.note) + DIMENSIONS.verticalLaneGap) + DIMENSIONS.tieStrokeWidth / 2;
+      parts.push(renderOutgoingTie(startX, rightTieEdgeX, entry.y - tieOffset));
     }
 
     const className = activeNoteIndices.has(entry.note.index) ? "note-item active" : "note-item";
@@ -937,13 +1257,8 @@ function renderLine(
     if (entry.note.velocity !== undefined) {
       const label = VELOCITY_LABELS[entry.note.velocity];
       if (label) {
-        const chordH = entry.note.kind === "pitch" ? chordHeight(entry.note) : DIMENSIONS.baseNoteHeight;
-        const nextTrackNote = nextNoteInSequence(trackNotes, entry.note);
-        const noteInTie = entry.note.tie || (nextTrackNote?.tie ?? false);
-        let velocityY = entry.y - chordH - DIMENSIONS.velocityTextGap;
-        if (noteInTie) {
-          velocityY -= DIMENSIONS.tieHeight;
-        }
+        const placement = layout.verticalPlan?.placements.get(`velocity:${entry.note.index}`);
+        const velocityY = entry.y - (placement?.anchor ?? chordHeight(entry.note) + DIMENSIONS.verticalLaneGap) - DIMENSIONS.velocityTextDescent;
         noteParts.push(`<text class="velocity" x="${entry.x}" y="${velocityY}" text-anchor="middle">${escapeXml(label)}</text>`);
       }
     }
@@ -952,7 +1267,15 @@ function renderLine(
     } else {
       noteParts.push(renderRestOrDrum(entry.note, entry.x, entry.y));
     }
-    noteParts.push(renderOrnament(entry.note, entry.x, entry.y, entry.ornamentEndX));
+    noteParts.push(
+      renderOrnament(
+        entry.note,
+        entry.x,
+        entry.y,
+        entry.ornamentEndX,
+        layout.verticalPlan?.placements.get(`ornament:${entry.note.index}`),
+      ),
+    );
     noteParts.push(renderDuration(entry.note, entry.x, entry.y, entry.full, entry.dashAnchors));
     parts.push(`<g class="${className}" data-note-index="${entry.note.index}">${noteParts.join("")}</g>`);
   }
@@ -978,7 +1301,6 @@ interface RenderLineLayout {
   bracketOffset: number;
   groupVisualWidth: number;
   slurSegments: SlurLineSegment[];
-  slurPadding: number;
 }
 
 interface ScoreLayoutContext {
@@ -1410,7 +1732,7 @@ function lyricLayoutConstraints(line: ScoreLine, lyrics: LyricLine[]): LineLayou
   return { minAdvanceByNote, lineStartPadding, lineEndPadding };
 }
 
-function layoutGroupLines(group: ScoreLineGroup, allNotes: Note[], pageWidth: number, hasLabels: boolean): LineLayout[] {
+function layoutGroupLines(group: ScoreLineGroup, pageWidth: number, hasLabels: boolean): LineLayout[] {
   const lyricConstraintsByLine = new Map<ScoreLine, LineLayoutConstraints>();
   for (const line of group.lines) {
     if (!isPrimaryLyricLine(line, hasLabels)) {
@@ -1423,7 +1745,7 @@ function layoutGroupLines(group: ScoreLineGroup, allNotes: Note[], pageWidth: nu
   }
 
   const buildLayouts = (useLyricAdvances: boolean): LineLayout[] =>
-    group.lines.flatMap((line) => layoutLine(line, allNotes, pageWidth, useLyricAdvances ? lyricConstraintsByLine.get(line) : undefined));
+    group.lines.flatMap((line) => layoutLine(line, pageWidth, useLyricAdvances ? lyricConstraintsByLine.get(line) : undefined));
 
   if (lyricConstraintsByLine.size === 0) {
     return buildLayouts(false);
@@ -1522,7 +1844,6 @@ function isPrimaryLyricLine(line: ScoreLine, hasLabels: boolean): boolean {
 }
 
 function layoutScore(document: Document, pageWidth: number): ScoreLayoutContext {
-  const allNotes = flattenNotes(document);
   const unit = actualNotePerBeat(document.header.timeSignature);
   const groups = scoreLineGroups(document);
   const hasLabels = document.score.some((line) => line.label !== undefined);
@@ -1530,19 +1851,21 @@ function layoutScore(document: Document, pageWidth: number): ScoreLayoutContext 
   const slurLanes = slurLaneMap(document, notesByLine);
   const finalMeasures = finalBarMeasures(groups);
   const layouts = groups.flatMap((group, groupIndex) => {
-    const groupLayouts = alignLineLayouts(layoutGroupLines(group, allNotes, Math.max(1, pageWidth - group.labelOffset - group.bracketOffset * 2), hasLabels), unit);
+    const groupLayouts = alignLineLayouts(layoutGroupLines(group, Math.max(1, pageWidth - group.labelOffset - group.bracketOffset * 2), hasLabels), unit);
     const groupVisualWidth = Math.max(0, lyricNaturalWidth(group), ...groupLayouts.map((layout) => layout.width + group.labelOffset + group.bracketOffset * 2));
     return groupLayouts.map((lineLayout) => {
       const slurSegments = projectSlursToLine(document, lineLayout, notesByLine, slurLanes);
-      const adjusted = withSlurLayout(lineLayout, slurSegments);
+      const verticalPlan = planVerticalLine(
+        collectVerticalItems(lineLayout, group.labelOffset, group.bracketOffset, notesByLine, slurSegments),
+      );
+      const adjustedLayout = withVerticalLayout(lineLayout, verticalPlan);
       return {
-        layout: adjusted.layout,
+        layout: adjustedLayout,
         groupIndex,
         labelOffset: group.labelOffset,
         bracketOffset: group.bracketOffset,
         groupVisualWidth,
         slurSegments,
-        slurPadding: adjusted.slurPadding,
       };
     });
   });
@@ -1687,7 +2010,6 @@ function renderScorePlacements(
       context.finalMeasures,
       context.notesByLine,
       item.slurSegments,
-      item.slurPadding,
     );
     parts.push(scaled ? `<g class="score-line scaled" transform="scale(${scaleX},1)">${renderedLine.svg}</g>` : renderedLine.svg);
     const groupPageKey = `${pageIndex}:${item.groupIndex}`;

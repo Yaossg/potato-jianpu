@@ -66,7 +66,3 @@ export function chordHeight(note: Note): number {
   }
   return height;
 }
-
-export function noteTieAfter(note: Note, allNotes: Note[]): boolean {
-  return Boolean(allNotes[note.index + 1]?.tie);
-}

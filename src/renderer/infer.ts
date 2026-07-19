@@ -1,7 +1,7 @@
 import type { Document, ScoreLine } from "../core/index.js";
 import { DIMENSIONS } from "./dimensions.js";
 import { labelOffsetForTexts, lyricLineDisplayLabel, scoreLineDisplayLabel } from "./labels.js";
-import { flattenNotes, layoutLine } from "./layout.js";
+import { layoutLine } from "./layout.js";
 import { DEFAULT_OPTIONS } from "./options.js";
 
 export interface InferPageWidthOptions {
@@ -48,7 +48,6 @@ function scoreLineGroups(document: Document): ScoreLine[][] {
 export function inferContentPageWidth(document: Document, options: InferPageWidthOptions = {}): number {
   const minWidth = options.minWidth ?? 1;
   const maxWidth = options.maxWidth ?? DEFAULT_OPTIONS.pageWidth;
-  const allNotes = flattenNotes(document);
   const scoreWidth = Math.max(
     0,
     ...scoreLineGroups(document).flatMap((group) => {
@@ -60,7 +59,7 @@ export function inferContentPageWidth(document: Document, options: InferPageWidt
       const bracketOffset = group.length > 1 ? DIMENSIONS.voiceBracketWidth * 2 : 0;
       const lyricTextWidth = Math.max(0, ...lyrics.map((lyric) => lyric.text.length * LYRIC_CHARACTER_WIDTH));
       const lyricWidth = lyricTextWidth > 0 ? lyricTextWidth + labelOffset + bracketOffset + DIMENSIONS.leftPadding : 0;
-      const notationWidths = group.flatMap((line) => layoutLine(line, allNotes, Number.POSITIVE_INFINITY).map((layout) => layout.width + labelOffset + bracketOffset));
+      const notationWidths = group.flatMap((line) => layoutLine(line, Number.POSITIVE_INFINITY).map((layout) => layout.width + labelOffset + bracketOffset));
       return [...notationWidths, lyricWidth];
     }),
   );

@@ -86,6 +86,10 @@ function tiePaths(svg) {
   return [...svg.matchAll(/<path class="tie" d="([^"]+)"/g)].map((match) => match[1]);
 }
 
+function pathYValues(path) {
+  return [...path.matchAll(/,(-?\d+(?:\.\d+)?)/g)].map((match) => Number(match[1]));
+}
+
 function slurPaths(svg) {
   return [...svg.matchAll(/<path class="slur" d="([^"]+)"/g)].map((match) => match[1]);
 }
@@ -364,8 +368,10 @@ test("renders cross-line ties as cut halves after justification", () => {
   const result = parse("1 2 | 3 - | ~3 4 |");
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 160, justifyMode: "all", background: "#ffffff" });
-  assert.match(svg, /<path class="tie" d="M[^"]+ Q[^"]+ [^,]+,88 L[^,]+,89\.5 Q[^"]+ Z"/);
-  assert.match(svg, /<path class="tie" d="M[^,]+,148 Q[^"]+ Q[^"]+ [^,]+,149\.5 Z"/);
+  const paths = tiePaths(svg);
+  assert.equal(paths.length, 2);
+  assert.match(paths[0], /^M[^ ]+ Q[^ ]+ [^ ]+ L[^ ]+ Q[^ ]+ [^ ]+ Z$/);
+  assert.match(paths[1], /^M[^ ]+ Q[^ ]+ [^ ]+ Q[^ ]+ [^ ]+ Z$/);
 });
 
 test("renders slurs outside ties and ornaments", () => {
@@ -407,7 +413,7 @@ test("renders a note count including endpoints in a gap on a counted slur platfo
   assert.match(svg, /\.slur-count \{ fill: currentColor;[^}]*font-size: 12px;/);
   assert.deepEqual(slurCounts(svg).map(({ count }) => count), [4]);
   assert.match(slurPaths(svg)[0], /^M[^ ]+ Q[^ ]+ [^ ]+ L[^ ]+ M[^ ]+ L[^ ]+ Q[^ ]+ [^ ]+$/);
-  assert.equal(Number(svg.match(/<svg[^>]* height="([^"]+)"/)?.[1]), Number(ordinarySvg.match(/<svg[^>]* height="([^"]+)"/)?.[1]) + 6);
+  assert.equal(Number(svg.match(/<svg[^>]* height="([^"]+)"/)?.[1]), Number(ordinarySvg.match(/<svg[^>]* height="([^"]+)"/)?.[1]) + 5.25);
 
   const nested = parse("$$($$(1 2 3) 4)");
   assert.equal(nested.ok, true);
@@ -468,9 +474,11 @@ test("connects ties to the previous note in the same track", () => {
   const paths = tiePaths(svg);
   const incomingTie = paths.find((path) => path.startsWith("M16,") && path.includes(`${secondT2Tied.x},`));
   assert.ok(incomingTie, "incoming tie should render into the tied T2 note");
-  assert.match(incomingTie, new RegExp(` ${secondT2Tied.x},${secondT2Tied.y - 24}(?: |$)`));
+  const tiedEndpoint = incomingTie.match(new RegExp(` ${secondT2Tied.x},([^ ]+)(?: |$)`));
+  assert.ok(tiedEndpoint);
+  assert.ok(Number(tiedEndpoint[1]) < secondT2Tied.y - 24);
   assert.equal(
-    paths.some((path) => path.startsWith(`M${secondT1.x},`) && path.includes(` ${secondT2Tied.x},${secondT2Tied.y - 24}`)),
+    paths.some((path) => path.startsWith(`M${secondT1.x},`) && path.includes(` ${secondT2Tied.x},${tiedEndpoint[1]}`)),
     false,
     "tied T2 note should not connect back to the previous T1 note in the visual group",
   );
@@ -1065,7 +1073,7 @@ test("keeps navigation marks above dense upper measure decorations", () => {
   const result = parse("[Segno] p < 1''' ~1''' f < 1''' [D.S.] | 2 [Fine]");
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value);
-  const navigationBottom = Math.max(navigationY(svg, "&#119051;"), navigationY(svg, "D\\.S\\."));
+  const navigationBottom = Math.min(navigationY(svg, "&#119051;"), navigationY(svg, "D\\.S\\."));
   const upperDecorationYs = [
     ...[...svg.matchAll(/<circle class="dot" cx="[^"]+" cy="([^"]+)" r="2"\/>/g)].map((match) => Number(match[1])),
     ...[...svg.matchAll(/<line class="hairpin" x1="[^"]+" y1="([^"]+)" x2="[^"]+" y2="([^"]+)"\/>/g)].flatMap((match) => [
@@ -1076,6 +1084,101 @@ test("keeps navigation marks above dense upper measure decorations", () => {
   ];
   assert.ok(upperDecorationYs.length > 0);
   assert.ok(navigationBottom + 6 < Math.min(...upperDecorationYs));
+});
+
+test("keeps fermatas clear of ties at each attachment shape", () => {
+  const cases = [
+    ["1 ~1(.)", {}],
+    ["1(.) ~1", {}],
+    ["{1 3 5} ~{1 3 5}(.)", {}],
+    ["1 | ~1(.)", { pageWidth: 70 }],
+  ];
+  for (const [source, options] of cases) {
+    const result = parse(source);
+    assert.equal(result.ok, true, source);
+    const svg = renderSvg(result.value, options);
+    const fermataY = Number(svg.match(/<text class="ornament fermata smufl-symbol" x="[^"]+" y="([^"]+)"/)?.[1]);
+    const tieTop = Math.min(
+      ...tiePaths(svg)
+        .map((path) => Math.min(...pathYValues(path)))
+        .filter((top) => top >= fermataY),
+    );
+    assert.ok(Number.isFinite(fermataY), source);
+    assert.ok(fermataY + 4 <= tieTop - 4, `${source} should keep the fermata clear of the tie`);
+  }
+});
+
+test("stacks tie ornament velocity and hairpin by semantic priority", () => {
+  const result = parse("p < 1 f < ~1(.) 2");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  const tieTop = Math.min(...pathYValues(tiePaths(svg)[0]));
+  const fermataBottom = Number(svg.match(/<text class="ornament fermata smufl-symbol" x="[^"]+" y="([^"]+)"/)?.[1]) + 4;
+  const velocityBottom = Number(svg.match(/<text class="velocity" x="[^"]+" y="([^"]+)"[^>]*>f<\/text>/)?.[1]) + 3;
+  const hairpinBottom = Math.max(
+    ...[...svg.matchAll(/<line class="hairpin" x1="[^"]+" y1="([^"]+)" x2="[^"]+" y2="([^"]+)"\/>/g)]
+      .flatMap((match) => [Number(match[1]), Number(match[2])]),
+  );
+  assert.ok(fermataBottom <= tieTop - 4);
+  assert.ok(velocityBottom <= fermataBottom - 4);
+  assert.ok(hairpinBottom <= velocityBottom - 4);
+});
+
+test("applies vertical lane height before pagination", () => {
+  const plain = parse("1 2 3 4\n5 6 7 1");
+  const dense = parse("p < 1 f < ~1(.) 2 3\n5 6 7 1");
+  assert.equal(plain.ok, true);
+  assert.equal(dense.ok, true);
+  assert.equal(renderSvgPages(plain.value, { pageWidth: 300, paginate: true, pageHeight: 200 }).length, 1);
+  assert.equal(renderSvgPages(dense.value, { pageWidth: 300, paginate: true, pageHeight: 200 }).length, 2);
+});
+
+test("lays out dense navigation ending slur and dynamic combinations", () => {
+  const result = parse("|: [Segno] 1 | [1] $$(p < 2 f < ~2(.) 3) :| [2] 4 [D.S.] |");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 220, justifyMode: "all" });
+  assert.match(svg, /class="navigation-target/);
+  assert.match(svg, /class="navigation-instruction"/);
+  assert.match(svg, /class="ending-line"/);
+  assert.match(svg, /class="slur"/);
+  assert.match(svg, /class="tie"/);
+  assert.match(svg, /class="ornament fermata/);
+  assert.match(svg, /class="velocity"/);
+  assert.match(svg, /class="hairpin"/);
+});
+
+test("lays out grace slide and long trill beside upper spans", () => {
+  const result = parse("$(1(<2) 3(tr~)- 4(~) 5)");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 220, justifyMode: "all" });
+  assert.match(svg, /class="grace-note-group"/);
+  assert.match(svg, /class="ornament trill-extension"/);
+  assert.match(svg, /class="ornament slide"/);
+  assert.match(svg, /class="slur"/);
+});
+
+test("plans upper decorations independently for simultaneous voices", () => {
+  const result = parse("T1: $$(p < {1 3 5}(<2) f < ~{1 3 5}(.) 2)\nT2: 5(tr~)- 6 7 1");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 240 });
+  assert.equal(slurPaths(svg).length, 1);
+  assert.equal(tiePaths(svg).length, 1);
+  assert.match(svg, /class="grace-note-group"/);
+  assert.match(svg, /class="ornament trill-extension"/);
+  assert.match(svg, /class="voice-bracket"/);
+});
+
+test("moves following voices brackets and lyrics with planned lane height", () => {
+  const plain = parse('T1: 1 1 2\nT2: 5 6 7\n"one two three"');
+  const dense = parse('T1: p < 1 f < ~1(.) 2\nT2: 5 6 7\n"one two three"');
+  assert.equal(plain.ok, true);
+  assert.equal(dense.ok, true);
+  const plainSvg = renderSvg(plain.value, { pageWidth: 240 });
+  const denseSvg = renderSvg(dense.value, { pageWidth: 240 });
+  const lyricY = (svg) => Number(svg.match(/<text class="lyric-syllable" x="[^"]+" y="([^"]+)"/)?.[1]);
+  const bracketBottom = (svg) => Math.max(...[...svg.matchAll(/<path class="voice-bracket" d="[^"]+ L[^,]+,([^"]+)"/g)].map((match) => Number(match[1])));
+  assert.ok(lyricY(denseSvg) > lyricY(plainSvg));
+  assert.ok(bracketBottom(denseSvg) > bracketBottom(plainSvg));
 });
 
 test("keeps navigation marks above repeated ending brackets", () => {

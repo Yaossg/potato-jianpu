@@ -125,7 +125,8 @@ The renderer follows a measurement-first pipeline:
    width.
 7. Optionally justify line coordinates when `justifyMode` enables it.
 8. Reserve page-adornment space for optional page footers and page numbers.
-9. Project slur spans into visual-line segments and reserve their vertical lanes.
+9. Project span marks into visual-line segments and plan every upper decoration
+   with the line's shared vertical layout.
 10. Optionally paginate completed visual lines into fixed-height page boxes,
    honoring manual page breaks from the parsed score.
 11. Draw bars, ties, slurs, notes, duration marks, and attached lyric lines or
@@ -150,6 +151,7 @@ interface LineLayout {
   width: number;
   height: number;
   maxPaddingUp: number;
+  verticalPlan?: VerticalLinePlan;
 }
 ```
 
@@ -220,10 +222,9 @@ Renderer dimensions are centralized in the `DIMENSIONS` object:
 | `accidentalOffset` | `10` | Horizontal space reserved for accidentals |
 | `tieHeight` | `16` | Tie arc height |
 | `tieCurveHeight` | `13` | Inner tie curve height |
-| `tiePadding` | `24` | Tie vertical offset above notes |
+| `tieStrokeWidth` | `1` | Tie outline width included in its planned box |
 | `slurMinHeight` | `12` | Minimum slur curve height |
-| `slurMaxHeight` | `24` | Maximum slur curve height and base reserved lane height |
-| `slurLaneGap` | `10` | Vertical separation between nested slur lanes |
+| `slurMaxHeight` | `24` | Maximum natural slur curve height |
 | `slurEndpointGap` | `4` | Clearance between slur endpoints and the notation below |
 | `slurEndpointOutset` | `4` | Horizontal outward offset from an anchored note center |
 | `slurStrokeWidth` | `1.5` | Slur stroke width and page-edge continuation inset basis |
@@ -236,15 +237,14 @@ Renderer dimensions are centralized in the `DIMENSIONS` object:
 | `dashSpacing` | `24` | Horizontal spacing for extension dashes |
 | `lineSpacing` | `10` | Vertical spacing after each visual line |
 | `velocityFontSize` | `14` | Per-note dynamic marker font size |
-| `velocityTextGap` | `2` | Gap between dynamic text and the note or chord |
+| `velocityTextDescent` | `3` | Conservative dynamic-text descent |
 | `hairpinHeight` | `12` | Vertical opening of gradual dynamic hairpins |
-| `hairpinTopGap` | `16` | Gap between hairpins and the note row |
+| `hairpinStrokeWidth` | `1.8` | Hairpin stroke width included in its planned box |
 | `hairpinTransitionGap` | `6` | Horizontal gap between opposite hairpins that meet on one note |
-| `hairpinVelocityClearance` | `8` | Extra upward offset when hairpins share a note with dynamic text |
-| `navigationHeight` | `20` | Vertical space reserved for the navigation mark lane |
-| `navigationTopOffset` | `10` | Vertical offset for navigation mark text |
-| `ornamentTopGap` | `3` | Gap between SMuFL ornaments and the note row |
-| `ornamentHeight` | `3` | Vertical space reserved above the note row for SMuFL ornaments |
+| `ornamentFontSize` | `22` | SMuFL ornament font size |
+| `ornamentHeight` | `22` | Conservative SMuFL glyph-box height |
+| `verticalLaneGap` | `4` | Minimum clearance between overlapping upper items |
+| `navigationFontHeight` | `28` | Conservative maximum navigation glyph-box height |
 | `trillExtensionStartOffset` | `9` | Long-trill path offset right of the note center |
 | `trillExtensionEndGap` | `8` | Gap before the next onset or measure barline |
 | `trillExtensionWavelength` | `8` | Target long-trill wave cycle width |
@@ -259,6 +259,48 @@ Renderer dimensions are centralized in the `DIMENSIONS` object:
 | `graceLowOctaveArcOffset` | `1.4` | Horizontal arc-end clearance from a lower-octave grace dot |
 
 These constants are not yet exposed as a public theme API.
+
+## Upper Vertical Layout
+
+Each completed visual line owns one internal `VerticalLinePlan`. Planning uses
+baseline-relative coordinates with upward as the positive direction; SVG y
+coordinates are derived only when the line is drawn. Notes, chords, and upper
+octave dots are fixed body obstacles. Every upper mark supplies a stable ID, a
+conservative x interval and height, its source order, and any nesting
+dependencies.
+
+When x intervals overlap, items are placed from near to far in this semantic
+order:
+
+1. notation body and upper octave dots
+2. ties
+3. ornaments, including fermata, mordent, turn, trill, grace, and slide
+4. per-note dynamics
+5. hairpins
+6. slurs, with inner spans before outer spans
+7. repeated endings
+8. navigation marks
+
+Disjoint intervals may reuse the same vertical space. This means two marks on
+opposite sides of a line need not force one global lane upward. Stable source
+order and IDs make repeated rendering deterministic, while interval-local
+packing limits the effect of a nearby edit. Text and SMuFL glyphs use
+conservative metric rectangles; tie, hairpin, slur, ending, grace, slide, and
+trill-extension paths use geometry derived from the same renderer constants.
+The renderer does not call DOM measurement APIs.
+
+Grace arcs, slide connectors, and anchored slur end curves are explicit
+connector exceptions: they may enter the clearance region around the notation
+they attach to. Their glyph, label, arrow, or platform body still occupies the
+normal planned lane. All other overlapping rectangles must retain the
+configured clearance.
+
+The plan is produced after wrapping, simultaneous-voice alignment, and slur
+projection but before pagination. Its `aboveHeight` sets the note baseline and
+line height, so pagination, lyrics, brackets, and page-overflow calculations
+consume the final height. Justification can only enlarge natural horizontal
+separation. An overwide line is scaled as one group, so neither operation
+creates a collision that was absent in the natural interval plan.
 
 ## Page Width And Wrapping
 
@@ -470,9 +512,9 @@ measure's end barline.
 The renderer shows the written score only; it does not visually expand the
 playback/export navigation order.
 
-Navigation marks render in a fixed lane at the top of the reserved vertical
-space so they do not collide with note rows, repeat brackets, dynamics, or
-hairpins.
+Navigation marks occupy the outermost planned band wherever their horizontal
+interval overlaps repeat brackets, slurs, dynamics, or other upper marks.
+Disjoint navigation marks may reuse a lower height.
 
 ### Ties
 
@@ -511,10 +553,11 @@ in `Slur.noteCount`, including both endpoints; rests are not counted. Half of
 the label font height is added to that visual line's reserved space so the
 centered text is not clipped or overlapped.
 
-Nested spans use separate vertical lanes for their horizontal sections. Inner
-slur platforms stay closer to the notation and outer platforms move upward,
-while every anchored curved end still reaches its note. Ties remain closer to
-their notes than slur platforms. Slur lane height is added before pagination,
+Nested spans use separate vertical placements for their horizontal sections.
+Inner slur platforms stay closer to the notation and outer platforms move
+upward, while every anchored curved end still reaches the shared notation
+anchor as an allowed connector. Ties and ornaments remain closer to their
+notes than slur platforms. Planned slur height is included before pagination,
 so page placement, lyrics, and multi-voice brackets include the reserved space.
 Justification and overwide-line scaling apply to slur coordinates together with
 their score line.
@@ -531,9 +574,10 @@ Gradual dynamic hairpins render above the note row. Paired `<` markers draw a
 crescendo, and paired `>` markers draw a diminuendo. Opposite markers may meet
 on the same note, so `<>` closes a crescendo and starts a diminuendo at that
 note, while `><` does the reverse. The renderer leaves a small horizontal gap
-between opposite hairpins at that shared note. Hairpins move slightly upward
-when they share a note with dynamic text such as `p` or `f`, so the markings do
-not overlap. Hairpins may cross measure and visual line boundaries. When
+between opposite hairpins at that shared note. Hairpins and dynamic text
+request separate interval-packed placements, so overlapping markings retain
+the shared vertical clearance. Hairpins may cross measure and visual line
+boundaries. When
 source line breaks or wrapping split a hairpin, the renderer draws a separate
 complete hairpin on each visual line.
 

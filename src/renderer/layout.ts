@@ -1,6 +1,7 @@
-import type { Document, Measure, Note, ScoreLine } from "../core/index.js";
+import type { Measure, Note, ScoreLine } from "../core/index.js";
 import { DIMENSIONS } from "./dimensions.js";
-import { noteTieAfter, ornamentLeftWidthOf, widthOf } from "./metrics.js";
+import { ornamentLeftWidthOf, widthOf } from "./metrics.js";
+import type { VerticalLinePlan } from "./vertical-layout.js";
 
 export interface MeasureLayout {
   measure: Measure;
@@ -21,6 +22,7 @@ export interface LineLayout {
   width: number;
   height: number;
   maxPaddingUp: number;
+  verticalPlan?: VerticalLinePlan;
 }
 
 export interface LineLayoutConstraints {
@@ -29,11 +31,7 @@ export interface LineLayoutConstraints {
   lineEndPadding?: number;
 }
 
-export function flattenNotes(document: Document): Note[] {
-  return document.score.flatMap((line) => line.measures).flatMap((measure) => measure.notes);
-}
-
-function paddingUpOf(note: Note, tieAfter: boolean, hasEnding: boolean): number {
+function paddingUpOf(note: Note): number {
   let height = DIMENSIONS.baseNoteHeight;
   if (note.kind === "pitch") {
     const base = note.chord.at(-1);
@@ -43,22 +41,7 @@ function paddingUpOf(note: Note, tieAfter: boolean, hasEnding: boolean): number 
       height += Math.abs(pitch.octave) * DIMENSIONS.octaveSpacing;
     }
   }
-  height += note.tie || tieAfter ? DIMENSIONS.tieHeight : 0;
-  height += hasEnding ? DIMENSIONS.endingHeight : 0;
-  if (note.velocity !== undefined) {
-    height += DIMENSIONS.velocityFontSize + DIMENSIONS.velocityTextGap;
-  }
-  if (note.ornament !== undefined && note.ornament.kind !== "slide") {
-    height += DIMENSIONS.ornamentTopGap + DIMENSIONS.ornamentHeight;
-  }
-  if (note.hairpinStart !== undefined || note.hairpinEnd) {
-    height += DIMENSIONS.hairpinTopGap + DIMENSIONS.hairpinHeight;
-  }
   return height;
-}
-
-function navigationPaddingUp(measure: Measure): number {
-  return (measure.navigationBefore?.length ?? 0) > 0 || (measure.navigationAfter?.length ?? 0) > 0 ? DIMENSIONS.navigationHeight : 0;
 }
 
 function paddingDownOf(note: Note): number {
@@ -74,7 +57,6 @@ function paddingDownOf(note: Note): number {
 
 function layoutMeasure(
   measure: Measure,
-  allNotes: Note[],
   constraints: LineLayoutConstraints | undefined,
   inlineRepeatStart = false,
   repeatStartAfterEnd = false,
@@ -104,10 +86,7 @@ function layoutMeasure(
       Array.from({ length: note.duration.dashes }, (_, index) => totalWidth + noteLeftOrnamentWidth + DIMENSIONS.dashSpacing * (index + 1)),
     );
     totalWidth += Math.max(widthOf(note), constraints?.minAdvanceByNote?.get(note) ?? 0);
-    paddingUp = Math.max(
-      paddingUp,
-      paddingUpOf(note, noteTieAfter(note, allNotes), note === measure.notes[0] && measure.ending !== undefined) + navigationPaddingUp(measure),
-    );
+    paddingUp = Math.max(paddingUp, paddingUpOf(note));
     paddingDown = Math.max(paddingDown, paddingDownOf(note));
   }
 
@@ -145,7 +124,7 @@ function buildLineLayout(line: ScoreLine, measures: MeasureLayout[], measureStar
   };
 }
 
-export function layoutLine(line: ScoreLine, allNotes: Note[], pageWidth: number, constraints?: LineLayoutConstraints): LineLayout[] {
+export function layoutLine(line: ScoreLine, pageWidth: number, constraints?: LineLayoutConstraints): LineLayout[] {
   const layouts: LineLayout[] = [];
   let current: MeasureLayout[] = [];
   let currentWidth = 0;
@@ -156,7 +135,6 @@ export function layoutLine(line: ScoreLine, allNotes: Note[], pageWidth: number,
     const nextMeasure = line.measures[measureIndex + 1];
     let measure = layoutMeasure(
       measureNode,
-      allNotes,
       constraints,
       current.length > 0,
       Boolean(previousMeasure?.repeatEnd && measureNode.repeatStart),
@@ -169,7 +147,6 @@ export function layoutLine(line: ScoreLine, allNotes: Note[], pageWidth: number,
       layouts.push(buildLineLayout(line, current, currentStartIndex));
       measure = layoutMeasure(
         measureNode,
-        allNotes,
         constraints,
         false,
         false,

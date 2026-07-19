@@ -62,6 +62,6 @@
 <g class="note-item" data-note-index="1"><text class="note" x="64" y="157" text-anchor="middle">0</text></g>
 <g class="note-item" data-note-index="2"><text class="note" x="88" y="157" text-anchor="middle">X</text><line class="underline" x1="78" y1="162" x2="98" y2="162"/><line class="underline" x1="78" y1="167" x2="98" y2="167"/></g>
 <g class="note-item" data-note-index="3"><text class="accidental" x="134" y="149">&#9837;</text><text class="note" x="144" y="157" text-anchor="middle">7</text><circle class="dot" cx="144" cy="162" r="2"/><line class="dash" x1="148" y1="148" x2="164" y2="148"/></g>
-<path class="tie" d="M144,133 Q173,117 202,133 Q173,120 144,133 Z"/>
+<path class="tie" d="M144,128.5 Q173,112.5 202,128.5 Q173,115.5 144,128.5 Z"/>
 <g class="note-item" data-note-index="4"><text class="accidental" x="192" y="149">&#9837;</text><text class="note" x="202" y="157" text-anchor="middle">7</text><circle class="dot" cx="202" cy="167" r="2"/><line class="underline" x1="182" y1="162" x2="212" y2="162"/></g>
 </svg>
