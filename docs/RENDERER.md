@@ -226,6 +226,7 @@ Renderer dimensions are centralized in the `DIMENSIONS` object:
 | `slurLaneGap` | `10` | Vertical separation between nested slur lanes |
 | `slurEndpointGap` | `4` | Clearance between slur endpoints and the notation below |
 | `slurEndpointOutset` | `4` | Horizontal outward offset from an anchored note center |
+| `slurStrokeWidth` | `1.5` | Slur stroke width and page-edge continuation inset basis |
 | `slurCountFontSize` | `12` | Font size for a counted-slur label |
 | `slurCountGap` | `4` | Clearance on each side of a counted-slur label |
 | `octaveSpacing` | `5` | Distance between octave dots |
@@ -498,8 +499,9 @@ one visual line places its endpoints just outside its source and destination
 note centers; a slur that
 crosses source wrapping or automatic wrapping is split into outgoing, middle,
 and incoming segments at the content edges. A split edge meets the horizontal
-section directly. Pagination reuses those visual-line segments, including
-across explicit page breaks.
+section directly. Split endpoints are inset by half the slur stroke width so
+their painted stroke remains inside the SVG viewport. Pagination reuses those
+visual-line segments, including across explicit page breaks.
 
 A slur opened with `$$(` has one numeric label centered on its horizontal
 section. The renderer splits the stroke around the label and places it only on

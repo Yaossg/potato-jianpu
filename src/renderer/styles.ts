@@ -31,7 +31,7 @@ export const SVG_STYLE = `.title { fill: currentColor; font-family: Arial, Helve
 .underline { stroke: currentColor; stroke-width: 2.5; }
 .dash { stroke: currentColor; stroke-width: 3; }
 .tie { fill: currentColor; stroke: currentColor; stroke-width: 1; }
-.slur { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: butt; }
+.slur { fill: none; stroke: currentColor; stroke-width: ${DIMENSIONS.slurStrokeWidth}; stroke-linecap: butt; }
 .slur-count { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: ${DIMENSIONS.slurCountFontSize}px; font-weight: 700; }
 .ornament { fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .grace-arc { stroke-width: 1; stroke-linecap: butt; stroke-linejoin: miter; }

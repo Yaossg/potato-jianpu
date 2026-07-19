@@ -57,15 +57,15 @@
 </g>
 <text class="tempo-mark" x="128" y="40" dominant-baseline="central">♩<tspan class="tempo-value"> = 120</tspan></text>
 <line class="bar-thin" x1="64" y1="108" x2="64" y2="140"/>
-<path class="slur" d="M14,104 Q14,92 26,92 L64,92"/>
+<path class="slur" d="M14,104 Q14,92 26,92 L63.25,92"/>
 <g class="note-item" data-note-index="0"><text class="note" x="18" y="132" text-anchor="middle">1</text></g>
 <g class="note-item" data-note-index="1"><text class="note" x="42" y="132" text-anchor="middle">2</text></g>
 <line class="bar-thin" x1="64" y1="180" x2="64" y2="212"/>
-<path class="slur" d="M0,164 L64,164"/>
+<path class="slur" d="M0.75,164 L63.25,164"/>
 <g class="note-item" data-note-index="2"><text class="note" x="18" y="204" text-anchor="middle">3</text></g>
 <g class="note-item" data-note-index="3"><text class="note" x="42" y="204" text-anchor="middle">4</text></g>
 <line class="bar-thin" x1="59" y1="252" x2="59" y2="284"/><line class="bar-final" x1="66" y1="252" x2="66" y2="284"/>
-<path class="slur" d="M0,236 L34.5,236 Q46,236 46,248"/>
+<path class="slur" d="M0.75,236 L34.6875,236 Q46,236 46,248"/>
 <g class="note-item" data-note-index="4"><text class="note" x="18" y="276" text-anchor="middle">5</text></g>
 <g class="note-item" data-note-index="5"><text class="note" x="42" y="276" text-anchor="middle">6</text></g>
 </svg>

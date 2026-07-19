@@ -430,6 +430,15 @@ test("splits slurs across visual lines and pages", () => {
   assert.equal(slurPaths(paged).length, wrappedPaths.length);
 });
 
+test("keeps cross-page slur continuation strokes inside the page viewport", () => {
+  const result = parse("$$(1\n---\n2)");
+  assert.equal(result.ok, true);
+  const pages = renderSvgPages(result.value, { pageWidth: 220, paginate: true, pageHeight: 160 });
+  assert.equal(pages.length, 2);
+  assert.match(pages[1].svg, /\.slur \{[^}]*stroke-width: 1\.5;/);
+  assert.match(slurPaths(pages[1].svg)[0], /^M0\.75,/);
+});
+
 test("renders a counted slur label once on its midpoint visual line", () => {
   const result = parse("$$(1 2 | 3 4 | 5 6 | 7 1')");
   assert.equal(result.ok, true);

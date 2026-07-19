@@ -880,6 +880,7 @@ function renderLine(
   }
 
   const contentTopY = lineY + slurPadding;
+  const slurEdgeInset = DIMENSIONS.slurStrokeWidth / 2;
   for (const segment of slurSegments) {
     const startEntry = segment.startNote
       ? lineEntries.find((entry) => entry.note === segment.startNote)
@@ -887,8 +888,8 @@ function renderLine(
     const endEntry = segment.endNote
       ? lineEntries.find((entry) => entry.note === segment.endNote)
       : undefined;
-    const startX = startEntry ? startEntry.x - DIMENSIONS.slurEndpointOutset : leftTieEdgeX;
-    const endX = endEntry ? endEntry.x + DIMENSIONS.slurEndpointOutset : rightTieEdgeX;
+    const startX = startEntry ? startEntry.x - DIMENSIONS.slurEndpointOutset : leftTieEdgeX + slurEdgeInset;
+    const endX = endEntry ? endEntry.x + DIMENSIONS.slurEndpointOutset : rightTieEdgeX - slurEdgeInset;
     const endpointY = contentTopY - DIMENSIONS.slurEndpointGap;
     parts.push(
       renderSlur(
