@@ -60,6 +60,8 @@ interface SlurLineSegment {
   startNote?: Note;
   endNote?: Note;
   startBoundaryMeasure?: Measure;
+  startOutset?: number;
+  endOutset?: number;
 }
 
 interface LineEntry {
@@ -387,8 +389,8 @@ function renderHairpin(kind: NonNullable<Note["hairpinStart"]>, startX: number, 
 function renderRepeatDots(x: number, baselineY: number): string {
   const yOffset = DIMENSIONS.barVerticalOffset;
   return [
-    `<circle class="repeat-dot" cx="${x}" cy="${baselineY - 16 + yOffset}" r="2.5"/>`,
-    `<circle class="repeat-dot" cx="${x}" cy="${baselineY - 6 + yOffset}" r="2.5"/>`,
+    `<circle class="repeat-dot" cx="${x}" cy="${baselineY - 16 + yOffset}" r="${DIMENSIONS.repeatDotRadius}"/>`,
+    `<circle class="repeat-dot" cx="${x}" cy="${baselineY - 6 + yOffset}" r="${DIMENSIONS.repeatDotRadius}"/>`,
   ].join("");
 }
 
@@ -520,14 +522,46 @@ function createLineJustifier(layout: LineLayout, targetWidth: number, enabled: b
   if (!enabled || targetWidth <= layout.width) {
     return (x: number) => x;
   }
-  const firstNoteX = DIMENSIONS.leftPadding;
-  const naturalEndX = layout.width - DIMENSIONS.leftPadding + 12;
-  const targetEndX = targetWidth - DIMENSIONS.leftPadding / 3;
+  let firstNoteX = DIMENSIONS.leftPadding;
+  for (const [measureIndex, measure] of layout.measures.entries()) {
+    const firstNote = measure.measure.notes[0];
+    if (firstNote) {
+      firstNoteX =
+        measureXOffset(layout.measures, measureIndex) +
+        measure.leftPadding +
+        measure.notePositions[0]! +
+        ornamentLeftWidthOf(firstNote);
+      break;
+    }
+  }
+  const lastMeasure = layout.measures.at(-1);
+  if (!lastMeasure) {
+    return (x: number) => x;
+  }
+  const lastMeasureX = measureXOffset(layout.measures, layout.measures.length - 1);
+  const naturalEndX =
+    lastMeasureX +
+    lastMeasure.width -
+    lastMeasure.rightPadding -
+    DIMENSIONS.repeatRightPadding +
+    12 +
+    (lastMeasure.measure.repeatEnd ? DIMENSIONS.repeatEndLeftGap : 0);
+  const suffixWidth = layout.width - naturalEndX;
+  const targetEndX = targetWidth - suffixWidth;
   if (naturalEndX <= firstNoteX || targetEndX <= firstNoteX) {
     return (x: number) => x;
   }
   const scale = (targetEndX - firstNoteX) / (naturalEndX - firstNoteX);
-  return (x: number) => firstNoteX + (x - firstNoteX) * scale;
+  const suffixShift = targetEndX - naturalEndX;
+  return (x: number) => {
+    if (x <= firstNoteX) {
+      return x;
+    }
+    if (x >= naturalEndX) {
+      return x + suffixShift;
+    }
+    return firstNoteX + (x - firstNoteX) * scale;
+  };
 }
 
 function nextMeasureInDocument(document: Document, measure: Measure): Measure | undefined {
@@ -863,6 +897,24 @@ function ornamentItem(entry: NaturalLineEntry): VerticalItem | undefined {
   };
 }
 
+function anchorHorizontalBounds(entry: NaturalLineEntry): { left: number; right: number } {
+  const body = noteBodyItem(entry);
+  let left = body.x1;
+  let right = body.x2;
+  const ornament = ornamentItem(entry);
+  if (ornament) {
+    left = Math.min(left, ornament.x1);
+    right = Math.max(right, ornament.x2);
+  }
+  if (entry.note.velocity !== undefined) {
+    const label = VELOCITY_LABELS[entry.note.velocity] ?? "";
+    const halfWidth = textWidth(label, DIMENSIONS.velocityFontSize) / 2;
+    left = Math.min(left, entry.x - halfWidth);
+    right = Math.max(right, entry.x + halfWidth);
+  }
+  return { left, right };
+}
+
 function textWidth(text: string, fontSize: number): number {
   return Math.max(fontSize, text.length * fontSize * 0.62);
 }
@@ -980,12 +1032,25 @@ function collectVerticalItems(
   const slurItems: Array<VerticalItem & { lane: number }> = slurSegments.map((segment) => {
     const start = segment.startNote ? entryByNote.get(segment.startNote) : undefined;
     const end = segment.endNote ? entryByNote.get(segment.endNote) : undefined;
+    const laneOutset = segment.lane * DIMENSIONS.verticalLaneGap;
+    if (start) {
+      const desiredStartX =
+        anchorHorizontalBounds(start).left - DIMENSIONS.slurEndpointGap - laneOutset;
+      const safeStartX = geometry.leftEdgeX + DIMENSIONS.slurStrokeWidth / 2;
+      segment.startOutset = start.x - Math.max(safeStartX, desiredStartX);
+    }
+    if (end) {
+      const desiredEndX =
+        anchorHorizontalBounds(end).right + DIMENSIONS.slurEndpointGap + laneOutset;
+      const safeEndX = geometry.rightEdgeX - DIMENSIONS.slurStrokeWidth / 2;
+      segment.endOutset = Math.min(safeEndX, desiredEndX) - end.x;
+    }
     const x1 = start
-      ? start.x - DIMENSIONS.slurEndpointOutset
+      ? start.x - (segment.startOutset ?? DIMENSIONS.slurEndpointOutset)
       : segment.startBoundaryMeasure
         ? naturalMeasureBarX(layout, segment.startBoundaryMeasure, labelOffset + bracketOffset) ?? geometry.leftEdgeX
         : geometry.leftEdgeX;
-    const x2 = end ? end.x + DIMENSIONS.slurEndpointOutset : geometry.rightEdgeX;
+    const x2 = end ? end.x + (segment.endOutset ?? DIMENSIONS.slurEndpointOutset) : geometry.rightEdgeX;
     return {
       id: segment.id,
       band: "slur",
@@ -1257,11 +1322,13 @@ function renderLine(
       ? naturalMeasureBarX(layout, segment.startBoundaryMeasure, 0)
       : undefined;
     const startX = startEntry
-      ? startEntry.x - DIMENSIONS.slurEndpointOutset
+      ? startEntry.x - (segment.startOutset ?? DIMENSIONS.slurEndpointOutset)
       : boundaryX !== undefined
         ? contentOffset + justifyX(boundaryX)
         : fragmentEdgeX(leftTieEdgeX, DIMENSIONS.slurStrokeWidth, "left");
-    const endX = endEntry ? endEntry.x + DIMENSIONS.slurEndpointOutset : fragmentEdgeX(rightTieEdgeX, DIMENSIONS.slurStrokeWidth, "right");
+    const endX = endEntry
+      ? endEntry.x + (segment.endOutset ?? DIMENSIONS.slurEndpointOutset)
+      : fragmentEdgeX(rightTieEdgeX, DIMENSIONS.slurStrokeWidth, "right");
     const placement = layout.verticalPlan?.placements.get(segment.id);
     const baselineY = lineY + layout.maxPaddingUp;
     const endpointY = baselineY - bodyTop - DIMENSIONS.slurEndpointGap;
@@ -1820,19 +1887,58 @@ function lyricLayoutConstraints(line: ScoreLine, lyrics: LyricLine[]): LineLayou
   return { minAdvanceByNote, lineStartPadding, lineEndPadding };
 }
 
-function layoutGroupLines(group: ScoreLineGroup, pageWidth: number, hasLabels: boolean): LineLayout[] {
-  const lyricConstraintsByLine = new Map<ScoreLine, LineLayoutConstraints>();
-  for (const line of group.lines) {
-    if (!isPrimaryLyricLine(line, hasLabels)) {
-      continue;
-    }
-    const constraints = lyricLayoutConstraints(line, group.lyrics);
-    if (constraints) {
-      lyricConstraintsByLine.set(line, constraints);
-    }
+function navigationLayoutConstraints(line: ScoreLine): LineLayoutConstraints | undefined {
+  const navigationAfter = line.measures.at(-1)?.navigationAfter ?? [];
+  if (navigationAfter.length === 0) {
+    return undefined;
   }
+  const widths: number[] = [];
+  if (navigationAfter.includes("fine")) {
+    widths.push(textWidth("Fine", DIMENSIONS.navigationTextFontSize));
+  }
+  const instructions = navigationAfter.filter((mark) => mark !== "fine");
+  if (instructions.length > 0) {
+    widths.push(
+      textWidth(
+        instructions.map(navigationAfterLabel).join(", "),
+        DIMENSIONS.navigationTextFontSize,
+      ),
+    );
+  }
+  return {
+    lineEndPadding: Math.max(0, ...widths) / 2 + DIMENSIONS.verticalLaneGap,
+  };
+}
 
-  return group.lines.flatMap((line) => layoutLine(line, pageWidth, lyricConstraintsByLine.get(line)));
+function mergeLineLayoutConstraints(
+  left: LineLayoutConstraints | undefined,
+  right: LineLayoutConstraints | undefined,
+): LineLayoutConstraints | undefined {
+  if (!left) {
+    return right;
+  }
+  if (!right) {
+    return left;
+  }
+  const minAdvanceByNote = new Map(left.minAdvanceByNote);
+  for (const [note, advance] of right.minAdvanceByNote ?? []) {
+    minAdvanceByNote.set(note, Math.max(minAdvanceByNote.get(note) ?? 0, advance));
+  }
+  return {
+    ...(minAdvanceByNote.size > 0 ? { minAdvanceByNote } : {}),
+    lineStartPadding: Math.max(left.lineStartPadding ?? 0, right.lineStartPadding ?? 0),
+    lineEndPadding: Math.max(left.lineEndPadding ?? 0, right.lineEndPadding ?? 0),
+  };
+}
+
+function layoutGroupLines(group: ScoreLineGroup, pageWidth: number, hasLabels: boolean): LineLayout[] {
+  return group.lines.flatMap((line) => {
+    const lyricConstraints = isPrimaryLyricLine(line, hasLabels)
+      ? lyricLayoutConstraints(line, group.lyrics)
+      : undefined;
+    const constraints = mergeLineLayoutConstraints(lyricConstraints, navigationLayoutConstraints(line));
+    return layoutLine(line, pageWidth, constraints);
+  });
 }
 
 function finalBarMeasures(groups: ScoreLineGroup[]): Set<Measure> {

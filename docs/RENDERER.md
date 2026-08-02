@@ -230,6 +230,9 @@ Renderer dimensions are centralized in the `DIMENSIONS` object:
 | `baseNoteHeight` | `24` | Base rendered note height |
 | `leftPadding` | `18` | Measure left padding before first note |
 | `measureSpacing` | `0` | Extra spacing between measures |
+| `barThinStrokeWidth` | `2.5` | Thin barline stroke width |
+| `barFinalStrokeWidth` | `5` | Heavy final and repeat barline stroke width |
+| `repeatDotRadius` | `2.5` | Repeat-dot radius |
 | `lyricTopPadding` | `12` | Vertical gap before lyrics below a score group |
 | `lyricLineHeight` | `20` | Vertical advance for stacked lyric lines |
 | `accidentalOffset` | `10` | Horizontal space reserved for accidentals |
@@ -239,7 +242,7 @@ Renderer dimensions are centralized in the `DIMENSIONS` object:
 | `slurMinHeight` | `12` | Minimum slur curve height |
 | `slurMaxHeight` | `24` | Maximum natural slur curve height |
 | `slurEndpointGap` | `4` | Clearance between slur endpoints and the notation below |
-| `slurEndpointOutset` | `4` | Horizontal outward offset from an anchored note center |
+| `slurEndpointOutset` | `4` | Fallback horizontal offset when anchored bounds are unavailable |
 | `slurStrokeWidth` | `1.5` | Slur stroke width and page-edge continuation inset basis |
 | `slurCountFontSize` | `12` | Font size for a counted-slur label |
 | `slurCountGap` | `4` | Clearance on each side of a counted-slur label |
@@ -308,12 +311,20 @@ they attach to. Their glyph, label, arrow, or platform body still occupies the
 normal planned lane. All other overlapping rectangles must retain the
 configured clearance.
 
+An anchored slur endpoint is placed beyond the combined horizontal bounds of
+its note body, accidental, ornament, and dynamic mark. Nested slurs add a
+lane-based outward offset where page-edge clearance permits, so shared anchors
+remain visually distinct without crossing their attached marks.
+
 The plan is produced after source-line layout, simultaneous-voice alignment, and slur
 projection but before pagination. Its `aboveHeight` sets the note baseline and
 line height, so pagination, lyrics, brackets, and page-overflow calculations
-consume the final height. Justification can only enlarge natural horizontal
-separation. An overwide line is scaled as one group, so neither operation
-creates a collision that was absent in the natural interval plan.
+consume the final height. Justification leaves geometry before the first
+rhythmic anchor unchanged, stretches the rhythmic span, and translates the
+suffix after the final bar as one unit. Final navigation instructions reserve
+their visible half-width at the line edge. An overwide line is scaled as one
+group, so neither operation creates a collision that was absent in the natural
+interval plan.
 
 ## Page Width And Source Lines
 

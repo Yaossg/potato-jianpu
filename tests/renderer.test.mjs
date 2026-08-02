@@ -66,6 +66,10 @@ function finalBarXs(svg) {
   return [...svg.matchAll(/<line class="bar-final" x1="([^"]+)"/g)].map((match) => Number(match[1]));
 }
 
+function scoreHorizontalScale(svg) {
+  return Number(svg.match(/<g class="score-group scaled" transform="scale\(([^,]+),1\)">/)?.[1] ?? 1);
+}
+
 function notePosition(svg, noteIndex) {
   const match = svg.match(new RegExp(`<g class="note-item(?: active)?" data-note-index="${noteIndex}"><text class="note" x="([^"]+)" y="([^"]+)"`));
   assert.ok(match, `note ${noteIndex} should render`);
@@ -387,8 +391,8 @@ test("renders slurs outside ties and ornaments", () => {
   const startNote = notePosition(svg, 0);
   const endNote = notePosition(svg, 3);
   assert.match(slurPath, /^M[^ ]+ Q[^ ]+ [^ ]+ L[^ ]+ Q[^ ]+ [^ ]+$/);
-  assert.match(slurPath, new RegExp(`^M${startNote.x - 4},`));
-  assert.match(slurPath, new RegExp(` ${endNote.x + 4},[^ ]+$`));
+  assert.ok(pathStart(slurPath)[0] <= startNote.x - 16);
+  assert.ok(pathEnd(slurPath)[0] >= endNote.x + 16);
   const slurControlY = Number(slurPath.match(/Q[^,]+,([^ ]+)/)?.[1]);
   const tieTopY = Math.min(...tiePaths(svg)[0].match(/-?\d+(?:\.\d+)?/g).map(Number).filter((_, index) => index % 2 === 1));
   assert.ok(slurControlY < tieTopY);
@@ -401,8 +405,36 @@ test("stacks nested slurs in separate lanes", () => {
   assert.equal(paths.length, 2);
   const controlYs = paths.map((path) => Number(path.match(/Q[^,]+,([^ ]+)/)?.[1]));
   assert.ok(Math.min(...controlYs) < Math.max(...controlYs));
+  const startXs = paths.map((path) => pathStart(path)[0]);
+  const endXs = paths.map((path) => pathEnd(path)[0]);
+  assert.ok(Math.min(...startXs) < Math.max(...startXs));
+  assert.ok(Math.min(...endXs) < Math.max(...endXs));
   assert.equal(pathStart(paths[0])[1], pathStart(paths[1])[1]);
   assert.equal(pathEnd(paths[0])[1], pathEnd(paths[1])[1]);
+});
+
+test("keeps slur endpoint curves outside anchored upper marks", () => {
+  const sources = [
+    "$(1(^) 2)",
+    "$(1 2(^))",
+    "$(1(.) 2)",
+    "$(1 2(.))",
+    "$(1(tr) 2(v))",
+    "$(1(<2345) 2)",
+    "$(1 2(>2345))",
+    "$(p1 f2)",
+    "$(<1 <2)",
+  ];
+  for (const source of sources) {
+    const result = parse(source);
+    assert.equal(result.ok, true, source);
+    const svg = renderSvg(result.value);
+    const path = slurPaths(svg)[0];
+    const firstX = noteX(svg, 0);
+    const lastX = noteX(svg, 1);
+    assert.ok(pathStart(path)[0] <= firstX - 16, `${source} start should clear its anchor`);
+    assert.ok(pathEnd(path)[0] >= lastX + 16, `${source} end should clear its anchor`);
+  }
 });
 
 test("renders a note count including endpoints in a gap on a counted slur platform", () => {
@@ -462,7 +494,7 @@ T2: 7, 1)`);
   const svg = renderSvg(result.value, { pageWidth: 220 });
   assert.equal(slurPaths(svg).length, 2);
   const firstT2 = notePosition(svg, 2);
-  assert.match(slurPaths(svg)[0], new RegExp(`^M${firstT2.x - 4},`));
+  assert.ok(pathStart(slurPaths(svg)[0])[0] <= firstT2.x - 16);
 });
 
 test("connects ties to the previous note in the same track", () => {
@@ -1098,6 +1130,32 @@ test("keeps navigation marks visible on horizontally scaled output", () => {
   assert.match(svg, /class="navigation-instruction"/);
 });
 
+test("keeps zero-margin repeat bars and trailing navigation inside the viewport", () => {
+  const result = parse("|: [Segno] 1 2 [D.S.] :|");
+  assert.equal(result.ok, true);
+  for (const pageWidth of [80, 120, 220, 420]) {
+    for (const justifyMode of ["none", "except-last", "all"]) {
+      const svg = renderSvg(result.value, { pageWidth, pageMargin: 0, justifyMode });
+      const scale = scoreHorizontalScale(svg);
+      for (const match of svg.matchAll(/<line class="(bar-thin|bar-final)" x1="([^"]+)"/g)) {
+        const strokeWidth = match[1] === "bar-final" ? 5 : 2.5;
+        const center = Number(match[2]) * scale;
+        assert.ok(center - strokeWidth * scale / 2 >= 0, `${pageWidth}/${justifyMode} left bar edge`);
+        assert.ok(center + strokeWidth * scale / 2 <= pageWidth, `${pageWidth}/${justifyMode} right bar edge`);
+      }
+      for (const match of svg.matchAll(/<circle class="repeat-dot" cx="([^"]+)"/g)) {
+        const center = Number(match[1]) * scale;
+        assert.ok(center - 2.5 * scale >= 0, `${pageWidth}/${justifyMode} left repeat dot edge`);
+        assert.ok(center + 2.5 * scale <= pageWidth, `${pageWidth}/${justifyMode} right repeat dot edge`);
+      }
+      const instructionX = Number(svg.match(/<text class="navigation-instruction" x="([^"]+)"/)?.[1]) * scale;
+      const instructionHalfWidth = 4 * 14 * 0.62 / 2 * scale;
+      assert.ok(instructionX - instructionHalfWidth >= 0, `${pageWidth}/${justifyMode} navigation left edge`);
+      assert.ok(instructionX + instructionHalfWidth <= pageWidth, `${pageWidth}/${justifyMode} navigation right edge`);
+    }
+  }
+});
+
 test("keeps short navigation instructions from adding wide ghost space", () => {
   const result = parse("[Segno] 1 [D.S.] | 2");
   assert.equal(result.ok, true);
@@ -1231,11 +1289,11 @@ test("keeps repeat start spacing consistent at the beginning of a line", () => {
   const result = parse("|: 1 | 2 :|");
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value);
-  const repeatStart = svg.match(/<line class="bar-final" x1="(\d+)"/);
+  const repeatStart = svg.match(/<line class="bar-final" x1="([\d.]+)"/);
   const firstNote = svg.match(/<text class="note" x="(\d+)" y="\d+" text-anchor="middle">1<\/text>/);
   assert.ok(repeatStart);
   assert.ok(firstNote);
-  assert.equal(Number(firstNote[1]) - Number(repeatStart[1]), 34);
+  assert.equal(Number(firstNote[1]) - Number(repeatStart[1]), 33.5);
 });
 
 test("keeps inline repeat start spacing consistent", () => {

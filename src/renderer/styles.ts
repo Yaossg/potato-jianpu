@@ -17,8 +17,8 @@ export const SVG_STYLE = `.title { fill: currentColor; font-family: Arial, Helve
 .note { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 24px; font-weight: 700; }
 .accidental { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-weight: 700; text-anchor: middle; }
 .dot { fill: currentColor; }
-.bar-thin { stroke: currentColor; stroke-width: 2.5; stroke-linecap: butt; }
-.bar-final { stroke: currentColor; stroke-width: 5; stroke-linecap: butt; }
+.bar-thin { stroke: currentColor; stroke-width: ${DIMENSIONS.barThinStrokeWidth}; stroke-linecap: butt; }
+.bar-final { stroke: currentColor; stroke-width: ${DIMENSIONS.barFinalStrokeWidth}; stroke-linecap: butt; }
 .repeat-dot { fill: currentColor; }
 .ending-line { stroke: currentColor; stroke-width: 2; fill: none; }
 .ending-label { fill: currentColor; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-weight: 700; }

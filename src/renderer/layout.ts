@@ -95,7 +95,9 @@ function layoutMeasure(
     width: totalWidth + leftPadding + rightPadding + 4 + (measure.repeatEnd ? DIMENSIONS.repeatRightPadding - DIMENSIONS.leftPadding : 0),
     leftPadding,
     rightPadding,
-    repeatStartX: measure.repeatStart ? (inlineRepeatStart ? -6 : 2) : null,
+    repeatStartX: measure.repeatStart
+      ? (inlineRepeatStart ? -6 : DIMENSIONS.barFinalStrokeWidth / 2)
+      : null,
     notePositions,
     dashPositions,
     paddingUp,
