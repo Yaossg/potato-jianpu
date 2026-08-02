@@ -159,23 +159,7 @@ $(1(^) 2 {3 5} 4)`}
 $(1(^) 2 {3 5} 4)`}
 />
 
-Use the contiguous `$$(` opener to add a number at the center of the horizontal slur section. The number counts all pitch notes and chords in the slur, including both endpoints. A chord counts as one, and an interior rest is not counted. Ordinary `$(...)` slurs have no number.
-
-<JianpuSource
-  title="Counted slur source"
-  source={`time: 4/4
-===
-$$(1 {2 4} 3 4)`}
-/>
-
-<ScorePreview
-  title="Rendered counted slur"
-  source={`time: 4/4
-===
-$$(1 {2 4} 3 4)`}
-/>
-
-The slur endpoints must be pitch notes or chords. A rest may occur inside a slur, but it produces a warning while the slur still renders. Drum notes are not accepted inside slurs. The first pitch note or chord must follow `$(` or `$$(` on the same source line.
+The slur endpoints must be pitch notes or chords. A rest may occur inside a slur, but it produces a warning while the slur still renders. Drum notes are not accepted inside slurs. The first pitch note or chord must follow `$(` on the same source line.
 
 <JianpuSource
   title="Nested and cross-line slurs"
@@ -199,7 +183,7 @@ To continue one slur from shared repeated material into alternate endings, first
   source={`$(1 2 3 4 | [1] 5 6 7 1) $(:| [2] 5 4 3 2)`}
 />
 
-Use `$$(...)` and `$$(` consistently for counted branches. Each displayed count covers the shared segment plus that branch's ending. The continuation does not connect the previous ending back to the repeat start, and ordinary repeat-back or navigation jumps never imply a slur.
+The continuation does not connect the previous ending back to the repeat start, and ordinary repeat-back or navigation jumps never imply a slur.
 
 <JianpuExample
   title="Slur containing a rest"

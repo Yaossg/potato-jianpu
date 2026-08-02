@@ -435,29 +435,18 @@ test("tokenizes the contiguous slur opener as one token", () => {
     "rparen",
     "eof",
   ]);
-  assert.deepEqual(tokenize("$$(1 2 3)").tokens.map((token) => token.type), [
-    "countedSlurStart",
-    "note",
-    "note",
-    "note",
-    "rparen",
-    "eof",
-  ]);
   assert.equal(tokenize("$ (1 2)").diagnostics[0]?.message, "Unexpected character '$'.");
+  assert.equal(tokenize("$$(1 2 3)").diagnostics.length, 2);
   assert.equal(tokenize("$$ (1 2)").diagnostics.length, 2);
 });
 
-test("counts pitch notes and chords including endpoints for counted slurs", () => {
-  const result = parse("$$(1 {2 4} 0 3 4)");
-  assert.equal(result.ok, true);
-  assert.deepEqual(
-    result.value.slurs.map(({ startNoteIndex, endNoteIndex, noteCount }) => ({ startNoteIndex, endNoteIndex, noteCount })),
-    [{ startNoteIndex: 0, endNoteIndex: 4, noteCount: 4 }],
-  );
-
-  const nested = parse("$$($$(1 2 3) 4)");
-  assert.equal(nested.ok, true);
-  assert.deepEqual(nested.value.slurs.map((slur) => slur.noteCount), [4, 3]);
+test("rejects the reserved counted slur opener", () => {
+  const result = parse("$$(1 2 3)");
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.diagnostics.slice(0, 2).map((diagnostic) => diagnostic.message), [
+    "Unexpected character '$'.",
+    "Unexpected character '$'.",
+  ]);
 });
 
 test("parses nested, chord, and independently tracked slurs", () => {
@@ -486,21 +475,11 @@ test("parses branched slurs into alternate endings", () => {
   ]);
 });
 
-test("counts each alternate-ending slur branch from the shared start", () => {
-  const result = parse("$$(1 2 | [1] 3) $$(:| [2] 4 5)");
-  assert.equal(result.ok, true);
-  assert.deepEqual(result.value.slurs.map((slur) => slur.noteCount), [3, 4]);
-});
-
 test("validates alternate-ending slur continuations", () => {
-  for (const [source, expected] of [
-    ["1 | [1] 2 $(:| [2] 3)", /needs a matching slur/],
-    ["$$(1 | [1] 2) $(:| [2] 3)", /same ordinary or counted opener/],
-  ]) {
-    const result = parse(source);
-    assert.equal(result.ok, false, source);
-    assert.match(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), expected, source);
-  }
+  const source = "1 | [1] 2 $(:| [2] 3)";
+  const result = parse(source);
+  assert.equal(result.ok, false);
+  assert.match(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /needs a matching slur/);
 });
 
 test("uses the common predecessor for ties entering every ending", () => {

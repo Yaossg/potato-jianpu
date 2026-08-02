@@ -59,7 +59,6 @@ import RelatedLinks from '../../../../components/RelatedLinks.astro';
 | `HIGHER` | `'` |
 | `TIE` | `~` |
 | `SLUR_START` | `$(` |
-| `COUNTED_SLUR_START` | `$$(` |
 | `VELOCITY` | `ppp`、`pp`、`p`、`mp`、`mf`、`f`、`ff` 或 `fff` |
 | `CRESCENDO` | `<` |
 | `DIMINUENDO` | `>` |
@@ -119,7 +118,7 @@ token 会作为歌词对齐占位符，而不是可见音节。`AUTO_STRING` 还
 <RailroadDiagram rule="navigation_instruction" title="navigation_instruction" caption="支持的小节后导航指令。" />
 <RailroadDiagram rule="measure_separator" title="measure_separator" caption="普通小节分隔符和带反复含义的小节分隔符。" />
 <RailroadDiagram rule="measure" title="measure" caption="可选八度前缀后接带时值音符和圆滑线标记。" />
-<RailroadDiagram rule="slur_open" title="slur_open" caption="在下一枚音高音符或和弦上开始普通或带计数视觉圆滑线的 $( 或 $$( 标记。" />
+<RailroadDiagram rule="slur_open" title="slur_open" caption="在下一枚音高音符或和弦上开始圆滑线的 $( 标记。" />
 <RailroadDiagram rule="slur_continuation" title="slur_continuation" caption="紧写在反复结束前、把公共圆滑线续接到后续 ending 的同类型圆滑线起点。" />
 <RailroadDiagram rule="slur_close" title="slur_close" caption="写在圆滑线最后一枚音高音符或和弦后的右括号。" />
 <RailroadDiagram rule="durable_note" title="durable_note" caption="带可选延音线和时值后缀的音符类项目。" />

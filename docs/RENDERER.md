@@ -565,13 +565,13 @@ section directly. Split endpoints are inset by half the slur stroke width so
 their painted stroke remains inside the SVG viewport. Pagination reuses those
 visual-line segments, including across explicit page breaks.
 
-A slur opened with `$$(` has one numeric label centered on its horizontal
-section. The renderer splits the stroke around the label and places it only on
-the source-line segment containing the span midpoint, including when the slur
-crosses lines or pages. The label is the number of pitch notes or chords stored
-in `Slur.noteCount`, including both endpoints; rests are not counted. Half of
-the label font height is added to that visual line's reserved space so the
-centered text is not clipped or overlapped.
+A slur carrying `Slur.noteCount` data has one numeric label centered on its
+horizontal section. The renderer splits the stroke around the label and places
+it only on the source-line segment containing the span midpoint, including
+when the slur crosses lines or pages. Half of the label font height is added to
+that visual line's reserved space so the centered text is not clipped or
+overlapped. The parser currently does not expose source syntax that creates
+`noteCount`; renderer callers may still provide it in a `Document`.
 
 Nested spans use separate vertical placements for their horizontal sections.
 Inner slur platforms stay closer to the notation and outer platforms move
@@ -583,8 +583,7 @@ Justification and overwide-line scaling apply to slur coordinates together with
 their score line.
 
 Slurs also request a short legato overlap during browser playback and MIDI,
-WAV, and MP3 export without changing written onset times. Counted and ordinary
-slurs share the same playback behavior.
+WAV, and MP3 export without changing written onset times.
 
 ### Dynamics And Hairpins
 

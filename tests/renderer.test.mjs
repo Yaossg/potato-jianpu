@@ -13,6 +13,16 @@ const fullHeaderSnapshot = readSnapshot("full-header.svg");
 const hiddenHeaderSnapshot = readSnapshot("hidden-header.svg");
 const notationFeaturesSnapshot = readSnapshot("notation-features.svg");
 
+function parseWithSlurCounts(source, counts) {
+  const result = parse(source);
+  assert.equal(result.ok, true);
+  assert.equal(result.value.slurs.length, counts.length);
+  result.value.slurs.forEach((slur, index) => {
+    slur.noteCount = counts[index];
+  });
+  return result;
+}
+
 function noteX(svg, noteIndex) {
   const match = svg.match(
     new RegExp(`<g class="note-item(?: active)?" data-note-index="${noteIndex}">[\\s\\S]*?<text class="note" x="([^"]+)"`),
@@ -438,7 +448,7 @@ test("keeps slur endpoint curves outside anchored upper marks", () => {
 });
 
 test("renders a note count including endpoints in a gap on a counted slur platform", () => {
-  const result = parse("$$(1 {2 4} 3 4)");
+  const result = parseWithSlurCounts("$(1 {2 4} 3 4)", [4]);
   const ordinary = parse("$(1 {2 4} 3 4)");
   assert.equal(result.ok, true);
   assert.equal(ordinary.ok, true);
@@ -449,8 +459,7 @@ test("renders a note count including endpoints in a gap on a counted slur platfo
   assert.match(slurPaths(svg)[0], /^M[^ ]+ Q[^ ]+ [^ ]+ L[^ ]+ M[^ ]+ L[^ ]+ Q[^ ]+ [^ ]+$/);
   assert.equal(Number(svg.match(/<svg[^>]* height="([^"]+)"/)?.[1]), Number(ordinarySvg.match(/<svg[^>]* height="([^"]+)"/)?.[1]) + 5.25);
 
-  const nested = parse("$$($$(1 2 3) 4)");
-  assert.equal(nested.ok, true);
+  const nested = parseWithSlurCounts("$($(1 2 3) 4)", [4, 3]);
   const nestedCounts = slurCounts(renderSvg(nested.value));
   assert.deepEqual(nestedCounts.map(({ count }) => count), [4, 3]);
   assert.notEqual(nestedCounts[0].y, nestedCounts[1].y);
@@ -469,8 +478,7 @@ test("keeps a slur on its source line when the group moves to a new page", () =>
 });
 
 test("keeps cross-page slur continuation strokes inside the page viewport", () => {
-  const result = parse("$$(1\n---\n2)");
-  assert.equal(result.ok, true);
+  const result = parseWithSlurCounts("$(1\n---\n2)", [2]);
   const pages = renderSvgPages(result.value, { pageWidth: 220, paginate: true, pageHeight: 160 });
   assert.equal(pages.length, 2);
   assert.match(pages[1].svg, /\.slur \{[^}]*stroke-width: 1\.5;/);
@@ -478,8 +486,7 @@ test("keeps cross-page slur continuation strokes inside the page viewport", () =
 });
 
 test("renders a counted slur label once on its midpoint source line", () => {
-  const result = parse("$$(1 2 | 3 4 | 5 6 | 7 1')");
-  assert.equal(result.ok, true);
+  const result = parseWithSlurCounts("$(1 2 | 3 4 | 5 6 | 7 1')", [8]);
   const svg = renderSvg(result.value, { pageWidth: 100, justifyMode: "all" });
   assert.deepEqual(slurCounts(svg).map(({ count }) => count), [8]);
   assert.equal(slurPaths(svg).filter((path) => / M[^ ]+ L/.test(path)).length, 1);
@@ -1228,7 +1235,7 @@ test("applies vertical lane height before pagination", () => {
 });
 
 test("lays out dense navigation ending slur and dynamic combinations", () => {
-  const result = parse("|: [Segno] 1 | [1] $$(p < 2 f < ~2(.) 3) :| [2] 4 [D.S.] |");
+  const result = parse("|: [Segno] 1 | [1] $(p < 2 f < ~2(.) 3) :| [2] 4 [D.S.] |");
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 220, justifyMode: "all" });
   assert.match(svg, /class="navigation-target/);
@@ -1252,7 +1259,7 @@ test("lays out grace slide and long trill beside upper spans", () => {
 });
 
 test("plans upper decorations independently for simultaneous voices", () => {
-  const result = parse("T1: $$(p < {1 3 5}(<2) f < ~{1 3 5}(.) 2)\nT2: 5(tr~)- 6 7 1");
+  const result = parse("T1: $(p < {1 3 5}(<2) f < ~{1 3 5}(.) 2)\nT2: 5(tr~)- 6 7 1");
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 240 });
   assert.equal(slurPaths(svg).length, 1);

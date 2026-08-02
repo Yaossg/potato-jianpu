@@ -53,7 +53,7 @@ navigation_instruction = "Fine" | "D.C." | "D.S." | "To Coda" ;
 measure = [ octave ], { slur_open }, durable_note, { slur_open | slur_close | durable_note } ;
 octave = LOWER, { LOWER } | HIGHER, { HIGHER } ;
 
-slur_open = SLUR_START | COUNTED_SLUR_START ;
+slur_open = SLUR_START ;
 slur_continuation = slur_open ;
 slur_close = RPAREN ;
 durable_note = [ velocity ], { hairpin }, [ tie ], [ velocity ], general_note, [ ornament ], [ length ] ;
@@ -123,7 +123,6 @@ LOWER = "," ;
 HIGHER = "'" ;
 TIE = "~" ;
 SLUR_START = "$(" ;
-COUNTED_SLUR_START = "$$(" ;
 VELOCITY = "ppp" | "pp" | "p" | "mp" | "mf" | "f" | "ff" | "fff" ;
 CRESCENDO = "<" ;
 DIMINUENDO = ">" ;

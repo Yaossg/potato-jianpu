@@ -94,16 +94,12 @@ test("compiles pitch notes to MIDI notes with key and octave", () => {
 test("plays slurs with legato overlap without changing the rhythmic timeline", () => {
   const plain = parse("1 2 3 4");
   const slurred = parse("$(1 2 3 4)");
-  const counted = parse("$$(1 2 3 4)");
   assert.equal(plain.ok, true);
   assert.equal(slurred.ok, true);
-  assert.equal(counted.ok, true);
   const plainMelody = compileMelody(plain.value);
   const slurredMelody = compileMelody(slurred.value);
-  const countedMelody = compileMelody(counted.value);
   assert.deepEqual(slurredMelody.notes.map((note) => note.duration), plainMelody.notes.map((note) => note.duration));
   assert.deepEqual(slurredMelody.notes.map((note) => note.legatoToIndex), [1, 2, 3, undefined]);
-  assert.deepEqual(countedMelody, slurredMelody);
   assert.deepEqual(
     melodyPitchSpans(slurredMelody.notes).map((span) => span.offset),
     [0, 1 / 4, 1 / 2, 3 / 4],

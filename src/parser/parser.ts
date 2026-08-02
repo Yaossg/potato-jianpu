@@ -33,7 +33,7 @@ type ResolvedTieTarget =
 
 type EndingBlock = { endings: number[]; startIndex: number; endIndex: number };
 type ActiveHairpin = { kind: HairpinKind; range: SourceRange };
-type ActiveSlur = { range: SourceRange; notes: Note[]; showNoteCount: boolean; continuationBoundary?: SourceRange };
+type ActiveSlur = { range: SourceRange; notes: Note[]; continuationBoundary?: SourceRange };
 type DynamicHairpinSpan = { kind: HairpinKind; start: Note; end: Note };
 type NotePrefixes = { velocity?: number; hairpinStart?: HairpinKind; hairpinEnd?: HairpinKind };
 type BracketMark =
@@ -744,7 +744,7 @@ class Parser {
   }
 
   private isSlurStart(): boolean {
-    return this.at("slurStart") || this.at("countedSlurStart");
+    return this.at("slurStart");
   }
 
   private isDurableNoteCoreStart(): boolean {
@@ -1123,7 +1123,6 @@ class Parser {
       stack.push({
         range: start.range,
         notes: [note],
-        showNoteCount: start.type === "countedSlurStart",
       });
     }
     if (stack.length > 0) {
@@ -1137,7 +1136,6 @@ class Parser {
       stack.push({
         range: start.range,
         notes: [],
-        showNoteCount: start.type === "countedSlurStart",
         continuationBoundary: boundary,
       });
     }
@@ -1148,7 +1146,7 @@ class Parser {
     const stack = this.activeSlurs.get(trackKey);
     const active = stack?.pop();
     if (!active) {
-      this.error("Unexpected ')' without matching slur start '$(' or '$$('.", close.range);
+      this.error("Unexpected ')' without matching slur start '$('.", close.range);
       return;
     }
     if (stack?.length === 0) {
@@ -1186,9 +1184,6 @@ class Parser {
       endNoteIndex: endNote.index,
       track: trackKey || "T1",
       placement: "auto",
-      ...(active.showNoteCount
-        ? { noteCount: active.notes.filter((note) => note.kind === "pitch").length }
-        : {}),
       ...(active.continuationBoundary
         ? {
             branch: {
@@ -1547,26 +1542,12 @@ class Parser {
             .sort((left, right) => left.range.start.offset - right.range.start.offset);
 
           for (const [continuationIndex, continuation] of continuations.entries()) {
-            const counted = continuation.noteCount !== undefined;
             const primary = primaryCandidates[continuationIndex];
             if (!primary) {
-              this.error(
-                counted
-                  ? "Counted ending slur continuation needs a matching counted slur from the common section into the first ending."
-                  : "Ending slur continuation needs a matching slur from the common section into the first ending.",
-                continuation.range,
-              );
-              continue;
-            }
-            if ((primary.noteCount !== undefined) !== counted) {
-              this.error("Ending slur continuation must use the same ordinary or counted opener as its first-ending slur.", continuation.range);
-              continuation.branch!.group = "invalid";
+              this.error("Ending slur continuation needs a matching slur from the common section into the first ending.", continuation.range);
               continue;
             }
             const group = `${track}:${firstEndingNotes[0]!.index}:${primary.startNoteIndex}`;
-            const commonStartOrdinal = noteOrdinal.get(primary.startNoteIndex) ?? 0;
-            const commonEndOrdinal = noteOrdinal.get(commonEnd.index) ?? commonStartOrdinal;
-            const commonCount = notes.slice(commonStartOrdinal, commonEndOrdinal + 1).filter((note) => note.kind === "pitch").length;
             primary.branch = {
               group,
               role: "primary",
@@ -1583,11 +1564,6 @@ class Parser {
               endings: block.endings,
               boundaryOffset: continuation.branch!.boundaryOffset,
             };
-            if (counted) {
-              continuation.noteCount = commonCount + blockNotes
-                .filter((note) => note.index >= continuation.startNoteIndex && note.index <= continuation.endNoteIndex && note.kind === "pitch")
-                .length;
-            }
           }
         }
       }
