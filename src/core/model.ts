@@ -49,6 +49,7 @@ export interface DurationMark {
 
 export interface BaseNote {
   tie: boolean;
+  tieFromEnding?: boolean;
   ornament?: Ornament;
   duration: DurationMark;
   index: number;
@@ -130,6 +131,14 @@ export interface Slur {
   track: string;
   placement: "auto";
   noteCount?: number;
+  branch?: {
+    group: string;
+    role: "primary" | "continuation";
+    commonStartNoteIndex: number;
+    commonEndNoteIndex: number;
+    endings: number[];
+    boundaryOffset: number;
+  };
   range: SourceRange;
 }
 

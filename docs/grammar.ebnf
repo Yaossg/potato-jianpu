@@ -40,8 +40,8 @@ lyric_alignment_placeholder = "_" | "~" ;
 page_break = DASH, DASH, DASH ;
 
 start_barline = BAR | REPEAT_START ;
-measure_separator = BAR | REPEAT_START | REPEAT_BOTH ;
-end_barline = BAR | REPEAT_END ;
+measure_separator = BAR | REPEAT_START | [ slur_continuation ], ( REPEAT_END | REPEAT_BOTH ) ;
+end_barline = BAR | [ slur_continuation ], REPEAT_END ;
 
 measure_prefix = ending | navigation_before ;
 ending = "[", NOTE, { ",", NOTE }, "]" ;
@@ -54,6 +54,7 @@ measure = [ octave ], { slur_open }, durable_note, { slur_open | slur_close | du
 octave = LOWER, { LOWER } | HIGHER, { HIGHER } ;
 
 slur_open = SLUR_START | COUNTED_SLUR_START ;
+slur_continuation = slur_open ;
 slur_close = RPAREN ;
 durable_note = [ velocity ], { hairpin }, [ tie ], [ velocity ], general_note, [ ornament ], [ length ] ;
 tie = TIE ;

@@ -24,6 +24,8 @@ Lyrics, lyric alignment, and lyric placeholders are visual-only. They do not add
 
 Slurs written with `$(...)` or counted `$$(...)` syntax add a short legato overlap between adjacent different pitches. Unlike a tie, a slur does not merge rhythmic durations or suppress attacks: onset times stay on their written beats. Rests break the connection, and repeated pitches are rearticulated without overlap.
 
+At alternate endings, an explicit slur continuation immediately before `:|` joins the shared repeated material to the selected later ending. Each pass follows its own branch; neither the previous ending tail nor a navigation jump becomes legato. A tie on an ending's first item likewise extends the actual shared predecessor for that pass.
+
 ## Ornaments And Sustain
 
 Fermatas written as `(.)` extend the attached note, chord, rest, drum note, or

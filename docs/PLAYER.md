@@ -259,6 +259,11 @@ The parser validates tie legality before successful playback/export:
 The melody compiler merges tied notes into the previous melody event by adding
 the tied note duration.
 
+At a repeated ending, a tie on the first durable item of each ending is checked
+against the final sounding item in the shared repeated section. During repeat
+expansion it therefore extends the shared item from that playback pass rather
+than the final source item of the preceding ending.
+
 Example:
 
 ```jianpu
@@ -272,6 +277,12 @@ they do not merge rhythmic durations or suppress attacks. The player instead
 adds a short legato overlap between adjacent different pitches while retaining
 their written onset times. Rests break the legato connection, repeated pitches
 are rearticulated without overlap, and nested slurs do not compound the effect.
+
+For alternate endings, place another matching `$(` or `$$(` immediately before
+the `:|` that leads to a later ending, then close it in that ending. The shared
+part of the primary slur is replayed on every pass, and each continuation joins
+the shared final pitch only to its own ending. Repeat-back and navigation jumps
+do not create slur connections.
 
 ## Rests
 

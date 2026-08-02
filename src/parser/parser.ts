@@ -33,7 +33,7 @@ type ResolvedTieTarget =
 
 type EndingBlock = { endings: number[]; startIndex: number; endIndex: number };
 type ActiveHairpin = { kind: HairpinKind; range: SourceRange };
-type ActiveSlur = { range: SourceRange; notes: Note[]; showNoteCount: boolean };
+type ActiveSlur = { range: SourceRange; notes: Note[]; showNoteCount: boolean; continuationBoundary?: SourceRange };
 type DynamicHairpinSpan = { kind: HairpinKind; start: Note; end: Note };
 type NotePrefixes = { velocity?: number; hairpinStart?: HairpinKind; hairpinEnd?: HairpinKind };
 type BracketMark =
@@ -176,6 +176,7 @@ class Parser {
     this.validateNoteKinds(score, header);
     this.validateLyrics(score);
     this.normalizeFinalEnding(score);
+    this.resolveBranchedSlurs(score);
     this.validateTies(score);
     this.validateSlides(score);
     this.validateRepeatedEndings(score);
@@ -597,6 +598,10 @@ class Parser {
       while (this.isSlurStart()) {
         slurStarts.push(this.current());
         this.index += 1;
+      }
+      if (slurStarts.length > 0 && (this.at("repeatEnd") || this.at("repeatBoth"))) {
+        this.openSlurContinuations(trackKey, slurStarts, this.current().range);
+        break;
       }
       if (slurStarts.length > 0 && !this.isDurableNoteStart()) {
         for (const startToken of slurStarts) {
@@ -1126,6 +1131,19 @@ class Parser {
     }
   }
 
+  private openSlurContinuations(trackKey: string, starts: Token[], boundary: SourceRange) {
+    const stack = this.activeSlurs.get(trackKey) ?? [];
+    for (const start of starts) {
+      stack.push({
+        range: start.range,
+        notes: [],
+        showNoteCount: start.type === "countedSlurStart",
+        continuationBoundary: boundary,
+      });
+    }
+    this.activeSlurs.set(trackKey, stack);
+  }
+
   private closeSlur(trackKey: string, endNote: Note, close: Token) {
     const stack = this.activeSlurs.get(trackKey);
     const active = stack?.pop();
@@ -1138,10 +1156,10 @@ class Parser {
     }
 
     const range = mergeRange(active.range, close.range);
-    const startNote = active.notes[0]!;
+    const startNote = active.notes[0];
     let valid = true;
-    if (startNote.kind !== "pitch") {
-      this.error("Slur must start on a pitch note or chord.", startNote.range);
+    if (!startNote || startNote.kind !== "pitch") {
+      this.error("Slur must start on a pitch note or chord.", startNote?.range ?? active.range);
       valid = false;
     }
     if (endNote.kind !== "pitch") {
@@ -1153,7 +1171,7 @@ class Parser {
       this.error("Slurs cannot contain drum notes.", drum.range);
       valid = false;
     }
-    if (active.notes.filter((note) => note.kind === "pitch").length < 2) {
+    if (!active.continuationBoundary && active.notes.filter((note) => note.kind === "pitch").length < 2) {
       this.error("Slur must contain at least two pitch notes or chords.", range);
       valid = false;
     }
@@ -1164,12 +1182,24 @@ class Parser {
       this.warning("Slur contains a rest; the arc will still be rendered.", range);
     }
     this.slurs.push({
-      startNoteIndex: startNote.index,
+      startNoteIndex: startNote!.index,
       endNoteIndex: endNote.index,
       track: trackKey || "T1",
       placement: "auto",
       ...(active.showNoteCount
         ? { noteCount: active.notes.filter((note) => note.kind === "pitch").length }
+        : {}),
+      ...(active.continuationBoundary
+        ? {
+            branch: {
+              group: "pending",
+              role: "continuation" as const,
+              commonStartNoteIndex: -1,
+              commonEndNoteIndex: -1,
+              endings: [],
+              boundaryOffset: active.continuationBoundary.start.offset,
+            },
+          }
         : {}),
       range,
     });
@@ -1405,6 +1435,7 @@ class Parser {
   }
 
   private validateTrackTies(lines: ScoreLine[]) {
+    const endingPredecessors = this.endingTiePredecessors(lines);
     let previous: ResolvedTieTarget | undefined;
     let hasPreviousNote = false;
 
@@ -1414,16 +1445,170 @@ class Parser {
         for (const note of measure.notes) {
           const current = this.resolveTieTarget(note, accidentals);
           if (note.tie) {
+            const expectedPrevious = endingPredecessors.has(note.index) ? endingPredecessors.get(note.index) : previous;
             if (!hasPreviousNote) {
               this.error("First note cannot be tied.", note.range);
-            } else if (!previous) {
+            } else if (!expectedPrevious) {
               this.error("Tied note must follow a sounding note.", note.range);
-            } else if (!current || !this.sameTieTarget(previous, current)) {
+            } else if (!current || !this.sameTieTarget(expectedPrevious, current)) {
               this.error("Tied note must match the previous sounding note.", note.range);
             }
           }
           previous = current;
           hasPreviousNote = true;
+        }
+      }
+    }
+  }
+
+  private endingTiePredecessors(lines: ScoreLine[]): Map<number, ResolvedTieTarget | undefined> {
+    const measures = lines.flatMap((line) => line.measures);
+    const result = new Map<number, ResolvedTieTarget | undefined>();
+    for (const blocks of this.groupEndingBlocks(measures)) {
+      const first = blocks[0];
+      if (!first) {
+        continue;
+      }
+      let predecessor: ResolvedTieTarget | undefined;
+      for (let measureIndex = first.startIndex - 1; measureIndex >= 0 && predecessor === undefined; measureIndex -= 1) {
+        const accidentals = new Map<number, Accidental>();
+        const targets = measures[measureIndex]!.notes.map((note) => this.resolveTieTarget(note, accidentals));
+        for (let noteIndex = targets.length - 1; noteIndex >= 0; noteIndex -= 1) {
+          if (targets[noteIndex] !== undefined) {
+            predecessor = targets[noteIndex];
+            break;
+          }
+        }
+        if (measures[measureIndex]!.repeatStart) {
+          break;
+        }
+      }
+      for (const [blockIndex, block] of blocks.entries()) {
+        const firstNote = measures[block.startIndex]?.notes[0];
+        if (firstNote) {
+          result.set(firstNote.index, predecessor);
+          if (blockIndex > 0 && firstNote.tie) {
+            firstNote.tieFromEnding = true;
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  private resolveBranchedSlurs(lines: ScoreLine[]) {
+    for (const trackLines of this.trackLineGroups(lines)) {
+      const measures = trackLines.flatMap((line) => line.measures);
+      const notes = measures.flatMap((measure) => measure.notes);
+      const noteOrdinal = new Map(notes.map((note, index) => [note.index, index]));
+      const track = trackLines[0]?.label ?? "T1";
+      const trackSlurs = this.slurs.filter((slur) => slur.track === track);
+
+      for (const blocks of this.groupEndingBlocks(measures)) {
+        const firstBlock = blocks[0];
+        if (!firstBlock) {
+          continue;
+        }
+        const firstEndingNotes = measures
+          .slice(firstBlock.startIndex, firstBlock.endIndex + 1)
+          .flatMap((measure) => measure.notes);
+        const firstEndingIndexes = new Set(firstEndingNotes.map((note) => note.index));
+        const firstEndingStart = noteOrdinal.get(firstEndingNotes[0]?.index ?? -1) ?? Number.POSITIVE_INFINITY;
+        const commonPitches = measures
+          .slice(0, firstBlock.startIndex)
+          .flatMap((measure) => measure.notes)
+          .filter((note) => note.kind === "pitch");
+        const commonEnd = commonPitches.at(-1);
+        if (!commonEnd) {
+          continue;
+        }
+
+        const primaryCandidates = trackSlurs
+          .filter((slur) => {
+            if (slur.branch) {
+              return false;
+            }
+            const start = noteOrdinal.get(slur.startNoteIndex) ?? Number.POSITIVE_INFINITY;
+            return start < firstEndingStart && firstEndingIndexes.has(slur.endNoteIndex);
+          })
+          .sort((left, right) =>
+            (noteOrdinal.get(left.startNoteIndex) ?? 0) - (noteOrdinal.get(right.startNoteIndex) ?? 0)
+            || (noteOrdinal.get(right.endNoteIndex) ?? 0) - (noteOrdinal.get(left.endNoteIndex) ?? 0));
+
+        for (const block of blocks.slice(1)) {
+          const blockNotes = measures.slice(block.startIndex, block.endIndex + 1).flatMap((measure) => measure.notes);
+          const blockIndexes = new Set(blockNotes.map((note) => note.index));
+          const boundaryMeasure = measures[block.startIndex - 1];
+          const continuations = trackSlurs
+            .filter((slur) => slur.branch?.role === "continuation"
+              && blockIndexes.has(slur.startNoteIndex)
+              && boundaryMeasure?.repeatEnd
+              && slur.branch.boundaryOffset <= (measures[block.startIndex]?.range.start.offset ?? Number.POSITIVE_INFINITY))
+            .sort((left, right) => left.range.start.offset - right.range.start.offset);
+
+          for (const [continuationIndex, continuation] of continuations.entries()) {
+            const counted = continuation.noteCount !== undefined;
+            const primary = primaryCandidates[continuationIndex];
+            if (!primary) {
+              this.error(
+                counted
+                  ? "Counted ending slur continuation needs a matching counted slur from the common section into the first ending."
+                  : "Ending slur continuation needs a matching slur from the common section into the first ending.",
+                continuation.range,
+              );
+              continue;
+            }
+            if ((primary.noteCount !== undefined) !== counted) {
+              this.error("Ending slur continuation must use the same ordinary or counted opener as its first-ending slur.", continuation.range);
+              continuation.branch!.group = "invalid";
+              continue;
+            }
+            const group = `${track}:${firstEndingNotes[0]!.index}:${primary.startNoteIndex}`;
+            const commonStartOrdinal = noteOrdinal.get(primary.startNoteIndex) ?? 0;
+            const commonEndOrdinal = noteOrdinal.get(commonEnd.index) ?? commonStartOrdinal;
+            const commonCount = notes.slice(commonStartOrdinal, commonEndOrdinal + 1).filter((note) => note.kind === "pitch").length;
+            primary.branch = {
+              group,
+              role: "primary",
+              commonStartNoteIndex: primary.startNoteIndex,
+              commonEndNoteIndex: commonEnd.index,
+              endings: firstBlock.endings,
+              boundaryOffset: continuation.branch!.boundaryOffset,
+            };
+            continuation.branch = {
+              group,
+              role: "continuation",
+              commonStartNoteIndex: primary.startNoteIndex,
+              commonEndNoteIndex: commonEnd.index,
+              endings: block.endings,
+              boundaryOffset: continuation.branch!.boundaryOffset,
+            };
+            if (counted) {
+              continuation.noteCount = commonCount + blockNotes
+                .filter((note) => note.index >= continuation.startNoteIndex && note.index <= continuation.endNoteIndex && note.kind === "pitch")
+                .length;
+            }
+          }
+        }
+      }
+
+      for (const slur of trackSlurs) {
+        if (!slur.branch) {
+          for (const blocks of this.groupEndingBlocks(measures)) {
+            const firstBlock = blocks[0];
+            const laterIndexes = new Set(blocks.slice(1).flatMap((block) =>
+              measures.slice(block.startIndex, block.endIndex + 1).flatMap((measure) => measure.notes.map((note) => note.index))));
+            const firstNote = firstBlock ? measures[firstBlock.startIndex]?.notes[0] : undefined;
+            if (firstNote
+              && (noteOrdinal.get(slur.startNoteIndex) ?? Number.POSITIVE_INFINITY) < (noteOrdinal.get(firstNote.index) ?? 0)
+              && laterIndexes.has(slur.endNoteIndex)) {
+              this.warning("A source-linear slur across repeated endings is ambiguous in playback; use a slur continuation before ':|'.", slur.range);
+              break;
+            }
+          }
+        }
+        if (slur.branch?.group === "pending") {
+          this.error("Ending slur continuation must follow a repeated ending boundary and match a first-ending slur.", slur.range);
         }
       }
     }

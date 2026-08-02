@@ -119,6 +119,8 @@ A leading tie marker `~` ties a note to the previous compatible note, combining 
 
 The tie target must be compatible with the previous sounding pitch. A tied note cannot be the first note in a track, and ties are validated independently for labeled tracks.
 
+When the first item in a repeated ending is tied, every ending uses the final sounding item in the shared repeated section as its target. The first ending draws the ordinary adjacent tie; later endings draw an incoming tie from the repeat boundary. A rest at the start of an ending prevents a later tie from jumping back to the shared section.
+
 <JianpuSource
   title="Compatible tie source"
   source={`time: 2/4
@@ -184,6 +186,20 @@ $($(1 2)
 />
 
 A slur adds a short legato overlap between adjacent different pitches in browser playback and MIDI, WAV, or MP3 output, without moving their written onset times. Rests break that connection, and repeated pitches remain separately attacked. A tie uses `~`, connects compatible repeated pitches, and combines their sounding duration. Both may appear together, with the shorter tie drawn closer to the notes.
+
+To continue one slur from shared repeated material into alternate endings, first write the ordinary slur into `[1]`. Immediately before the `:|` that leads to each later ending, write another matching `$(` and close it inside that ending. This split behavior is adapted from Tomato Jianpu notation while retaining this project's `$(` token:
+
+<JianpuSource
+  title="Alternate-ending slur source"
+  source={`$(1 2 3 4 | [1] 5 6 7 1) $(:| [2] 5 4 3 2)`}
+/>
+
+<ScorePreview
+  title="Branched slur across endings"
+  source={`$(1 2 3 4 | [1] 5 6 7 1) $(:| [2] 5 4 3 2)`}
+/>
+
+Use `$$(...)` and `$$(` consistently for counted branches. Each displayed count covers the shared segment plus that branch's ending. The continuation does not connect the previous ending back to the repeat start, and ordinary repeat-back or navigation jumps never imply a slur.
 
 <JianpuExample
   title="Slur containing a rest"

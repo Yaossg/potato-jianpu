@@ -471,6 +471,51 @@ T2: $({1 3} {2 4})`);
   assert.deepEqual(tracked.value.slurs.map((slur) => slur.track), ["T1", "T2"]);
 });
 
+test("parses branched slurs into alternate endings", () => {
+  const result = parse("1 2 $(3 4 | [1] 1 2) 3 4 $(:| [2] 1 2) 3 4 |");
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.value.slurs.map((slur) => ({
+    start: slur.startNoteIndex,
+    end: slur.endNoteIndex,
+    role: slur.branch?.role,
+    commonEnd: slur.branch?.commonEndNoteIndex,
+    endings: slur.branch?.endings,
+  })), [
+    { start: 2, end: 5, role: "primary", commonEnd: 3, endings: [1] },
+    { start: 8, end: 9, role: "continuation", commonEnd: 3, endings: [2] },
+  ]);
+});
+
+test("counts each alternate-ending slur branch from the shared start", () => {
+  const result = parse("$$(1 2 | [1] 3) $$(:| [2] 4 5)");
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.value.slurs.map((slur) => slur.noteCount), [3, 4]);
+});
+
+test("validates alternate-ending slur continuations", () => {
+  for (const [source, expected] of [
+    ["1 | [1] 2 $(:| [2] 3)", /needs a matching slur/],
+    ["$$(1 | [1] 2) $(:| [2] 3)", /same ordinary or counted opener/],
+  ]) {
+    const result = parse(source);
+    assert.equal(result.ok, false, source);
+    assert.match(result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), expected, source);
+  }
+});
+
+test("uses the common predecessor for ties entering every ending", () => {
+  const valid = parse("|: 1 | [1] ~1 :| [2] ~1");
+  assert.equal(valid.ok, true);
+  assert.equal(valid.value.score[0].measures[2].notes[0].tieFromEnding, true);
+
+  const incompatibleCommon = parse("|: 1 | [1] 2 :| [2] ~2");
+  assert.equal(incompatibleCommon.ok, false);
+  assert.match(incompatibleCommon.diagnostics.map((diagnostic) => diagnostic.message).join("\n"), /must match the previous sounding note/);
+
+  const compatibleCommon = parse("|: 1 | [1] 2 :| [2] ~1");
+  assert.equal(compatibleCommon.ok, true);
+});
+
 test("warns for rests inside slurs while keeping the visual span", () => {
   const result = parse("$(1 0 2)");
   assert.equal(result.ok, true);

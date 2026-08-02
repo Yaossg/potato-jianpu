@@ -380,6 +380,23 @@ test("plays repeated endings on the matching pass", () => {
   );
 });
 
+test("plays branched slurs from the common section into each ending", () => {
+  const result = parse("$(1 2 | [1] 3) $(:| [2] 4 5)");
+  assert.equal(result.ok, true);
+  const melody = compileMelody(result.value);
+  assert.deepEqual(melody.notes.map((note) => [note.index, note.legatoToIndex]), [
+    [0, 1], [1, 2], [2, undefined],
+    [0, 1], [1, 3], [3, 4], [4, undefined],
+  ]);
+});
+
+test("merges ties entering each ending with that pass common note", () => {
+  const result = parse("|: 1 | [1] ~1 :| [2] ~1");
+  assert.equal(result.ok, true);
+  const melody = compileMelody(result.value);
+  assert.deepEqual(melody.notes.map((note) => [note.index, note.duration]), [[0, 0.5], [0, 0.5]]);
+});
+
 test("plays repeated endings beyond the second pass", () => {
   const result = parse("|: 1 | [1] 2 :| [2] 3 :| [3] 4 |");
   assert.equal(result.ok, true);

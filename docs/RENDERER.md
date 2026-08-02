@@ -28,6 +28,12 @@ analyzeScoreLayout(document: Document, options?: RenderOptions): ScoreLayoutWarn
 
 `document` must already be parsed. The renderer does not parse source text.
 
+Alternate-ending slur continuations begin visually at their repeat boundary;
+they do not redraw the shared primary arc. A tie entering the first ending is a
+normal adjacent tie, while a tie entering a later ending is drawn as an incoming
+fragment from that ending's repeat boundary rather than from the preceding
+source ending.
+
 Options:
 
 ```ts

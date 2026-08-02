@@ -1011,6 +1011,28 @@ test("renders repeated ending brackets", () => {
   assert.match(svg, /<text class="ending-label" x="\d+" y="\d+" text-anchor="start">2\.<\/text>/);
 });
 
+test("renders alternate-ending slur continuations from the repeat boundary", () => {
+  const result = parse("$(1 2 | [1] 3) $(:| [2] 4 5)");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  const paths = slurPaths(svg);
+  assert.equal(paths.length, 2);
+  const repeatBarX = Number([...svg.matchAll(/<line class="bar-final" x1="([^"]+)"/g)][0]?.[1]) - 5;
+  const continuationStartX = Number(paths[1].match(/^M([^,]+),/)?.[1]);
+  assert.equal(continuationStartX, repeatBarX);
+});
+
+test("renders later-ending ties as incoming fragments only", () => {
+  const result = parse("|: 1 | [1] ~1 :| [2] ~1");
+  assert.equal(result.ok, true);
+  const paths = tiePaths(renderSvg(result.value));
+  assert.equal(paths.length, 2);
+  const firstStart = Number(paths[0].match(/^M([^,]+),/)?.[1]);
+  const laterStart = Number(paths[1].match(/^M([^,]+),/)?.[1]);
+  assert.ok(laterStart > firstStart);
+  assert.match(paths[1], /^M[^,]+,[^ ]+ Q[^ ]+ [^ ]+ Q[^ ]+ [^ ]+ Z$/);
+});
+
 test("renders repeated ending brackets for multiple passes", () => {
   const result = parse("|: 1 | [1,2] 2 :| [3] 3 |");
   assert.equal(result.ok, true);

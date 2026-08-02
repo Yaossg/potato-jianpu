@@ -256,8 +256,8 @@ interface SourceNoteEventGroup {
   endIndex: number;
 }
 
-function slurTransitions(document: Document): Map<number, number> {
-  const transitions = new Map<number, number>();
+function slurTransitions(document: Document): Set<string> {
+  const transitions = new Set<string>();
   const notesByTrack = new Map<string, Note[]>();
   for (const line of document.score) {
     const track = line.label ?? "T1";
@@ -271,8 +271,11 @@ function slurTransitions(document: Document): Map<number, number> {
       const current = notes[index]!;
       const next = notes[index + 1]!;
       if (current.kind === "pitch" && next.kind === "pitch") {
-        transitions.set(current.index, next.index);
+        transitions.add(`${current.index}:${next.index}`);
       }
+    }
+    if (slur.branch?.role === "continuation") {
+      transitions.add(`${slur.branch.commonEndNoteIndex}:${slur.startNoteIndex}`);
     }
   }
   return transitions;
@@ -312,7 +315,6 @@ function compileMeasure(
   sourceGroups: SourceNoteEventGroup[],
   contexts: PlaybackNoteContext[],
   contextStart: number,
-  transitions: Map<number, number>,
 ) {
   for (const [index, note] of measure.notes.entries()) {
     const context = contexts[contextStart + index]!;
@@ -327,10 +329,15 @@ function compileMeasure(
       output.push(...melodyNotes);
       sourceGroups.push({ note, startIndex, endIndex: output.length - 1 });
     }
-    const legatoToIndex = transitions.get(note.index);
-    const finalEvent = output.at(-1);
-    if (legatoToIndex !== undefined && finalEvent) {
-      finalEvent.legatoToIndex = legatoToIndex;
+  }
+}
+
+function applySlurTransitions(notes: MelodyNote[], sourceGroups: SourceNoteEventGroup[], transitions: Set<string>) {
+  for (let index = 0; index < sourceGroups.length - 1; index += 1) {
+    const current = sourceGroups[index]!;
+    const next = sourceGroups[index + 1]!;
+    if (transitions.has(`${current.note.index}:${next.note.index}`)) {
+      notes[current.endIndex]!.legatoToIndex = next.note.index;
     }
   }
 }
@@ -514,9 +521,10 @@ function compileMeasures(document: Document, measures: Measure[], program: numbe
   const transitions = slurTransitions(document);
   let contextStart = 0;
   for (const measure of playbackMeasures) {
-    compileMeasure(measure, program, notes, sourceGroups, contexts, contextStart, transitions);
+    compileMeasure(measure, program, notes, sourceGroups, contexts, contextStart);
     contextStart += measure.notes.length;
   }
+  applySlurTransitions(notes, sourceGroups, transitions);
   applyHairpinVelocities(notes, sourceGroups);
 
   return {

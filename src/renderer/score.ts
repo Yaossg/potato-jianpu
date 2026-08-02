@@ -59,6 +59,7 @@ interface SlurLineSegment {
   countLabel?: number;
   startNote?: Note;
   endNote?: Note;
+  startBoundaryMeasure?: Measure;
 }
 
 interface LineEntry {
@@ -649,6 +650,17 @@ function slurLaneMap(document: Document, notesByLine: Map<ScoreLine, Note[]>): M
       }
       lanes.set(slur, lane);
     }
+    const primaryLaneByGroup = new Map<string, number>();
+    for (const slur of slurs) {
+      if (slur.branch?.role === "primary") {
+        primaryLaneByGroup.set(slur.branch.group, lanes.get(slur) ?? 0);
+      }
+    }
+    for (const slur of slurs) {
+      if (slur.branch?.role === "continuation") {
+        lanes.set(slur, primaryLaneByGroup.get(slur.branch.group) ?? lanes.get(slur) ?? 0);
+      }
+    }
   }
   return lanes;
 }
@@ -676,21 +688,48 @@ function projectSlursToLine(
     }
     const start = ordinal.get(slur.startNoteIndex);
     const end = ordinal.get(slur.endNoteIndex);
-    if (start === undefined || end === undefined || end < first || start > last) {
+    const boundaryOnLine = slur.branch?.role === "continuation"
+      && slur.branch.boundaryOffset >= layout.line.range.start.offset
+      && slur.branch.boundaryOffset <= layout.line.range.end.offset;
+    if (start === undefined || end === undefined || end < first || (start > last && !boundaryOnLine)) {
       return [];
     }
     const labelNote = slur.noteCount !== undefined
       ? trackNotes[Math.floor((start + end) / 2)]
       : undefined;
+    const continuationStartMeasure = slur.branch?.role === "continuation"
+      ? layout.measures.find((measure) => measure.measure.notes.some((note) => note.index === slur.startNoteIndex))?.measure
+      : undefined;
+    const continuationStartIndex = continuationStartMeasure
+      ? layout.measures.findIndex((measure) => measure.measure === continuationStartMeasure)
+      : -1;
     return [{
       id: `slur:${slur.range.start.offset}:${slur.range.end.offset}:${layout.line.range.start.offset}:${layout.measureStartIndex}`,
       slur,
       lane: lanes.get(slur) ?? 0,
       ...(labelNote && lineNoteIndexes.has(labelNote.index) ? { countLabel: slur.noteCount } : {}),
-      ...(lineNoteIndexes.has(slur.startNoteIndex) ? { startNote: notesByIndex.get(slur.startNoteIndex) } : {}),
+      ...(lineNoteIndexes.has(slur.startNoteIndex) && slur.branch?.role !== "continuation"
+        ? { startNote: notesByIndex.get(slur.startNoteIndex) }
+        : {}),
       ...(lineNoteIndexes.has(slur.endNoteIndex) ? { endNote: notesByIndex.get(slur.endNoteIndex) } : {}),
+      ...(continuationStartIndex > 0 || boundaryOnLine
+        ? { startBoundaryMeasure: continuationStartIndex > 0
+            ? layout.measures[continuationStartIndex - 1]!.measure
+            : [...layout.measures].reverse().find((entry) => entry.measure.repeatEnd)?.measure }
+        : {}),
     }];
   });
+}
+
+function naturalMeasureBarX(layout: LineLayout, measure: Measure, contentOffset: number): number | undefined {
+  const measureIndex = layout.measures.findIndex((entry) => entry.measure === measure);
+  if (measureIndex < 0) {
+    return undefined;
+  }
+  const measureLayout = layout.measures[measureIndex]!;
+  const xOffset = measureXOffset(layout.measures, measureIndex);
+  const naturalBarX = xOffset + measureLayout.width - measureLayout.rightPadding - DIMENSIONS.repeatRightPadding + 12;
+  return contentOffset + naturalBarX + (measure.repeatEnd ? DIMENSIONS.repeatEndLeftGap : 0);
 }
 
 interface NaturalLineEntry {
@@ -862,17 +901,25 @@ function collectVerticalItems(
     const nextNote = nextNoteInSequence(trackNotes, entry.note);
     const next = nextNote ? entryByNote.get(nextNote) : undefined;
     if (entry.note.tie) {
+      const endingBoundary = entry.note.tieFromEnding
+        ? (() => {
+            const measureIndex = layout.measures.findIndex((item) => item.measure.notes.includes(entry.note));
+            return measureIndex > 0
+              ? naturalMeasureBarX(layout, layout.measures[measureIndex - 1]!.measure, labelOffset + bracketOffset)
+              : undefined;
+          })()
+        : undefined;
       items.push({
         id: `tie:${entry.note.index}`,
         band: "tie",
-        x1: previous?.x ?? geometry.leftEdgeX,
+        x1: endingBoundary ?? previous?.x ?? geometry.leftEdgeX,
         x2: entry.x + (entry.note.kind === "pitch" ? maxAccidentalOffset(entry.note.chord) : 0),
         height: DIMENSIONS.tieHeight + DIMENSIONS.tieStrokeWidth,
         gap: DIMENSIONS.verticalLaneGap,
         sourceOrder: entry.note.range.start.offset,
       });
     }
-    if (nextNote?.tie && !next) {
+    if (nextNote?.tie && !nextNote.tieFromEnding && !next) {
       items.push({
         id: `tie:${nextNote.index}`,
         band: "tie",
@@ -933,7 +980,11 @@ function collectVerticalItems(
   const slurItems: Array<VerticalItem & { lane: number }> = slurSegments.map((segment) => {
     const start = segment.startNote ? entryByNote.get(segment.startNote) : undefined;
     const end = segment.endNote ? entryByNote.get(segment.endNote) : undefined;
-    const x1 = start ? start.x - DIMENSIONS.slurEndpointOutset : geometry.leftEdgeX;
+    const x1 = start
+      ? start.x - DIMENSIONS.slurEndpointOutset
+      : segment.startBoundaryMeasure
+        ? naturalMeasureBarX(layout, segment.startBoundaryMeasure, labelOffset + bracketOffset) ?? geometry.leftEdgeX
+        : geometry.leftEdgeX;
     const x2 = end ? end.x + DIMENSIONS.slurEndpointOutset : geometry.rightEdgeX;
     return {
       id: segment.id,
@@ -1035,6 +1086,16 @@ function renderLine(
   const justifyX = createLineJustifier(layout, visualWidth - contentOffset - bracketOffset, justifyLine);
   const leftTieEdgeX = contentOffset;
   const rightTieEdgeX = contentOffset + justifyX(layout.width - DIMENSIONS.leftPadding + 12);
+  const endingTieStartX = (note: Note): number => {
+    const measureIndex = layout.measures.findIndex((entry) => entry.measure.notes.includes(note));
+    if (measureIndex <= 0) {
+      return fragmentEdgeX(leftTieEdgeX, DIMENSIONS.tieStrokeWidth, "left");
+    }
+    const previousLayout = layout.measures[measureIndex - 1]!;
+    const xOffset = measureXOffset(layout.measures, measureIndex - 1);
+    const naturalBarX = xOffset + previousLayout.width - previousLayout.rightPadding - DIMENSIONS.repeatRightPadding + 12;
+    return contentOffset + justifyX(naturalBarX + (previousLayout.measure.repeatEnd ? DIMENSIONS.repeatEndLeftGap : 0));
+  };
   if (displayLabel) {
     parts.push(`<text class="line-label" x="8" y="${lineY + layout.maxPaddingUp}" text-anchor="start">${escapeXml(displayLabel)}</text>`);
   }
@@ -1192,7 +1253,14 @@ function renderLine(
     const endEntry = segment.endNote
       ? lineEntries.find((entry) => entry.note === segment.endNote)
       : undefined;
-    const startX = startEntry ? startEntry.x - DIMENSIONS.slurEndpointOutset : fragmentEdgeX(leftTieEdgeX, DIMENSIONS.slurStrokeWidth, "left");
+    const boundaryX = segment.startBoundaryMeasure
+      ? naturalMeasureBarX(layout, segment.startBoundaryMeasure, 0)
+      : undefined;
+    const startX = startEntry
+      ? startEntry.x - DIMENSIONS.slurEndpointOutset
+      : boundaryX !== undefined
+        ? contentOffset + justifyX(boundaryX)
+        : fragmentEdgeX(leftTieEdgeX, DIMENSIONS.slurStrokeWidth, "left");
     const endX = endEntry ? endEntry.x + DIMENSIONS.slurEndpointOutset : fragmentEdgeX(rightTieEdgeX, DIMENSIONS.slurStrokeWidth, "right");
     const placement = layout.verticalPlan?.placements.get(segment.id);
     const baselineY = lineY + layout.maxPaddingUp;
@@ -1237,7 +1305,7 @@ function renderLine(
         parts.push(renderSlide(entry.x + maxAccidentalOffset(entry.note.chord), entry.y - shift, direction));
       }
     }
-    if (entry.note.tie && previous) {
+    if (entry.note.tie && previous && !entry.note.tieFromEnding) {
       const startX = previous.x + (previous.note.kind === "pitch" ? maxAccidentalOffset(previous.note.chord) : 0);
       const endX = entry.x + (entry.note.kind === "pitch" ? maxAccidentalOffset(entry.note.chord) : 0);
       const placement = layout.verticalPlan?.placements.get(`tie:${entry.note.index}`);
@@ -1247,10 +1315,11 @@ function renderLine(
       const endX = entry.x + (entry.note.kind === "pitch" ? maxAccidentalOffset(entry.note.chord) : 0);
       const placement = layout.verticalPlan?.placements.get(`tie:${entry.note.index}`);
       const tieOffset = (placement?.anchor ?? chordHeight(entry.note) + DIMENSIONS.verticalLaneGap) + DIMENSIONS.tieStrokeWidth / 2;
-      parts.push(renderIncomingTie(fragmentEdgeX(leftTieEdgeX, DIMENSIONS.tieStrokeWidth, "left"), endX, entry.y - tieOffset));
+      const startX = entry.note.tieFromEnding ? endingTieStartX(entry.note) : fragmentEdgeX(leftTieEdgeX, DIMENSIONS.tieStrokeWidth, "left");
+      parts.push(renderIncomingTie(startX, endX, entry.y - tieOffset));
     }
     const nextRendered = nextNote ? lineEntries.some((candidate) => candidate.note === nextNote) : false;
-    if (nextNote?.tie && !nextRendered) {
+    if (nextNote?.tie && !nextNote.tieFromEnding && !nextRendered) {
       const startX = entry.x + (entry.note.kind === "pitch" ? maxAccidentalOffset(entry.note.chord) : 0);
       const placement = layout.verticalPlan?.placements.get(`tie:${nextNote.index}`);
       const tieOffset = (placement?.anchor ?? chordHeight(entry.note) + DIMENSIONS.verticalLaneGap) + DIMENSIONS.tieStrokeWidth / 2;
