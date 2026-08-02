@@ -51,7 +51,7 @@ test("frontend production build emits the expected app shell", async () => {
   const settingsPanelSource = await readFile(new URL("../src/web/SettingsPanel.tsx", import.meta.url), "utf8");
   const sourceEditorSource = await readFile(new URL("../src/web/SourceEditor.tsx", import.meta.url), "utf8");
   const audioSource = await readFile(new URL("../src/web/audio.ts", import.meta.url), "utf8");
-  const pageWarningsSource = await readFile(new URL("../src/web/page-warnings.ts", import.meta.url), "utf8");
+  const rendererSvgSource = await readFile(new URL("../src/renderer/svg.ts", import.meta.url), "utf8");
 
   assert.match(script, /Modern Jianpu Markup/);
   assert.match(script, /Export/);
@@ -198,8 +198,8 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(settingsPanelSource, /value=\{pageHeightDraft\.draft\}/);
   assert.match(settingsPanelSource, /onBlur=\{pageHeightDraft\.commit\}/);
   assert.match(settingsPanelSource, /settings-warnings/);
-  assert.match(pageWarningsSource, /MIN_USABLE_PAGE_HEIGHT/);
-  assert.match(pageWarningsSource, /EXCESSIVE_PAGE_COUNT/);
+  assert.match(rendererSvgSource, /MIN_USABLE_PAGE_HEIGHT/);
+  assert.match(rendererSvgSource, /EXCESSIVE_PAGE_COUNT/);
   assert.match(sourceEditorSource, /onChange=\{\(event\) => updateSource\(event\.target\.value, event\.target\.selectionStart\)\}/);
   assert.match(sourceEditorSource, /selectDiagnosticRange/);
   assert.match(sourceEditorSource, /title=\{part\.tooltip\}/);

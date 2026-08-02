@@ -124,9 +124,9 @@ Responsibilities:
 
 - accept parsed `Document`
 - measure notes and measures
-- wrap measures according to `pageWidth`
+- preserve each source score line as one rendered line and scale overwide groups
 - render header and score as deterministic SVG output
-- project slur spans across visual lines and pages
+- project slur spans across source lines and pages
 - attach note metadata for frontend interaction
 - apply active-note highlighting
 - define shared paper preset dimensions and orientation-based page-size

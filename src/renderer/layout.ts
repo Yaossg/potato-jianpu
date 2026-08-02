@@ -124,50 +124,25 @@ function buildLineLayout(line: ScoreLine, measures: MeasureLayout[], measureStar
   };
 }
 
-export function layoutLine(line: ScoreLine, pageWidth: number, constraints?: LineLayoutConstraints): LineLayout[] {
-  const layouts: LineLayout[] = [];
-  let current: MeasureLayout[] = [];
-  let currentWidth = 0;
-  let currentStartIndex = 0;
+export function layoutLine(line: ScoreLine, _pageWidth: number, constraints?: LineLayoutConstraints): LineLayout[] {
+  const measures: MeasureLayout[] = [];
 
   for (const [measureIndex, measureNode] of line.measures.entries()) {
-    const previousMeasure = current.at(-1)?.measure;
+    const previousMeasure = measures.at(-1)?.measure;
     const nextMeasure = line.measures[measureIndex + 1];
-    let measure = layoutMeasure(
+    const measure = layoutMeasure(
       measureNode,
       constraints,
-      current.length > 0,
+      measures.length > 0,
       Boolean(previousMeasure?.repeatEnd && measureNode.repeatStart),
       Boolean(measureNode.repeatEnd && nextMeasure?.repeatStart),
       measureIndex === 0 ? (constraints?.lineStartPadding ?? 0) : 0,
       measureIndex === line.measures.length - 1 ? (constraints?.lineEndPadding ?? 0) : 0,
     );
-    const nextWidth = current.length === 0 ? measure.width : currentWidth + DIMENSIONS.measureSpacing + measure.width;
-    if (current.length > 0 && nextWidth > pageWidth) {
-      layouts.push(buildLineLayout(line, current, currentStartIndex));
-      measure = layoutMeasure(
-        measureNode,
-        constraints,
-        false,
-        false,
-        Boolean(measureNode.repeatEnd && nextMeasure?.repeatStart),
-        measureIndex === 0 ? (constraints?.lineStartPadding ?? 0) : 0,
-        measureIndex === line.measures.length - 1 ? (constraints?.lineEndPadding ?? 0) : 0,
-      );
-      current = [measure];
-      currentWidth = measure.width;
-      currentStartIndex = measureIndex;
-    } else {
-      current.push(measure);
-      currentWidth = nextWidth;
-    }
+    measures.push(measure);
   }
 
-  if (current.length > 0) {
-    layouts.push(buildLineLayout(line, current, currentStartIndex));
-  }
-
-  return layouts;
+  return measures.length > 0 ? [buildLineLayout(line, measures, 0)] : [];
 }
 
 export function measureXOffset(measures: MeasureLayout[], measureIndex: number): number {

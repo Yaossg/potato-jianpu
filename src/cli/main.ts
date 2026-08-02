@@ -15,7 +15,9 @@ import { parse } from "../parser/index.js";
 import { exportMidiBytes } from "../player/index.js";
 import {
   PAPER_PRESET_LIST,
+  analyzeScoreLayout,
   embedBravuraFontFace,
+  formatScoreLayoutWarning,
   isPageOrientation,
   isPaperPresetName,
   isSixDigitHexColor,
@@ -388,6 +390,9 @@ async function main(argv: string[]): Promise<number> {
     if (!renderOptions) {
       return 2;
     }
+    for (const warning of analyzeScoreLayout(result.value, renderOptions)) {
+      console.warn(`warning: ${formatScoreLayoutWarning(warning)}`);
+    }
     if (flags.includes("--split-pages")) {
       const pages = renderSvgPages(result.value, renderOptions);
       const embeddedPages = await Promise.all(pages.map(async (page) => ({ ...page, svg: await embedSvgDownloadFonts(page.svg) })));
@@ -406,6 +411,9 @@ async function main(argv: string[]): Promise<number> {
     const renderOptions = readRenderOptions(flags);
     if (!renderOptions) {
       return 2;
+    }
+    for (const warning of analyzeScoreLayout(result.value, renderOptions)) {
+      console.warn(`warning: ${formatScoreLayoutWarning(warning)}`);
     }
     const scale = readPositiveNumberFlag(flags, "--png-scale");
     if (Number.isNaN(scale)) {
@@ -430,6 +438,9 @@ async function main(argv: string[]): Promise<number> {
     const renderOptions = readRenderOptions(flags);
     if (!renderOptions) {
       return 2;
+    }
+    for (const warning of analyzeScoreLayout(result.value, renderOptions)) {
+      console.warn(`warning: ${formatScoreLayoutWarning(warning)}`);
     }
     const pages = renderSvgPages(result.value, renderOptions);
     await writeFile(output, await renderPdfBytes(pages, { title: result.value.header.title || undefined }));

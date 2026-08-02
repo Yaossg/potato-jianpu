@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { parse } from "../dist/parser/index.js";
-import { analyzeScoreOverwidth, embedBravuraFontFace, inferContentPageWidth, PAPER_PRESET_LIST, renderSvg, renderSvgPages, resolvePageSize, svgUsesSmuflSymbols } from "../dist/renderer/index.js";
+import { analyzeScoreLayout, analyzeScoreOverwidth, embedBravuraFontFace, inferContentPageWidth, PAPER_PRESET_LIST, renderSvg, renderSvgPages, resolvePageSize, svgUsesSmuflSymbols } from "../dist/renderer/index.js";
 
 function readSnapshot(name) {
   return readFileSync(new URL(`./fixtures/snapshots/${name}`, import.meta.url), "utf8").replace(/\r\n/g, "\n").replace(/\n$/, "");
@@ -12,8 +12,6 @@ const minimalSnapshot = readSnapshot("minimal.svg");
 const fullHeaderSnapshot = readSnapshot("full-header.svg");
 const hiddenHeaderSnapshot = readSnapshot("hidden-header.svg");
 const notationFeaturesSnapshot = readSnapshot("notation-features.svg");
-const wrappedTieSnapshot = readSnapshot("wrapped-tie.svg");
-const wrappedSlurSnapshot = readSnapshot("wrapped-slur.svg");
 
 function noteX(svg, noteIndex) {
   const match = svg.match(
@@ -241,21 +239,25 @@ test("matches the notation features SVG snapshot", () => {
   assert.equal(svg, notationFeaturesSnapshot);
 });
 
-test("matches the wrapped tie SVG snapshot", () => {
+test("keeps an overwide tied source line intact", () => {
   const result = parse("1 - | ~1 - | 2 3 |");
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 70, color: "#111827", background: "#ffffff" });
-  assert.equal(svg, wrappedTieSnapshot);
+  assert.equal(svg.match(/class="score-group scaled"/g)?.length, 1);
+  assert.equal(tiePaths(svg).length, 1);
+  assert.equal(svg.match(/class="note-item"/g)?.length, 4);
 });
 
-test("matches the wrapped slur SVG snapshot", () => {
+test("keeps an overwide slurred source line intact", () => {
   const result = parse("$(1 2 | 3 4 | 5 6)");
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 100, color: "#111827", background: "#ffffff" });
-  assert.equal(svg, wrappedSlurSnapshot);
+  assert.equal(svg.match(/class="score-group scaled"/g)?.length, 1);
+  assert.equal(slurPaths(svg).length, 1);
+  assert.equal(svg.match(/class="note-item"/g)?.length, 6);
 });
 
-test("paginates visual lines into fixed-height page groups", () => {
+test("paginates source-line groups into fixed-height page groups", () => {
   const result = parse(`title: "Paged"\n===\n1 2 | 3 4 | 5 6 | 7 1' |\n1 2 | 3 4 | 5 6 | 7 1' |\n1 2 | 3 4 | 5 6 | 7 1' |`);
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 120, paginate: true, pageHeight: 160, background: "#ffffff" });
@@ -269,8 +271,8 @@ test("paginates visual lines into fixed-height page groups", () => {
   assert.match(svg, /<rect class="page-boundary" x="0\.5" y="0\.5" width="119" height="159" fill="none" stroke="#cbd5e1" stroke-width="1"\/>/);
   assert.match(svg, /<rect class="page-boundary" x="0\.5" y="160\.5" width="119" height="159" fill="none" stroke="#cbd5e1" stroke-width="1"\/>/);
   const page2 = svg.match(/<g class="page" data-page="2"[\s\S]*?(?=<g class="page" data-page="3"|<\/svg>)/)?.[0] ?? "";
-  assert.match(page2, /<line class="bar-thin" x1="[^"]+" y1="12"/);
-  assert.match(page2, /<text class="note" x="[^"]+" y="36"/);
+  assert.match(page2, /<g class="score-group scaled"/);
+  assert.match(page2, /<text class="note" x="[^"]+" y="41"/);
   assert.equal([...svg.matchAll(/Paged/g)].length, 1);
   assert.match(svg, /<g class="page" data-page="1" transform="translate\(0, 0\)">[\s\S]*Paged/);
   assert.doesNotMatch(svg, /<g class="page" data-page="2"[^>]*>[\s\S]*Paged/);
@@ -365,13 +367,13 @@ test("uses page adornments from the header", () => {
 });
 
 test("renders cross-line ties as cut halves after justification", () => {
-  const result = parse("1 2 | 3 - | ~3 4 |");
+  const result = parse("1 2 | 3 - |\n~3 4 |");
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 160, justifyMode: "all", background: "#ffffff" });
   const paths = tiePaths(svg);
   assert.equal(paths.length, 2);
   assert.match(paths[0], /^M[^ ]+ Q[^ ]+ [^ ]+ L[^ ]+ Q[^ ]+ [^ ]+ Z$/);
-  assert.match(paths[1], /^M[^ ]+ Q[^ ]+ [^ ]+ Q[^ ]+ [^ ]+ Z$/);
+  assert.match(paths[1], /^M0\.5,[^ ]+ Q[^ ]+ [^ ]+ Q[^ ]+ [^ ]+ Z$/);
 });
 
 test("renders slurs outside ties and ornaments", () => {
@@ -422,18 +424,16 @@ test("renders a note count including endpoints in a gap on a counted slur platfo
   assert.notEqual(nestedCounts[0].y, nestedCounts[1].y);
 });
 
-test("splits slurs across visual lines and pages", () => {
+test("keeps a slur on its source line when the group moves to a new page", () => {
   const result = parse("$(1 2 | 3 4 | 5 6 | 7 1')");
   assert.equal(result.ok, true);
-  const wrapped = renderSvg(result.value, { pageWidth: 100, justifyMode: "all" });
-  const wrappedPaths = slurPaths(wrapped);
-  assert.ok(wrappedPaths.length > 1);
-  assert.match(wrappedPaths[0], /^M[^ ]+ Q[^ ]+ [^ ]+ L[^ ]+$/);
-  assert.ok(wrappedPaths.some((path) => /^M[^ ]+ L[^ ]+$/.test(path)));
-  assert.match(wrappedPaths.at(-1), /^M[^ ]+ L[^ ]+ Q[^ ]+ [^ ]+$/);
+  const narrow = renderSvg(result.value, { pageWidth: 100, justifyMode: "all" });
+  const narrowPaths = slurPaths(narrow);
+  assert.equal(narrowPaths.length, 1);
+  assert.match(narrowPaths[0], /^M[^ ]+ Q[^ ]+ [^ ]+ L[^ ]+ Q[^ ]+ [^ ]+$/);
   const paged = renderSvg(result.value, { pageWidth: 100, paginate: true, pageHeight: 100 });
   assert.ok((paged.match(/class="page" data-page=/g)?.length ?? 0) > 1);
-  assert.equal(slurPaths(paged).length, wrappedPaths.length);
+  assert.equal(slurPaths(paged).length, 1);
 });
 
 test("keeps cross-page slur continuation strokes inside the page viewport", () => {
@@ -445,7 +445,7 @@ test("keeps cross-page slur continuation strokes inside the page viewport", () =
   assert.match(slurPaths(pages[1].svg)[0], /^M0\.75,/);
 });
 
-test("renders a counted slur label once on its midpoint visual line", () => {
+test("renders a counted slur label once on its midpoint source line", () => {
   const result = parse("$$(1 2 | 3 4 | 5 6 | 7 1')");
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 100, justifyMode: "all" });
@@ -472,7 +472,7 @@ test("connects ties to the previous note in the same track", () => {
   const secondT1 = notePosition(svg, 4);
   const secondT2Tied = notePosition(svg, 5);
   const paths = tiePaths(svg);
-  const incomingTie = paths.find((path) => path.startsWith("M16,") && path.includes(`${secondT2Tied.x},`));
+  const incomingTie = paths.find((path) => path.startsWith("M16.5,") && path.includes(`${secondT2Tied.x},`));
   assert.ok(incomingTie, "incoming tie should render into the tied T2 note");
   const tiedEndpoint = incomingTie.match(new RegExp(` ${secondT2Tied.x},([^ ]+)(?: |$)`));
   assert.ok(tiedEndpoint);
@@ -503,14 +503,15 @@ test("uses a single sixteenth note for 16-denominator tempo marks", () => {
   assert.doesNotMatch(svg, /♬ = 96/);
 });
 
-test("wraps score measures when page width is narrow", () => {
+test("keeps score measures on one source line when page width is narrow", () => {
   const result = parse("1 2 | 3 4 | 5 6 | 7 1' |");
   assert.equal(result.ok, true);
   const wide = renderSvg(result.value, { pageWidth: 1000 });
   const narrow = renderSvg(result.value, { pageWidth: 120 });
   const wideHeight = Number(wide.match(/height="([^"]+)"/)?.[1]);
   const narrowHeight = Number(narrow.match(/height="([^"]+)"/)?.[1]);
-  assert.ok(narrowHeight > wideHeight);
+  assert.equal(narrowHeight, wideHeight);
+  assert.equal(narrow.match(/class="score-group scaled"/g)?.length, 1);
 });
 
 test("justifies all score lines by stretching note positions", () => {
@@ -554,7 +555,7 @@ test("scales a single overwide score line into the page width", () => {
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 120 });
   assert.match(svg, /<svg[^>]+width="120"/);
-  assert.match(svg, /<g class="score-line scaled" transform="scale\(0\.\d+,1\)">/);
+  assert.match(svg, /<g class="score-group scaled" transform="scale\(0\.\d+,1\)">/);
 });
 
 test("reports overwide score layout warnings", () => {
@@ -572,15 +573,29 @@ test("reports overwide score layout warnings", () => {
   assert.ok(multiWarnings.some((warning) => warning.multiTrack));
 });
 
-test("reports source lines that auto-wrap into multiple visual lines", () => {
+test("reports unified score lyric and page layout warnings", () => {
+  const result = parse('1--- 2--- 3--- 4---\n"supercalifragilisticexpialidocious"');
+  assert.equal(result.ok, true);
+  const warnings = analyzeScoreLayout(result.value, {
+    pageWidth: 100,
+    paginate: true,
+    pageHeight: 180,
+    pageMargin: 50,
+    pageNumbers: true,
+  });
+  assert.ok(warnings.some((warning) => warning.kind === "overwide-score-group"));
+  assert.ok(warnings.some((warning) => warning.kind === "overwide-lyric"));
+  assert.ok(warnings.some((warning) => warning.kind === "overheight-group"));
+  assert.ok(warnings.some((warning) => warning.kind === "small-usable-page-height"));
+});
+
+test("does not report automatic source-line wrapping", () => {
   const result = parse("1 2 | 3 4 | 5 6 | 7 1' |");
   assert.equal(result.ok, true);
   const warnings = analyzeScoreOverwidth(result.value, 120);
-  const wrapped = warnings.find((warning) => warning.kind === "wrapped-source-line");
-  assert.ok(wrapped);
-  assert.equal(wrapped.range.start.line, 1);
-  assert.equal(wrapped.multiTrack, false);
-  assert.ok(wrapped.visualLineCount > 1);
+  assert.equal(warnings.length, 1);
+  assert.equal(warnings[0].kind, "overwide-line");
+  assert.equal(warnings[0].range.start.line, 1);
 });
 
 test("renders chord notes as stacked text instead of slash-joined text", () => {
@@ -631,7 +646,7 @@ test("renders whole-chord ornaments above the chord", () => {
   assert.match(svg, /<g class="grace-note-group"/);
 });
 
-test("renders rising, falling, and wrapped slide segments", () => {
+test("renders rising, falling, and horizontally scaled slide segments", () => {
   const result = parse("1(~) 5 5(~) 1");
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value);
@@ -650,12 +665,12 @@ test("renders rising, falling, and wrapped slide segments", () => {
     assert.ok(Math.max(...points.map(([, y]) => y)) <= source.y - 12, "slide mark should stay in the source note's upper-right area");
   }
 
-  const wrapped = parse("1 2 3 4(~) | 5 6 7 1'");
-  assert.equal(wrapped.ok, true);
-  const wrappedSvg = renderSvg(wrapped.value, { pageWidth: 120 });
-  const wrappedPaths = slidePaths(wrappedSvg);
-  assert.equal(wrappedPaths.length, 1);
-  assert.equal(slideArrowPaths(wrappedSvg).length, 1);
+  const narrow = parse("1 2 3 4(~) | 5 6 7 1'");
+  assert.equal(narrow.ok, true);
+  const narrowSvg = renderSvg(narrow.value, { pageWidth: 120 });
+  const narrowPaths = slidePaths(narrowSvg);
+  assert.equal(narrowPaths.length, 1);
+  assert.equal(slideArrowPaths(narrowSvg).length, 1);
 });
 
 test("keeps slide radius fixed when the target note position changes", () => {
@@ -1004,13 +1019,12 @@ test("renders repeated ending brackets for multiple passes", () => {
   assert.match(svg, /<text class="ending-label" x="\d+" y="\d+" text-anchor="start">3\.<\/text>/);
 });
 
-test("renders ending brackets open at wrapped line ends", () => {
+test("keeps ending brackets on one overwide source line", () => {
   const result = parse("|: 1 | [1] 2 | 3 | 4 :| [2] 5 |");
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 80 });
-  const openEnding = svg.match(/<path class="ending-line" d="M\d+,\d+ V\d+ H(?<x>\d+)"\/>/);
-  assert.ok(openEnding?.groups);
-  assert.ok(Number(openEnding.groups.x) < 70);
+  assert.equal(svg.match(/class="ending-line"/g)?.length, 2);
+  assert.equal(svg.match(/class="score-group scaled"/g)?.length, 1);
 });
 
 test("renders ending brackets open across source line breaks", () => {
@@ -1054,7 +1068,7 @@ test("renders navigation marks before and after measures", () => {
   assert.match(svg, /\.navigation-symbol \{[^}]*font-style: normal/);
 });
 
-test("keeps navigation marks visible on wrapped output", () => {
+test("keeps navigation marks visible on horizontally scaled output", () => {
   const result = parse("[Segno] 1 | 2 | 3 [D.S.] | 4 [Fine]");
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 80 });
@@ -1296,6 +1310,24 @@ test("keeps right voice brackets on the rendered score width", () => {
   assert.equal(rightVoiceBracketX(svg), 70);
 });
 
+test("uses one shared horizontal scale for simultaneous tracks", () => {
+  const result = parse("T1: 1--- 2--- 3--- 4---\nT2: 5,--- 6,--- 7,--- 1---");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 140 });
+  assert.equal(svg.match(/class="score-group scaled"/g)?.length, 1);
+  assert.equal(svg.match(/class="note-item"/g)?.length, 8);
+  assert.equal(svg.match(/class="score-line scaled"/g)?.length ?? 0, 0);
+});
+
+test("keeps a simultaneous track group together when paginating", () => {
+  const result = parse('title: "Atomic"\n===\nT1: 1 2\nT2: 5, 6,');
+  assert.equal(result.ok, true);
+  const pages = renderSvgPages(result.value, { pageWidth: 220, paginate: true, pageHeight: 160 });
+  assert.equal(pages.length, 2);
+  assert.equal(pages[0].svg.match(/class="note-item"/g)?.length ?? 0, 0);
+  assert.equal(pages[1].svg.match(/class="note-item"/g)?.length, 4);
+});
+
 test("aligns notes across simultaneous tracks by rhythmic position", () => {
   const result = parse("T1: 1 2 3 4 | 5 6 7 1'\nT2: 5, - 6, - | 1, - 2, -");
   assert.equal(result.ok, true);
@@ -1333,7 +1365,7 @@ test("falls back to measure-level alignment when track rhythms miss beat boundar
   assert.equal(new Set(finalBarXs(svg)).size, 1);
 });
 
-test("aligns simultaneous tracks only within matching wrapped measure spans", () => {
+test("aligns simultaneous tracks across the complete source-line span", () => {
   const result = parse("T1: 1 2 3 4 | 5 6 7 1'\nT2: 5, - 6, - | 1, - 2, -");
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 112 });
@@ -1523,20 +1555,37 @@ test("keeps lyric-expanded multi-track rhythm anchors aligned", () => {
   assert.ok(noteX(svg, 1) - noteX(svg, 0) >= 70);
 });
 
-test("renders overwide aligned lyrics as a normal lyric line", () => {
+test("scales overwide aligned lyrics with their score group", () => {
   const result = parse('1 2\n"supercalifragilisticexpialidocious tiny"');
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 100 });
-  assert.match(svg, /<text class="lyric-line" x="18" y="\d+" text-anchor="start">supercalifragilisticexpialidocious tiny<\/text>/);
-  assert.doesNotMatch(svg, /<text class="lyric-syllable"/);
+  assert.match(svg, /<g class="score-group scaled"[^>]*>[\s\S]*<text class="lyric-syllable"/);
+  assert.doesNotMatch(svg, /class="lyric-block scaled"/);
 });
 
-test("keeps multi-line lyric syllables as a normal lyric line", () => {
+test("scales an overwide normal lyric independently from the score", () => {
+  const result = parse('1\n"supercalifragilisticexpialidocious"');
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 100 });
+  assert.match(svg, /<g class="lyric-block scaled" transform="scale\(0\.\d+,1\)">/);
+  assert.doesNotMatch(svg, /class="score-group scaled"/);
+});
+
+test("does not scale a normal lyric with an overwide score group", () => {
+  const result = parse('1--- 2--- 3--- 4---\n"caption"');
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 120 });
+  assert.match(svg, /<text class="lyric-line"[^>]*>caption<\/text>/);
+  assert.doesNotMatch(svg, /class="lyric-block scaled"/);
+  assert.match(svg, /class="score-group scaled"/);
+});
+
+test("keeps aligned lyric syllables attached to one overwide source line", () => {
   const result = parse('1 2 | 3 4 |\n"one two three four"');
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 90 });
-  assert.match(svg, /<text class="lyric-line" x="18" y="\d+" text-anchor="start">one two three four<\/text>/);
-  assert.doesNotMatch(svg, /<text class="lyric-syllable"/);
+  assert.equal(svg.match(/class="lyric-syllable"/g)?.length, 4);
+  assert.equal(svg.match(/class="score-group scaled"/g)?.length, 1);
 });
 
 test("renders explicit export color and background", () => {
@@ -1583,11 +1632,12 @@ test("renders hairpins in SVG", () => {
   assert.match(svg, /<line class="hairpin" x1="18" y1="[^"]+" x2="90" y2="[^"]+"\/>/);
 });
 
-test("renders hairpins split across visual lines as separate hairpins", () => {
+test("keeps hairpins on one overwide source line", () => {
   const result = parse("p < 1 2 | 3 f < 4 |");
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 70 });
-  assert.ok((svg.match(/class="hairpin"/g)?.length ?? 0) >= 4);
+  assert.equal(svg.match(/class="hairpin"/g)?.length, 2);
+  assert.equal(svg.match(/class="score-group scaled"/g)?.length, 1);
 });
 
 test("renders hairpins across source lines on the same track", () => {
@@ -1595,6 +1645,7 @@ test("renders hairpins across source lines on the same track", () => {
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value);
   assert.equal(svg.match(/class="hairpin"/g)?.length, 4);
+  assert.match(svg, /<line class="hairpin" x1="0\.9"/);
 });
 
 test("separates opposite hairpins that meet on one note", () => {

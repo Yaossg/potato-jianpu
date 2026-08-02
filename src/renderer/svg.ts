@@ -1,7 +1,7 @@
 import type { Document } from "../core/index.js";
 import { renderHeader } from "./header.js";
 import { DEFAULT_OPTIONS, type RenderOptions, validateRenderColorOptions } from "./options.js";
-import { renderScore } from "./score.js";
+import { analyzeScoreGeometry, renderScore, type ScoreGeometryWarning } from "./score.js";
 import { SVG_STYLE } from "./styles.js";
 import { escapeXml } from "./xml.js";
 
@@ -9,6 +9,29 @@ export interface RenderedSvgPage {
   svg: string;
   width: number;
   height: number;
+}
+
+export type ScoreLayoutWarning =
+  | ScoreGeometryWarning
+  | { kind: "small-usable-page-height"; usableHeight: number }
+  | { kind: "excessive-page-count"; pageCount: number };
+
+const MIN_USABLE_PAGE_HEIGHT = 240;
+const EXCESSIVE_PAGE_COUNT = 12;
+
+export function formatScoreLayoutWarning(warning: ScoreLayoutWarning): string {
+  switch (warning.kind) {
+    case "overwide-score-group":
+      return `${warning.multiTrack ? "A simultaneous multi-track group" : "A score line"} is wider than the current page content (${warning.naturalWidth}px > ${warning.pageWidth}px) and will be horizontally scaled to ${Math.round(warning.scaleX * 100)}%.`;
+    case "overwide-lyric":
+      return `A lyric line is wider than the current page content (${warning.naturalWidth}px > ${warning.pageWidth}px) and will be horizontally scaled to ${Math.round(warning.scaleX * 100)}%.`;
+    case "overheight-group":
+      return `A score group is taller than one page's usable score area (${warning.naturalHeight}px > ${warning.pageHeight}px). It will stay together at the top of a new page and may extend beyond the page.`;
+    case "small-usable-page-height":
+      return `Only ${warning.usableHeight}px of page height is usable after margins and footer space. Increase page height or reduce margins before exporting.`;
+    case "excessive-page-count":
+      return `These page settings create ${warning.pageCount} pages. Increase page height or reduce margins if the export feels too fragmented.`;
+  }
 }
 
 function resolvedRenderOptions(document: Document, options: RenderOptions): Required<RenderOptions> {
@@ -87,6 +110,35 @@ ${SVG_STYLE}
 </defs>
 ${body}
 </svg>`;
+}
+
+export function analyzeScoreLayout(document: Document, options: RenderOptions = {}): ScoreLayoutWarning[] {
+  const resolved = resolvedRenderOptions(document, options);
+  const inset = pageContentInset(resolved);
+  const pageContentWidth = contentWidth(resolved.pageWidth, resolved.pageMargin);
+  const pageContentHeight = contentHeight(resolved.pageHeight, inset);
+  const header = renderHeader(document, pageContentWidth);
+  const warnings: ScoreLayoutWarning[] = analyzeScoreGeometry(
+    document,
+    pageContentWidth,
+    resolved.paginate ? pageContentHeight : undefined,
+  );
+
+  if (!resolved.paginate) {
+    return warnings;
+  }
+  if (pageContentHeight < MIN_USABLE_PAGE_HEIGHT) {
+    warnings.push({ kind: "small-usable-page-height", usableHeight: pageContentHeight });
+  }
+  const score = renderScore(document, header.height, pageContentWidth, [], resolved.justifyMode, {
+    enabled: true,
+    pageHeight: pageContentHeight,
+  });
+  const pageCount = Math.max(1, score.pages?.length ?? 0);
+  if (pageCount >= EXCESSIVE_PAGE_COUNT) {
+    warnings.push({ kind: "excessive-page-count", pageCount });
+  }
+  return warnings;
 }
 
 export function renderSvgPages(document: Document, options: RenderOptions = {}): RenderedSvgPage[] {

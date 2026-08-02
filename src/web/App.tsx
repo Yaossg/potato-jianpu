@@ -10,16 +10,14 @@ import {
   skipInitialArrangementRests,
   trimArrangementAtNote,
 } from "../index.js";
-import { DEFAULT_PAGE_SIZE, PAPER_PRESET_LIST, analyzeScoreOverwidth, inferContentPageWidth, renderSvg, renderSvgPages, resolvePageSize } from "../renderer/index.js";
-import type { OverwideScoreLayoutWarning, PageOrientation, PaperPresetName } from "../renderer/index.js";
+import { DEFAULT_PAGE_SIZE, PAPER_PRESET_LIST, analyzeScoreLayout, formatScoreLayoutWarning, inferContentPageWidth, renderSvg, renderSvgPages, resolvePageSize } from "../renderer/index.js";
+import type { PageOrientation, PaperPresetName } from "../renderer/index.js";
 import { PreviewAudioPlayer } from "./audio.js";
 import { waitForNextFrame } from "./browser-utils.js";
 import { DEFAULT_PNG_SCALE, downloadBlob, downloadBytes, pngPixelDimensions, svgToPngBlob } from "./downloads.js";
 import { ExamplesPanel } from "./ExamplesPanel.js";
 import { exportFilename, splitPageExportFilename } from "./export-filename.js";
 import { isLanguage, pageWidthModeLabels, translate } from "./i18n.js";
-import { pageLayoutWarnings } from "./page-warnings.js";
-import type { PageLayoutWarning } from "./page-warnings.js";
 import { PreviewPanel } from "./PreviewPanel.js";
 import { SettingsPanel } from "./SettingsPanel.js";
 import { SourceEditor } from "./SourceEditor.js";
@@ -160,23 +158,6 @@ function audioExportSummary(language: Language, noteCount: number, seconds: numb
   return `${noteCount} ${translate(language, noteCount === 1 ? "event" : "events")}, ${roundedSeconds}s`;
 }
 
-function overwideScoreWarningMessage(warning: OverwideScoreLayoutWarning): string {
-  if (warning.kind === "wrapped-source-line") {
-    return warning.multiTrack
-      ? `A simultaneous multi-track source line was automatically wrapped into ${warning.visualLineCount} visual lines because the current page content is too narrow (${warning.naturalWidth}px > ${warning.pageWidth}px). Matching source line breaks at measure boundaries can make voices easier to compare.`
-      : `A source score line was automatically wrapped into ${warning.visualLineCount} visual lines because the current page content is too narrow (${warning.naturalWidth}px > ${warning.pageWidth}px). Try a wider page or insert source line breaks at measure boundaries.`;
-  }
-  return warning.multiTrack
-    ? `A simultaneous multi-track measure or visual line is wider than the current page content (${warning.naturalWidth}px > ${warning.pageWidth}px). Matching source line breaks at measure boundaries can make voices easier to compare.`
-    : `A dense measure or visual line is wider than the current page content (${warning.naturalWidth}px > ${warning.pageWidth}px). Try a wider page, less dense notation, or source line breaks at measure boundaries.`;
-}
-
-function pageLayoutWarningMessage(warning: PageLayoutWarning): string {
-  return warning.kind === "small-usable-page-height"
-    ? `Only ${warning.usableHeight}px of page height is usable after margins and footer space. Increase page height or reduce margins before exporting.`
-    : `These page settings create ${warning.pageCount} pages. Increase page height or reduce margins if the export feels too fragmented.`;
-}
-
 export function App() {
   const [source, setSource] = useState(() => initialSource());
   const [sourceWrap, setSourceWrap] = useState(() => initialSourceWrap());
@@ -240,22 +221,35 @@ export function App() {
   const headerPaginate = previewParsed?.ok ? previewParsed.value.header.paginate : false;
   const effectivePaginate = paginateOverride ?? headerPaginate;
   const maxPageMargin = Math.max(MIN_PAGE_MARGIN, Math.floor((Math.min(pageWidth, effectivePaginate ? resolvedPageHeight : pageWidth) - 1) / 2));
-  const pageContentWidth = Math.max(1, pageWidth - pageMargin * 2);
   const headerPageFooter = previewParsed?.ok ? previewParsed.value.header.footer : "";
   const headerPageNumbers = previewParsed?.ok ? previewParsed.value.header.numbering : false;
   const effectivePageNumbers = headerPageNumbers || (effectivePaginate && pageNumbers);
   const trackProgramOverrideCount = parsed.ok ? Object.keys(parsed.value.header.trackPrograms).length : 0;
-  const layoutDiagnostics = useMemo<Diagnostic[]>(
+  const scoreLayoutWarnings = useMemo(
     () =>
       parsed.ok
-        ? analyzeScoreOverwidth(parsed.value, pageContentWidth).map((warning) => ({
-            severity: "warning",
-            message: overwideScoreWarningMessage(warning),
-            range: warning.range,
-          }))
+        ? analyzeScoreLayout(parsed.value, {
+            pageWidth,
+            paginate: effectivePaginate,
+            pageHeight: resolvedPageHeight,
+            pageMargin,
+            pageFooter: headerPageFooter,
+            pageNumbers: effectivePageNumbers,
+            justifyMode,
+          })
         : [],
-    [pageContentWidth, parsed],
+    [effectivePageNumbers, effectivePaginate, headerPageFooter, justifyMode, pageMargin, pageWidth, parsed, resolvedPageHeight],
   );
+  const layoutDiagnostics: Diagnostic[] = scoreLayoutWarnings.map((warning) => ({
+    severity: "warning",
+    message: formatScoreLayoutWarning(warning),
+    ...(warning.kind === "overwide-score-group" || warning.kind === "overwide-lyric" || warning.kind === "overheight-group"
+      ? { range: warning.range }
+      : {}),
+  }));
+  const pageHeightWarningMessages = scoreLayoutWarnings
+    .filter((warning) => warning.kind === "overheight-group" || warning.kind === "small-usable-page-height" || warning.kind === "excessive-page-count")
+    .map(formatScoreLayoutWarning);
   const svg = useMemo(
     () =>
       previewParsed?.ok
@@ -326,25 +320,7 @@ export function App() {
   const selectedPaperPreset = paperPreset === "custom" ? null : (PAPER_PRESET_LIST.find((preset) => preset.name === paperPreset) ?? null);
   const pageWidthModeLabel =
     selectedPaperPreset === null ? t(pageWidthModeLabels[pageWidthMode]) : `${selectedPaperPreset.label} ${t(pageOrientation)}`;
-  const pageHeightWarningMessages = useMemo(
-    () =>
-      pageLayoutWarnings({
-        paginate: effectivePaginate,
-        pageHeight: resolvedPageHeight,
-        pageMargin,
-        pageFooter: headerPageFooter,
-        pageNumbers: effectivePageNumbers,
-        pageCount: previewPageCount,
-      }).map(pageLayoutWarningMessage),
-    [effectivePageNumbers, effectivePaginate, headerPageFooter, resolvedPageHeight, pageMargin, previewPageCount],
-  );
-  const pageHeightDiagnostics = parsed.ok
-    ? pageHeightWarningMessages.map((message) => ({
-        severity: "warning" as const,
-        message,
-      }))
-    : [];
-  const diagnostics = parsed.ok ? [...parsed.diagnostics, ...layoutDiagnostics, ...pageHeightDiagnostics] : parsed.diagnostics;
+  const diagnostics = parsed.ok ? [...parsed.diagnostics, ...layoutDiagnostics] : parsed.diagnostics;
 
   useEffect(() => {
     document.documentElement.lang = language === "zh" ? "zh-Hans" : "en";

@@ -7,7 +7,7 @@ Current renderer modules:
 - `svg.ts`: top-level SVG document serialization.
 - `header.ts`: title, subtitle, key, time, tempo, and composer drawing.
 - `score.ts`: score, note, rest, drum, duration, bar, tie, and slur drawing.
-- `layout.ts`: measure and line layout, including page-width wrapping.
+- `layout.ts`: measure and source-line layout.
 - `metrics.ts`: note width, chord height, accidental offset, and tie lookahead.
 - `dimensions.ts`: shared renderer layout constants.
 - `styles.ts`: inline SVG stylesheet.
@@ -23,6 +23,7 @@ The renderer exports:
 ```ts
 renderSvg(document: Document, options?: RenderOptions): string
 renderSvgPages(document: Document, options?: RenderOptions): RenderedSvgPage[]
+analyzeScoreLayout(document: Document, options?: RenderOptions): ScoreLayoutWarning[]
 ```
 
 `document` must already be parsed. The renderer does not parse source text.
@@ -45,15 +46,15 @@ interface RenderOptions {
 }
 ```
 
-- `pageWidth` controls the SVG `width`, `viewBox` width, header layout, measure
-  wrapping, and maximum visual line width. Default: `1000`.
+- `pageWidth` controls the SVG `width`, `viewBox` width, header layout, and
+  maximum rendered group width. Default: `1000`.
 - `paginate` switches from one adaptive-height SVG page to a fixed-height
   multi-page SVG. Default: the parsed `paginate` header value, or `false` when
   omitted.
 - `pageHeight` controls each page box height when `paginate` is `true`.
   Default: `1400`.
 - `pageMargin` adds an equal margin on all four page sides. The SVG viewport
-  and PDF page size stay unchanged, while header layout, measure wrapping, score
+  and PDF page size stay unchanged, while header layout, score scaling,
   justification, and pagination use the reduced content box. Default: `0`.
 - `pageFooter` sets optional page-level footer text. Default: the parsed
   `footer` header value, or empty when omitted.
@@ -78,6 +79,12 @@ interface RenderOptions {
 `renderSvg()` returns a complete SVG string with XML declaration, `<svg>`,
 inline `<style>`, header graphics, and score graphics. `renderSvgPages()`
 returns complete per-page SVG documents for target-specific PDF adapters.
+`analyzeScoreLayout()` resolves the same render options and reports structured
+warnings for an overwide score group, an independently overwide ordinary lyric,
+an overheight group, a very small usable page height, or an excessive page
+count. The browser and CLI share this analysis; warnings do not reject an
+export. `analyzeScoreOverwidth(document, pageWidth)` remains available as a
+compatibility wrapper for score-group width warnings.
 
 The renderer also exports paper helpers used by the CLI and browser app:
 
@@ -120,14 +127,13 @@ The renderer follows a measurement-first pipeline:
 2. Measure each note.
 3. Build measure layouts.
 4. Resolve the content box from `pageWidth`, `pageHeight`, and `pageMargin`.
-5. Wrap measure layouts into visual lines based on the content width.
-6. Horizontally scale any single visual line that still exceeds the content
-   width.
+5. Preserve each source score line as one rendered line.
+6. Horizontally scale any complete score group that exceeds the content width.
 7. Optionally justify line coordinates when `justifyMode` enables it.
 8. Reserve page-adornment space for optional page footers and page numbers.
 9. Project span marks into visual-line segments and plan every upper decoration
    with the line's shared vertical layout.
-10. Optionally paginate completed visual lines into fixed-height page boxes,
+10. Optionally paginate complete score groups into fixed-height page boxes,
    honoring manual page breaks from the parsed score.
 11. Draw bars, ties, slurs, notes, duration marks, and attached lyric lines or
     syllables.
@@ -159,8 +165,8 @@ interface LineLayout {
 padding is applied.
 
 In labeled multi-voice groups, simultaneous tracks share measure-local rhythmic
-anchors. After each track has been wrapped into visual lines, the renderer
-aligns lines that cover the same measure span. When every track in a measure
+anchors. Each track remains on its source line, and all tracks in the group
+share one horizontal scale when the group is overwide. When every track in a measure
 has the same rhythmic anchor set, notes with the same start position are placed
 at the same x coordinate. The shared coordinate uses enough horizontal advance
 for the widest note or duration mark at that rhythmic position, so accidentals
@@ -177,8 +183,7 @@ whitespace-separated alignment units. An automatic lyric string written as
 `@"..."` splits Han characters one-by-one and splits hyphenated ASCII words
 into syllables, keeping the hyphen on non-final syllables. Lyrics with multiple
 alignment units are rendered under leading main voice note anchors when the
-aligned slot count is less than or equal to the main voice note count and the
-main voice occupies one rendered visual line. Normal tokens render as centered
+aligned slot count is less than or equal to the main voice note count. Normal tokens render as centered
 syllables, `_` reserves an empty aligned slot, and `~` reserves one additional
 slot for the previous visible syllable. A syllable followed by one or more `~`
 placeholders renders at the center of the covered anchor span instead of
@@ -188,9 +193,11 @@ by increasing the horizontal advance between neighboring main-voice note
 anchors, so English words do not overlap adjacent syllables. The first and last
 aligned syllables also reserve enough line-edge padding for their visible text
 halves, so centered syllables stay inside the content box instead of spilling
-past the left or right edge. If the lyric has more aligned slots than main
-voice notes, or if the expanded main voice wraps or must be horizontally scaled
-to fit the page, the lyric remains a normal left-aligned lyric line. In
+past the left or right edge. Aligned lyrics share the score group's horizontal
+scale so their note anchors remain synchronized. If a lyric has more aligned
+slots than main-voice notes, it remains a normal left-aligned lyric line. Normal
+lyrics do not inherit the music scale and use an independent horizontal scale
+only when their own text exceeds the content width. In
 multi-voice groups, the renderer uses `T1` as the main voice; unlabeled lines
 in labeled scores also count as `T1`.
 
@@ -295,25 +302,25 @@ they attach to. Their glyph, label, arrow, or platform body still occupies the
 normal planned lane. All other overlapping rectangles must retain the
 configured clearance.
 
-The plan is produced after wrapping, simultaneous-voice alignment, and slur
+The plan is produced after source-line layout, simultaneous-voice alignment, and slur
 projection but before pagination. Its `aboveHeight` sets the note baseline and
 line height, so pagination, lyrics, brackets, and page-overflow calculations
 consume the final height. Justification can only enlarge natural horizontal
 separation. An overwide line is scaled as one group, so neither operation
 creates a collision that was absent in the natural interval plan.
 
-## Page Width And Wrapping
+## Page Width And Source Lines
 
-The renderer wraps between measures. A visual line accumulates measures until
-adding the next measure would exceed the content width, which is `pageWidth`
-minus the left and right page margins.
+The renderer preserves every source score line as one rendered line. It does
+not insert measure-level visual line breaks when the content box becomes
+narrow. The content width is `pageWidth` minus the left and right page margins.
 
 Important details:
 
-- wrapping never splits a measure internally
-- source line breaks are preserved as natural line boundaries
-- a single measure wider than the content width remains on its own line and is
-  horizontally scaled to fit the content box
+- source line breaks are the only score-line boundaries
+- simultaneous tracks use one shared horizontal scale
+- aligned lyrics follow that music scale; ordinary lyrics scale independently
+  only when their own line is overwide
 - `pageWidth` also sets the SVG viewport width
 - `pageMargin` shifts rendered header and score content inward without changing
   the SVG viewport width
@@ -342,10 +349,8 @@ available content width by remapping horizontal coordinates. The `"except-last"`
 mode skips the final score line; `"all"` includes it. The remapping uses beat
 groups: notes inside one beat group, such as a continuous underlined run, keep
 their natural internal spacing and move as one unit. This affects notes, bars,
-ties, dashes, underlines, and duration dots together. It is independent of
-whether the line was created by source line breaks or automatic wrapping.
-Overwide lines still use line-level scaling instead of additional position
-stretching.
+ties, dashes, underlines, and duration dots together. Overwide source-line
+groups still use group-level scaling instead of additional position stretching.
 
 ## Pagination
 
@@ -362,12 +367,11 @@ Each page uses the fixed `pageWidth x pageHeight` page box, and the root SVG
 height is `pageHeight * pageCount`. When `pageMargin` is non-zero, content is
 drawn inside a translated `.page-content` group and pagination uses
 `pageHeight - pageMargin * 2` as the usable page height. Pagination only occurs
-between completed visual lines; it does not split measures, wrapped visual
-lines, lyrics attached to a score group, or simultaneous voice groups within
-one visual line. The header renders only on the first page and consumes
-first-page vertical space. If a visual line is taller than the available page
-height, it is placed at the top content inset of a new page without vertical
-compression.
+between complete score groups; it does not split simultaneous tracks or lyrics
+attached to a group. The header renders only on the first page and consumes
+first-page vertical space. If a complete group is taller than the available
+page height, it is placed at the top content inset of a new page without
+vertical compression and produces a layout warning.
 
 A score line containing only `---` marks a manual page break. When `paginate`
 is `true`, the next score line starts on a new page. Manual breaks do not
@@ -520,11 +524,11 @@ Disjoint navigation marks may reuse a lower height.
 
 Ties render as filled SVG paths above notes.
 
-Local ties are drawn between adjacent rendered note entries in the same visual
+Local ties are drawn between adjacent rendered note entries in the same source
 line.
 
-If a tied note starts a visual line, the renderer draws an incoming partial tie.
-If a note at the end of a visual line ties into the next note, the renderer
+If a tied note starts a source line, the renderer draws an incoming partial tie.
+If a note at the end of a source line ties into the next note, the renderer
 draws an outgoing partial tie.
 
 This is a pragmatic cross-line rendering strategy, not full engraving-quality
@@ -537,9 +541,8 @@ rise, a horizontal middle section, and a curved descent keep them visually
 distinct from the filled, continuously curved tie paths. The renderer resolves
 each document-level slur against the ordered notes of its own track, so
 interleaved multi-voice note indexes do not join unrelated voices. A slur on
-one visual line places its endpoints just outside its source and destination
-note centers; a slur that
-crosses source wrapping or automatic wrapping is split into outgoing, middle,
+one source line places its endpoints just outside its source and destination
+note centers; a slur that crosses source line boundaries is split into outgoing, middle,
 and incoming segments at the content edges. A split edge meets the horizontal
 section directly. Split endpoints are inset by half the slur stroke width so
 their painted stroke remains inside the SVG viewport. Pagination reuses those
@@ -547,8 +550,8 @@ visual-line segments, including across explicit page breaks.
 
 A slur opened with `$$(` has one numeric label centered on its horizontal
 section. The renderer splits the stroke around the label and places it only on
-the visual segment containing the span midpoint, including when the slur wraps
-across lines or pages. The label is the number of pitch notes or chords stored
+the source-line segment containing the span midpoint, including when the slur
+crosses lines or pages. The label is the number of pitch notes or chords stored
 in `Slur.noteCount`, including both endpoints; rests are not counted. Half of
 the label font height is added to that visual line's reserved space so the
 centered text is not clipped or overlapped.
@@ -578,7 +581,7 @@ between opposite hairpins at that shared note. Hairpins and dynamic text
 request separate interval-packed placements, so overlapping markings retain
 the shared vertical clearance. Hairpins may cross measure and visual line
 boundaries. When
-source line breaks or wrapping split a hairpin, the renderer draws a separate
+source line breaks split a hairpin, the renderer draws a separate
 complete hairpin on each visual line.
 
 ### Ornaments
@@ -605,8 +608,8 @@ duration.
 Slides render in the source note's upper-right area as source-attached
 quarter-circle SVG arcs with an arrowhead at the arc end. Every rising or
 falling slide uses the same 6px radius regardless
-of the target note's position, duration spacing, justification, or visual-line
-wrapping. The target pitch determines only whether the fixed-size mark bends
+of the target note's position, duration spacing, justification, or source-line
+length. The target pitch determines only whether the fixed-size mark bends
 upward or downward. A slide between notes at the same sounding pitch produces
 a parser warning and is omitted.
 
@@ -680,8 +683,8 @@ theme.
 The renderer is deterministic but still intentionally simple:
 
 - layout constants are internal, not configurable
-- measure wrapping only occurs between measures
-- overwide lines use line-level scaling instead of note re-spacing
+- source lines are never automatically wrapped by page width
+- overwide score groups use shared horizontal scaling instead of note re-spacing
 - no full collision avoidance for dense chords, ties, and slurs
 - no zip packaging for split per-page browser downloads
 - no staff or engraving model beyond the current Jianpu notation

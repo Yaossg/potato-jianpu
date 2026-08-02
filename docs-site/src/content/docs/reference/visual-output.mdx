@@ -1,10 +1,10 @@
 ---
 title: Visual Output Behavior
-description: Understand how page settings, wrapping, pagination, and visual export formats affect a rendered score.
+description: Understand how page settings, source lines, scaling, pagination, and visual export formats affect a rendered score.
 docId: reference-visual-output
 sectionIds:
   - shared-rendering-model
-  - page-size-and-wrapping
+  - page-size-and-source-lines
   - pagination-and-adornments
   - format-results
 ---
@@ -19,13 +19,13 @@ SVG, PNG, and PDF begin with the same score layout. The browser preview uses tha
 
 The file header can set `paginate`, `footer`, and `numbering` defaults. A CLI option or the browser's current Page Settings can choose a different result for that export without changing the `.jpu` source.
 
-## Page Size And Wrapping
+## Page Size And Source Lines
 
-`pageWidth` is both the SVG viewport width and the maximum width available to a visual score line. A paper preset resolves width and height together: A4 is `1190 × 1684`, B5 is `998 × 1418`, and Letter is `1224 × 1584` in renderer units. Portrait and landscape swap the preset dimensions; an explicit width or height overrides that dimension after the preset is resolved.
+`pageWidth` is both the SVG viewport width and the maximum width available to a rendered score group. A paper preset resolves width and height together: A4 is `1190 × 1684`, B5 is `998 × 1418`, and Letter is `1224 × 1584` in renderer units. Portrait and landscape swap the preset dimensions; an explicit width or height overrides that dimension after the preset is resolved.
 
-Page margin applies equally on all four sides. It reduces the content box used for header layout, score wrapping, justification, and pagination, but it does not shrink the exported SVG or PDF page itself.
+Page margin applies equally on all four sides. It reduces the content box used for header layout, score scaling, justification, and pagination, but it does not shrink the exported SVG or PDF page itself.
 
-The renderer wraps between measures, never inside one measure. A source line break stays a natural visual line boundary. If one measure is wider than the content box, it stays on a line by itself and is scaled horizontally to fit rather than split. Long labels and aligned lyrics can require more horizontal space; if a lyric cannot align on one visual main-voice line, it renders as an ordinary lyric line instead.
+Every source score line stays one rendered line; page width never inserts measure-level line breaks. If a complete score group is wider than the content box, it is horizontally scaled to fit. Simultaneous tracks share one scale, and aligned lyric syllables follow the same scale so their note positions remain synchronized. An ordinary lyric does not inherit music scaling; it stays at normal scale unless its own full line is overwide, in which case that lyric line is independently scaled. Horizontal scaling does not reduce font height, vertical spacing, or line height.
 
 Justification changes only horizontal visual spacing:
 
@@ -37,7 +37,7 @@ It does not change `.jpu` source, playback timing, MIDI, WAV, or MP3 output.
 
 ## Pagination And Adornments
 
-Without pagination, visual output is one adaptive-height page. With pagination, the renderer creates fixed-height pages, keeps the score header on the first page only, and draws visible page boundaries. `---` on a line by itself is a manual page break: it moves the next score line to a new page only when pagination is enabled.
+Without pagination, visual output is one adaptive-height page. With pagination, the renderer creates fixed-height pages, keeps the score header on the first page only, and draws visible page boundaries. A simultaneous track group and its lyrics move as one indivisible block. If one block is taller than a page's usable area, it starts at the top of a new page without vertical scaling and produces a layout warning. `---` on a line by itself is a manual page break: it moves the next score group to a new page only when pagination is enabled.
 
 Page footer text is drawn at the bottom-left of every page. Page numbers are centered and use `current / total`. Both reserve vertical space, so score content does not overlap them. Supplying a page height alone does not enable pagination; enable Paginate in the browser or pass `--paginate` to the CLI.
 
@@ -49,7 +49,7 @@ Page footer text is drawn at the bottom-left of every page. Page numbers are cen
 | PNG | Opaque raster image of the same SVG layout, using bundled export fonts and a configurable pixel scale. | Browser and CLI support one PNG per page when Split pages is enabled. |
 | PDF | Vector PDF pages with Unicode text and ornament fonts embedded. | Each rendered page becomes one PDF page. PDF is not split into separate downloads. |
 
-Browser downloads use the current Page and Export Settings. CLI commands put equivalent choices beside the command: `--paper`, `--orientation`, `--page-width`, `--page-height`, `--page-margin`, `--page-footer`, `--page-numbers`, `--paginate`, `--color`, and `--background`. Color and background accept `#RRGGBB` only. PNG additionally accepts `--png-scale`; SVG and PNG accept `--split-pages`.
+Browser downloads use the current Page and Export Settings. CLI commands put equivalent choices beside the command: `--paper`, `--orientation`, `--page-width`, `--page-height`, `--page-margin`, `--page-footer`, `--page-numbers`, `--paginate`, `--color`, and `--background`. Color and background accept `#RRGGBB` only. PNG additionally accepts `--png-scale`; SVG and PNG accept `--split-pages`. The browser and CLI report the same layout-warning categories for horizontal scaling, overheight groups, very small usable page height, and excessive page counts; CLI visual exports still succeed when only these warnings are present.
 
 <RelatedLinks
   links={[

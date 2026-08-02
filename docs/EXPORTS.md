@@ -152,10 +152,11 @@ Options:
 - `--split-pages`: write one SVG file per rendered page instead of one combined
   SVG file.
 
-The renderer uses `pageWidth` for the SVG viewport width. Measures are wrapped
-between measures when the next measure would exceed the content width, which is
-`pageWidth` minus the left and right page margins. A single measure wider than
-the content width is kept on its own line rather than split internally.
+The renderer uses `pageWidth` for the SVG viewport width. Every source score
+line remains one rendered line. When its complete score group exceeds the
+content width (`pageWidth` minus the left and right margins), all simultaneous
+tracks and aligned lyrics share one horizontal scale. An ordinary lyric stays
+at normal scale unless it is independently wider than the content box.
 
 Paginated SVG export keeps one SVG file unless `--split-pages` is set. The root
 height is the page height multiplied by the page count, each page is emitted as
@@ -201,7 +202,7 @@ Options:
   safeguard, so output pixels cannot be transparent.
 - `--png-scale <number>`: positive raster scale. Defaults to `2`; for example,
   an A4 page becomes `2380 x 3368` pixels. Scale changes pixel density without
-  changing layout or page wrapping.
+  changing score layout or pagination.
 - `--split-pages`: write one PNG file per rendered page. `-o` uses the same
   stem, zero-padding, and no-overwrite behavior as split SVG export.
 

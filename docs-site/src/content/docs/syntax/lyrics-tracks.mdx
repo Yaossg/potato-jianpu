@@ -131,7 +131,7 @@ When a score contains any labeled track, unlabeled score lines are treated as `T
 
 ## Lyric Diagnostics
 
-Lyrics are attached to the preceding score group. A lyric line before any score line is invalid. When a lyric line contains multiple whitespace-separated lyric units and the main voice renders on one row, the renderer centers visible syllables under the leading sounding main-voice notes. Long syllables, especially English words, can widen the spacing between neighboring notes so lyrics do not collide. Rests do not receive lyric positions. If the lyric has more aligned slots than main-voice notes, or if the widened main voice no longer fits on one row, the lyric is rendered as a plain full line; extra aligned slots also produce a warning. A `~` merge placeholder before any visible syllable is invalid.
+Lyrics are attached to the preceding score group. A lyric line before any score line is invalid. When a lyric line contains multiple whitespace-separated lyric units, the renderer centers visible syllables under the leading sounding main-voice notes. Long syllables, especially English words, can widen the spacing between neighboring notes so lyrics do not collide. Rests do not receive lyric positions. Aligned lyrics follow the score group's horizontal scale when the complete source line is overwide. If the lyric has more aligned slots than main-voice notes, it is rendered as a plain full line and produces a warning. A plain lyric never wraps visually; it stays at normal scale unless its own line is overwide, when it receives an independent horizontal scale. A `~` merge placeholder before any visible syllable is invalid.
 
 <JianpuExample
   title="Mismatched lyric count"
@@ -151,7 +151,7 @@ L1: "one two three four five"`}
 
 ## Track Grouping
 
-Track lines are grouped in ascending label order and every labeled group starts at `T1`. A group may end early, so `T1 T2 T3 T1 T2` starts a second group after the first group finishes. `T1 T1 T2` is also valid because the second `T1` starts a new group. `T1 T2 T2`, `T1 T2 T2 T1`, or a group that starts at `T2` are invalid. Lines in the same group play together; the next group starts after the previous group ends.
+Track lines are grouped in ascending label order and every labeled group starts at `T1`. A group may end early, so `T1 T2 T3 T1 T2` starts a second group after the first group finishes. `T1 T1 T2` is also valid because the second `T1` starts a new group. `T1 T2 T2`, `T1 T2 T2 T1`, or a group that starts at `T2` are invalid. Lines in the same group play together, share one horizontal rendering scale, and stay together during pagination; the next group starts after the previous group ends.
 
 <JianpuSource
   title="Grouped track source"

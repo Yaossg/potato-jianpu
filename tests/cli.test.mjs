@@ -176,7 +176,7 @@ test("CLI export-png accepts pagination and scale options", async () => {
 
   const png = await readFile(output);
   assert.equal(String.fromCharCode(...png.slice(1, 4)), "PNG");
-  assert.deepEqual(pngDimensions(png), { width: 360, height: 1920 });
+  assert.deepEqual(pngDimensions(png), { width: 360, height: 960 });
 });
 
 test("CLI export-svg can split rendered pages", async () => {
@@ -352,6 +352,23 @@ test("CLI export-svg succeeds with warnings", async () => {
   assert.match(stderr, /Measure duration/);
   const svg = await readFile(output, "utf8");
   assert.match(svg, /<svg/);
+});
+
+test("CLI visual export reports layout scaling and still succeeds", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
+  const input = join(dir, "score.jpu");
+  const output = join(dir, "score.svg");
+  await writeFile(input, "1--- 2--- 3--- 4---", "utf8");
+
+  const { stdout, stderr } = await execFileAsync(
+    process.execPath,
+    ["dist/cli/main.js", "export-svg", input, "-o", output, "--page-width", "120"],
+    { cwd: repoDir },
+  );
+
+  assert.match(stdout.trim(), /score\.svg$/);
+  assert.match(stderr, /warning: A score line is wider/);
+  assert.match(await readFile(output, "utf8"), /class="score-group scaled"/);
 });
 
 
