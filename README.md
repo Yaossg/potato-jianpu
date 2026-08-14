@@ -56,6 +56,7 @@ key: C
 time: 4/4
 tempo: 96
 hidden: false
+measureNumbers: true
 program: 24
 volume: 85%
 T1.program: "Violin"

@@ -160,6 +160,7 @@ export interface Header {
   hidden: boolean;
   footer: string;
   numbering: boolean;
+  measureNumbers: boolean;
   paginate: boolean;
   program?: number;
   volume?: number;

@@ -41,6 +41,8 @@ const LYRIC_PUNCTUATION_WIDTH = 5;
 const LYRIC_OTHER_WIDTH = 9;
 const LYRIC_SYLLABLE_GAP = 6;
 const PAGINATED_PAGE_CONTENT_TOP = 12;
+const MEASURE_NUMBER_HEIGHT = 20;
+const MEASURE_NUMBER_BASELINE = 14;
 
 function fragmentEdgeX(edgeX: number, strokeWidth: number, side: "left" | "right"): number {
   const inset = strokeWidth / 2;
@@ -1458,6 +1460,7 @@ interface ScoreVisualBlock {
   index: number;
   height: number;
   pageBreakBefore: boolean;
+  measureNumber: number;
 }
 
 interface ScoreRenderPlacement {
@@ -2055,25 +2058,30 @@ function layoutScore(document: Document, pageWidth: number): ScoreLayoutContext 
   return { groups, layouts, hasLabels, finalMeasures, notesByLine };
 }
 
-function visualBlocks(context: ScoreLayoutContext): ScoreVisualBlock[] {
+function visualBlocks(context: ScoreLayoutContext, measureNumbers = false): ScoreVisualBlock[] {
+  let measureNumber = 1;
   return context.groups.map((group, groupIndex) => {
     const items = context.layouts.filter((item) => item.groupIndex === groupIndex);
     const musicHeight = items.reduce((sum, item) => sum + item.layout.height + DIMENSIONS.lineSpacing, 0);
     const lyricHeight = group.lyrics.length > 0 ? DIMENSIONS.lyricTopPadding + group.lyrics.length * DIMENSIONS.lyricLineHeight : 0;
+    const primaryLine = primaryLineForLyrics(group, context.hasLabels) ?? group.lines[0];
+    const currentMeasureNumber = measureNumber;
+    measureNumber += primaryLine?.measures.length ?? 0;
     return {
       items,
       groupIndex,
       index: groupIndex,
-      height: musicHeight + lyricHeight,
+      height: musicHeight + lyricHeight + (measureNumbers ? MEASURE_NUMBER_HEIGHT : 0),
       pageBreakBefore: group.lines.some((line) => line.pageBreakBefore === true),
+      measureNumber: currentMeasureNumber,
     };
   });
 }
 
-export function analyzeScoreGeometry(document: Document, pageWidth: number, pageHeight?: number): ScoreGeometryWarning[] {
+export function analyzeScoreGeometry(document: Document, pageWidth: number, pageHeight?: number, measureNumbers = false): ScoreGeometryWarning[] {
   const safePageWidth = Math.max(1, pageWidth);
   const context = layoutScore(document, safePageWidth);
-  const blocks = visualBlocks(context);
+  const blocks = visualBlocks(context, measureNumbers);
   const warnings: ScoreGeometryWarning[] = [];
 
   for (const [groupIndex, group] of context.groups.entries()) {
@@ -2138,6 +2146,7 @@ function renderScorePlacements(
   pageWidth: number,
   activeNoteIndices: number[],
   justifyMode: JustifyMode,
+  measureNumbers: boolean,
 ): string[] {
   const activeNoteIndexSet = new Set(activeNoteIndices);
   const pageParts = new Map<number, string[]>();
@@ -2158,7 +2167,7 @@ function renderScorePlacements(
     const shouldJustify = shouldJustifyGroup(justifyMode, block.groupIndex, context.groups.length);
     const musicParts: string[] = [];
     const ordinaryLyricParts: string[] = [];
-    let lineY = placement.y;
+    let lineY = placement.y + (measureNumbers ? MEASURE_NUMBER_HEIGHT : 0);
     let lyricAnchors: number[] = [];
     let bracketY1 = Number.POSITIVE_INFINITY;
     let bracketY2 = Number.NEGATIVE_INFINITY;
@@ -2215,6 +2224,13 @@ function renderScorePlacements(
     }
 
     const renderedMusic = musicParts.join("\n");
+    if (measureNumbers) {
+      const firstItem = block.items[0];
+      const repeatStartX = firstItem?.layout.measures[0]?.repeatStartX ?? 0;
+      const naturalX = (firstItem?.labelOffset ?? 0) + (firstItem?.bracketOffset ?? 0) + repeatStartX;
+      const renderedX = musicScaled ? naturalX * musicScaleX : naturalX;
+      parts.push(`<text class="measure-number" x="${renderedX}" y="${placement.y + MEASURE_NUMBER_BASELINE}" text-anchor="start">(${block.measureNumber})</text>`);
+    }
     parts.push(
       musicScaled
         ? `<g class="score-group scaled" transform="scale(${musicScaleX},1)">${renderedMusic}</g>`
@@ -2263,10 +2279,11 @@ export function renderScore(
   pageWidth: number,
   activeNoteIndices: number[],
   justifyMode: JustifyMode,
+  measureNumbers = false,
   pagination?: { enabled: boolean; pageHeight: number },
 ): ScoreRenderResult {
   const context = layoutScore(document, pageWidth);
-  const blocks = visualBlocks(context);
+  const blocks = visualBlocks(context, measureNumbers);
   const placements: ScoreRenderPlacement[] =
     pagination?.enabled === true
       ? paginateBlocks(blocks, yStart, pagination.pageHeight)
@@ -2274,7 +2291,7 @@ export function renderScore(
           block,
           y: yStart + blocks.slice(0, block.index).reduce((sum, previous) => sum + previous.height, 0),
         }));
-  const pages = renderScorePlacements(document, context, placements, pageWidth, activeNoteIndices, justifyMode);
+  const pages = renderScorePlacements(document, context, placements, pageWidth, activeNoteIndices, justifyMode, measureNumbers);
   const height =
     placements.length === 0
       ? 0

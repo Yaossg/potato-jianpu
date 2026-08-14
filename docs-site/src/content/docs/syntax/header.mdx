@@ -51,19 +51,19 @@ Known fields include:
 
 | Category | Fields | Meaning |
 | --- | --- | --- |
-| Score display | `title`, `subtitle`, `composer`, `hidden`, `paginate`, `numbering`, `footer` | Visible metadata, header visibility, paginated visual rendering, page numbers, and page footer text. |
+| Score display | `title`, `subtitle`, `composer`, `hidden`, `paginate`, `numbering`, `measureNumbers`, `footer` | Visible metadata, header visibility, paginated visual rendering, page numbers, measure numbers, and page footer text. |
 | Musical defaults | `key`, `time`, `tempo` | Pitch spelling, measure-duration validation, and playback/export tempo. |
 | Playback defaults | `program`, `volume` | Score-level Program and track volume defaults for playback and export. |
 | Track and lyric labels | `Tn.name`, `Tn`, `Pn.name`, `Pn`, `Ln.name`, `Ln` | Visible names for melodic tracks, percussion tracks, and lyric lines. |
 | Track playback overrides | `Tn.program`, `Pn.program`, `Tn.volume`, `Pn.volume` | Per-track Program and volume overrides for playback and export. |
 
-Default values are empty for `title`, `subtitle`, `composer`, and `footer`; `hidden`, `numbering`, and `paginate` default to `false`; `key` defaults to `C`; `time` defaults to `4/4`; `tempo` defaults to `120`; `program` falls back to the browser or CLI Program setting; and `volume` defaults to `1`.
+Default values are empty for `title`, `subtitle`, `composer`, and `footer`; `hidden`, `numbering`, `measureNumbers`, and `paginate` default to `false`; `key` defaults to `C`; `time` defaults to `4/4`; `tempo` defaults to `120`; `program` falls back to the browser or CLI Program setting; and `volume` defaults to `1`.
 
 Only documented header fields are accepted. Unknown fields such as `arranger` or misspelled fields such as `temop` are parse errors.
 
 ## Syntax and Validation
 
-Header field names are case-sensitive. Text values and visible label names must be quoted; `key`, `time`, `tempo`, `hidden`, `numbering`, and `paginate` use unquoted typed values.
+Header field names are case-sensitive. Text values and visible label names must be quoted; `key`, `time`, `tempo`, `hidden`, `numbering`, `measureNumbers`, and `paginate` use unquoted typed values.
 
 Text fields use double-quoted strings and must stay on one line. A backslash skips the following character during tokenization, but the backslash is preserved as source text rather than interpreted as an escape sequence. Write visible metadata exactly as you want users to read it.
 
@@ -120,11 +120,14 @@ hidden: true
 
 Use `paginate: true` to render fixed-height pages by default for SVG, PNG, and PDF output. Use `footer` to set footer text rendered at the bottom-left of each page. Use `numbering: true` to render centered page numbers as `current / total`. Browser and CLI render options can still override these fields for a specific export.
 
+Use `measureNumbers: true` to label the first measure of every written score line above its left boundary. Labels use parenthesized Arabic numbers such as `(1)` and `(5)`, continue across pages, and count written measures without expanding repeats. A simultaneous multi-track group receives one label based on its primary line. The browser's **Measure numbers** setting can enable or disable these labels without editing the source.
+
 <JianpuSource
   title="Page adornment header source"
   source={`paginate: true
 footer: "modern-jianpu"
 numbering: true
+measureNumbers: true
 ===
 1 2 3 4
 ---

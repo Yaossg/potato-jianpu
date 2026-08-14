@@ -177,6 +177,7 @@ export function App() {
   const [pageHeight, setPageHeight] = useState(DEFAULT_PAGE_HEIGHT);
   const [pageMargin, setPageMargin] = useState(DEFAULT_PAGE_MARGIN);
   const [pageNumbers, setPageNumbers] = useState(false);
+  const [measureNumbersOverride, setMeasureNumbersOverride] = useState<boolean | null>(null);
   const [justifyMode, setJustifyMode] = useState<JustifyMode>("none");
   const [theme, setTheme] = useState<ThemeName>(() => initialTheme());
   const [scoreColor, setScoreColor] = useState(() => themeColors(initialTheme()).scoreColor);
@@ -224,6 +225,8 @@ export function App() {
   const headerPageFooter = previewParsed?.ok ? previewParsed.value.header.footer : "";
   const headerPageNumbers = previewParsed?.ok ? previewParsed.value.header.numbering : false;
   const effectivePageNumbers = headerPageNumbers || (effectivePaginate && pageNumbers);
+  const headerMeasureNumbers = previewParsed?.ok ? previewParsed.value.header.measureNumbers : false;
+  const effectiveMeasureNumbers = measureNumbersOverride ?? headerMeasureNumbers;
   const trackProgramOverrideCount = parsed.ok ? Object.keys(parsed.value.header.trackPrograms).length : 0;
   const scoreLayoutWarnings = useMemo(
     () =>
@@ -235,10 +238,11 @@ export function App() {
             pageMargin,
             pageFooter: headerPageFooter,
             pageNumbers: effectivePageNumbers,
+            measureNumbers: effectiveMeasureNumbers,
             justifyMode,
           })
         : [],
-    [effectivePageNumbers, effectivePaginate, headerPageFooter, justifyMode, pageMargin, pageWidth, parsed, resolvedPageHeight],
+    [effectiveMeasureNumbers, effectivePageNumbers, effectivePaginate, headerPageFooter, justifyMode, pageMargin, pageWidth, parsed, resolvedPageHeight],
   );
   const layoutDiagnostics: Diagnostic[] = scoreLayoutWarnings.map((warning) => ({
     severity: "warning",
@@ -260,6 +264,7 @@ export function App() {
             pageMargin,
             pageFooter: headerPageFooter,
             pageNumbers: effectivePageNumbers,
+            measureNumbers: effectiveMeasureNumbers,
             justifyMode,
             activeNoteIndices: parsed.ok ? activeNoteIndices : [],
             color: scoreColor,
@@ -269,6 +274,7 @@ export function App() {
     [
       activeNoteIndices,
       effectivePageNumbers,
+      effectiveMeasureNumbers,
       effectivePaginate,
       headerPageFooter,
       justifyMode,
@@ -291,6 +297,7 @@ export function App() {
             pageMargin,
             pageFooter: headerPageFooter,
             pageNumbers: effectivePageNumbers,
+            measureNumbers: effectiveMeasureNumbers,
             justifyMode,
             activeNoteIndices: parsed.ok ? activeNoteIndices : [],
             color: scoreColor,
@@ -300,6 +307,7 @@ export function App() {
     [
       activeNoteIndices,
       effectivePageNumbers,
+      effectiveMeasureNumbers,
       effectivePaginate,
       headerPageFooter,
       justifyMode,
@@ -766,6 +774,7 @@ export function App() {
           minPageMargin={MIN_PAGE_MARGIN}
           maxPageMargin={maxPageMargin}
           pageNumbers={pageNumbers}
+          measureNumbers={effectiveMeasureNumbers}
           pageWarnings={pageHeightWarningMessages}
           scoreColor={scoreColor}
           pageBackground={pageBackground}
@@ -795,6 +804,7 @@ export function App() {
           onPageHeightChange={setPageHeight}
           onPageMarginChange={setPageMargin}
           onPageNumbersChange={setPageNumbers}
+          onMeasureNumbersChange={setMeasureNumbersOverride}
           onScoreColorChange={setScoreColor}
           onPageBackgroundChange={setPageBackground}
           onJustifyModeChange={setJustifyMode}

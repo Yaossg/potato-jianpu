@@ -44,6 +44,7 @@ interface RenderOptions {
   pageMargin?: number;
   pageFooter?: string;
   pageNumbers?: boolean;
+  measureNumbers?: boolean;
   justifyMode?: "none" | "except-last" | "all";
   activeNoteIndex?: number;
   activeNoteIndices?: number[];
@@ -66,6 +67,9 @@ interface RenderOptions {
   `footer` header value, or empty when omitted.
 - `pageNumbers` renders centered page numbers as `current / total`. Default:
   the parsed `numbering` header value, or `false` when omitted.
+- `measureNumbers` labels the first written measure of every rendered score
+  line as `(number)` above its left boundary. Default: the parsed
+  `measureNumbers` header value, or `false` when omitted.
 - `justifyMode` controls horizontal score justification. `"none"` keeps natural
   spacing, `"except-last"` justifies every visual line except the final score
   line, and `"all"` justifies every visual line. Default: `"none"`.
@@ -141,8 +145,8 @@ The renderer follows a measurement-first pipeline:
    with the line's shared vertical layout.
 10. Optionally paginate complete score groups into fixed-height page boxes,
    honoring manual page breaks from the parsed score.
-11. Draw bars, ties, slurs, notes, duration marks, and attached lyric lines or
-    syllables.
+11. Draw optional line-opening measure numbers, bars, ties, slurs, notes,
+    duration marks, and attached lyric lines or syllables.
 12. Compute final SVG height from either the adaptive content height or the fixed
     page height multiplied by page count.
 

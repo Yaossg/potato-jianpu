@@ -9,6 +9,7 @@ export interface RenderOptions {
   pageMargin?: number;
   pageFooter?: string;
   pageNumbers?: boolean;
+  measureNumbers?: boolean;
   justifyMode?: JustifyMode;
   activeNoteIndex?: number;
   activeNoteIndices?: number[];
@@ -38,6 +39,7 @@ export const DEFAULT_OPTIONS: Required<RenderOptions> = {
   pageMargin: 0,
   pageFooter: "",
   pageNumbers: false,
+  measureNumbers: false,
   justifyMode: "none",
   activeNoteIndex: -1,
   activeNoteIndices: [],

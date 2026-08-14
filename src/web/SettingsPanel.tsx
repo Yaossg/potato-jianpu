@@ -26,6 +26,7 @@ interface SettingsPanelProps {
   minPageMargin: number;
   maxPageMargin: number;
   pageNumbers: boolean;
+  measureNumbers: boolean;
   pageWarnings: string[];
   scoreColor: string;
   pageBackground: string;
@@ -55,6 +56,7 @@ interface SettingsPanelProps {
   onPageHeightChange: (height: number) => void;
   onPageMarginChange: (margin: number) => void;
   onPageNumbersChange: (enabled: boolean) => void;
+  onMeasureNumbersChange: (enabled: boolean) => void;
   onScoreColorChange: (color: string) => void;
   onPageBackgroundChange: (color: string) => void;
   onJustifyModeChange: (mode: JustifyMode) => void;
@@ -148,6 +150,7 @@ export function SettingsPanel({
   minPageMargin,
   maxPageMargin,
   pageNumbers,
+  measureNumbers,
   pageWarnings,
   scoreColor,
   pageBackground,
@@ -177,6 +180,7 @@ export function SettingsPanel({
   onPageHeightChange,
   onPageMarginChange,
   onPageNumbersChange,
+  onMeasureNumbersChange,
   onScoreColorChange,
   onPageBackgroundChange,
   onJustifyModeChange,
@@ -299,6 +303,10 @@ export function SettingsPanel({
                 />
               </label>
             )}
+            <label className="checkbox-control">
+              <input type="checkbox" checked={measureNumbers} onChange={(event) => onMeasureNumbersChange(event.target.checked)} />
+              {t("measureNumbers")}
+            </label>
             {paginate && (
               <label className="checkbox-control">
                 <input type="checkbox" checked={pageNumbers} onChange={(event) => onPageNumbersChange(event.target.checked)} />

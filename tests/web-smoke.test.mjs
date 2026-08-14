@@ -190,6 +190,8 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(settingsPanelSource, /t\("splitPages"\)/);
   assert.match(settingsPanelSource, /t\("pageHeight"\)/);
   assert.match(settingsPanelSource, /t\("pageMargin"\)/);
+  assert.match(settingsPanelSource, /t\("measureNumbers"\)/);
+  assert.match(settingsPanelSource, /onMeasureNumbersChange/);
   assert.match(settingsPanelSource, /function useClampedNumberDraft/);
   assert.match(settingsPanelSource, /const pageMarginDraft = useClampedNumberDraft/);
   assert.match(settingsPanelSource, /value=\{pageMarginDraft\.draft\}/);

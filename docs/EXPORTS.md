@@ -72,6 +72,7 @@ Parse result shape:
       "hidden": false,
       "footer": "",
       "numbering": false,
+      "measureNumbers": false,
       "paginate": false,
       "trackNames": {},
       "trackPrograms": {},

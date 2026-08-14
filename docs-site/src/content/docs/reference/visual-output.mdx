@@ -15,9 +15,9 @@ Use this reference when a score looks different after changing paper, margins, p
 
 ## Shared Rendering Model
 
-SVG, PNG, and PDF begin with the same score layout. The browser preview uses that layout too, so page width, paper preset, orientation, pagination, margin, notation color, background, footer, page numbers, and justification affect visual output together.
+SVG, PNG, and PDF begin with the same score layout. The browser preview uses that layout too, so page width, paper preset, orientation, pagination, margin, notation color, background, footer, page numbers, measure numbers, and justification affect visual output together.
 
-The file header can set `paginate`, `footer`, and `numbering` defaults. A CLI option or the browser's current Page Settings can choose a different result for that export without changing the `.jpu` source.
+The file header can set `paginate`, `footer`, `numbering`, and `measureNumbers` defaults. A CLI option or the browser's current Page Settings can choose a different result for that export without changing the `.jpu` source. Measure numbers label the first written measure of each score line with parenthesized Arabic numbers and continue across pages.
 
 ## Page Size And Source Lines
 

@@ -43,6 +43,7 @@ function resolvedRenderOptions(document: Document, options: RenderOptions): Requ
     pageMargin,
     pageFooter: options.pageFooter ?? document.header.footer,
     pageNumbers: options.pageNumbers ?? document.header.numbering,
+    measureNumbers: options.measureNumbers ?? document.header.measureNumbers,
     justifyMode: options.justifyMode ?? DEFAULT_OPTIONS.justifyMode,
     activeNoteIndex: options.activeNoteIndex ?? DEFAULT_OPTIONS.activeNoteIndex,
     activeNoteIndices: options.activeNoteIndices ?? DEFAULT_OPTIONS.activeNoteIndices,
@@ -122,6 +123,7 @@ export function analyzeScoreLayout(document: Document, options: RenderOptions = 
     document,
     pageContentWidth,
     resolved.paginate ? pageContentHeight : undefined,
+    resolved.measureNumbers,
   );
 
   if (!resolved.paginate) {
@@ -130,7 +132,7 @@ export function analyzeScoreLayout(document: Document, options: RenderOptions = 
   if (pageContentHeight < MIN_USABLE_PAGE_HEIGHT) {
     warnings.push({ kind: "small-usable-page-height", usableHeight: pageContentHeight });
   }
-  const score = renderScore(document, header.height, pageContentWidth, [], resolved.justifyMode, {
+  const score = renderScore(document, header.height, pageContentWidth, [], resolved.justifyMode, resolved.measureNumbers, {
     enabled: true,
     pageHeight: pageContentHeight,
   });
@@ -151,7 +153,7 @@ export function renderSvgPages(document: Document, options: RenderOptions = {}):
   const pageContentHeight = contentHeight(resolved.pageHeight, inset);
   const header = renderHeader(document, pageContentWidth);
   const activeNoteIndices = resolved.activeNoteIndices.length > 0 ? resolved.activeNoteIndices : [resolved.activeNoteIndex];
-  const score = renderScore(document, header.height, pageContentWidth, activeNoteIndices, resolved.justifyMode, {
+  const score = renderScore(document, header.height, pageContentWidth, activeNoteIndices, resolved.justifyMode, resolved.measureNumbers, {
     enabled: resolved.paginate,
     pageHeight: pageContentHeight,
   });
@@ -199,7 +201,7 @@ export function renderSvg(document: Document, options: RenderOptions = {}): stri
   const pageContentHeight = contentHeight(resolved.pageHeight, inset);
   const header = renderHeader(document, pageContentWidth);
   const activeNoteIndices = resolved.activeNoteIndices.length > 0 ? resolved.activeNoteIndices : [resolved.activeNoteIndex];
-  const score = renderScore(document, header.height, pageContentWidth, activeNoteIndices, resolved.justifyMode, {
+  const score = renderScore(document, header.height, pageContentWidth, activeNoteIndices, resolved.justifyMode, resolved.measureNumbers, {
     enabled: resolved.paginate,
     pageHeight: pageContentHeight,
   });

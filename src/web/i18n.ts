@@ -44,6 +44,7 @@ export type TranslationKey =
   | "pageHeight"
   | "pageMargin"
   | "pageNumbers"
+  | "measureNumbers"
   | "color"
   | "page"
   | "justify"
@@ -127,6 +128,7 @@ const translations: { en: Record<TranslationKey, string>; zh: Record<Translation
     pageHeight: "Page height",
     pageMargin: "Page margin",
     pageNumbers: "Page numbers",
+    measureNumbers: "Measure numbers",
     color: "Color",
     page: "Page",
     justify: "Justify",
@@ -209,6 +211,7 @@ const translations: { en: Record<TranslationKey, string>; zh: Record<Translation
     pageHeight: "页高",
     pageMargin: "页边距",
     pageNumbers: "页码",
+    measureNumbers: "小节编号",
     color: "谱面颜色",
     page: "页面",
     justify: "两端对齐",

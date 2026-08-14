@@ -45,14 +45,16 @@ test("parses empty files with default header values", () => {
   assert.equal(result.value.header.tempo, 120);
   assert.equal(result.value.header.footer, "");
   assert.equal(result.value.header.numbering, false);
+  assert.equal(result.value.header.measureNumbers, false);
   assert.equal(result.value.header.paginate, false);
 });
 
 test("parses page rendering header fields", () => {
-  const result = parse(`footer: "modern-jianpu"\nnumbering: true\npaginate: true\n===\n1 2`);
+  const result = parse(`footer: "modern-jianpu"\nnumbering: true\nmeasureNumbers: true\npaginate: true\n===\n1 2`);
   assert.equal(result.ok, true);
   assert.equal(result.value.header.footer, "modern-jianpu");
   assert.equal(result.value.header.numbering, true);
+  assert.equal(result.value.header.measureNumbers, true);
   assert.equal(result.value.header.paginate, true);
 });
 
@@ -769,12 +771,13 @@ test("reports specific diagnostics for stray duration and chord markers", () => 
 
 
 test("rejects invalid typed header values", () => {
-  const result = parse(`tempo: -1\ntime: 5/4\nkey: H\nhidden: yes\npaginate: yes\n===\n1234`);
+  const result = parse(`tempo: -1\ntime: 5/4\nkey: H\nhidden: yes\nmeasureNumbers: yes\npaginate: yes\n===\n1234`);
   assert.equal(result.ok, false);
   assert.match(result.diagnostics.map((d) => d.message).join("\n"), /Invalid tempo/);
   assert.match(result.diagnostics.map((d) => d.message).join("\n"), /Invalid time signature/);
   assert.match(result.diagnostics.map((d) => d.message).join("\n"), /Unknown key signature/);
   assert.match(result.diagnostics.map((d) => d.message).join("\n"), /Expected boolean value for hidden/);
+  assert.match(result.diagnostics.map((d) => d.message).join("\n"), /Expected boolean value for measureNumbers/);
   assert.match(result.diagnostics.map((d) => d.message).join("\n"), /Expected boolean value for paginate/);
 
   const tempo = result.diagnostics.find((diagnostic) => diagnostic.message.includes("Invalid tempo"));
@@ -809,13 +812,14 @@ test("accepts accidental-first key spellings", () => {
 });
 
 test("rejects old string syntax for typed header values", () => {
-  const result = parse(`tempo: "120"\ntime: "4/4"\nkey: "D"\nhidden: "yes"\npaginate: "true"\n===\n1 2`);
+  const result = parse(`tempo: "120"\ntime: "4/4"\nkey: "D"\nhidden: "yes"\nmeasureNumbers: "true"\npaginate: "true"\n===\n1 2`);
   assert.equal(result.ok, false);
   const messages = result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
   assert.match(messages, /Expected numeric tempo value/);
   assert.match(messages, /Expected time signature value/);
   assert.match(messages, /Expected key signature value/);
   assert.match(messages, /Expected boolean value for hidden/);
+  assert.match(messages, /Expected boolean value for measureNumbers/);
   assert.match(messages, /Expected boolean value for paginate/);
 });
 

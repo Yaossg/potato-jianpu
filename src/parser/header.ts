@@ -28,7 +28,7 @@ const keyMap: Record<string, KeySignature> = {
   B: 11,
 };
 
-const semanticKeys = new Set(["title", "subtitle", "composer", "key", "time", "tempo", "hidden", "footer", "numbering", "paginate", "program", "volume"]);
+const semanticKeys = new Set(["title", "subtitle", "composer", "key", "time", "tempo", "hidden", "footer", "numbering", "measureNumbers", "paginate", "program", "volume"]);
 
 export function createDefaultHeader(): Header {
   return {
@@ -42,6 +42,7 @@ export function createDefaultHeader(): Header {
     hidden: false,
     footer: "",
     numbering: false,
+    measureNumbers: false,
     paginate: false,
     trackNames: {},
     trackPrograms: {},
@@ -134,6 +135,14 @@ export function applyHeaderProperty(
       return "ok";
     }
     parseNumbering(header, value, diagnostics);
+    return "ok";
+  }
+
+  if (textKey === "measureNumbers") {
+    if (!value || !recordKey(seen, "measureNumbers", "Duplicate header property 'measureNumbers'.", keyRange, diagnostics)) {
+      return "ok";
+    }
+    parseMeasureNumbers(header, value, diagnostics);
     return "ok";
   }
 
@@ -383,6 +392,22 @@ function parseNumbering(header: Header, value: HeaderValue, diagnostics: Diagnos
     return;
   }
   diagnostics.push({ severity: "error", message: "Expected boolean value for numbering.", range: value.range });
+}
+
+function parseMeasureNumbers(header: Header, value: HeaderValue, diagnostics: Diagnostic[]) {
+  if (value.quoted) {
+    diagnostics.push({ severity: "error", message: "Expected boolean value for measureNumbers.", range: value.range });
+    return;
+  }
+  if (value.text === "true") {
+    header.measureNumbers = true;
+    return;
+  }
+  if (value.text === "false") {
+    header.measureNumbers = false;
+    return;
+  }
+  diagnostics.push({ severity: "error", message: "Expected boolean value for measureNumbers.", range: value.range });
 }
 
 function parsePaginate(header: Header, value: HeaderValue, diagnostics: Diagnostic[]) {

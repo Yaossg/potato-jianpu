@@ -305,6 +305,25 @@ test("uses pagination from the header unless render options override it", () => 
   assert.doesNotMatch(overridden, /<g class="page" data-page="/);
 });
 
+test("renders cumulative measure numbers above the first measure of each score line", () => {
+  const result = parse(`measureNumbers: true\n===\n1 2 | 3 4 |\n5 6 | 7 1' |`);
+  assert.equal(result.ok, true);
+
+  const fromHeader = renderSvg(result.value, { pageWidth: 320 });
+  assert.deepEqual([...fromHeader.matchAll(/class="measure-number"[^>]*>\((\d+)\)<\/text>/g)].map((match) => match[1]), ["1", "3"]);
+  assert.match(fromHeader, /<text class="measure-number" x="0" y="\d+" text-anchor="start">\(1\)<\/text>/);
+
+  const overridden = renderSvg(result.value, { pageWidth: 320, measureNumbers: false });
+  assert.doesNotMatch(overridden, /class="measure-number"/);
+});
+
+test("renders one measure number for each simultaneous score group", () => {
+  const result = parse(`T1: 1 | 2 |\nT2: 3 | 4 |\nT1: 5 |\nT2: 6 |`);
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value, { pageWidth: 320, measureNumbers: true });
+  assert.deepEqual([...svg.matchAll(/class="measure-number"[^>]*>\((\d+)\)<\/text>/g)].map((match) => match[1]), ["1", "3"]);
+});
+
 test("resolves paper presets before explicit page size overrides", () => {
   assert.deepEqual(PAPER_PRESET_LIST.map((preset) => preset.name), ["a4", "b5", "letter"]);
   assert.deepEqual(resolvePageSize({ paper: "a4" }), { pageWidth: 1190, pageHeight: 1684 });
