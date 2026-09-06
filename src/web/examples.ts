@@ -5,6 +5,7 @@ import _68example from "../../examples/6-8-example.jpu?raw";
 import drums from "../../examples/drums.jpu?raw";
 import jingleBells from "../../examples/jingle-bells.jpu?raw";
 import happyBirthday from "../../examples/happy-birthday.jpu?raw";
+import edelweiss from "../../examples/edelweiss.jpu?raw";
 import canon from "../../examples/canon.jpu?raw";
 import dearLittleWish from "../../examples/dear-little-wish.jpu?raw";
 import burningField from "../../examples/burning-field.jpu?raw";
@@ -19,6 +20,7 @@ export const examples = [
   drums,
   jingleBells,
   happyBirthday,
+  edelweiss,
   canon,
   dearLittleWish,
   burningField,
