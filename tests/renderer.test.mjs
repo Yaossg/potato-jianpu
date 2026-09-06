@@ -32,7 +32,7 @@ function noteX(svg, noteIndex) {
 }
 
 function lyricSyllableX(svg, text) {
-  const match = svg.match(new RegExp(`<text class="lyric-syllable" x="([^"]+)" y="[^"]+" text-anchor="middle">${text}</text>`));
+  const match = svg.match(new RegExp(`<text class="lyric-syllable(?: lyric-latin)?" x="([^"]+)" y="[^"]+" text-anchor="middle">${text}</text>`));
   assert.ok(match, `lyric syllable ${text} should render`);
   return Number(match[1]);
 }
@@ -40,18 +40,18 @@ function lyricSyllableX(svg, text) {
 function lyricEstimatedWidth(text) {
   return [...text].reduce((sum, char) => {
     if (/\s/u.test(char)) {
-      return sum + 4.5;
+      return sum + 3.5;
     }
     if (/[\u3400-\u9fff\uf900-\ufaff]/u.test(char)) {
       return sum + 17;
     }
-    if (/[A-Za-z0-9]/u.test(char)) {
-      return sum + 8.5;
+    if (/\p{Script=Latin}|\p{N}/u.test(char)) {
+      return sum + 6.5;
     }
     if (/[\p{P}\p{S}]/u.test(char)) {
-      return sum + 5;
+      return sum + 4;
     }
-    return sum + 9;
+    return sum + 8;
   }, 0);
 }
 
@@ -1305,7 +1305,7 @@ test("moves following voices brackets and lyrics with planned lane height", () =
   assert.equal(dense.ok, true);
   const plainSvg = renderSvg(plain.value, { pageWidth: 240 });
   const denseSvg = renderSvg(dense.value, { pageWidth: 240 });
-  const lyricY = (svg) => Number(svg.match(/<text class="lyric-syllable" x="[^"]+" y="([^"]+)"/)?.[1]);
+  const lyricY = (svg) => Number(svg.match(/<text class="lyric-syllable(?: lyric-latin)?" x="[^"]+" y="([^"]+)"/)?.[1]);
   const bracketBottom = (svg) => Math.max(...[...svg.matchAll(/<path class="voice-bracket" d="[^"]+ L[^,]+,([^"]+)"/g)].map((match) => Number(match[1])));
   assert.ok(lyricY(denseSvg) > lyricY(plainSvg));
   assert.ok(bracketBottom(denseSvg) > bracketBottom(plainSvg));
@@ -1510,7 +1510,7 @@ test("renders lyrics below the preceding voice group", () => {
   const result = parse('T1: "High"\nT2: "Low"\n===\nT1: 1 2\nT2: 5, 6,\nL1: "hello & goodbye"\n"second line"\nT1: 3 4');
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 240 });
-  assert.match(svg, /<text class="lyric-line" x="\d+" y="\d+" text-anchor="start">hello &amp; goodbye<\/text>/);
+  assert.match(svg, /<text class="lyric-line lyric-latin" x="\d+" y="\d+" text-anchor="start">hello &amp; goodbye<\/text>/);
   assert.equal(lyricSyllableX(svg, "second"), noteX(svg, 0));
   assert.equal(lyricSyllableX(svg, "line"), noteX(svg, 1));
   assert.ok(svg.indexOf("hello &amp; goodbye") < svg.indexOf('data-note-index="4"'));
@@ -1520,8 +1520,8 @@ test("renders header-defined lyric labels with reserved horizontal space", () =>
   const result = parse('L1: "Verse"\n===\n1 2\nL1: "hello"\n"again"');
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 180 });
-  assert.match(svg, /<text class="line-label" x="8" y="\d+" text-anchor="start">Verse<\/text><text class="lyric-line" x="79" y="\d+" text-anchor="start">hello<\/text>/);
-  assert.match(svg, /<text class="lyric-line" x="79" y="\d+" text-anchor="start">again<\/text>/);
+  assert.match(svg, /<text class="line-label" x="8" y="\d+" text-anchor="start">Verse<\/text><text class="lyric-line lyric-latin" x="79" y="\d+" text-anchor="start">hello<\/text>/);
+  assert.match(svg, /<text class="lyric-line lyric-latin" x="79" y="\d+" text-anchor="start">again<\/text>/);
   assert.match(svg, /<g class="note-item" data-note-index="0"><text class="note" x="79"/);
 });
 
@@ -1529,8 +1529,8 @@ test("justifies lyric text with its score group", () => {
   const result = parse('1 2\n"hello"\n3 4\n"tail"');
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 240, justifyMode: "except-last" });
-  assert.match(svg, /<text class="lyric-line" x="18" y="\d+" text-anchor="start" textLength="222" lengthAdjust="spacing">hello<\/text>/);
-  assert.match(svg, /<text class="lyric-line" x="18" y="\d+" text-anchor="start">tail<\/text>/);
+  assert.match(svg, /<text class="lyric-line lyric-latin" x="18" y="\d+" text-anchor="start" textLength="222" lengthAdjust="spacing">hello<\/text>/);
+  assert.match(svg, /<text class="lyric-line lyric-latin" x="18" y="\d+" text-anchor="start">tail<\/text>/);
 });
 
 test("aligns lyric syllables under main voice notes", () => {
@@ -1548,7 +1548,7 @@ test("aligns fewer lyric syllables under leading main voice notes", () => {
   const svg = renderSvg(result.value, { pageWidth: 180 });
   assert.equal(lyricSyllableX(svg, "one"), noteX(svg, 0));
   assert.equal(lyricSyllableX(svg, "two"), noteX(svg, 1));
-  assert.doesNotMatch(svg, /<text class="lyric-line"[^>]*>one two<\/text>/);
+  assert.doesNotMatch(svg, /<text class="lyric-line[^"]*"[^>]*>one two<\/text>/);
 });
 
 test("renders lyric spacing placeholders as empty aligned slots", () => {
@@ -1558,7 +1558,7 @@ test("renders lyric spacing placeholders as empty aligned slots", () => {
   assert.equal(lyricSyllableX(svg, "one"), noteX(svg, 0));
   assert.equal(lyricSyllableX(svg, "three"), noteX(svg, 2));
   assert.equal(lyricSyllableX(svg, "four"), noteX(svg, 3));
-  assert.doesNotMatch(svg, /<text class="lyric-syllable"[^>]*>_<\/text>/);
+  assert.doesNotMatch(svg, /<text class="lyric-syllable[^"]*"[^>]*>_<\/text>/);
 });
 
 test("renders lyric merge placeholders without filler text", () => {
@@ -1567,8 +1567,8 @@ test("renders lyric merge placeholders without filler text", () => {
   const svg = renderSvg(result.value, { pageWidth: 180 });
   assert.equal(lyricSyllableX(svg, "held"), (noteX(svg, 0) + noteX(svg, 1)) / 2);
   assert.equal(lyricSyllableX(svg, "next"), noteX(svg, 2));
-  assert.doesNotMatch(svg, /<text class="lyric-syllable"[^>]*>~<\/text>/);
-  assert.doesNotMatch(svg, /<text class="lyric-syllable"[^>]*>_<\/text>/);
+  assert.doesNotMatch(svg, /<text class="lyric-syllable[^"]*"[^>]*>~<\/text>/);
+  assert.doesNotMatch(svg, /<text class="lyric-syllable[^"]*"[^>]*>_<\/text>/);
 });
 
 test("aligns automatic Chinese lyric syllables under notes", () => {
@@ -1591,6 +1591,16 @@ test("renders automatic hyphenated English lyric syllables", () => {
   assert.equal(lyricSyllableX(svg, "a"), noteX(svg, 4));
 });
 
+test("uses separate CJK and Latin lyric font sizes", () => {
+  const result = parse('1 2\n"春day"\n"hello"');
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  assert.match(svg, /\.lyric-syllable \{[^}]*font-size: 17px;/);
+  assert.match(svg, /\.lyric-latin \{ font-size: 13px; \}/);
+  assert.match(svg, /<text class="lyric-line"[^>]*><tspan class="lyric-cjk">春<\/tspan><tspan class="lyric-latin">day<\/tspan><\/text>/);
+  assert.match(svg, /<text class="lyric-line lyric-latin"[^>]*>hello<\/text>/);
+});
+
 test("does not expand note spacing for lyric merge placeholder targets", () => {
   const blank = parse('1 2 3 4\n"shine _ on _"');
   const merged = parse('1 2 3 4\n"shine ~ on _"');
@@ -1607,8 +1617,8 @@ test("keeps excess lyric syllables as a normal lyric line", () => {
   const result = parse('1 2\n"one two three"');
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 180 });
-  assert.match(svg, /<text class="lyric-line" x="18" y="\d+" text-anchor="start">one two three<\/text>/);
-  assert.doesNotMatch(svg, /<text class="lyric-syllable"/);
+  assert.match(svg, /<text class="lyric-line lyric-latin" x="18" y="\d+" text-anchor="start">one two three<\/text>/);
+  assert.doesNotMatch(svg, /<text class="lyric-syllable/);
 });
 
 test("keeps excess automatic lyric syllables as a normal lyric line", () => {
@@ -1616,7 +1626,7 @@ test("keeps excess automatic lyric syllables as a normal lyric line", () => {
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 180 });
   assert.match(svg, /<text class="lyric-line" x="18" y="\d+" text-anchor="start">春天来<\/text>/);
-  assert.doesNotMatch(svg, /<text class="lyric-syllable"/);
+  assert.doesNotMatch(svg, /<text class="lyric-syllable/);
 });
 
 test("expands lyric syllable anchors to avoid English lyric overlap", () => {
@@ -1625,7 +1635,7 @@ test("expands lyric syllable anchors to avoid English lyric overlap", () => {
   const svg = renderSvg(result.value, { pageWidth: 260 });
   const wonderfulX = lyricSyllableX(svg, "wonderful");
   const eveningX = lyricSyllableX(svg, "evening");
-  assert.ok(eveningX - wonderfulX >= 70);
+  assert.ok(eveningX - wonderfulX >= (lyricEstimatedWidth("wonderful") + lyricEstimatedWidth("evening")) / 2 + 6);
 });
 
 test("reserves left space for the first aligned lyric syllable", () => {
@@ -1657,7 +1667,10 @@ test("uses the widest lyric syllable in each aligned slot", () => {
   const result = parse('1 2\n"hi evening"\n"wonderful by"');
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 260 });
-  assert.ok(lyricSyllableX(svg, "evening") - lyricSyllableX(svg, "hi") >= 70);
+  assert.ok(
+    lyricSyllableX(svg, "evening") - lyricSyllableX(svg, "hi") >=
+      (lyricEstimatedWidth("wonderful") + lyricEstimatedWidth("evening")) / 2 + 6,
+  );
   assert.equal(lyricSyllableX(svg, "wonderful"), lyricSyllableX(svg, "hi"));
   assert.equal(lyricSyllableX(svg, "by"), lyricSyllableX(svg, "evening"));
 });
@@ -1668,14 +1681,14 @@ test("keeps lyric-expanded multi-track rhythm anchors aligned", () => {
   const svg = renderSvg(result.value, { pageWidth: 260 });
   assert.equal(noteX(svg, 0), noteX(svg, 2));
   assert.equal(noteX(svg, 1), noteX(svg, 3));
-  assert.ok(noteX(svg, 1) - noteX(svg, 0) >= 70);
+  assert.ok(noteX(svg, 1) - noteX(svg, 0) >= (lyricEstimatedWidth("wonderful") + lyricEstimatedWidth("evening")) / 2 + 6);
 });
 
 test("scales overwide aligned lyrics with their score group", () => {
   const result = parse('1 2\n"supercalifragilisticexpialidocious tiny"');
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 100 });
-  assert.match(svg, /<g class="score-group scaled"[^>]*>[\s\S]*<text class="lyric-syllable"/);
+  assert.match(svg, /<g class="score-group scaled"[^>]*>[\s\S]*<text class="lyric-syllable/);
   assert.doesNotMatch(svg, /class="lyric-block scaled"/);
 });
 
@@ -1691,7 +1704,7 @@ test("does not scale a normal lyric with an overwide score group", () => {
   const result = parse('1--- 2--- 3--- 4---\n"caption"');
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 120 });
-  assert.match(svg, /<text class="lyric-line"[^>]*>caption<\/text>/);
+  assert.match(svg, /<text class="lyric-line lyric-latin"[^>]*>caption<\/text>/);
   assert.doesNotMatch(svg, /class="lyric-block scaled"/);
   assert.match(svg, /class="score-group scaled"/);
 });
@@ -1700,7 +1713,7 @@ test("keeps aligned lyric syllables attached to one overwide source line", () =>
   const result = parse('1 2 | 3 4 |\n"one two three four"');
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 90 });
-  assert.equal(svg.match(/class="lyric-syllable"/g)?.length, 4);
+  assert.equal(svg.match(/class="lyric-syllable(?: lyric-latin)?"/g)?.length, 4);
   assert.equal(svg.match(/class="score-group scaled"/g)?.length, 1);
 });
 

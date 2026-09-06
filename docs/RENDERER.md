@@ -207,7 +207,10 @@ past the left or right edge. Aligned lyrics share the score group's horizontal
 scale so their note anchors remain synchronized. If a lyric has more aligned
 slots than main-voice notes, it remains a normal left-aligned lyric line. Normal
 lyrics do not inherit the music scale and use an independent horizontal scale
-only when their own text exceeds the content width. In
+only when their own text exceeds the content width.
+
+CJK lyric text renders at `17px`, while Latin-script lyric text renders at
+`13px`; mixed-language lyrics apply the sizes to their respective text runs. In
 multi-voice groups, the renderer uses `T1` as the main voice; unlabeled lines
 in labeled scores also count as `T1`.
 

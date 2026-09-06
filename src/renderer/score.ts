@@ -21,6 +21,7 @@ import {
   type LineLayoutConstraints,
   type MeasureLayout,
 } from "./layout.js";
+import { lyricCharacterScript, lyricScript, lyricTextWidth } from "./lyrics.js";
 import { chordHeight, maxAccidentalOffset, ornamentLeftWidthOf, ornamentRightWidthOf } from "./metrics.js";
 import type { JustifyMode } from "./options.js";
 import { SMUFL_SYMBOLS } from "./smufl.js";
@@ -34,11 +35,6 @@ const accidentalMap = new Map([
   [-1, "&#9837;"],
   [-2, "&#119083;"],
 ]);
-const LYRIC_LATIN_WIDTH = 8.5;
-const LYRIC_CJK_WIDTH = 17;
-const LYRIC_SPACE_WIDTH = 4.5;
-const LYRIC_PUNCTUATION_WIDTH = 5;
-const LYRIC_OTHER_WIDTH = 9;
 const LYRIC_SYLLABLE_GAP = 6;
 const PAGINATED_PAGE_CONTENT_TOP = 12;
 const MEASURE_NUMBER_HEIGHT = 20;
@@ -1805,26 +1801,6 @@ function scoreLineGroups(document: Document): ScoreLineGroup[] {
   });
 }
 
-function lyricCharWidth(char: string): number {
-  if (/\s/u.test(char)) {
-    return LYRIC_SPACE_WIDTH;
-  }
-  if (/[\u3400-\u9fff\uf900-\ufaff]/u.test(char)) {
-    return LYRIC_CJK_WIDTH;
-  }
-  if (/[A-Za-z0-9]/u.test(char)) {
-    return LYRIC_LATIN_WIDTH;
-  }
-  if (/[\p{P}\p{S}]/u.test(char)) {
-    return LYRIC_PUNCTUATION_WIDTH;
-  }
-  return LYRIC_OTHER_WIDTH;
-}
-
-function lyricTextWidth(text: string): number {
-  return [...text].reduce((sum, char) => sum + lyricCharWidth(char), 0);
-}
-
 interface RenderedLyricSyllable {
   text: string;
   startIndex: number;
@@ -1988,6 +1964,34 @@ function renderVoiceBracket(x: number, y1: number, y2: number, side: "left" | "r
   return `<path class="voice-bracket" d="M${innerX},${y1} L${x},${y1 + bevel} V${y2 - bevel} L${innerX},${y2}"/><path class="voice-bracket-stem" d="M${x},${y1 + bevel} V${y2 - bevel}"/>`;
 }
 
+function lyricClass(baseClass: string, text: string): string {
+  return lyricScript(text) === "latin" ? `${baseClass} lyric-latin` : baseClass;
+}
+
+function renderLyricText(text: string): string {
+  if (lyricScript(text) !== "mixed") {
+    return escapeXml(text);
+  }
+  const characters = [...text];
+  const firstScript = characters.map(lyricCharacterScript).find((script) => script !== undefined) ?? "latin";
+  let currentScript = firstScript;
+  let currentText = "";
+  const runs: Array<{ script: "cjk" | "latin"; text: string }> = [];
+  for (const char of characters) {
+    const script = lyricCharacterScript(char) ?? currentScript;
+    if (script !== currentScript && currentText) {
+      runs.push({ script: currentScript, text: currentText });
+      currentText = "";
+    }
+    currentScript = script;
+    currentText += char;
+  }
+  if (currentText) {
+    runs.push({ script: currentScript, text: currentText });
+  }
+  return runs.map((run) => `<tspan class="lyric-${run.script}">${escapeXml(run.text)}</tspan>`).join("");
+}
+
 function renderLyrics(document: Document, lyrics: LyricLine[], contentX: number, y: number, targetTextWidth: number | undefined): string {
   return lyrics
     .map((lyric, index) => {
@@ -1999,7 +2003,7 @@ function renderLyrics(document: Document, lyrics: LyricLine[], contentX: number,
         targetTextWidth !== undefined && targetTextWidth > naturalTextWidth
           ? ` textLength="${targetTextWidth}" lengthAdjust="spacing"`
           : "";
-      return `${label}<text class="lyric-line" x="${contentX}" y="${lineY}" text-anchor="start"${justifyAttributes}>${escapeXml(lyric.text)}</text>`;
+      return `${label}<text class="${lyricClass("lyric-line", lyric.text)}" x="${contentX}" y="${lineY}" text-anchor="start"${justifyAttributes}>${renderLyricText(lyric.text)}</text>`;
     })
     .join("\n");
 }
@@ -2016,7 +2020,7 @@ function renderAlignedLyrics(document: Document, lyrics: LyricLine[], contentX: 
       const syllables = renderedLyricSyllables(lyric)
         .map((syllable) => {
           const x = (anchors[syllable.startIndex]! + anchors[syllable.endIndex]!) / 2;
-          return `<text class="lyric-syllable" x="${x}" y="${lineY}" text-anchor="middle">${escapeXml(syllable.text)}</text>`;
+          return `<text class="${lyricClass("lyric-syllable", syllable.text)}" x="${x}" y="${lineY}" text-anchor="middle">${renderLyricText(syllable.text)}</text>`;
         })
         .join("");
       return `${label}${syllables}`;
