@@ -95,5 +95,10 @@
     "react-dom": "^19.2.5",
     "svg-to-pdfkit": "^0.1.8",
     "svg2pdf.js": "^2.7.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "ebnf2railroad>railroad-diagrams": "file:vendor/railroad-diagrams"
+    }
   }
 }

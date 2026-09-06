@@ -116,6 +116,7 @@ rendered SVG pages. Frontend WAV and MP3 export render audio with browser
 Before cutting a release:
 
 - Use the package manager recorded in `package.json` (`pnpm@8.10.3`).
+- Run `git submodule update --init` so the pinned railroad renderer is present.
 - Run `pnpm install`.
 - Run `pnpm run check`.
 - Run `pnpm run test`.

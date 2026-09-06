@@ -8,8 +8,13 @@ Use pnpm. The package manager version is pinned in `package.json`.
 ## Setup
 
 ```sh
+git submodule update --init
 pnpm install
 ```
+
+The `vendor/railroad-diagrams` submodule supplies the pinned railroad renderer
+used by `ebnf2railroad`. Initialize submodules before installing dependencies
+when the repository was cloned without `--recurse-submodules`.
 
 ## Development
 
