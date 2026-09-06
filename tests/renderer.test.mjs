@@ -598,6 +598,16 @@ test("justifies all score lines by stretching note positions", () => {
   assert.doesNotMatch(allLines, /<g class="note-item" data-note-index="8"><text class="note" x="42" y="158" text-anchor="middle">6<\/text><\/g>/);
 });
 
+test("keeps duration dashes aligned after accidentals", () => {
+  const result = parse("#1- 2 |");
+  assert.equal(result.ok, true);
+  const natural = renderSvg(result.value, { pageWidth: 160, background: "#ffffff" });
+  assert.equal(dashCenterX(natural, 0) - noteX(natural, 0), 24);
+
+  const justified = renderSvg(result.value, { pageWidth: 260, justifyMode: "all", background: "#ffffff" });
+  assert.equal(dashCenterX(justified, 0) - noteX(justified, 0), 24);
+});
+
 test("infers page width from natural score content", () => {
   const short = parse("1 2 |");
   const long = parse("1 2 | 3 4 | 5 6 | 7 1' |");

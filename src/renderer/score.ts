@@ -1236,7 +1236,7 @@ function renderLine(
       const groupShift = justifyX(groupStartX) - groupStartX;
       const dashAnchors = measureLayout.dashPositions[noteIndex]!.map((dashPosition) => {
         const naturalDashX = xOffset + dashPosition + measureLayout.leftPadding;
-        return contentOffset + justifyX(naturalDashX);
+        return contentOffset + naturalDashX + groupShift;
       });
       const entry: LineEntry = {
         note,

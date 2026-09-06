@@ -1,6 +1,6 @@
 import type { Measure, Note, ScoreLine } from "../core/index.js";
 import { DIMENSIONS } from "./dimensions.js";
-import { ornamentLeftWidthOf, widthOf } from "./metrics.js";
+import { maxAccidentalOffset, ornamentLeftWidthOf, widthOf } from "./metrics.js";
 import type { VerticalLinePlan } from "./vertical-layout.js";
 
 export interface MeasureLayout {
@@ -81,9 +81,13 @@ function layoutMeasure(
 
   for (const note of measure.notes) {
     const noteLeftOrnamentWidth = ornamentLeftWidthOf(note);
+    const noteAccidentalWidth = note.kind === "pitch" ? maxAccidentalOffset(note.chord) : 0;
     notePositions.push(totalWidth);
     dashPositions.push(
-      Array.from({ length: note.duration.dashes }, (_, index) => totalWidth + noteLeftOrnamentWidth + DIMENSIONS.dashSpacing * (index + 1)),
+      Array.from(
+        { length: note.duration.dashes },
+        (_, index) => totalWidth + noteLeftOrnamentWidth + noteAccidentalWidth + DIMENSIONS.dashSpacing * (index + 1),
+      ),
     );
     totalWidth += Math.max(widthOf(note), constraints?.minAdvanceByNote?.get(note) ?? 0);
     paddingUp = Math.max(paddingUp, paddingUpOf(note));
