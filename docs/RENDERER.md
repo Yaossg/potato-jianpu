@@ -318,8 +318,11 @@ they attach to. Their glyph, label, arrow, or platform body still occupies the
 normal planned lane. All other overlapping rectangles must retain the
 configured clearance.
 
-An anchored slur endpoint is placed beyond the combined horizontal bounds of
-its note body, accidental, ornament, and dynamic mark. Nested slurs add a
+An ordinary slur endpoint sits 4 units outside its note center (including any
+accidental offset at the right endpoint). Ornaments and dynamic marks expand
+these bounds when they need side clearance; the note's spacing box does not.
+Endpoint height follows the note bodies within that slur segment, so a tall
+chord elsewhere on the line cannot flatten its curves. Nested slurs add a
 lane-based outward offset where page-edge clearance permits, so shared anchors
 remain visually distinct without crossing their attached marks.
 

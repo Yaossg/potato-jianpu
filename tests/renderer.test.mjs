@@ -409,6 +409,30 @@ test("renders cross-line ties as cut halves after justification", () => {
   assert.match(paths[1], /^M0\.5,[^ ]+ Q[^ ]+ [^ ]+ Q[^ ]+ [^ ]+ Z$/);
 });
 
+test("keeps short slurs close to their notes and adjacent slurs separate", () => {
+  const result = parse("$(11)$(22)");
+  assert.equal(result.ok, true);
+  const svg = renderSvg(result.value);
+  const paths = slurPaths(svg);
+  assert.equal(paths.length, 2);
+  assert.equal(pathStart(paths[0])[0], noteX(svg, 0) - 4);
+  assert.equal(pathEnd(paths[0])[0], noteX(svg, 1) + 4);
+  assert.ok(pathEnd(paths[0])[0] < pathStart(paths[1])[0]);
+  assert.equal(pathStart(paths[0])[1], pathStart(paths[1])[1]);
+});
+
+test("keeps a short slur curved when an unrelated tall chord shares its line", () => {
+  const render = (source) => {
+    const result = parse(source);
+    assert.equal(result.ok, true);
+    const svg = renderSvg(result.value);
+    const path = slurPaths(svg)[0];
+    const baseline = notePosition(svg, 0).y;
+    return pathYValues(path).map((y) => baseline - y);
+  };
+  assert.deepEqual(render("$(11) 2 3 {1 3 5}"), render("$(11)"));
+});
+
 test("renders slurs outside ties and ornaments", () => {
   const result = parse("$(1(^) 2 ~2 3)");
   assert.equal(result.ok, true);
@@ -421,7 +445,7 @@ test("renders slurs outside ties and ornaments", () => {
   const endNote = notePosition(svg, 3);
   assert.match(slurPath, /^M[^ ]+ Q[^ ]+ [^ ]+ L[^ ]+ Q[^ ]+ [^ ]+$/);
   assert.ok(pathStart(slurPath)[0] <= startNote.x - 16);
-  assert.ok(pathEnd(slurPath)[0] >= endNote.x + 16);
+  assert.equal(pathEnd(slurPath)[0], endNote.x + 4);
   const slurControlY = Number(slurPath.match(/Q[^,]+,([^ ]+)/)?.[1]);
   const tieTopY = Math.min(...tiePaths(svg)[0].match(/-?\d+(?:\.\d+)?/g).map(Number).filter((_, index) => index % 2 === 1));
   assert.ok(slurControlY < tieTopY);
@@ -461,8 +485,15 @@ test("keeps slur endpoint curves outside anchored upper marks", () => {
     const path = slurPaths(svg)[0];
     const firstX = noteX(svg, 0);
     const lastX = noteX(svg, 1);
-    assert.ok(pathStart(path)[0] <= firstX - 16, `${source} start should clear its anchor`);
-    assert.ok(pathEnd(path)[0] >= lastX + 16, `${source} end should clear its anchor`);
+    assert.ok(pathStart(path)[0] <= firstX - 4, `${source} start should clear its anchor`);
+    assert.ok(pathEnd(path)[0] >= lastX + 4, `${source} end should clear its anchor`);
+    const notes = result.value.score[0].measures.flatMap((measure) => measure.notes);
+    if (notes[0].ornament || notes[0].velocity !== undefined) {
+      assert.ok(pathStart(path)[0] <= firstX - 16, `${source} start should clear its upper mark`);
+    }
+    if (notes[1].ornament || notes[1].velocity !== undefined) {
+      assert.ok(pathEnd(path)[0] >= lastX + 16, `${source} end should clear its upper mark`);
+    }
   }
 });
 
@@ -520,7 +551,7 @@ T2: 7, 1)`);
   const svg = renderSvg(result.value, { pageWidth: 220 });
   assert.equal(slurPaths(svg).length, 2);
   const firstT2 = notePosition(svg, 2);
-  assert.ok(pathStart(slurPaths(svg)[0])[0] <= firstT2.x - 16);
+  assert.equal(pathStart(slurPaths(svg)[0])[0], firstT2.x - 4);
 });
 
 test("connects ties to the previous note in the same track", () => {

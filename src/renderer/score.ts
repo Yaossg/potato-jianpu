@@ -896,10 +896,15 @@ function ornamentItem(entry: NaturalLineEntry): VerticalItem | undefined {
 }
 
 function anchorHorizontalBounds(entry: NaturalLineEntry): { left: number; right: number } {
-  const body = noteBodyItem(entry);
-  let left = body.x1;
-  let right = body.x2;
+  // Endpoints sit above the note, so only upper marks need side clearance.
+  let left = entry.x;
+  let right = entry.x + (entry.note.kind === "pitch" ? maxAccidentalOffset(entry.note.chord) : 0);
   const ornament = ornamentItem(entry);
+  if (ornament || entry.note.velocity !== undefined) {
+    const body = noteBodyItem(entry);
+    left = body.x1;
+    right = body.x2;
+  }
   if (ornament) {
     left = Math.min(left, ornament.x1);
     right = Math.max(right, ornament.x2);
@@ -1303,12 +1308,6 @@ function renderLine(
     parts.push(renderHairpin(segment.kind, startX, endX, lineY + layout.maxPaddingUp - centerOffset));
   }
 
-  const bodyTop = Math.max(
-    DIMENSIONS.baseNoteHeight,
-    ...[...(layout.verticalPlan?.placements.values() ?? [])]
-      .filter((placement) => placement.band === "body")
-      .map((placement) => placement.top),
-  );
   for (const segment of slurSegments) {
     const startEntry = segment.startNote
       ? lineEntries.find((entry) => entry.note === segment.startNote)
@@ -1329,6 +1328,12 @@ function renderLine(
       : fragmentEdgeX(rightTieEdgeX, DIMENSIONS.slurStrokeWidth, "right");
     const placement = layout.verticalPlan?.placements.get(segment.id);
     const baselineY = lineY + layout.maxPaddingUp;
+    const bodyTop = Math.max(
+      DIMENSIONS.baseNoteHeight,
+      ...lineEntries
+        .filter((entry) => entry.x >= startX && entry.x <= endX)
+        .map((entry) => chordHeight(entry.note)),
+    );
     const endpointY = baselineY - bodyTop - DIMENSIONS.slurEndpointGap;
     const platformTopPadding = Math.max(
       DIMENSIONS.slurStrokeWidth / 2,
