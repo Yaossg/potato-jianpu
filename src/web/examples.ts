@@ -11,6 +11,7 @@ import dearLittleWish from "../../examples/dear-little-wish.jpu?raw";
 import burningField from "../../examples/burning-field.jpu?raw";
 import blockyHeroes from "../../examples/blocky-heroes.jpu?raw";
 import shining from "../../examples/shining-from-the-underground.jpu?raw";
+import theSameSong from "../../examples/the-same-song.jpu?raw";
 
 export const examples = [
   scale,
@@ -26,6 +27,7 @@ export const examples = [
   burningField,
   blockyHeroes,
   shining,
+  theSameSong,
 ];
 
 export function exampleTitle(source: string): string | null {

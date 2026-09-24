@@ -32,3 +32,4 @@ pnpm run cli -- export-mp3 examples/twinkle.jpu -o twinkle.mp3
 | `burning-field.jpu` | Example with rests, ties, and octave marks |
 | `blocky-heroes.jpu` | Example with naturals and dense sixteenth notes |
 | `shining-from-the-underground.jpu` | Example with measure octave prefixes |
+| `the-same-song.jpu` | Image transcription with two lyric verses, repeats, alternate endings, and slurs |
