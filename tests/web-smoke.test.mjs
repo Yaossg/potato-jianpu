@@ -207,7 +207,6 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(sourceEditorSource, /title=\{part\.tooltip\}/);
   assert.match(appSource, /inferContentPageWidth/);
   assert.match(audioSource, /SCHEDULE_AHEAD_SECONDS/);
-  assert.match(audioSource, /currentTime > context\.currentTime \+ SCHEDULE_AHEAD_SECONDS/);
   assert.doesNotMatch(script, /grammar\.zh\.html/);
   assert.match(script, /time-signature/);
   assert.match(script, /帮助/);

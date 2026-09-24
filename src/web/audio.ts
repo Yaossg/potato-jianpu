@@ -118,15 +118,18 @@ export class PreviewAudioPlayer {
         return;
       }
       const noteStartTime = startTime + item.offset * secondsPerWholeNote;
-      const currentTime = noteStartTime;
+      // A single pause cannot bound the lookahead after long notes or rests.
+      // Wait before allocating a synth voice, and recheck the audio clock.
+      while (noteStartTime > context.currentTime + SCHEDULE_AHEAD_SECONDS) {
+        await this.scheduleDelay.delay(SCHEDULE_PAUSE_SECONDS);
+        if (generation !== this.playGeneration) {
+          return;
+        }
+      }
       const duration = item.duration * secondsPerWholeNote;
       synth.noteOn(item.channel, item.note, Math.max(0, Math.min(127, Math.round((item.velocity ?? DEFAULT_VELOCITY) * item.volume))), noteStartTime);
       synth.noteOff(item.channel, item.note, noteStartTime + duration);
       latestEndTime = Math.max(latestEndTime, noteStartTime + duration);
-
-      if (currentTime > context.currentTime + SCHEDULE_AHEAD_SECONDS) {
-        await this.scheduleDelay.delay(SCHEDULE_PAUSE_SECONDS);
-      }
     }
     if (generation === this.playGeneration) {
       await this.scheduleDelay.delay(latestEndTime - context.currentTime + END_GRACE_SECONDS);

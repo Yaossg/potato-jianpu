@@ -393,6 +393,10 @@ Behavior:
 - schedules note-start timers for frontend highlighting
 - supports starting from a parsed note index
 - schedules all arrangement tracks against the same audio clock
+- admits new sounding notes only within a rolling one-second lookahead,
+  rechecking the audio clock every half second while waiting; long notes and
+  rests do not allocate distant future synth voices
+- cancels pending scheduling waits when playback stops or restarts
 
 The frontend exposes a Settings panel with Default Program, volume, audition,
 and initial-rest controls. Browser playback and MIDI download use the selected
