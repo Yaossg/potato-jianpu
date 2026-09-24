@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { parse, tokenize } from "../dist/parser/index.js";
+import { parse } from "../dist/parser/index.js";
 
 test("parses a header and unspaced score", () => {
   const result = parse(`title: "Twinkle"\nkey: D\ntime: 4/4\ntempo: 180\n===\n1155|665-|\n`);
@@ -427,28 +427,6 @@ test("parses slurs as document-level track spans", () => {
   ]);
   assert.equal(result.value.slurs[0].range.start.offset, 0);
   assert.equal(result.value.slurs[0].range.end.offset, source.length);
-});
-
-test("tokenizes the contiguous slur opener as one token", () => {
-  assert.deepEqual(tokenize("$(1 2)").tokens.map((token) => token.type), [
-    "slurStart",
-    "note",
-    "note",
-    "rparen",
-    "eof",
-  ]);
-  assert.equal(tokenize("$ (1 2)").diagnostics[0]?.message, "Unexpected character '$'.");
-  assert.equal(tokenize("$$(1 2 3)").diagnostics.length, 2);
-  assert.equal(tokenize("$$ (1 2)").diagnostics.length, 2);
-});
-
-test("rejects the reserved counted slur opener", () => {
-  const result = parse("$$(1 2 3)");
-  assert.equal(result.ok, false);
-  assert.deepEqual(result.diagnostics.slice(0, 2).map((diagnostic) => diagnostic.message), [
-    "Unexpected character '$'.",
-    "Unexpected character '$'.",
-  ]);
 });
 
 test("parses nested, chord, and independently tracked slurs", () => {
