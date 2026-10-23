@@ -96,6 +96,22 @@ tempo: 72
 
 ## 乐谱显示
 
+重复书写 `composer` 可逐行列出作词、作曲、编曲等署名，显示顺序与书写顺序一致。每条署名仍使用单行双引号字符串；空字符串可留出一行。所有署名右对齐，最后一行与调号、拍号和速度同行，正文随署名行数自动下移。`title` 和 `subtitle` 仍不能重复。
+
+<JianpuSource source={`title: "Credits"
+composer: "张三 作词"
+composer: "李四 作曲"
+composer: "王五 编曲"
+===
+1 2 3 4`} />
+
+<ScorePreview source={`title: "Credits"
+composer: "张三 作词"
+composer: "李四 作曲"
+composer: "王五 编曲"
+===
+1 2 3 4`} />
+
 使用 `title`、`subtitle` 和 `composer` 编写渲染在乐谱上方的文本。这些字段不影响解析、播放计时或导出格式选择。
 
 使用 `hidden: true` 可以让整块渲染文件头从 SVG 中隐藏，同时把元数据保留在文档里。使用 `hidden: false` 或省略该字段时，会正常渲染文件头。

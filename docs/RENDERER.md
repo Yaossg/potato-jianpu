@@ -439,7 +439,13 @@ When visible, the header may render:
 - key metadata as `1=<key>`
 - time signature as stacked digits with a square-ended fraction line
 - tempo mark and tempo number
-- right-aligned composer
+- right-aligned composer credit lines in source order
+
+Repeated `composer` properties are stored in `header.composer` as newline-separated
+text. Credit lines use an 18px font size and a 28-unit line spacing; the last line shares the key, time,
+and tempo row. Extra lines increase header height and move the score down,
+including during pagination. Natural header width uses the longest credit line.
+Single-line headers retain their existing layout.
 
 Header text is XML-escaped.
 

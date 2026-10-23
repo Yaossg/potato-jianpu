@@ -23,6 +23,7 @@ const TIME_SIGNATURE_DIGIT_Y_OFFSET = 10;
 const TEMPO_SPACE_WIDTH = 6;
 const TEMPO_TEXT_WIDTH = 10;
 const TEMPO_NUMBER_TEXT_WIDTH = 9;
+const COMPOSER_LINE_HEIGHT = 28;
 
 function displayKeyText(key: string): string {
   return key.replace(/#/g, "♯").replace(/b/g, "♭");
@@ -99,7 +100,9 @@ export function renderHeader(document: Document, width: number): { svg: string; 
   const parts: string[] = [];
   const titleY = header.title ? 40 : 0;
   const subtitleY = header.subtitle ? titleY + 32 : titleY;
-  const metadataY = subtitleY + 40;
+  const composerLines = header.composer ? header.composer.split("\n") : [];
+  const composerY = subtitleY + 40;
+  const metadataY = composerY + Math.max(0, composerLines.length - 1) * COMPOSER_LINE_HEIGHT;
   const height = metadataY + 40;
 
   if (header.title) {
@@ -112,8 +115,8 @@ export function renderHeader(document: Document, width: number): { svg: string; 
   parts.push(renderKeySignature(header.keySignatureText, layout.keyX, metadataY));
   parts.push(renderTimeSignature(header.timeSignature.beatsPerMeasure, header.timeSignature.beatsPerWholeNote, layout.timeX, metadataY));
   parts.push(renderTempoMark(header.timeSignature.beatsPerWholeNote, header.tempo, layout.tempoX, metadataY));
-  if (header.composer) {
-    parts.push(`<text class="metadata" x="${width - 50}" y="${metadataY}" text-anchor="end">${escapeXml(header.composer)}</text>`);
-  }
+  composerLines.forEach((line, index) => {
+    parts.push(`<text class="metadata" style="font-size: 18px" x="${width - 50}" y="${composerY + index * COMPOSER_LINE_HEIGHT}" text-anchor="end">${escapeXml(line)}</text>`);
+  });
   return { svg: parts.join("\n"), height };
 }

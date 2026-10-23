@@ -1406,3 +1406,16 @@ test("P track without explicit program warns on pitch notes (drum mode default)"
   assert.ok(warnings.some((d) => d.message.includes("Pitch note used on a drum track")));
   assert.ok(!warnings.some((d) => d.message.includes("Drum note")));
 });
+
+test("repeated composer properties preserve ordered credit lines and empty entries", () => {
+  const result = parse('composer: ""\ncomposer: "张三 作词"\ntempo: 96\ncomposer: "李四 作曲"\ncomposer: ""\n===\n1 2 3 4');
+  assert.equal(result.ok, true);
+  assert.equal(result.value.header.composer, '\n张三 作词\n李四 作曲\n');
+  assert.deepEqual(result.diagnostics, []);
+  for (const key of ["title", "subtitle"]) {
+    const duplicate = parse(key + ': "A"\n' + key + ': "B"\n===\n1 2 3 4');
+    assert.equal(duplicate.ok, false);
+    assert.ok(duplicate.diagnostics.some((d) => d.message.includes("Duplicate header property")));
+  }
+  assert.equal(parse('composer: Unquoted\n===\n1 2 3 4').ok, false);
+});

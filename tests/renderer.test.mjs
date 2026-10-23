@@ -1832,3 +1832,32 @@ test("raises hairpins above colocated dynamic markings", () => {
   assert.ok(Number.isFinite(velocityY));
   assert.ok(Math.max(...hairpinYs) <= velocityY - 14);
 });
+
+test("renders ordered credit lines with bottom aligned metadata and expanded header height", async () => {
+  const { renderHeader } = await import("../dist/renderer/header.js");
+  const single = parse('title: "Song"\nsubtitle: "Subtitle"\ncomposer: "A & B"\n===\n1 2 3 4');
+  const multi = parse('title: "Song"\nsubtitle: "Subtitle"\ncomposer: "A & B"\ncomposer: ""\ncomposer: "<C>"\n===\n1 2 3 4');
+  assert.equal(multi.ok, true);
+  const header = renderHeader(multi.value, 500);
+  assert.equal(header.height, renderHeader(single.value, 500).height + 56);
+  assert.match(header.svg, /x="450" y="112" text-anchor="end">A &amp; B<\/text>/);
+  assert.match(header.svg, /x="450" y="140" text-anchor="end"><\/text>/);
+  assert.match(header.svg, /x="450" y="168" text-anchor="end">&lt;C&gt;<\/text>/);
+  assert.match(header.svg, /class="tempo-mark"[^>]*y="168"/);
+  const height = (doc) => Number(renderSvg(doc).match(/<svg[^>]*height="([^"]+)"/)[1]);
+  assert.equal(height(multi.value), height(single.value) + 56);
+  assert.equal(inferContentPageWidth(multi.value), inferContentPageWidth(single.value));
+  multi.value.header.hidden = true;
+  assert.deepEqual(renderHeader(multi.value, 500), { svg: "", height: 0 });
+});
+
+test("multiline credits reserve space on the first paginated page", () => {
+  const single = parse('composer: "A"\n===\n1 2 3 4\n1 2 3 4');
+  const multi = parse('composer: "A"\ncomposer: "B"\ncomposer: "C"\n===\n1 2 3 4\n1 2 3 4');
+  const options = { pageWidth: 500, paginate: true, pageHeight: 200 };
+  assert.equal(renderSvgPages(single.value, options).length, 1);
+  const pages = renderSvgPages(multi.value, options);
+  assert.equal(pages.length, 2);
+  assert.match(pages[0].svg, /text-anchor="end">C<\/text>/);
+  assert.doesNotMatch(pages[1].svg, /text-anchor="end">C<\/text>/);
+});

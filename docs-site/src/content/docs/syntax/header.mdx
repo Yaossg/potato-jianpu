@@ -96,6 +96,22 @@ tempo: 72
 
 ## Score Display
 
+Repeat `composer` to list lyricist, composer, arranger, or other credits on separate lines in source order. Each entry remains a single-line double-quoted string; an empty string reserves a blank line. Credits are right-aligned, with the last line alongside the key, time, and tempo marks. Extra lines move the score down. `title` and `subtitle` must still be unique.
+
+<JianpuSource source={`title: "Credits"
+composer: "张三 作词"
+composer: "李四 作曲"
+composer: "王五 编曲"
+===
+1 2 3 4`} />
+
+<ScorePreview source={`title: "Credits"
+composer: "张三 作词"
+composer: "李四 作曲"
+composer: "王五 编曲"
+===
+1 2 3 4`} />
+
 Use `title`, `subtitle`, and `composer` for text rendered above the score. These fields do not affect parsing, playback timing, or export format choices.
 
 Use `hidden: true` to keep the rendered header block out of the SVG while retaining the metadata in the document. Use `hidden: false`, or omit the field, to render the header normally.

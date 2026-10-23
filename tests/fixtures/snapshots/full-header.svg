@@ -60,5 +60,5 @@
 <text x="104" y="122" text-anchor="middle" dominant-baseline="central">8</text>
 </g>
 <text class="tempo-mark" x="138" y="112" dominant-baseline="central">♪<tspan class="tempo-value"> = 96</tspan></text>
-<text class="metadata" x="450" y="112" text-anchor="end">Composer Name</text>
+<text class="metadata" style="font-size: 18px" x="450" y="112" text-anchor="end">Composer Name</text>
 </svg>

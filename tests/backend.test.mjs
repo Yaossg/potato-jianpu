@@ -115,7 +115,7 @@ test("renders deterministic opaque PNG output with bundled fonts", () => {
   const png = renderPngBytes(svg);
   assert.deepEqual(pngDimensions(png), { width: 640, height: 380 });
   assert.equal(pngHasOnlyOpaquePixels(png), true);
-  assert.equal(createHash("sha256").update(png).digest("hex"), "dcc9103b0132eb50d20b56af81ad350bae4271e3140f30b0bd3b98bd69d78d80");
+  assert.equal(createHash("sha256").update(png).digest("hex"), "dea4951e16878471fa7a5e5269cd6482f4323497e0f64d3653820831af3bad9d");
   assert.equal(pngHasOnlyOpaquePixels(renderPngBytes(renderSvg(result.value, { pageWidth: 320 }), { background: "#ff8080", scale: 1 })), true);
   assert.throws(
     () => renderPngBytes(renderSvg(result.value, { pageWidth: 320 }), { background: "rgba(255, 0, 0, 0.5)", scale: 1 }),

@@ -80,6 +80,11 @@ export function applyHeaderProperty(
     if (!value || !expectQuoted(value, textKey, diagnostics)) {
       return "ok";
     }
+    if (textKey === "composer") {
+      header.composer = seen.has(textKey) ? `${header.composer}\n${value.text}` : value.text;
+      seen.add(textKey);
+      return "ok";
+    }
     if (!recordKey(seen, textKey, `Duplicate header property '${textKey}'.`, keyRange, diagnostics)) {
       return "ok";
     }
