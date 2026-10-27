@@ -18,6 +18,11 @@ PDFKit with SVG-to-PDFKit, while frontend PDF uses jsPDF with svg2pdf.js.
 Backend WAV/MP3 use a Node offline Web Audio adapter, while frontend WAV/MP3
 use browser `OfflineAudioContext` and local JavaScript MP3 encoding.
 
+Both WAV/MP3 paths schedule synthesis in short windows as offline rendering
+advances, preserving opening notes in long or chord-heavy scores without
+allocating the entire score's audio nodes at once. See
+[Player Reference](PLAYER.md) for the scheduling behavior.
+
 ## CLI Commands
 
 Run commands through the package script during development:

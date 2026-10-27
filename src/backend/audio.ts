@@ -1,6 +1,7 @@
 import { RenderingAudioContext } from "@descript/web-audio-js";
 import type { Document } from "../core/index.js";
-import { arrangementDuration, compileArrangement, melodyPitchSpans, skipInitialArrangementRests, type Arrangement, type MelodyNote } from "../player/index.js";
+import { arrangementDuration, compileArrangement, skipInitialArrangementRests, type Arrangement } from "../player/index.js";
+import { AUDIO_RENDER_BLOCK_SIZE, audioRenderStepFrames, createOfflineSchedule } from "../player/offline-schedule.js";
 import WebAudioTinySynth from "../player/webaudio-tinysynth.js";
 
 export interface AudioRenderOptions {
@@ -22,9 +23,6 @@ export const DEFAULT_AMPLITUDE = 1;
 export const CHANNEL_COUNT = 2;
 export const BITS_PER_SAMPLE = 16;
 
-const DEFAULT_VELOCITY = 64;
-const DRUM_CHANNEL = 9;
-const MELODIC_CHANNELS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15] as const;
 const RENDER_TAIL_SECONDS = 0.25;
 
 function secondsPerWholeNote(arrangement: Arrangement): number {
@@ -33,32 +31,6 @@ function secondsPerWholeNote(arrangement: Arrangement): number {
 
 function totalSeconds(arrangement: Arrangement): number {
   return arrangementDuration(arrangement) * secondsPerWholeNote(arrangement);
-}
-
-function scheduleTrack(synth: WebAudioTinySynth, notes: MelodyNote[], secondsPerWhole: number, channel: number, volume: number) {
-  const context = synth.getAudioContext();
-  for (const span of melodyPitchSpans(notes)) {
-    const startTime = context.currentTime + span.offset * secondsPerWhole;
-    const duration = span.duration * secondsPerWhole;
-    const velocity = Math.max(0, Math.min(127, Math.round((span.velocity ?? DEFAULT_VELOCITY) * volume)));
-    synth.noteOn(channel, span.note, velocity, startTime);
-    synth.noteOff(channel, span.note, startTime + duration);
-  }
-}
-
-function scheduleTinySynth(synth: WebAudioTinySynth, arrangement: Arrangement) {
-  const secondsPerWhole = secondsPerWholeNote(arrangement);
-  let melodicChannelIndex = 0;
-  for (const track of arrangement.tracks) {
-    const channel = track.program >= 128 ? DRUM_CHANNEL : MELODIC_CHANNELS[melodicChannelIndex++];
-    if (channel === undefined) {
-      throw new Error(`Audio export supports at most ${MELODIC_CHANNELS.length} melodic tracks.`);
-    }
-    if (track.program < 128) {
-      synth.setProgram(channel, track.program);
-    }
-    scheduleTrack(synth, track.notes, secondsPerWhole, channel, track.volume);
-  }
 }
 
 export function normalizeAudioOptions(options: AudioRenderOptions, label: string) {
@@ -84,12 +56,14 @@ export function renderDocumentPcm(document: Document, options: AudioRenderOption
   const compiled = compileArrangement(document, program);
   const arrangement = options.omitInitialRests ? skipInitialArrangementRests(compiled) : compiled;
   const synth = new WebAudioTinySynth({
-    voices: Math.max(64, arrangement.tracks.reduce((sum, track) => sum + track.notes.length, 0)),
+    // Offline export must preserve every voice, including dense chords.
+    // Windowed scheduling lets TinySynth reclaim finished voices as time advances.
+    voices: Number.POSITIVE_INFINITY,
     internalcontext: false,
   });
   const context = new RenderingAudioContext({
     sampleRate,
-    blockSize: 128,
+    blockSize: AUDIO_RENDER_BLOCK_SIZE,
     numberOfChannels: CHANNEL_COUNT,
     bitDepth: BITS_PER_SAMPLE,
     floatingPoint: false,
@@ -97,9 +71,15 @@ export function renderDocumentPcm(document: Document, options: AudioRenderOption
   synth.setAudioContext(context as unknown as AudioContext);
   synth.reset();
   synth.setMasterVol(amplitude);
-  scheduleTinySynth(synth, arrangement);
-
-  context.processTo(Math.max(0.01, totalSeconds(arrangement) + RENDER_TAIL_SECONDS));
+  const scheduleUntil = createOfflineSchedule(synth, arrangement);
+  const frames = Math.ceil(Math.max(0.01, totalSeconds(arrangement) + RENDER_TAIL_SECONDS) * sampleRate);
+  const step = audioRenderStepFrames(sampleRate);
+  for (let frame = 0; frame < frames; frame += step) {
+    const endFrame = Math.min(frame + step, frames);
+    // Include one extra quantum for processTo's floating-point block rounding.
+    scheduleUntil((endFrame + AUDIO_RENDER_BLOCK_SIZE) / sampleRate);
+    context.processTo(endFrame / sampleRate);
+  }
   const audioData = context.exportAsAudioData() as {
     channelData: Float32Array[];
     length: number;

@@ -445,6 +445,20 @@ offline rendering context, so Program and drum timbres are aligned with browser
 playback. Browser WAV and MP3 export use `OfflineAudioContext` with the same
 adapter directly in the frontend.
 
+Both offline paths merge pitch spans from all tracks in onset order and schedule
+half-second windows aligned to 128-frame render blocks, with one extra block of
+lookahead for rounding. The backend advances `RenderingAudioContext` between
+windows; the browser registers an `OfflineAudioContext.suspend()` point before
+starting or resuming each window. Note times stay relative to the beginning of
+the score, including across rests and window boundaries. Export does not use
+wall-clock playback timers.
+
+Offline synthesis disables voice stealing so dense chords cannot evict notes
+before they are rendered. TinySynth still reclaims finished voices as the audio
+clock advances; future windows do not allocate audio nodes in advance. This
+avoids estimating voice capacity from source-note counts, which undercount
+chord pitches and can lose opening notes when the entire score is queued.
+
 ## MIDI Export
 
 `exportMidiBytes(document, program?, options?)` returns a `Uint8Array`.

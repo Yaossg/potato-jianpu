@@ -1,5 +1,6 @@
 import type { Document } from "../core/index.js";
-import { arrangementDuration, compileArrangement, melodyPitchSpans, skipInitialArrangementRests, type Arrangement, type MelodyNote } from "../player/index.js";
+import { arrangementDuration, compileArrangement, skipInitialArrangementRests, type Arrangement } from "../player/index.js";
+import { AUDIO_RENDER_BLOCK_SIZE, audioRenderStepFrames, createOfflineSchedule } from "../player/offline-schedule.js";
 import WebAudioTinySynth from "../player/webaudio-tinysynth.js";
 import * as lamejs from "lamejs";
 import BitStream from "lamejs/src/js/BitStream.js";
@@ -30,9 +31,6 @@ const DEFAULT_BIT_RATE = 128;
 const CHANNEL_COUNT = 2;
 const BITS_PER_SAMPLE = 16;
 const HEADER_SIZE = 44;
-const DEFAULT_VELOCITY = 64;
-const DRUM_CHANNEL = 9;
-const MELODIC_CHANNELS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15] as const;
 const RENDER_TAIL_SECONDS = 0.25;
 const MP3_FRAME_SAMPLES = 1152;
 
@@ -75,32 +73,6 @@ function normalizeBitRate(bitRate: number | undefined): number {
   return normalized;
 }
 
-function scheduleTrack(synth: WebAudioTinySynth, notes: MelodyNote[], secondsPerWhole: number, channel: number, volume: number) {
-  const context = synth.getAudioContext();
-  for (const span of melodyPitchSpans(notes)) {
-    const startTime = context.currentTime + span.offset * secondsPerWhole;
-    const duration = span.duration * secondsPerWhole;
-    const velocity = Math.max(0, Math.min(127, Math.round((span.velocity ?? DEFAULT_VELOCITY) * volume)));
-    synth.noteOn(channel, span.note, velocity, startTime);
-    synth.noteOff(channel, span.note, startTime + duration);
-  }
-}
-
-function scheduleTinySynth(synth: WebAudioTinySynth, arrangement: Arrangement) {
-  const secondsPerWhole = secondsPerWholeNote(arrangement);
-  let melodicChannelIndex = 0;
-  for (const track of arrangement.tracks) {
-    const channel = track.program >= 128 ? DRUM_CHANNEL : MELODIC_CHANNELS[melodicChannelIndex++];
-    if (channel === undefined) {
-      throw new Error(`Audio export supports at most ${MELODIC_CHANNELS.length} melodic tracks.`);
-    }
-    if (track.program < 128) {
-      synth.setProgram(channel, track.program);
-    }
-    scheduleTrack(synth, track.notes, secondsPerWhole, channel, track.volume);
-  }
-}
-
 async function renderDocumentPcm(document: Document, options: BrowserAudioExportOptions, label: string): Promise<RenderedAudio> {
   const { sampleRate, amplitude, program } = normalizeAudioOptions(options, label);
   const compiled = compileArrangement(document, program);
@@ -109,7 +81,9 @@ async function renderDocumentPcm(document: Document, options: BrowserAudioExport
   const frameCount = Math.max(1, Math.ceil(durationSeconds * sampleRate));
   const context = new OfflineAudioContext(CHANNEL_COUNT, frameCount, sampleRate);
   const synth = new WebAudioTinySynth({
-    voices: Math.max(64, arrangement.tracks.reduce((sum, track) => sum + track.notes.length, 0)),
+    // Offline export must preserve every voice, including dense chords.
+    // Windowed scheduling lets TinySynth reclaim finished voices as time advances.
+    voices: Number.POSITIVE_INFINITY,
     internalcontext: false,
   });
 
@@ -117,9 +91,20 @@ async function renderDocumentPcm(document: Document, options: BrowserAudioExport
   await synth.ready();
   synth.reset();
   synth.setMasterVol(amplitude);
-  scheduleTinySynth(synth, arrangement);
-
-  const buffer = await context.startRendering();
+  const scheduleUntil = createOfflineSchedule(synth, arrangement);
+  const step = audioRenderStepFrames(sampleRate);
+  let rendering: Promise<AudioBuffer> | undefined;
+  for (let frame = 0; frame < frameCount; frame += step) {
+    const endFrame = Math.min(frame + step, frameCount);
+    scheduleUntil((endFrame + AUDIO_RENDER_BLOCK_SIZE) / sampleRate);
+    // Register the next pause before starting/resuming the fast offline clock.
+    const suspended = endFrame < frameCount ? context.suspend(endFrame / sampleRate) : undefined;
+    if (rendering) await context.resume();
+    else rendering = context.startRendering();
+    // Also observe rendering failures so a rejected render cannot hang at a pause.
+    if (suspended) await Promise.race([suspended, rendering]);
+  }
+  const buffer = await rendering!;
   const pcm = new Int16Array(buffer.length * buffer.numberOfChannels);
   for (let index = 0; index < buffer.length; index += 1) {
     for (let channel = 0; channel < buffer.numberOfChannels; channel += 1) {
