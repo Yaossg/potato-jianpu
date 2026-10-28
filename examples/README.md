@@ -21,6 +21,8 @@ pnpm run cli -- export-mp3 examples/twinkle.jpu -o twinkle.mp3
 | --- | --- |
 | `scale.jpu` | Small scale reference with explicit metadata and octave marks |
 | `sunny-skips.jpu` | Original cheerful flute and nylon guitar miniature in 2/4 with slurs and dotted rhythms |
+| `epic-begin.jpu` | Original epic instrumental theme with horn, strings, and marching percussion in A minor |
+| `epic-end.jpu` | Reflective instrumental variation of the same theme with oboe, harp, and lighter percussion |
 | `twinkle.jpu` | Compact notation, dashes, and a traditional melody header |
 | `ode-to-joy.jpu` | Key signature, dotted/slashed rhythm, and multi-line score |
 | `6-8-example.jpu` | 6/8 example with 16th notes side by side |

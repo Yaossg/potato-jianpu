@@ -13,6 +13,8 @@ import blockyHeroes from "../../examples/blocky-heroes.jpu?raw";
 import shining from "../../examples/shining-from-the-underground.jpu?raw";
 import theSameSong from "../../examples/the-same-song.jpu?raw";
 import sunnySkips from "../../examples/sunny-skips.jpu?raw";
+import epicBegin from "../../examples/epic-begin.jpu?raw";
+import epicEnd from "../../examples/epic-end.jpu?raw";
 
 export const examples = [
   scale,
@@ -30,6 +32,8 @@ export const examples = [
   shining,
   theSameSong,
   sunnySkips,
+  epicBegin,
+  epicEnd,
 ];
 
 export function exampleTitle(source: string): string | null {
