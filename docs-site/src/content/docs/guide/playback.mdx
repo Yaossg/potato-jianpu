@@ -29,7 +29,7 @@ Mordents, turns, trills, and grace notes expand into timed events inside the wri
 
 ## Browser Playback
 
-The browser app uses WebAudioTinySynth. Playback schedules notes incrementally, highlights active rendered notes, and stops when the source changes.
+The browser app uses SpessaSynth with the GeneralUser GS sampled sound bank. The bank (about 32 MB) loads on first playback and is reused during the session. Playback highlights active notes and stops when the source changes. The audio engine receives the complete score; long scores do not have a total-note limit.
 
 Click-to-play starts from rendered note metadata. If the clicked note is the first playback note and initial-rest omission is enabled, leading rests are skipped.
 
@@ -37,7 +37,7 @@ Rendered score previews in the documentation use the same playback compiler. Whe
 
 ## Programs And Drums
 
-Programs `0..127` use melodic TinySynth programs. Programs `128..174` use drum mode. In drum mode, source `X` maps to percussion note `program - 128 + 35`.
+Programs `0..127` use melodic General MIDI presets. Programs `128..174` use drum mode. In drum mode, source `X` maps to percussion note `program - 128 + 35`.
 
 Use `program` in the file header to set the score-level default Program. The browser and CLI Program controls are used only when the file header omits `program`.
 

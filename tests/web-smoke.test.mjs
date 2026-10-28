@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
@@ -27,6 +27,14 @@ async function runPnpmScript(script) {
 
 test("frontend production build emits the expected app shell", async () => {
   await runPnpmScript("web:build");
+
+  const assets = await readdir(new URL("../dist-web/assets/", import.meta.url));
+  assert.ok(assets.some((name) => name.startsWith("GeneralUser-GS-") && name.endsWith(".sf2")));
+  assert.ok(assets.some((name) => name.startsWith("spessasynth_processor.min-") && name.endsWith(".js")));
+  for (const prefix of ["../dist-web/", "../dist-web/docs/"]) {
+    const license = await readFile(new URL(`${prefix}licenses/GeneralUser-GS-LICENSE.txt`, import.meta.url), "utf8");
+    assert.match(license, /GeneralUser GS v2.0.3/);
+  }
 
   const html = await readFile(new URL("../dist-web/index.html", import.meta.url), "utf8");
   assert.match(html, /<div id="root"><\/div>/);
@@ -118,7 +126,7 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(script, /max:200/);
   assert.match(script, /Audio sample rate \(WAV\/MP3\)/);
   assert.match(script, /Audition/);
-  assert.match(script, /internalcontext/);
+  assert.match(script, /GeneralUser-GS/);
   assert.match(script, /Omit initial rests/);
   assert.match(style, /font-variant-ligatures:\s*none/);
   assert.match(style, /\.theme-dark/);
@@ -206,7 +214,8 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(sourceEditorSource, /selectDiagnosticRange/);
   assert.match(sourceEditorSource, /title=\{part\.tooltip\}/);
   assert.match(appSource, /inferContentPageWidth/);
-  assert.match(audioSource, /SCHEDULE_AHEAD_SECONDS/);
+  assert.match(audioSource, /loadNewSongList/);
+  assert.doesNotMatch(audioSource, /SCHEDULE_AHEAD_SECONDS/);
   assert.doesNotMatch(script, /grammar\.zh\.html/);
   assert.match(script, /time-signature/);
   assert.match(script, /帮助/);

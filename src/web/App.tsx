@@ -621,15 +621,20 @@ export function App() {
     const arrangement = startNoteIndex === 0 && omitInitialRests ? skipInitialArrangementRests(compiled) : compiled;
     const playbackArrangement = startNoteIndex === 0 ? arrangement : trimArrangementAtNote(arrangement, startNoteIndex);
     setIsPlaying(true);
-    await player.play(
-      playbackArrangement,
-      () => {
-        setIsPlaying(false);
-        setActiveNoteIndices([]);
-      },
-      setActiveNoteIndices,
-      volume / 100,
-    );
+    try {
+      await player.play(
+        playbackArrangement,
+        () => {
+          setIsPlaying(false);
+          setActiveNoteIndices([]);
+        },
+        setActiveNoteIndices,
+        volume / 100,
+      );
+    } catch {
+      stopPlayback();
+      window.alert(translate(language, "audioLoadFailed"));
+    }
   }
 
   async function auditionProgram() {
@@ -641,15 +646,20 @@ export function App() {
     playerRef.current = player;
     setActiveNoteIndices([]);
     setIsPlaying(true);
-    await player.play(
-      compileArrangement(result.value, program),
-      () => {
-        setIsPlaying(false);
-        setActiveNoteIndices([]);
-      },
-      undefined,
-      volume / 100,
-    );
+    try {
+      await player.play(
+        compileArrangement(result.value, program),
+        () => {
+          setIsPlaying(false);
+          setActiveNoteIndices([]);
+        },
+        undefined,
+        volume / 100,
+      );
+    } catch {
+      stopPlayback();
+      window.alert(translate(language, "audioLoadFailed"));
+    }
   }
 
   function stopPlayback() {

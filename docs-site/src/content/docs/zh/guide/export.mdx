@@ -86,7 +86,7 @@ MIDI 导出使用共享播放模型处理音符计时、反复、Program 解析�
 
 ## 音频导出
 
-WAV 和 MP3 通过基于 TinySynth 的音频路径渲染。浏览器导出使用 `OfflineAudioContext`；后端导出使用 Node 可用的离线渲染路径。MP3 通过 `lamejs` 在本地编码。
+WAV 和 MP3 使用 SpessaSynth，以及与浏览器播放相同的 GeneralUser GS 音色库。浏览器和 CLI 均在本地渲染，并保留两秒尾音。浏览器按需加载音色库，CLI 使用随项目提供的文件。MP3 通过 `lamejs` 在本地编码。
 
 ```sh
 pnpm run cli -- export-wav examples/twinkle.jpu -o twinkle.wav --program 0 --sample-rate 44100 --amplitude 1 --omit-initial-rest

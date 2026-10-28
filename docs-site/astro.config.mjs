@@ -1,8 +1,10 @@
 import mdx from "@astrojs/mdx";
 import starlight from "@astrojs/starlight";
 import { defineConfig } from "astro/config";
+import { audioLicenses } from "../scripts/audio-licenses.mjs";
 
 export default defineConfig({
+  vite: { plugins: [audioLicenses()] },
   base: "/docs",
   outDir: "../dist-web/docs",
   integrations: [

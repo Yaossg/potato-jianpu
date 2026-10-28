@@ -189,6 +189,10 @@ function buildArrangementTracks(arrangement: Arrangement): number[][] {
 export function exportMidiBytes(document: Document, program = 0, options: MidiExportOptions = {}): Uint8Array {
   const compiled = compileArrangement(document, program);
   const arrangement = options.omitInitialRests ? skipInitialArrangementRests(compiled) : compiled;
+  return arrangementMidiBytes(arrangement);
+}
+
+export function arrangementMidiBytes(arrangement: Arrangement): Uint8Array {
   const tracks = [buildMetaTrack(arrangement), ...buildArrangementTracks(arrangement)];
   const bytes = [
     ...HEADER_CHUNK_TYPE,

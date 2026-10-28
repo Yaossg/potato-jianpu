@@ -39,6 +39,7 @@
   "files": [
     "dist/",
     "dist-web/",
+    "assets/soundfonts/",
     "docs/",
     "docs-site/AGENTS.md",
     "docs-site/astro.config.mjs",
@@ -49,13 +50,14 @@
     "examples/",
     "README.md",
     "AGENTS.md",
-    "package.json"
+    "package.json",
+    "scripts/audio-licenses.mjs"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "check": "tsc -p tsconfig.json --noEmit",
     "test": "pnpm run build && node --test tests/*.test.mjs",
-    "test:coverage": "pnpm run build && c8 --exclude-after-remap --exclude='dist/**' --exclude='dist-web/**' --exclude='src/player/webaudio-tinysynth.js' --exclude='tests/**' --reporter=none node --test tests/backend.test.mjs tests/examples.test.mjs tests/package.test.mjs tests/parser.test.mjs tests/player.test.mjs tests/renderer.test.mjs && c8 report --exclude-after-remap --exclude='dist/**' --exclude='dist-web/**' --exclude='src/player/webaudio-tinysynth.js' --exclude='tests/**' --reporter=text --reporter=html",
+    "test:coverage": "pnpm run build && c8 --exclude-after-remap --exclude='dist/**' --exclude='dist-web/**' --exclude='tests/**' --reporter=none node --test tests/backend.test.mjs tests/examples.test.mjs tests/package.test.mjs tests/parser.test.mjs tests/player.test.mjs tests/renderer.test.mjs && c8 report --exclude-after-remap --exclude='dist/**' --exclude='dist-web/**' --exclude='tests/**' --reporter=text --reporter=html",
     "cli": "pnpm run build && node dist/cli/main.js",
     "dev": "vite",
     "web:app": "vite build",
@@ -84,7 +86,6 @@
     "vite": "^8.0.10"
   },
   "dependencies": {
-    "@descript/web-audio-js": "0.15.3-patched.6",
     "@expo-google-fonts/noto-sans-sc": "^0.4.3",
     "@resvg/resvg-js": "^2.6.2",
     "@vexflow-fonts/bravura": "1.0.2",
@@ -93,6 +94,8 @@
     "pdfkit": "^0.19.1",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
+    "spessasynth_core": "^4.4.2",
+    "spessasynth_lib": "^4.4.1",
     "svg-to-pdfkit": "^0.1.8",
     "svg2pdf.js": "^2.7.0"
   },

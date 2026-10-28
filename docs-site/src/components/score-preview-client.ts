@@ -20,6 +20,7 @@ interface PreviewState {
   lastPageWidth: number;
 }
 
+const previewPlayer = new PreviewAudioPlayer();
 let activePreview: { figure: HTMLElement; player: PreviewAudioPlayer } | null = null;
 
 function clampPageWidth(width: number): number {
@@ -99,33 +100,39 @@ async function playPreview(
     }
   }
 
-  const player = new PreviewAudioPlayer();
+  const player = previewPlayer;
   activePreview = { figure, player };
   setPlayButtonState(figure.querySelector<HTMLButtonElement>('[data-score-preview-play]'), payload, true);
 
   const compiled = compileArrangement(result.value, DEFAULT_PROGRAM);
   const arrangement = startNoteIndex === 0 ? compiled : trimArrangementAtNote(compiled, startNoteIndex);
-  await player.play(
-    arrangement,
-    () => {
-      if (activePreview?.player !== player) {
-        return;
-      }
-      activePreview = null;
-      state.activeNoteIndices = [];
-      setPlayButtonState(figure.querySelector<HTMLButtonElement>('[data-score-preview-play]'), payload, false);
-      render();
-    },
-    (noteIndices) => {
-      if (activePreview?.player !== player) {
-        return;
-      }
-      state.activeNoteIndices = noteIndices;
-      render();
-    },
-    DEFAULT_VOLUME,
-    DEFAULT_PROGRAM,
-  );
+  try {
+    await player.play(
+      arrangement,
+      () => {
+        if (activePreview?.player !== player) {
+          return;
+        }
+        activePreview = null;
+        state.activeNoteIndices = [];
+        setPlayButtonState(figure.querySelector<HTMLButtonElement>('[data-score-preview-play]'), payload, false);
+        render();
+      },
+      (noteIndices) => {
+        if (activePreview?.player !== player) {
+          return;
+        }
+        state.activeNoteIndices = noteIndices;
+        render();
+      },
+      DEFAULT_VOLUME,
+    );
+  } catch {
+    if (activePreview?.figure === figure) stopPreview(figure, payload, state, render);
+    window.alert(document.documentElement.lang.startsWith('zh')
+      ? '无法加载音频，请检查网络连接后重试。'
+      : 'Unable to load audio. Check your connection and try again.');
+  }
 }
 
 function hydratePreview(figure: HTMLElement): void {

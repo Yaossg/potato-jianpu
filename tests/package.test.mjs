@@ -21,6 +21,9 @@ test("package metadata points at built backend and library files", async () => {
   assert.equal(manifest.bin.jianpu, "./dist/cli/main.js");
   assert.ok(manifest.files.includes("dist/"));
   assert.ok(manifest.files.includes("dist-web/"));
+  assert.ok(manifest.files.includes("assets/soundfonts/"));
+  await exists("assets/soundfonts/GeneralUser-GS.sf2");
+  await exists("assets/soundfonts/LICENSE.txt");
   assert.ok(!manifest.files.includes("docs-site/"));
   assert.ok(manifest.files.includes("docs-site/package.json"));
   assert.ok(manifest.files.includes("docs-site/src/"));

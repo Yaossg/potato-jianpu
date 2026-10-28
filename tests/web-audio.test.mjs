@@ -4,128 +4,125 @@ import { readFile } from "node:fs/promises";
 import vm from "node:vm";
 import ts from "typescript";
 import * as playerModule from "../dist/player/index.js";
-
+import * as midiModule from "../dist/player/midi.js";
+import { BasicMIDI, SpessaLog } from "spessasynth_core";
+SpessaLog.setLogLevel(false, false, false);
 const source = await readFile(new URL("../src/web/audio.ts", import.meta.url), "utf8");
 const { outputText } = ts.transpileModule(source, {
   compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
 });
-
-function harness() {
+function harness({ delayed = false, fail = false } = {}) {
   const context = { currentTime: 10, async resume() {} };
   const timers = new Map();
-  const starts = [];
-  const ends = [];
-  let timerId = 0;
-  class Synth {
-    async ready() {}
-    reset() {}
-    setMasterVol() {}
-    setProgram() {}
-    getAudioContext() { return context; }
-    noteOn(channel, note, velocity, time) {
-      starts.push({ channel, note, velocity, time, submittedAt: context.currentTime });
-    }
-    noteOff(channel, note, time) { ends.push({ channel, note, time }); }
-  }
+  const handlers = new Map();
+  const songs = [];
+  let timerId = 0, starts = 0, stops = 0, loads = 0, origin = 10;
+  let release;
+  const loading = delayed ? new Promise(resolve => { release = resolve; }) : Promise.resolve();
+  const sequencer = {
+    isFinished: false,
+    get currentTime() { return context.currentTime - origin; },
+    eventHandler: {
+      addEvent(type, id, fn) { handlers.set(type, fn); },
+      removeEvent(type) { handlers.delete(type); },
+    },
+    loadNewSongList(list) {
+      songs.push(BasicMIDI.fromArrayBuffer(list[0].binary));
+      queueMicrotask(() => handlers.get("songChange")?.({}));
+    },
+    play() { origin = context.currentTime; starts++; },
+    pause() {},
+  };
   const exports = {};
   vm.runInNewContext(outputText, {
     exports,
+    Uint8Array,
+    AudioContext: function () { return context; },
     require(path) {
       if (path === "../player/index.js") return playerModule;
-      if (path === "../player/webaudio-tinysynth.js") return { default: Synth };
+      if (path === "../player/midi.js") return midiModule;
+      if (path === "./synth.js") return { async createPreviewSynth() {
+        loads++;
+        await loading;
+        if (fail && loads === 1) throw new Error("Network failed");
+        return { sequencer, synth: { setSystemParameter() {}, stopAll() { stops++; } } };
+      } };
       throw new Error(`Unexpected import: ${path}`);
     },
     window: {
-      setTimeout(callback, milliseconds) {
-        timers.set(++timerId, { callback, time: context.currentTime + milliseconds / 1000 });
-        return timerId;
-      },
+      setTimeout(callback, milliseconds) { timers.set(++timerId, { callback, time: context.currentTime + milliseconds / 1000 }); return timerId; },
       clearTimeout(id) { timers.delete(id); },
     },
   });
-  // Flush async synth setup and scheduler continuations without wall-clock waits.
-  async function flush() {
-    for (let i = 0; i < 12; i++) await Promise.resolve();
-  }
-  async function tick(advanceAudio = true) {
-    await flush();
-    const entry = [...timers.entries()].sort((a, b) => a[1].time - b[1].time)[0];
-    assert.ok(entry, "playback should have a pending timer");
-    const [id, timer] = entry;
-    timers.delete(id);
-    if (advanceAudio) context.currentTime = timer.time;
-    timer.callback();
+  async function flush() { for (let i = 0; i < 30; i++) await Promise.resolve(); }
+  async function tick(time) {
+    context.currentTime = time;
+    for (const [id, timer] of [...timers]) if (timer.time <= time) { timers.delete(id); timer.callback(); }
     await flush();
   }
-  return { player: new exports.PreviewAudioPlayer(), context, starts, ends, timers, flush, tick };
+  return { player: new exports.PreviewAudioPlayer(), context, songs, timers, flush, tick, release, get starts() { return starts; }, get stops() { return stops; }, get loads() { return loads; } };
 }
-
-function arrangement(...tracks) {
+function arrangement(notes) {
   const timing = { tempo: 120, beatsPerWholeNote: 4, beatsPerMeasure: 4 };
-  return {
-    ...timing,
-    tracks: tracks.map((notes, index) => ({ ...timing, notes, name: `T${index + 1}`, program: 0, volume: 1 })),
-  };
+  return { ...timing, tracks: [{ ...timing, notes, name: "T1", program: 0, volume: 1 }] };
 }
-
-test("long multi-track playback keeps every onset within the rolling window", async () => {
+test("submits the whole long score once and follows the audio clock for highlighting", async () => {
   const h = harness();
   const notes = Array.from({ length: 600 }, (_, index) => ({ chord: [60, 64, 67], duration: 1, index }));
   let ended = 0;
-  const playing = h.player.play(arrangement(notes, notes), () => ended++);
+  const highlights = [];
+  const playing = h.player.play(arrangement(notes), () => ended++, ids => highlights.push([...ids]));
   await h.flush();
-  for (let i = 0; ended === 0 && i < 5000; i++) await h.tick();
-  assert.equal(ended, 1);
+  assert.equal(h.songs.length, 1);
+  assert.equal(h.songs[0].tracks.flatMap(t => t.events).filter(e => (e.statusByte & 0xf0) === 0x90).length, 1800);
+  assert.deepEqual(highlights, [[0]]);
+  await h.tick(12.01);
+  assert.deepEqual(highlights.at(-1), [1]);
+  await h.tick(1210.1);
   await playing;
-  assert.equal(h.starts.length, 3600);
-  assert.equal(h.ends.length, 3600);
-  for (const [index, start] of h.starts.entries()) {
-    assert.ok(start.time - start.submittedAt <= 1, `onset ${index} was queued too early`);
-    assert.ok(start.submittedAt <= start.time, `onset ${index} was queued late`);
-    assert.equal(start.time, 10 + Math.floor(index / 6) * 2);
-    assert.equal(h.ends[index].time, start.time + 2);
-  }
+  assert.equal(ended, 1);
   assert.equal(h.timers.size, 0);
 });
-
-test("long rests and a stationary audio clock do not allocate future voices", async () => {
-  const h = harness();
-  let ended = false;
-  const playing = h.player.play(arrangement([
-    { chord: "rest", duration: 60, index: 0 },
-    { chord: [72], duration: 0.25, index: 1 },
-  ]), () => { ended = true; });
+test("stop while the sound bank loads cannot start stale playback", async () => {
+  const h = harness({ delayed: true });
+  let ended = 0;
+  const playing = h.player.play(arrangement([{ chord: [60], duration: 1, index: 0 }]), () => ended++);
   await h.flush();
-  assert.equal(h.starts.length, 0);
-  for (let i = 0; i < 10; i++) await h.tick(false);
-  assert.equal(h.starts.length, 0);
-  for (let i = 0; !ended && i < 300; i++) await h.tick();
-  assert.equal(ended, true);
+  h.player.stop();
+  h.release();
   await playing;
-  assert.equal(h.starts.length, 1);
-  assert.equal(h.starts[0].time, 130);
-  assert.ok(h.starts[0].submittedAt >= 129);
+  assert.equal(h.starts, 0);
+  assert.equal(ended, 0);
 });
-
-test("restarting during a scheduling wait cancels the old notes and completion", async () => {
-  const h = harness();
-  let oldEnded = false;
-  const oldPlay = h.player.play(arrangement([
-    { chord: [60], duration: 60, index: 0 },
-    { chord: [62], duration: 1, index: 1 },
-  ]), () => { oldEnded = true; });
+test("rapid restart during loading reuses one synth and plays only the latest score", async () => {
+  const h = harness({ delayed: true });
+  let oldEnded = false, newEnded = false;
+  const old = h.player.play(arrangement([{ chord: [60], duration: 1, index: 0 }]), () => oldEnded = true);
   await h.flush();
-  assert.equal(h.starts.length, 1);
-  let newEnded = false;
-  const newPlay = h.player.play(arrangement([
-    { chord: [72], duration: 0.25, index: 0 },
-  ]), () => { newEnded = true; });
+  const next = h.player.play(arrangement([{ chord: [72], duration: 0.25, index: 1 }]), () => newEnded = true);
   await h.flush();
-  await oldPlay;
-  await h.tick();
-  await newPlay;
+  h.release();
+  await h.flush();
+  await old;
+  await h.tick(11);
+  await next;
+  assert.equal(h.loads, 1);
+  assert.equal(h.songs.length, 1);
   assert.equal(oldEnded, false);
   assert.equal(newEnded, true);
-  assert.deepEqual(h.starts.map((start) => start.note), [60, 72]);
+});
+test("loading failures are retryable and stopped playback does not complete", async () => {
+  const h = harness({ fail: true });
+  const score = arrangement([{ chord: "rest", duration: 10, index: 0 }, { chord: [60], duration: 1, index: 1 }]);
+  await assert.rejects(h.player.play(score, () => {}), /Network failed/);
+  let ended = false;
+  const retry = h.player.play(score, () => ended = true);
+  await h.flush();
+  assert.equal(h.loads, 2);
+  assert.equal(h.songs[0].firstNoteOn, 3840);
+  h.player.stop();
+  await retry;
+  assert.equal(ended, false);
   assert.equal(h.timers.size, 0);
+  assert.ok(h.stops > 0);
 });

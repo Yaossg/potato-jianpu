@@ -51,8 +51,7 @@ test in `pnpm run test`.
 `coverage/index.html`. It runs the parser, renderer, player, backend, examples,
 and package tests and remaps coverage to shared source files. It intentionally
 omits the CLI integration and frontend smoke tests, so run `pnpm run test` for
-the complete suite. Coverage excludes `dist/`, `dist-web/`, the bundled
-TinySynth adapter, and test files; it does not upload reports or enforce
+the complete suite. Coverage excludes `dist/`, `dist-web/`, and test files; it does not upload reports or enforce
 thresholds. See `docs/QUALITY.md` for the coverage policy.
 
 Docs-site-specific commands live in `docs-site/docs/COMMANDS.md`.

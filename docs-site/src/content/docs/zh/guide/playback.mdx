@@ -29,7 +29,7 @@ import RelatedLinks from '../../../../components/RelatedLinks.astro';
 
 ## 浏览器播放
 
-浏览器 App 使用 WebAudioTinySynth。播放会增量调度音符，高亮当前发声的渲染音符，并在源码变化时停止。
+浏览器 App 使用 SpessaSynth 和 GeneralUser GS 采样音色库。音色库约 32 MB，在首次播放时加载，并在当前页面会话中复用。播放会高亮当前音符，并在源码变化时停止。音频引擎接收完整曲谱，长曲谱没有总音符数量限制。
 
 点击播放从渲染音符的元数据开始。如果点击的是第一个播放音符，并且开启了忽略开头休止符，前导休止会被跳过。
 
@@ -37,7 +37,7 @@ import RelatedLinks from '../../../../components/RelatedLinks.astro';
 
 ## Program 与鼓音
 
-程序号 `0..127` 使用旋律 TinySynth 音色。程序号 `128..174` 使用鼓模式。在鼓模式中，源码里的 `X` 会映射到打击乐音符 `program - 128 + 35`。
+程序号 `0..127` 使用旋律 General MIDI 音色。程序号 `128..174` 使用鼓模式。在鼓模式中，源码里的 `X` 会映射到打击乐音符 `program - 128 + 35`。
 
 使用文件头里的 `program` 可以设置乐谱级默认 Program。只有文件头省略 `program` 时，浏览器和 CLI 的 Program 控件才作为默认值。
 

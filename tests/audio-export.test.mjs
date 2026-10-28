@@ -4,72 +4,27 @@ import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import vm from "node:vm";
 import ts from "typescript";
-import { RenderingAudioContext } from "@descript/web-audio-js";
 import { parse } from "../dist/parser/index.js";
 import * as player from "../dist/player/index.js";
-import * as scheduling from "../dist/player/offline-schedule.js";
-import WebAudioTinySynth from "../dist/player/webaudio-tinysynth.js";
-import { exportWavBytes } from "../dist/backend/index.js";
+import * as soundfont from "../dist/player/soundfont.js";
 
-// Exercise the browser export path with real synthesis and a deterministic
-// offline clock. Native browser suspension remains a manual integration check.
-class OfflineContext extends RenderingAudioContext {
-  static instances = [];
-  constructor(channels, frames, sampleRate) {
-    super({ numberOfChannels: channels, sampleRate, blockSize: 128 });
-    this.frames = frames;
-    this.pauses = [];
-    OfflineContext.instances.push(this);
-  }
-  suspend(time) {
-    assert.ok(time > this.currentTime);
-    return new Promise((resolve) => { this.pause = { time, resolve }; });
-  }
-  startRendering() {
-    const result = new Promise((resolve, reject) => {
-      this.finish = resolve;
-      this.fail = reject;
-    });
-    this.advance();
-    return result;
-  }
-  async resume() { if (this.finish) this.advance(); }
-  advance() {
-    queueMicrotask(() => {
-      try {
-        if (this.pause) {
-          const { time, resolve } = this.pause;
-          this.pause = undefined;
-          this.processTo(time);
-          this.pauses.push(this.currentTime);
-          resolve();
-        } else {
-          this.processTo(this.frames / this.sampleRate);
-          const data = this.exportAsAudioData();
-          this.finish({
-            length: this.frames,
-            numberOfChannels: data.numberOfChannels,
-            getChannelData: (channel) => data.channelData[channel],
-          });
-        }
-      } catch (error) { this.fail(error); }
-    });
-  }
-}
+import { exportWavBytes } from "../dist/backend/index.js";
 
 const source = await readFile(new URL("../src/web/audio-export.ts", import.meta.url), "utf8");
 const { outputText } = ts.transpileModule(source, {
   compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
 });
+const bank = new Uint8Array(await readFile(new URL("../assets/soundfonts/GeneralUser-GS.sf2", import.meta.url))).buffer;
 const browserExports = {};
 const require = createRequire(import.meta.url);
 vm.runInNewContext(outputText, {
   exports: browserExports,
-  OfflineAudioContext: OfflineContext,
+  performance,
+  setTimeout,
   require(path) {
     if (path === "../player/index.js") return player;
-    if (path === "../player/offline-schedule.js") return scheduling;
-    if (path === "../player/webaudio-tinysynth.js") return { default: WebAudioTinySynth };
+    if (path === "../player/soundfont.js") return soundfont;
+    if (path === "./soundfont.js") return { loadSoundfont: async () => bank };
     return require(path);
   },
 });
@@ -108,7 +63,7 @@ for (const [name, exportWav] of [
       assert.ok(rms(wav, chord * 0.1 + 0.015, chord * 0.1 + 0.075, sampleRate) > 20,
         `chord ${chord} must be audible`);
     }
-    if (name === "browser") assert.ok(OfflineContext.instances.at(-1).pauses.length > 5);
+
   });
 
   test(`${name} preserves initial rests and notes after silent render windows`, async () => {
@@ -123,21 +78,18 @@ for (const [name, exportWav] of [
   });
 }
 
-test("offline scheduling merges tracks and bounds allocation without shifting absolute times", () => {
-  const score = document('tempo: 120\ntime: 4/4\n===\nT1: {1 3 5} - - - | 0 - - - | 2 - - - |\nT2: 5 - - - | 6 - - - | 7 - - - |');
-  const starts = [];
-  let now = 0;
-  const synth = {
-    setProgram() {},
-    noteOn(channel, note, velocity, start) { starts.push({ channel, note, start, submitted: now }); },
-    noteOff() {},
-  };
-  const schedule = scheduling.createOfflineSchedule(synth, player.compileArrangement(score));
-  for (; now < 6; now += 0.5) schedule(now + 0.5);
-  assert.equal(starts.length, 7);
-  assert.deepEqual(starts.map((event) => event.start), [0, 0, 0, 0, 2, 4, 4]);
-  for (const event of starts) {
-    assert.ok(event.start >= event.submitted);
-    assert.ok(event.start < event.submitted + 0.5);
-  }
+test("browser and backend render identical sampled audio including drums and dynamics", async () => {
+  const score = document('tempo: 120\ntime: 4/4\nT2.program: 40\nP1.program: 130\n===\nT1: p 1 2 f 3 4 |\nT2: 5 - - - |\nP1: X 0 X 0 |');
+  const backend = exportWavBytes(score, { sampleRate: 8000 });
+  const browser = await browserExports.exportBrowserWavBytes(score, { sampleRate: 8000 });
+  assert.deepEqual(new Uint8Array(browser), backend);
+});
+
+test("sampled export preserves the release tail and honors mute", async () => {
+  const score = document('tempo: 120\ntime: 4/4\nprogram: 40\n===\n1 - - - |');
+  const wav = exportWavBytes(score, { sampleRate: 8000 });
+  assert.equal((wav.length - 44) / 4, 4 * 8000);
+  assert.ok(rms(wav, 2, 2.1, 8000) > 0);
+  const muted = await browserExports.exportBrowserWavBytes(score, { sampleRate: 8000, amplitude: 0 });
+  assert.ok(muted.slice(44).every((byte) => byte === 0));
 });

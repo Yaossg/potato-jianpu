@@ -158,12 +158,14 @@ Responsibilities:
 The melody compiler is shared by browser playback, MIDI export, WAV export, and
 MP3 export.
 
-Browser playback itself lives in `src/web/audio.ts` and uses the shared
-`src/player/webaudio-tinysynth.js` adapter.
+Browser playback lives in `src/web/audio.ts` and uses SpessaSynth's worklet
+and sequencer. `src/web/synth.ts` loads the worklet and `src/web/soundfont.ts`
+fetches the bundled sound bank. Complete arrangements are submitted as MIDI.
 
-Backend WAV and MP3 export live in `src/backend`. They share a TinySynth offline
-render path built on `@descript/web-audio-js`; WAV writes the PCM samples
-directly, while MP3 encodes them with `lamejs`.
+Backend and browser audio export share `src/player/soundfont.ts`, a
+platform-neutral SpessaSynth PCM renderer. Backend reads the bank from disk;
+web fetches it from a bundled asset URL. WAV writes PCM directly and MP3 uses
+`lamejs`. `assets/soundfonts/` contains GeneralUser GS and its license.
 
 ## Backend
 
@@ -249,7 +251,7 @@ Responsibilities:
 The frontend imports shared parser, renderer, and player code. It does not
 import backend PNG, PDF, WAV, or MP3 modules. Browser PNG, PDF, and audio
 export adapters stay in `src/web` and use DOM canvas APIs, browser PDF
-generation, `OfflineAudioContext`, and browser bundled encoders.
+generation, the shared SoundFont renderer, and browser bundled encoders.
 
 ## Tests
 

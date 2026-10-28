@@ -2,6 +2,7 @@ export type Language = "en" | "zh";
 export type PageWidthMode = "panel" | "content" | "manual";
 export type JustifyMode = "none" | "except-last" | "all";
 export type TranslationKey =
+  | "audioLoadFailed"
   | "language"
   | "english"
   | "chinese"
@@ -86,6 +87,7 @@ export type TranslationKey =
 
 const translations: { en: Record<TranslationKey, string>; zh: Record<TranslationKey, string> } = {
   en: {
+    audioLoadFailed: "Unable to load audio. Check your connection and try again.",
     language: "Language",
     english: "English",
     chinese: "中文",
@@ -169,6 +171,7 @@ const translations: { en: Record<TranslationKey, string>; zh: Record<Translation
     events: "events",
   } satisfies Record<TranslationKey, string>,
   zh: {
+    audioLoadFailed: "无法加载音频，请检查网络连接后重试。",
     language: "语言",
     english: "English",
     chinese: "中文",

@@ -86,7 +86,7 @@ MIDI export uses the shared playback model for note timing, repeats, Program res
 
 ## Audio Exports
 
-WAV and MP3 render through the TinySynth-based audio path. Browser exports use `OfflineAudioContext`; backend exports use the Node-capable offline render path. MP3 encoding is local through `lamejs`.
+WAV and MP3 use SpessaSynth and the same GeneralUser GS sound bank as browser playback. Browser and CLI exports render locally and include a two-second release tail. The browser loads the sound bank on demand; the CLI uses the bundled file. MP3 encoding is local through `lamejs`.
 
 ```sh
 pnpm run cli -- export-wav examples/twinkle.jpu -o twinkle.wav --program 0 --sample-rate 44100 --amplitude 1 --omit-initial-rest

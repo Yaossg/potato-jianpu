@@ -15,13 +15,10 @@ The project has two product targets:
 The backend and frontend use different adapters for binary exports. Backend PNG
 uses `@resvg/resvg-js`, while frontend PNG uses SVG-to-canvas. Backend PDF uses
 PDFKit with SVG-to-PDFKit, while frontend PDF uses jsPDF with svg2pdf.js.
-Backend WAV/MP3 use a Node offline Web Audio adapter, while frontend WAV/MP3
-use browser `OfflineAudioContext` and local JavaScript MP3 encoding.
-
-Both WAV/MP3 paths schedule synthesis in short windows as offline rendering
-advances, preserving opening notes in long or chord-heavy scores without
-allocating the entire score's audio nodes at once. See
-[Player Reference](PLAYER.md) for the scheduling behavior.
+Backend and browser WAV/MP3 use the same SpessaSynth PCM renderer and bundled
+GeneralUser GS 2.0.3 SoundFont. MP3 encoding is local through `lamejs`.
+The complete event list is rendered in audio blocks without allocating future
+voices. See [Player Reference](PLAYER.md) for scheduling and release-tail behavior.
 
 ## CLI Commands
 
@@ -294,7 +291,7 @@ and volume, per-note dynamics and hairpins, drum mode, and MIDI channel assignme
 ## WAV Export
 
 WAV export uses the same arrangement compiler as MIDI export and renders through
-the same WebAudioTinySynth timbre engine used by browser preview playback. It
+the same SpessaSynth SoundFont engine used by browser preview playback. It
 writes a stereo 16-bit PCM WAV file:
 
 ```sh
@@ -314,15 +311,13 @@ The WAV renderer shares Program, per-track Program, drum-channel, and dynamic
 velocity behavior with browser preview playback and MIDI export. See
 [docs/PLAYER.md](PLAYER.md) for arrangement, Program, and volume behavior.
 
-The WAV renderer uses `WebAudioTinySynth` with an offline
-`RenderingAudioContext`, writes stereo 16-bit PCM output, and runs until the
-longest arrangement track finishes plus a short render tail. `--amplitude` is
-applied as TinySynth master volume, combined with the resolved track volume.
+The WAV renderer produces stereo 16-bit PCM and includes two seconds after
+the longest track for release envelopes and effects. `--amplitude` controls
+master gain, combined with the resolved track volume.
 
-The frontend also exposes WAV download. Browser WAV export uses
-`OfflineAudioContext` with the same TinySynth adapter as preview playback, then
-writes a RIFF/WAVE container locally in the browser. The frontend uses the
-current Program, volume, and initial-rest settings.
+Browser WAV export fetches the bundled SoundFont on demand, renders PCM locally,
+and writes a RIFF/WAVE container using the current Program, volume, and
+initial-rest settings.
 
 ## MP3 Export
 
@@ -343,12 +338,12 @@ Options:
 - `--bit-rate <kbps>`: positive number. Defaults to `128`.
 - `--omit-initial-rest`: remove leading rests before rendering audio.
 
-MP3 export shares the same backend TinySynth PCM render path as WAV export,
+MP3 export shares the same backend SpessaSynth PCM render path as WAV export,
 then encodes the stereo samples with `lamejs`. The default bit rate is
 `128` kbps. See [docs/PLAYER.md](PLAYER.md) for arrangement, Program, and
 volume behavior.
 
 The frontend also exposes MP3 download. Browser MP3 export uses
-`OfflineAudioContext` with the same TinySynth adapter as preview playback, then
+the shared SoundFont PCM renderer, then
 encodes the rendered stereo PCM samples locally with `lamejs`. The frontend uses
 the current Program, volume, and initial-rest settings.

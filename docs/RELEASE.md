@@ -86,6 +86,8 @@ The release file allow-list currently includes:
 
 - `dist/`
 - `dist-web/`
+- `assets/soundfonts/`
+- `scripts/audio-licenses.mjs`
 - `docs/`
 - `docs-site/AGENTS.md`
 - `docs-site/astro.config.mjs`
@@ -108,8 +110,13 @@ The frontend exposes SVG, split-page SVG, PNG, split-page PNG, PDF, MIDI, WAV,
 and MP3 download. Frontend visual exports can use shared paper presets and
 orientation values. Frontend PNG export is a browser canvas adapter over the
 rendered SVG. Frontend PDF export uses browser-bundled PDF generation over
-rendered SVG pages. Frontend WAV and MP3 export render audio with browser
-`OfflineAudioContext`; MP3 encoding is bundled into the frontend.
+rendered SVG pages. Frontend WAV and MP3 export render locally with SpessaSynth and the bundled
+GeneralUser GS bank; MP3 encoding is bundled into the frontend.
+
+The SoundFont is an approximately 32 MB asset loaded on demand. Keep
+`assets/soundfonts/` with the backend distribution; Vite emits its own hashed
+copy for the frontend and docs site. Preserve the SoundFont license and source
+notice in distributions.
 
 ## Pre-Release Checklist
 

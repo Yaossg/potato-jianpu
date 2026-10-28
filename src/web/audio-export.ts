@@ -1,7 +1,7 @@
+import { renderSoundfontBlocks } from "../player/soundfont.js";
+import { loadSoundfont } from "./soundfont.js";
 import type { Document } from "../core/index.js";
-import { arrangementDuration, compileArrangement, skipInitialArrangementRests, type Arrangement } from "../player/index.js";
-import { AUDIO_RENDER_BLOCK_SIZE, audioRenderStepFrames, createOfflineSchedule } from "../player/offline-schedule.js";
-import WebAudioTinySynth from "../player/webaudio-tinysynth.js";
+import { compileArrangement, skipInitialArrangementRests } from "../player/index.js";
 import * as lamejs from "lamejs";
 import BitStream from "lamejs/src/js/BitStream.js";
 import Lame from "lamejs/src/js/Lame.js";
@@ -31,21 +31,12 @@ const DEFAULT_BIT_RATE = 128;
 const CHANNEL_COUNT = 2;
 const BITS_PER_SAMPLE = 16;
 const HEADER_SIZE = 44;
-const RENDER_TAIL_SECONDS = 0.25;
 const MP3_FRAME_SAMPLES = 1152;
 
 const lameGlobals = globalThis as { MPEGMode?: unknown; Lame?: unknown; BitStream?: unknown };
 lameGlobals.MPEGMode = MPEGMode;
 lameGlobals.Lame = Lame;
 lameGlobals.BitStream = BitStream;
-
-function secondsPerWholeNote(arrangement: Arrangement): number {
-  return (60 / arrangement.tempo) * arrangement.beatsPerWholeNote;
-}
-
-function totalSeconds(arrangement: Arrangement): number {
-  return arrangementDuration(arrangement) * secondsPerWholeNote(arrangement);
-}
 
 function normalizeAudioOptions(options: BrowserAudioExportOptions, label: string) {
   const sampleRate = Math.round(options.sampleRate ?? DEFAULT_SAMPLE_RATE);
@@ -77,49 +68,17 @@ async function renderDocumentPcm(document: Document, options: BrowserAudioExport
   const { sampleRate, amplitude, program } = normalizeAudioOptions(options, label);
   const compiled = compileArrangement(document, program);
   const arrangement = options.omitInitialRests ? skipInitialArrangementRests(compiled) : compiled;
-  const durationSeconds = Math.max(0.01, totalSeconds(arrangement) + RENDER_TAIL_SECONDS);
-  const frameCount = Math.max(1, Math.ceil(durationSeconds * sampleRate));
-  const context = new OfflineAudioContext(CHANNEL_COUNT, frameCount, sampleRate);
-  const synth = new WebAudioTinySynth({
-    // Offline export must preserve every voice, including dense chords.
-    // Windowed scheduling lets TinySynth reclaim finished voices as time advances.
-    voices: Number.POSITIVE_INFINITY,
-    internalcontext: false,
-  });
-
-  synth.setAudioContext(context as unknown as AudioContext);
-  await synth.ready();
-  synth.reset();
-  synth.setMasterVol(amplitude);
-  const scheduleUntil = createOfflineSchedule(synth, arrangement);
-  const step = audioRenderStepFrames(sampleRate);
-  let rendering: Promise<AudioBuffer> | undefined;
-  for (let frame = 0; frame < frameCount; frame += step) {
-    const endFrame = Math.min(frame + step, frameCount);
-    scheduleUntil((endFrame + AUDIO_RENDER_BLOCK_SIZE) / sampleRate);
-    // Register the next pause before starting/resuming the fast offline clock.
-    const suspended = endFrame < frameCount ? context.suspend(endFrame / sampleRate) : undefined;
-    if (rendering) await context.resume();
-    else rendering = context.startRendering();
-    // Also observe rendering failures so a rejected render cannot hang at a pause.
-    if (suspended) await Promise.race([suspended, rendering]);
-  }
-  const buffer = await rendering!;
-  const pcm = new Int16Array(buffer.length * buffer.numberOfChannels);
-  for (let index = 0; index < buffer.length; index += 1) {
-    for (let channel = 0; channel < buffer.numberOfChannels; channel += 1) {
-      const sample = buffer.getChannelData(channel)[index] ?? 0;
-      const clamped = Math.max(-1, Math.min(1, sample));
-      pcm[index * buffer.numberOfChannels + channel] = Math.round(clamped * 32767);
+  const render = renderSoundfontBlocks(arrangement, await loadSoundfont(), sampleRate, amplitude);
+  let result = render.next();
+  let yieldedAt = performance.now();
+  while (!result.done) {
+    if (performance.now() - yieldedAt > 20) {
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      yieldedAt = performance.now();
     }
+    result = render.next();
   }
-
-  return {
-    sampleRate,
-    channelCount: buffer.numberOfChannels,
-    frames: buffer.length,
-    pcm,
-  };
+  return result.value;
 }
 
 function writeAscii(bytes: Uint8Array, offset: number, value: string) {

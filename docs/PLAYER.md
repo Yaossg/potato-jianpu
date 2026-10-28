@@ -12,14 +12,14 @@ src/player/
   melody.ts   shared document-to-melody compiler
   midi.ts     MIDI writer
   synth.ts    shared lightweight synthesis constants and helpers
-  webaudio-tinysynth.js
+  soundfont.ts shared SoundFont PCM rendering
 
 src/web/
   audio.ts    browser preview player
   audio-export.ts browser WAV/MP3 export adapter
 
 src/backend/
-  audio.ts    backend TinySynth offline PCM renderer
+  audio.ts    backend SoundFont PCM adapter
   wav.ts      backend WAV writer
   mp3.ts      backend MP3 encoder
 ```
@@ -320,7 +320,7 @@ MIDI export emits note-on events for every chord note at the same logical start
 time and note-off events after the shared duration.
 
 WAV and MP3 export schedule the same note-on and note-off events into an
-offline WebAudioTinySynth rendering context.
+offline SpessaSynth processor.
 
 ## Drum Mode
 
@@ -373,30 +373,19 @@ P3: X/ X/ X/ X/ | X/ X/ X/ X/ |
 
 ## Browser Preview Playback
 
-`PreviewAudioPlayer` in `src/web/audio.ts` uses the
-`WebAudioTinySynth` adapter in `src/player/webaudio-tinysynth.js`.
+`PreviewAudioPlayer` in `src/web/audio.ts` uses SpessaSynth's AudioWorklet
+synthesizer and sequencer with the bundled GeneralUser GS 2.0.3 SoundFont.
+The sound bank is fetched on first playback and reused for the page session.
+Failed downloads can be retried. The build serves the bank from its own assets.
 
-Behavior:
-
-- lazily creates one `WebAudioTinySynth` instance
-- resumes the synth-owned `AudioContext` for each play request
-- stops any existing playback before starting a new one
-- resets active synth voices before starting a new play request
-- sets the selected melodic Program for programs `0..127`
-- uses the score-level `program` header when present
-- sets per-track melodic Programs when the score has `Tn.program` headers
-- scales per-track note velocity when the score has `Tn.volume` headers
-- schedules note-on and note-off events for pitch/chord events
-- uses WebAudioTinySynth percussion channel playback for drum programs
-  `128..174`
-- skips sound generation for rests
-- schedules note-start timers for frontend highlighting
-- supports starting from a parsed note index
-- schedules all arrangement tracks against the same audio clock
-- admits new sounding notes only within a rolling one-second lookahead,
-  rechecking the audio clock every half second while waiting; long notes and
-  rests do not allocate distant future synth voices
-- cancels pending scheduling waits when playback stops or restarts
+The complete arrangement is submitted as MIDI events once; the audio thread
+creates voices when events become due. No main-thread note lookahead window or
+score-length voice budget is needed. Real-time synthesis uses a 256-voice cap;
+this limits simultaneous sample voices, not the number of notes in the score.
+Playback resumes the audio context in the user gesture, preserves initial and
+trailing rests, supports trimmed arrangements for click-to-play, and uses the
+sequencer clock for note highlighting. Stop/restart cancels pending playback,
+pauses the sequencer, and silences active voices. Source edits stop playback.
 
 The frontend exposes a Settings panel with Default Program, volume, audition,
 and initial-rest controls. Browser playback and MIDI download use the selected
@@ -422,7 +411,7 @@ highlight simultaneous notes across arrangement tracks.
 Clicking a rendered note starts playback from that note index.
 
 Browser playback base velocity is currently `64`. The browser volume slider is
-applied through WebAudioTinySynth master volume, and the resolved track volume
+applied through SpessaSynth master gain, and the resolved track volume
 scales each track's note velocity.
 
 Per-note dynamic markers (`ppp` through `fff`) set explicit MIDI-style
@@ -440,24 +429,18 @@ markers, the parser warns if a crescendo does not end louder than it starts or
 a diminuendo does not end softer than it starts. Track volume and browser or
 export master volume still scale the resulting per-note velocity.
 
-Backend WAV and MP3 export use the same WebAudioTinySynth adapter with an
-offline rendering context, so Program and drum timbres are aligned with browser
-playback. Browser WAV and MP3 export use `OfflineAudioContext` with the same
-adapter directly in the frontend.
+Backend and browser WAV/MP3 exports share `src/player/soundfont.ts` and the
+same bundled SoundFont. The SF2 bank uses uncompressed samples, allowing the
+backend's existing synchronous export API to remain synchronous. The browser
+fetches the bank asynchronously and yields between rendering batches to keep
+the page responsive.
 
-Both offline paths merge pitch spans from all tracks in onset order and schedule
-half-second windows aligned to 128-frame render blocks, with one extra block of
-lookahead for rounding. The backend advances `RenderingAudioContext` between
-windows; the browser registers an `OfflineAudioContext.suspend()` point before
-starting or resuming each window. Note times stay relative to the beginning of
-the score, including across rests and window boundaries. Export does not use
-wall-clock playback timers.
-
-Offline synthesis disables voice stealing so dense chords cannot evict notes
-before they are rendered. TinySynth still reclaims finished voices as the audio
-clock advances; future windows do not allocate audio nodes in advance. This
-avoids estimating voice capacity from source-note counts, which undercount
-chord pitches and can lose opening notes when the entire score is queued.
+The renderer stores the complete note-event list and processes PCM in blocks
+of at most 128 frames, splitting blocks at note boundaries. Voices are created
+only when the render clock reaches their onset. Offline voice allocation grows
+as needed, so no fixed polyphony budget discards dense chords. Export includes
+two seconds after the arrangement for release envelopes and effects; longer
+tails can still be truncated. Each export destroys its processor after use.
 
 ## MIDI Export
 
@@ -544,19 +527,14 @@ Output format:
 - 16-bit PCM
 - one data chunk
 
-The WAV synthesizer uses WebAudioTinySynth offline:
+The WAV synthesizer uses SpessaSynth with the bundled GeneralUser GS bank:
 
-- `@descript/web-audio-js` provides the backend `RenderingAudioContext`
-- the shared melody compiler provides note timing and MIDI note numbers
-- melodic programs `0..127` set TinySynth channel 1 Program
-- drum programs `128..174` use TinySynth percussion channel 10 and the same
-  percussion note mapping as MIDI export
-- base note velocity is fixed at `64`
-- per-note dynamic markers and hairpins set note velocity before resolved track
-  volume scales it
-- `amplitude` is applied as TinySynth master volume, so it combines with the
-  resolved track volume
-- rest events are silence
+- the shared melody compiler provides timing and MIDI pitches
+- melodic programs `0..127` select GM presets
+- drum programs `128..174` use channel 10 and the existing percussion mapping
+- base note velocity is `64`; dynamics and track volume scale note velocity
+- `amplitude` controls master gain
+- rests preserve the timeline without creating voices
 
 Invalid sample rates and amplitudes throw errors.
 
@@ -581,7 +559,7 @@ interface Mp3ExportOptions {
 }
 ```
 
-MP3 export shares the same backend TinySynth PCM render path as WAV export, then
+MP3 export shares the same backend SpessaSynth PCM render path as WAV export, then
 encodes the stereo samples with `lamejs`. The default bit rate is `128` kbps.
 
 The CLI exposes MP3 export as:

@@ -16,6 +16,10 @@ Current status:
 - example scores in `examples/`
 - Node built-in test runner for parser, renderer, player, backend, CLI, and examples
 
+Playback and WAV/MP3 export use SpessaSynth with the bundled GeneralUser GS
+2.0.3 sampled sound bank. The browser loads the approximately 32 MB bank on
+first use; CLI exports use the local copy.
+
 ## Commands
 
 ```sh
