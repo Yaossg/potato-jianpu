@@ -18,10 +18,18 @@ function harness({ delayed = false, fail = false } = {}) {
   const songs = [];
   let timerId = 0, starts = 0, stops = 0, loads = 0, origin = 10;
   let release;
+  let pausedTime = 0;
   const loading = delayed ? new Promise(resolve => { release = resolve; }) : Promise.resolve();
   const sequencer = {
     isFinished: false,
-    get currentTime() { return context.currentTime - origin; },
+    get currentTime() { return pausedTime ?? context.currentTime - origin; },
+    set currentTime(time) {
+      queueMicrotask(() => {
+        origin = context.currentTime - time;
+        if (pausedTime !== undefined) pausedTime = time;
+        handlers.get("timeChange")?.({ newTime: time });
+      });
+    },
     eventHandler: {
       addEvent(type, id, fn) { handlers.set(type, fn); },
       removeEvent(type) { handlers.delete(type); },
@@ -30,8 +38,14 @@ function harness({ delayed = false, fail = false } = {}) {
       songs.push(BasicMIDI.fromArrayBuffer(list[0].binary));
       queueMicrotask(() => handlers.get("songChange")?.({}));
     },
-    play() { origin = context.currentTime; starts++; },
-    pause() {},
+    play() {
+      origin = context.currentTime - (pausedTime ?? 0);
+      pausedTime = undefined;
+      starts++;
+      // The worklet starts the new song before its clock update reaches the UI.
+      queueMicrotask(() => { origin = context.currentTime; });
+    },
+    pause() { pausedTime = this.currentTime; },
   };
   const exports = {};
   vm.runInNewContext(outputText, {
@@ -66,6 +80,28 @@ function harness({ delayed = false, fail = false } = {}) {
 function arrangement(notes) {
   const timing = { tempo: 120, beatsPerWholeNote: 4, beatsPerMeasure: 4 };
   return { ...timing, tracks: [{ ...timing, notes, name: "T1", program: 0, volume: 1 }] };
+}
+
+for (const finish of [false, true]) {
+  test(`restart after ${finish ? "completion" : "stop"} waits for the new song clock`, async () => {
+    const h = harness();
+    const score = arrangement(Array.from({ length: 4 }, (_, index) => ({ chord: [60 + index], duration: 0.25, index })));
+    const first = h.player.play(score, () => {});
+    await h.flush();
+    await h.tick(finish ? 12 : 11.1);
+    if (!finish) h.player.stop();
+    await first;
+    const highlights = [];
+    let ended = false;
+    const next = h.player.play(score, () => { ended = true; }, ids => highlights.push([...ids]));
+    await h.flush();
+    assert.deepEqual(highlights, [[0]]);
+    assert.equal(ended, false);
+    await h.tick(h.context.currentTime + 0.51);
+    assert.deepEqual(highlights.at(-1), [1]);
+    h.player.stop();
+    await next;
+  });
 }
 test("submits the whole long score once and follows the audio clock for highlighting", async () => {
   const h = harness();

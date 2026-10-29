@@ -391,6 +391,8 @@ Playback resumes the audio context in the user gesture, preserves initial and
 trailing rests, supports trimmed arrangements for click-to-play, and uses the
 sequencer clock for note highlighting. Stop/restart cancels pending playback,
 pauses the sequencer, and silences active voices. Source edits stop playback.
+Each new playback waits for the sequencer to acknowledge a reset to time zero
+before starting playback and note highlighting, including after a stop or completion.
 
 The frontend exposes a Settings panel with Default Program, volume, audition,
 and initial-rest controls. Browser playback and MIDI download use the selected

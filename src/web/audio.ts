@@ -72,13 +72,23 @@ export class PreviewAudioPlayer {
           const cleanup = () => {
             window.clearTimeout(timeout);
             events.removeEvent("songChange", "preview-load");
+            events.removeEvent("timeChange", "preview-load");
             events.removeEvent("midiError", "preview-load");
           };
           const timeout = window.setTimeout(() => {
             cleanup();
             reject(new Error("SoundFont sequence loading timed out."));
           }, 30000);
-          events.addEvent("songChange", "preview-load", () => { cleanup(); resolve(); });
+          events.addEvent("songChange", "preview-load", () => {
+            // Song loading preserves the main-thread paused clock. Wait for
+            // the worklet to acknowledge zero before consuming note groups.
+            events.addEvent("timeChange", "preview-load", ({ newTime }) => {
+              if (newTime !== 0) return;
+              cleanup();
+              resolve();
+            });
+            engine.sequencer.currentTime = 0;
+          });
           events.addEvent("midiError", "preview-load", (error) => { cleanup(); reject(error); });
           try {
             engine.sequencer.loadNewSongList([{ binary: new Uint8Array(arrangementMidiBytes(arrangement)).buffer }]);
