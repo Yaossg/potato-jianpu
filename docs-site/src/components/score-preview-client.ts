@@ -1,4 +1,7 @@
 import { compileArrangement, parse, renderSvg, trimArrangementAtNote } from '../../../src/index.ts';
+import { audioLoadMessage } from '../../../src/web/audio-status.ts';
+import { translate } from '../../../src/web/i18n.ts';
+import type { AudioLoadStatus } from '../../../src/web/soundfont.ts';
 import { PreviewAudioPlayer } from '../../../src/web/audio.ts';
 
 const MIN_PREVIEW_PAGE_WIDTH = 280;
@@ -70,6 +73,25 @@ function setPlayButtonState(button: HTMLButtonElement | null, payload: PreviewPa
   button.setAttribute('aria-pressed', String(isPlaying));
 }
 
+function showAudioLoadStatus(figure: HTMLElement, status: AudioLoadStatus | null): void {
+  const container = figure.querySelector<HTMLElement>('[data-score-preview-loading]');
+  const label = container?.querySelector('span');
+  const progress = container?.querySelector('progress');
+  if (!container || !label || !progress) return;
+  container.hidden = status === null;
+  if (!status) return;
+  const language = document.documentElement.lang.startsWith('zh') ? 'zh' : 'en';
+  label.textContent = audioLoadMessage(status, (key) => translate(language, key));
+  progress.setAttribute('aria-label', translate(language, status.phase === 'downloading' ? 'audioDownloading' : 'audioPreparing'));
+  if (status.phase === 'downloading' && status.total) {
+    progress.max = status.total;
+    progress.value = status.loaded;
+  } else {
+    progress.removeAttribute('value');
+    progress.removeAttribute('max');
+  }
+}
+
 function stopPreview(figure: HTMLElement, payload: PreviewPayload, state: PreviewState, render: () => void): void {
   if (activePreview?.figure !== figure) {
     return;
@@ -126,6 +148,7 @@ async function playPreview(
         render();
       },
       DEFAULT_VOLUME,
+      (status) => showAudioLoadStatus(figure, status),
     );
   } catch {
     if (activePreview?.figure === figure) stopPreview(figure, payload, state, render);

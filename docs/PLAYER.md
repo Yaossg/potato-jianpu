@@ -377,6 +377,11 @@ P3: X/ X/ X/ X/ | X/ X/ X/ X/ |
 synthesizer and sequencer with the bundled GeneralUser GS 2.0.3 SoundFont.
 The sound bank is fetched on first playback and reused for the page session.
 Failed downloads can be retried. The build serves the bank from its own assets.
+Playback, audition, audio export, and docs examples show download progress and
+an audio-preparation state. Progress reports decoded bytes; a percentage is
+shown only when a reliable uncompressed Content-Length is available. Concurrent
+consumers share the download. Stopping playback removes its progress listener
+and cancels playback, while the shared download continues for cache reuse.
 
 The complete arrangement is submitted as MIDI events once; the audio thread
 creates voices when events become due. No main-thread note lookahead window or

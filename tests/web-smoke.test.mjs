@@ -127,6 +127,9 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(script, /Audio sample rate \(WAV\/MP3\)/);
   assert.match(script, /Audition/);
   assert.match(script, /GeneralUser-GS/);
+  assert.match(script, /Downloading sound bank/);
+  assert.match(script, /Preparing audio/);
+  assert.match(style, /audio-load-status/);
   assert.match(script, /Omit initial rests/);
   assert.match(style, /font-variant-ligatures:\s*none/);
   assert.match(style, /\.theme-dark/);

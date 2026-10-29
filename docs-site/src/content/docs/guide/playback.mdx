@@ -29,6 +29,8 @@ Mordents, turns, trills, and grace notes expand into timed events inside the wri
 
 ## Browser Playback
 
+First use shows the sound-bank download progress, followed by audio preparation. If the download size is unavailable, the app shows downloaded MB without a percentage. Stopping playback dismisses its progress indicator; the download continues for reuse. If loading fails, try playback or export again.
+
 The browser app uses SpessaSynth with the GeneralUser GS sampled sound bank. The bank (about 32 MB) loads on first playback and is reused during the session. Playback highlights active notes and stops when the source changes. The audio engine receives the complete score; long scores do not have a total-note limit.
 
 Click-to-play starts from rendered note metadata. If the clicked note is the first playback note and initial-rest omission is enabled, leading rests are skipped.

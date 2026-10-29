@@ -14,6 +14,7 @@ interface ToolbarProps {
   canExportImage: boolean;
   exportingAudio: "wav" | "mp3" | null;
   audioExportDetails: string;
+  audioLoadingText?: string;
   t: (key: TranslationKey) => string;
   onToggleLanguage: () => void;
   onToggleTheme: () => void;
@@ -40,6 +41,7 @@ export function Toolbar({
   canExportImage,
   exportingAudio,
   audioExportDetails,
+  audioLoadingText,
   t,
   onToggleLanguage,
   onToggleTheme,
@@ -116,6 +118,7 @@ export function Toolbar({
         canExportImage={canExportImage}
         exportingAudio={exportingAudio}
         audioExportDetails={audioExportDetails}
+        audioLoadingText={audioLoadingText}
         t={t}
         onExportSvg={onExportSvg}
         onExportPng={onExportPng}

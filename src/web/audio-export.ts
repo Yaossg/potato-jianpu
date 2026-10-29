@@ -1,5 +1,5 @@
 import { renderSoundfontBlocks } from "../player/soundfont.js";
-import { loadSoundfont } from "./soundfont.js";
+import { loadSoundfont, type AudioLoadListener } from "./soundfont.js";
 import type { Document } from "../core/index.js";
 import { compileArrangement, skipInitialArrangementRests } from "../player/index.js";
 import * as lamejs from "lamejs";
@@ -8,6 +8,7 @@ import Lame from "lamejs/src/js/Lame.js";
 import MPEGMode from "lamejs/src/js/MPEGMode.js";
 
 export interface BrowserAudioExportOptions {
+  onLoadStatus?: AudioLoadListener;
   sampleRate?: number;
   program?: number;
   amplitude?: number;
@@ -68,7 +69,14 @@ async function renderDocumentPcm(document: Document, options: BrowserAudioExport
   const { sampleRate, amplitude, program } = normalizeAudioOptions(options, label);
   const compiled = compileArrangement(document, program);
   const arrangement = options.omitInitialRests ? skipInitialArrangementRests(compiled) : compiled;
-  const render = renderSoundfontBlocks(arrangement, await loadSoundfont(), sampleRate, amplitude);
+  let bank: ArrayBuffer;
+  options.onLoadStatus?.({ phase: "preparing" });
+  try {
+    bank = await loadSoundfont((status) => options.onLoadStatus?.(status ?? { phase: "preparing" }));
+  } finally {
+    options.onLoadStatus?.(null);
+  }
+  const render = renderSoundfontBlocks(arrangement, bank, sampleRate, amplitude);
   let result = render.next();
   let yieldedAt = performance.now();
   while (!result.done) {

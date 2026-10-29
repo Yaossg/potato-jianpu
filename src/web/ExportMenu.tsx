@@ -6,6 +6,7 @@ interface ExportMenuProps {
   canExportImage: boolean;
   exportingAudio: "wav" | "mp3" | null;
   audioExportDetails: string;
+  audioLoadingText?: string;
   t: (key: TranslationKey) => string;
   onExportSvg: () => void;
   onExportPng: () => void;
@@ -20,6 +21,7 @@ export function ExportMenu({
   canExportImage,
   exportingAudio,
   audioExportDetails,
+  audioLoadingText,
   t,
   onExportSvg,
   onExportPng,
@@ -52,7 +54,7 @@ export function ExportMenu({
         <button type="button" onClick={onExportMp3} disabled={!canExportScore || exportingAudio !== null}>
           {exportingAudio === "mp3" ? `${t("exporting")} MP3...` : "MP3"}
         </button>
-        {exportingAudio && <p className="export-status">{audioExportDetails ? `${t("renderingLocally")}: ${audioExportDetails}` : `${t("renderingLocally")}...`}</p>}
+        {exportingAudio && <p className="export-status">{audioLoadingText || (audioExportDetails ? `${t("renderingLocally")}: ${audioExportDetails}` : `${t("renderingLocally")}...`)}</p>}
       </div>
     </details>
   );

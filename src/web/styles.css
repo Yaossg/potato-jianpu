@@ -810,3 +810,17 @@ textarea {
     min-height: 360px;
   }
 }
+
+.audio-load-status {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding: 0.65rem 1rem;
+  background: var(--panel-bg);
+  color: var(--text);
+  border-bottom: 1px solid var(--panel-border);
+  font-size: 0.875rem;
+}
+.audio-load-status progress { width: 10rem; max-width: 100%; accent-color: var(--play-control); }
+.audio-load-status small { color: var(--muted-text); }

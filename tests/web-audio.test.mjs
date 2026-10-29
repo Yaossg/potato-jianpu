@@ -41,6 +41,7 @@ function harness({ delayed = false, fail = false } = {}) {
     require(path) {
       if (path === "../player/index.js") return playerModule;
       if (path === "../player/midi.js") return midiModule;
+      if (path === "./soundfont.js") return { subscribeSoundfontProgress: () => () => {} };
       if (path === "./synth.js") return { async createPreviewSynth() {
         loads++;
         await loading;
@@ -86,9 +87,12 @@ test("submits the whole long score once and follows the audio clock for highligh
 test("stop while the sound bank loads cannot start stale playback", async () => {
   const h = harness({ delayed: true });
   let ended = 0;
-  const playing = h.player.play(arrangement([{ chord: [60], duration: 1, index: 0 }]), () => ended++);
+  const statuses = [];
+  const playing = h.player.play(arrangement([{ chord: [60], duration: 1, index: 0 }]), () => ended++, undefined, 1, status => statuses.push(status));
   await h.flush();
+  assert.equal(statuses.at(-1).phase, "preparing");
   h.player.stop();
+  assert.equal(statuses.at(-1), null);
   h.release();
   await playing;
   assert.equal(h.starts, 0);

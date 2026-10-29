@@ -12,6 +12,8 @@ import {
 } from "../index.js";
 import { DEFAULT_PAGE_SIZE, PAPER_PRESET_LIST, analyzeScoreLayout, formatScoreLayoutWarning, inferContentPageWidth, renderSvg, renderSvgPages, resolvePageSize } from "../renderer/index.js";
 import type { PageOrientation, PaperPresetName } from "../renderer/index.js";
+import { audioLoadMessage } from "./audio-status.js";
+import type { AudioLoadStatus } from "./soundfont.js";
 import { PreviewAudioPlayer } from "./audio.js";
 import { waitForNextFrame } from "./browser-utils.js";
 import { DEFAULT_PNG_SCALE, downloadBlob, downloadBytes, pngPixelDimensions, svgToPngBlob } from "./downloads.js";
@@ -166,6 +168,9 @@ export function App() {
   const [highlightCurrentLine, setHighlightCurrentLine] = useState(() => storedBoolean(HIGHLIGHT_CURRENT_LINE_STORAGE_KEY, true));
   const [highlightDiagnostics, setHighlightDiagnostics] = useState(() => storedBoolean(HIGHLIGHT_DIAGNOSTICS_STORAGE_KEY, true));
   const [language, setLanguage] = useState<Language>(() => initialLanguage());
+  const [playbackLoadStatus, setPlaybackLoadStatus] = useState<AudioLoadStatus | null>(null);
+  const [exportLoadStatus, setExportLoadStatus] = useState<AudioLoadStatus | null>(null);
+  const audioLoadStatus = exportLoadStatus ?? playbackLoadStatus;
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeNoteIndices, setActiveNoteIndices] = useState<number[]>([]);
   const [pageWidthMode, setPageWidthMode] = useState<PageWidthMode>("panel");
@@ -548,6 +553,7 @@ export function App() {
       const { exportBrowserWavBytes } = await import("./audio-export.js");
       const wav = await exportBrowserWavBytes(parsed.value, {
         program,
+        onLoadStatus: setExportLoadStatus,
         sampleRate: audioSampleRate,
         amplitude: Math.min(1, Math.max(0, volume / 100)),
         omitInitialRests,
@@ -557,6 +563,7 @@ export function App() {
     } catch (error) {
       window.alert(error instanceof Error ? error.message : "Failed to export WAV.");
     } finally {
+      setExportLoadStatus(null);
       setExportingAudio(null);
       setAudioExportDetails("");
     }
@@ -573,6 +580,7 @@ export function App() {
       const { exportBrowserMp3Bytes } = await import("./audio-export.js");
       const mp3 = await exportBrowserMp3Bytes(parsed.value, {
         program,
+        onLoadStatus: setExportLoadStatus,
         sampleRate: audioSampleRate,
         amplitude: Math.min(1, Math.max(0, volume / 100)),
         omitInitialRests,
@@ -582,6 +590,7 @@ export function App() {
     } catch (error) {
       window.alert(error instanceof Error ? error.message : "Failed to export MP3.");
     } finally {
+      setExportLoadStatus(null);
       setExportingAudio(null);
       setAudioExportDetails("");
     }
@@ -630,6 +639,7 @@ export function App() {
         },
         setActiveNoteIndices,
         volume / 100,
+        setPlaybackLoadStatus,
       );
     } catch {
       stopPlayback();
@@ -655,6 +665,7 @@ export function App() {
         },
         undefined,
         volume / 100,
+        setPlaybackLoadStatus,
       );
     } catch {
       stopPlayback();
@@ -747,6 +758,7 @@ export function App() {
           canExportImage={parsed.ok && svg !== null}
           exportingAudio={exportingAudio}
           audioExportDetails={audioExportDetails}
+          audioLoadingText={exportLoadStatus ? audioLoadMessage(exportLoadStatus, t) : undefined}
           t={t}
           onToggleLanguage={toggleLanguage}
           onToggleTheme={toggleTheme}
@@ -764,6 +776,17 @@ export function App() {
           onExportMp3={() => void exportMp3()}
         />
       </header>
+      {audioLoadStatus && (
+        <div className="audio-load-status" role="status" aria-live="polite">
+          <span>{audioLoadMessage(audioLoadStatus, t)}</span>
+          <progress
+            aria-label={audioLoadStatus.phase === "downloading" ? t("audioDownloading") : t("audioPreparing")}
+            max={audioLoadStatus.phase === "downloading" ? audioLoadStatus.total : undefined}
+            value={audioLoadStatus.phase === "downloading" && audioLoadStatus.total ? audioLoadStatus.loaded : undefined}
+          />
+          <small>{t("audioFirstLoad")}</small>
+        </div>
+      )}
 
       {showSettings && (
         <SettingsPanel

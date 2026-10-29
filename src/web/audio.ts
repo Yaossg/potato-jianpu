@@ -1,5 +1,6 @@
 import { arrangementDuration, type Arrangement } from "../player/index.js";
 import { arrangementMidiBytes } from "../player/midi.js";
+import { subscribeSoundfontProgress, type AudioLoadListener } from "./soundfont.js";
 import { createPreviewSynth } from "./synth.js";
 
 class CancellableDelay {
@@ -37,10 +38,17 @@ export class PreviewAudioPlayer {
   private setup: Promise<void> = Promise.resolve();
   private generation = 0;
   private delay = new CancellableDelay();
+  private loadingListener?: AudioLoadListener;
+  private unsubscribeProgress?: () => void;
 
-  async play(arrangement: Arrangement, onEnded: () => void, onNoteStart?: (indices: number[]) => void, volume = 1) {
+  async play(arrangement: Arrangement, onEnded: () => void, onNoteStart?: (indices: number[]) => void, volume = 1, onLoadStatus?: AudioLoadListener) {
     this.stop();
     const generation = this.generation;
+    this.loadingListener = onLoadStatus;
+    onLoadStatus?.({ phase: "preparing" });
+    this.unsubscribeProgress = subscribeSoundfontProgress((status) => {
+      if (generation === this.generation) onLoadStatus?.(status ?? { phase: "preparing" });
+    });
     try {
       // Resume in the user gesture, before downloading the sound bank.
       this.context ??= new AudioContext();
@@ -81,6 +89,7 @@ export class PreviewAudioPlayer {
       await setup;
       if (generation !== this.generation) return;
       engine.synth.setSystemParameter("gain", Math.max(0, Math.min(2, volume)));
+      this.clearLoadStatus();
       engine.sequencer.play();
       const start = context.currentTime;
       const secondsPerWhole = 60 / arrangement.tempo * arrangement.beatsPerWholeNote;
@@ -106,8 +115,16 @@ export class PreviewAudioPlayer {
   stop() {
     this.generation++;
     this.delay.cancel();
+    this.clearLoadStatus();
     this.engine?.sequencer.pause();
     this.engine?.synth.stopAll(true);
+  }
+
+  private clearLoadStatus() {
+    this.unsubscribeProgress?.();
+    this.unsubscribeProgress = undefined;
+    this.loadingListener?.(null);
+    this.loadingListener = undefined;
   }
 
   private noteStartGroups(arrangement: Arrangement, secondsPerWhole: number) {

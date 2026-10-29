@@ -59,6 +59,7 @@ const bravuraFontFace = `@font-face {
       </button>
     </div>
   )}
+  <p data-score-preview-loading class="score-preview-loading" role="status" aria-live="polite" hidden><span></span> <progress></progress></p>
   <div class="score-preview-stage" data-score-preview-stage role="img" aria-label={accessibleLabel} set:html={svg} />
   <script type="application/json" data-score-preview-source set:html={payload} />
   <script>
@@ -67,6 +68,8 @@ const bravuraFontFace = `@font-face {
 </figure>
 
 <style>
+  .score-preview-loading { font-size: 0.85rem; margin: 0.4rem 0; }
+  .score-preview-loading progress { width: 8rem; max-width: 100%; vertical-align: middle; }
   .score-preview {
     margin: 1rem 0 1.5rem;
   }

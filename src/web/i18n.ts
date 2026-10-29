@@ -2,6 +2,9 @@ export type Language = "en" | "zh";
 export type PageWidthMode = "panel" | "content" | "manual";
 export type JustifyMode = "none" | "except-last" | "all";
 export type TranslationKey =
+  | "audioPreparing"
+  | "audioDownloading"
+  | "audioFirstLoad"
   | "audioLoadFailed"
   | "language"
   | "english"
@@ -87,6 +90,9 @@ export type TranslationKey =
 
 const translations: { en: Record<TranslationKey, string>; zh: Record<TranslationKey, string> } = {
   en: {
+    audioPreparing: "Preparing audio…",
+    audioDownloading: "Downloading sound bank…",
+    audioFirstLoad: "The sound bank loads on first use and is reused on this page.",
     audioLoadFailed: "Unable to load audio. Check your connection and try again.",
     language: "Language",
     english: "English",
@@ -171,6 +177,9 @@ const translations: { en: Record<TranslationKey, string>; zh: Record<Translation
     events: "events",
   } satisfies Record<TranslationKey, string>,
   zh: {
+    audioPreparing: "正在准备音频…",
+    audioDownloading: "正在下载音源…",
+    audioFirstLoad: "首次使用需要加载音源，之后在此页面中复用。",
     audioLoadFailed: "无法加载音频，请检查网络连接后重试。",
     language: "语言",
     english: "English",
