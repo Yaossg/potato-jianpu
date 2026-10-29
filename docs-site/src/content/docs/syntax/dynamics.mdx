@@ -1,6 +1,6 @@
 ---
 title: Dynamics
-description: Write per-note dynamics, crescendo hairpins, and diminuendo hairpins.
+description: Write dynamic markings, crescendo hairpins, and diminuendo hairpins.
 docId: syntax-dynamics
 sectionIds:
   - dynamic-markings
@@ -15,7 +15,7 @@ import ScorePreview from '../../../components/ScorePreview.astro';
 
 ## Dynamic Markings
 
-Per-note dynamics use Italian dynamic markings as a prefix before the note. A dynamic applies to exactly one note. Spaces between the marking and the note are optional.
+Dynamics use Italian dynamic markings as a prefix before the note. A marking applies from that note onward in the same track until another marking or hairpin changes the velocity. It persists across rests, barlines, and source lines; other tracks keep their own dynamics. Spaces between the marking and the note are optional. For example, `f 1 2 3 4` plays all four notes at `f`.
 
 <JianpuSource
   title="Dynamic marking source"
@@ -41,7 +41,7 @@ Eight dynamic levels are supported, each mapped to a MIDI velocity value:
 | `ff` | fortissimo | 102 |
 | `fff` | fortississimo | 118 |
 
-Dynamics can also be applied to chords, rests, and tied notes.
+Dynamics can also be applied to chords, rests, and tied notes. A marking on a rest or tied segment sets the velocity for subsequent attacks. Tied notes keep sounding without a new attack or a change to their original attack velocity.
 
 <JianpuSource
   title="Dynamics with chords, rests, and ties"
@@ -98,7 +98,7 @@ f < 1 2 p < 3`}
   source={`1 f~1`}
 />
 
-When no per-note dynamic or hairpin endpoint is written, the track-level or score-level volume from the header controls the velocity.
+Before any dynamic marking or hairpin, the base velocity is 64. A hairpin starts from the current velocity unless its start has an explicit marking, and its endpoint velocity persists afterward. Track-level or score-level volume scales the resulting velocity throughout.
 
 <RelatedLinks
   links={[

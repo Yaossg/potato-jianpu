@@ -939,6 +939,54 @@ test("defaults to undefined velocity when no dynamic marker", () => {
   assert.equal(melody.notes[1].velocity, undefined);
 });
 
+test("sustains dynamics across bars, lines, rests, chords, and ornaments", () => {
+  const result = parse("f 1 2 0 4 |\n5 6 p 0 {1 3} | 2(tr) 3");
+  assert.equal(result.ok, true);
+  const melody = compileMelody(result.value);
+  assert.deepEqual(melody.notes.map((note) => note.velocity),
+    melody.notes.map((note) => note.index < 6 ? 85 : 49));
+  const events = midiNoteEvents(exportMidiBytes(result.value)).filter((event) => event.type === "on");
+  assert.deepEqual(events.slice(0, 5).map((event) => event.velocity), [85, 85, 85, 85, 85]);
+  assert.ok(events.slice(5).every((event) => event.velocity === 49));
+  assert.equal(result.value.score[0].measures[0].notes[1].velocity, undefined);
+});
+
+test("keeps dynamics independent per track across score groups", () => {
+  const result = parse("T1: f 1 2\nT2: p 3 4\nT1: 5 6\nT2: 7 1");
+  assert.equal(result.ok, true);
+  assert.deepEqual(compileArrangement(result.value).tracks.map((track) => track.notes.map((note) => note.velocity)),
+    [[85, 85, 85, 85], [49, 49, 49, 49]]);
+});
+
+test("sustains explicit and implicit hairpin endpoints", () => {
+  for (const [source, expected] of [
+    ["p < 1 2 3 f < 4 | 5 6", [49, 61, 73, 85, 85, 85]],
+    ["p 1 < 2 3 < 4 5", [49, 49, 61, 73, 73]],
+    ["f 1 > 2 3 > 4 5", [85, 85, 73, 61, 61]],
+    ["p < 1 2 f < ~2 3", [49, 67, 85]],
+    ["p < 1 2 <> 3 4 > 5 6", [49, 61, 73, 61, 49, 49]],
+  ]) {
+    const result = parse(source);
+    assert.equal(result.ok, true);
+    assert.deepEqual(compileMelody(result.value).notes.map((note) => note.velocity), expected);
+  }
+});
+
+test("dynamics on tied segments affect later attacks without changing the held attack", () => {
+  const result = parse("p 1 ~f1 2 3");
+  assert.equal(result.ok, true);
+  const melody = compileMelody(result.value);
+  assert.deepEqual(melody.notes.map((note) => note.velocity), [49, 85, 85]);
+  assert.equal(melody.notes[0].duration, 0.5);
+});
+
+test("resolves dynamics in repeated playback order", () => {
+  const result = parse("|: p 1 2 | f 3 4 :| 5 6");
+  assert.equal(result.ok, true);
+  assert.deepEqual(compileMelody(result.value).notes.map((note) => note.velocity),
+    [49, 49, 85, 85, 49, 49, 85, 85, 85, 85]);
+});
+
 test("exports per-note MIDI velocities", () => {
   const result = parse("f 1 pp 2");
   assert.equal(result.ok, true);

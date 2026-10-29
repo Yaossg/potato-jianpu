@@ -414,8 +414,12 @@ Browser playback base velocity is currently `64`. The browser volume slider is
 applied through SpessaSynth master gain, and the resolved track volume
 scales each track's note velocity.
 
-Per-note dynamic markers (`ppp` through `fff`) set explicit MIDI-style
-velocities. Gradual dynamic hairpins use paired `<` markers for crescendo and
+Dynamic markers (`ppp` through `fff`) set MIDI-style velocities from the marked
+note onward in the same track, across rests, barlines, and source lines, until
+another dynamic or hairpin changes them. Tracks keep independent dynamic state
+in expanded playback order. Markings on tied segments affect subsequent attacks
+without reattacking or changing the velocity of the held note. Before any dynamic,
+notes retain the default velocity. Gradual dynamic hairpins use paired `<` markers for crescendo and
 paired `>` markers for diminuendo. For example, `p < 1 2 3 f < 4`
 interpolates from `p` on `1` to `f` on `4`. The shared melody compiler
 interpolates source-note velocities across the marked range. When an ornament
@@ -424,7 +428,8 @@ inherits that source note's single resolved velocity and does not add extra
 hairpin interpolation steps. Explicit dynamic markers
 at the hairpin start or end become the interpolation endpoints; when the ending
 note has no explicit dynamic, the compiler applies a modest default rise or
-fall from the starting velocity. When both endpoints have explicit dynamic
+fall from the starting velocity. The endpoint velocity persists after the hairpin.
+When both endpoints have explicit dynamic
 markers, the parser warns if a crescendo does not end louder than it starts or
 a diminuendo does not end softer than it starts. Track volume and browser or
 export master volume still scale the resulting per-note velocity.

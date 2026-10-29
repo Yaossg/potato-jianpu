@@ -324,6 +324,8 @@ function compileMeasure(
       if (previous) {
         previous.duration += melodyNotes.reduce((sum, melodyNote) => sum + melodyNote.duration, 0);
       }
+      // Ties have no new attack, but their markings still update later dynamics.
+      sourceGroups.push({ note, startIndex: output.length, endIndex: output.length - 1 });
     } else {
       const startIndex = output.length;
       output.push(...melodyNotes);
@@ -333,6 +335,7 @@ function compileMeasure(
 }
 
 function applySlurTransitions(notes: MelodyNote[], sourceGroups: SourceNoteEventGroup[], transitions: Set<string>) {
+  sourceGroups = sourceGroups.filter((group) => group.startIndex <= group.endIndex);
   for (let index = 0; index < sourceGroups.length - 1; index += 1) {
     const current = sourceGroups[index]!;
     const next = sourceGroups[index + 1]!;
@@ -368,32 +371,31 @@ function interpolateHairpin(
   }
 }
 
-function applyHairpinVelocities(notes: MelodyNote[], sourceGroups: SourceNoteEventGroup[]) {
-  let lastExplicitVelocity = DEFAULT_VELOCITY;
+function applyDynamicVelocities(notes: MelodyNote[], sourceGroups: SourceNoteEventGroup[]) {
+  let currentVelocity: number | undefined;
   let active: { kind: NonNullable<Note["hairpinStart"]>; startGroupIndex: number; startVelocity: number } | null = null;
 
   for (const [groupIndex, group] of sourceGroups.entries()) {
     const note = group.note;
-    const melodyNote = notes[group.startIndex]!;
-    if (melodyNote.velocity !== undefined && active === null) {
-      lastExplicitVelocity = melodyNote.velocity;
+    if (note.velocity !== undefined && active === null) {
+      currentVelocity = note.velocity;
     }
 
     if (note.hairpinEnd !== undefined && active?.kind === note.hairpinEnd) {
       const fallbackEndVelocity =
         active.kind === "crescendo" ? active.startVelocity + HAIRPIN_DEFAULT_DELTA : active.startVelocity - HAIRPIN_DEFAULT_DELTA;
-      const endVelocity = melodyNote.velocity ?? fallbackEndVelocity;
+      const endVelocity = note.velocity ?? fallbackEndVelocity;
       interpolateHairpin(notes, sourceGroups, active.startGroupIndex, groupIndex, active.startVelocity, endVelocity);
-      lastExplicitVelocity = clampVelocity(endVelocity);
+      currentVelocity = clampVelocity(endVelocity);
       active = null;
     }
 
     if (note.hairpinStart !== undefined) {
-      const startVelocity = melodyNote.velocity ?? lastExplicitVelocity;
+      const startVelocity = note.velocity ?? currentVelocity ?? DEFAULT_VELOCITY;
       active = { kind: note.hairpinStart, startGroupIndex: groupIndex, startVelocity };
       setGroupVelocity(notes, group, startVelocity);
-    } else if (melodyNote.velocity !== undefined && active === null) {
-      lastExplicitVelocity = melodyNote.velocity;
+    } else if (active === null && currentVelocity !== undefined) {
+      setGroupVelocity(notes, group, currentVelocity);
     }
   }
 }
@@ -525,7 +527,7 @@ function compileMeasures(document: Document, measures: Measure[], program: numbe
     contextStart += measure.notes.length;
   }
   applySlurTransitions(notes, sourceGroups, transitions);
-  applyHairpinVelocities(notes, sourceGroups);
+  applyDynamicVelocities(notes, sourceGroups);
 
   return {
     notes,
