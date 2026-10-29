@@ -214,8 +214,10 @@ CJK lyric text renders at `17px`, while Latin-script lyric text renders at
 multi-voice groups, the renderer uses `T1` as the main voice; unlabeled lines
 in labeled scores also count as `T1`.
 
-Track and lyric labels reserve horizontal space based on the rendered label
-text length plus padding. Visible labels come from typed header label fields,
+Track and lyric labels reserve horizontal space based on estimated glyph
+widths plus padding. CJK characters and fullwidth forms reserve the label's
+16-unit font size per code point; other characters use an 8.5-unit average
+advance. Visible labels come from typed header label fields,
 such as `T1.name: "Melody"`, `T1: "Melody"`, `L1.name: "Verse"`, or
 `L1: "Verse"`. A group uses the widest visible label in that group, so short
 labels do not consume the same left margin as long labels.

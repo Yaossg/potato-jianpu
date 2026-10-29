@@ -1427,6 +1427,37 @@ test("does not render bare track labels without header-defined names", () => {
   assert.match(svg, /<g class="note-item" data-note-index="0"><text class="note" x="18"/);
 });
 
+test("reserves full glyph widths for CJK and mixed track and lyric labels", () => {
+  for (const [label, width] of [["合唱垫底", 64], ["弦乐 A", 49], ["Ａ（𠀀）", 64]]) {
+    const result = parse(`hidden: true\nT1.name: "${label}"\n===\nT1: 1 2`);
+    const lyric = parse(`hidden: true\nL1.name: "${label}"\n===\nT1: 1 2\nL1: "hello"`);
+    assert.equal(result.ok, true);
+    assert.equal(lyric.ok, true);
+    const expectedNoteX = 8 + width + 10 + 18;
+    assert.equal(noteX(renderSvg(result.value), 0), expectedNoteX);
+    assert.equal(noteX(renderSvg(lyric.value), 0), expectedNoteX);
+    const bare = parse("hidden: true\n===\nT1: 1 2");
+    assert.equal(inferContentPageWidth(result.value) - inferContentPageWidth(bare.value), 8 + width + 10);
+  }
+});
+
+for (const example of ["epic-begin", "epic-end"]) {
+  test(`${example} keeps Chinese names clear of every voice bracket`, () => {
+    const result = parse(readFileSync(new URL(`../examples/${example}.jpu`, import.meta.url), "utf8"));
+    assert.equal(result.ok, true);
+    for (const pageWidth of [320, 1000, 3000]) {
+      const svg = renderSvg(result.value, { pageWidth });
+      const stems = [...svg.matchAll(/<path class="voice-bracket-stem" d="M([^,]+),/g)];
+      assert.ok(stems.length > 0);
+      // Names and brackets share the group's scale, so compare natural coordinates.
+      for (let index = 0; index < stems.length; index += 2) {
+        assert.ok(Number(stems[index][1]) - 1.5 >= 8 + 4 * 16 + 10,
+          "the left bracket must clear the four-character name and its padding");
+      }
+    }
+  });
+}
+
 test("renders voice brackets around simultaneous track groups", () => {
   const result = parse(`T1: "High"\nT2: "Low"\n===\nT1: 1 2\nT2: 5, 6,\nT1: 3`);
   assert.equal(result.ok, true);

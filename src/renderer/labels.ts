@@ -1,4 +1,5 @@
 import type { Document, LyricLine, ScoreLine } from "../core/index.js";
+import { DIMENSIONS } from "./dimensions.js";
 
 const LABEL_CHARACTER_WIDTH = 8.5;
 const LABEL_RIGHT_PADDING = 10;
@@ -13,7 +14,13 @@ export function lyricLineDisplayLabel(document: Document, line: LyricLine): stri
 }
 
 export function labelOffsetForText(label: string): number {
-  return label ? Math.ceil(LABEL_LEFT_X + label.length * LABEL_CHARACTER_WIDTH + LABEL_RIGHT_PADDING) : 0;
+  // CJK glyphs and fullwidth forms occupy an em, not the Latin average advance.
+  // Iterate code points so supplementary Han characters count as one glyph.
+  const width = [...label].reduce((sum, char) => {
+    const fullwidth = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\u3000-\u303f\uff01-\uff60\uffe0-\uffe6]/u.test(char);
+    return sum + (fullwidth ? DIMENSIONS.labelFontSize : LABEL_CHARACTER_WIDTH);
+  }, 0);
+  return label ? Math.ceil(LABEL_LEFT_X + width + LABEL_RIGHT_PADDING) : 0;
 }
 
 export function labelOffsetForTexts(labels: string[]): number {
