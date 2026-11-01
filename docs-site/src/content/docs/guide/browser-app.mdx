@@ -41,6 +41,8 @@ Diagnostics appear below the editor, are highlighted in the source, and add red 
 
 First use shows the sound-bank download progress, followed by audio preparation. If the download size is unavailable, the app shows downloaded MB without a percentage. Stopping playback dismisses its progress indicator; the download continues for reuse. If loading fails, try playback or export again.
 
+When browser storage is available, the downloaded bank is saved across reloads and shared by the app and documentation on the same site. Cached use skips the download indicator. Editing scores, switching instruments, and ordinary app updates do not invalidate it; changing the bank version requires a new download. Clearing site data, browser storage eviction, or leaving a private session can remove it. A different site address or browser profile has separate storage. This saves the sound bank for offline reuse; opening the app itself offline still depends on its page and audio engine being available.
+
 The preview updates from the same parser and renderer used by the CLI, so syntax behavior stays shared across browser and terminal workflows. The preview summary shows how many score lines are rendered, the active page width, and whether that width came from the panel, content inference, a manual setting, or a paper preset.
 
 Use the playback button to audition the current score. Active notes are highlighted in the rendered preview as playback advances. You can also click a rendered note to start playback from that note. Changing source, loading an example, or stopping playback clears the active highlight.

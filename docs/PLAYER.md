@@ -376,6 +376,16 @@ P3: X/ X/ X/ X/ | X/ X/ X/ X/ |
 `PreviewAudioPlayer` in `src/web/audio.ts` uses SpessaSynth's AudioWorklet
 synthesizer and sequencer with the bundled GeneralUser GS 2.0.3 SoundFont.
 The sound bank is fetched on first playback and reused for the page session.
+Cache Storage also retains the complete bank across reloads, keyed by its
+content version rather than its deployed URL. Same-origin app and docs pages
+share it. Cache hits skip downloading progress and network revalidation.
+Only a bank-version change requires a different entry; score edits, program
+changes, stops, and ordinary app updates do not invalidate it. Clearing site
+data, browser eviction, private-session cleanup, or changing origin/profile
+can remove or isolate the cache. If storage is unavailable or full, playback
+falls back to the network and page-session cache. Failed downloads never write
+partial cache entries. This caches the bank only, not the app or worklet needed
+to open a fresh page offline.
 Failed downloads can be retried. The build serves the bank from its own assets.
 Playback, audition, audio export, and docs examples show download progress and
 an audio-preparation state. Progress reports decoded bytes; a percentage is

@@ -92,9 +92,11 @@ for (const finish of [false, true]) {
     if (!finish) h.player.stop();
     await first;
     const highlights = [];
+    const statuses = [];
     let ended = false;
-    const next = h.player.play(score, () => { ended = true; }, ids => highlights.push([...ids]));
+    const next = h.player.play(score, () => { ended = true; }, ids => highlights.push([...ids]), 1, s => statuses.push(s));
     await h.flush();
+    assert.equal(statuses.some(s => s !== null), false);
     assert.deepEqual(highlights, [[0]]);
     assert.equal(ended, false);
     await h.tick(h.context.currentTime + 0.51);

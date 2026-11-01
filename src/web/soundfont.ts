@@ -5,6 +5,27 @@ export type AudioLoadListener = (status: AudioLoadStatus | null) => void;
 let loading: Promise<ArrayBuffer> | undefined;
 let progress: AudioLoadStatus | null = null;
 const listeners = new Set<AudioLoadListener>();
+// Independent of deployment paths and JS build hashes; change only with the bank.
+const cacheName = "jianpu-soundfonts-v1";
+const cacheKey = "/__jianpu_soundfonts__/9575028c7a1f589f5770fccc8cff2734566af40cd26ed836944e9a5152688cfe.sf2";
+
+async function cachedSoundfont(): Promise<ArrayBuffer> {
+  let cache: Cache | undefined;
+  try {
+    cache = await globalThis.caches?.open(cacheName);
+    const cached = await cache?.match(cacheKey);
+    if (cached) return await cached.arrayBuffer();
+  } catch {
+    // Storage may be disabled or evicted; playback can still use the network.
+  }
+  const buffer = await downloadSoundfont();
+  try {
+    await cache?.put(cacheKey, new Response(buffer));
+  } catch {
+    // Quota/storage failures must not discard a successfully downloaded bank.
+  }
+  return buffer;
+}
 
 export function subscribeSoundfontProgress(listener: AudioLoadListener): () => void {
   listeners.add(listener);
@@ -56,7 +77,7 @@ async function downloadSoundfont(): Promise<ArrayBuffer> {
 export async function loadSoundfont(onProgress?: AudioLoadListener): Promise<ArrayBuffer> {
   const unsubscribe = onProgress ? subscribeSoundfontProgress(onProgress) : undefined;
   try {
-    loading ??= downloadSoundfont().then((buffer) => {
+    loading ??= cachedSoundfont().then((buffer) => {
       report(null);
       return buffer;
     }).catch((error) => {

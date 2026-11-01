@@ -45,10 +45,12 @@ export class PreviewAudioPlayer {
     this.stop();
     const generation = this.generation;
     this.loadingListener = onLoadStatus;
-    onLoadStatus?.({ phase: "preparing" });
-    this.unsubscribeProgress = subscribeSoundfontProgress((status) => {
-      if (generation === this.generation) onLoadStatus?.(status ?? { phase: "preparing" });
-    });
+    if (!this.engine) {
+      onLoadStatus?.({ phase: "preparing" });
+      this.unsubscribeProgress = subscribeSoundfontProgress((status) => {
+        if (generation === this.generation) onLoadStatus?.(status ?? { phase: "preparing" });
+      });
+    }
     try {
       // Resume in the user gesture, before downloading the sound bank.
       this.context ??= new AudioContext();
