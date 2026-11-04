@@ -12,6 +12,7 @@ import burningField from "../../examples/burning-field.jpu?raw";
 import blockyHeroes from "../../examples/blocky-heroes.jpu?raw";
 import shining from "../../examples/shining-from-the-underground.jpu?raw";
 import theSameSong from "../../examples/the-same-song.jpu?raw";
+import vivaLaVida from "../../examples/vivalavida.jpu?raw";
 import sunnySkips from "../../examples/sunny-skips.jpu?raw";
 import epicBegin from "../../examples/epic-begin.jpu?raw";
 import epicEnd from "../../examples/epic-end.jpu?raw";
@@ -31,6 +32,7 @@ export const examples = [
   blockyHeroes,
   shining,
   theSameSong,
+  vivaLaVida,
   sunnySkips,
   epicBegin,
   epicEnd,
