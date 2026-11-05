@@ -203,6 +203,9 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(settingsPanelSource, /t\("pageMargin"\)/);
   assert.match(settingsPanelSource, /t\("measureNumbers"\)/);
   assert.match(settingsPanelSource, /onMeasureNumbersChange/);
+  assert.match(appSource, /effectiveMeasureNumbers = headerMeasureNumbers \|\| measureNumbers/);
+  assert.match(appSource, /measureNumbers=\{measureNumbers\}/);
+  assert.doesNotMatch(settingsPanelSource, /disabled=\{measureNumbersFromHeader\}/);
   assert.match(settingsPanelSource, /function useClampedNumberDraft/);
   assert.match(settingsPanelSource, /const pageMarginDraft = useClampedNumberDraft/);
   assert.match(settingsPanelSource, /value=\{pageMarginDraft\.draft\}/);

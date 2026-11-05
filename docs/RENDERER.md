@@ -70,6 +70,10 @@ interface RenderOptions {
 - `measureNumbers` labels the first written measure of every rendered score
   line as `(number)` above its left boundary. Default: the parsed
   `measureNumbers` header value, or `false` when omitted.
+  In the web app, measure numbers follow the same OR rule as page numbering:
+  they are shown when either the header value or the Page Settings checkbox is
+  true. The checkbox controls the page preference, so turning it off does not
+  suppress a true header value. This applies to both preview and exports.
 - `justifyMode` controls horizontal score justification. `"none"` keeps natural
   spacing, `"except-last"` justifies every visual line except the final score
   line, and `"all"` justifies every visual line. Default: `"none"`.

@@ -182,7 +182,7 @@ export function App() {
   const [pageHeight, setPageHeight] = useState(DEFAULT_PAGE_HEIGHT);
   const [pageMargin, setPageMargin] = useState(DEFAULT_PAGE_MARGIN);
   const [pageNumbers, setPageNumbers] = useState(false);
-  const [measureNumbersOverride, setMeasureNumbersOverride] = useState<boolean | null>(null);
+  const [measureNumbers, setMeasureNumbers] = useState(false);
   const [justifyMode, setJustifyMode] = useState<JustifyMode>("none");
   const [theme, setTheme] = useState<ThemeName>(() => initialTheme());
   const [scoreColor, setScoreColor] = useState(() => themeColors(initialTheme()).scoreColor);
@@ -231,7 +231,7 @@ export function App() {
   const headerPageNumbers = previewParsed?.ok ? previewParsed.value.header.numbering : false;
   const effectivePageNumbers = headerPageNumbers || (effectivePaginate && pageNumbers);
   const headerMeasureNumbers = previewParsed?.ok ? previewParsed.value.header.measureNumbers : false;
-  const effectiveMeasureNumbers = measureNumbersOverride ?? headerMeasureNumbers;
+  const effectiveMeasureNumbers = headerMeasureNumbers || measureNumbers;
   const trackProgramOverrideCount = parsed.ok ? Object.keys(parsed.value.header.trackPrograms).length : 0;
   const scoreLayoutWarnings = useMemo(
     () =>
@@ -807,7 +807,7 @@ export function App() {
           minPageMargin={MIN_PAGE_MARGIN}
           maxPageMargin={maxPageMargin}
           pageNumbers={pageNumbers}
-          measureNumbers={effectiveMeasureNumbers}
+          measureNumbers={measureNumbers}
           pageWarnings={pageHeightWarningMessages}
           scoreColor={scoreColor}
           pageBackground={pageBackground}
@@ -837,7 +837,7 @@ export function App() {
           onPageHeightChange={setPageHeight}
           onPageMarginChange={setPageMargin}
           onPageNumbersChange={setPageNumbers}
-          onMeasureNumbersChange={setMeasureNumbersOverride}
+          onMeasureNumbersChange={setMeasureNumbers}
           onScoreColorChange={setScoreColor}
           onPageBackgroundChange={setPageBackground}
           onJustifyModeChange={setJustifyMode}

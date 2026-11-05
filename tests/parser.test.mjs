@@ -58,6 +58,16 @@ test("parses page rendering header fields", () => {
   assert.equal(result.value.header.paginate, true);
 });
 
+test("parses omitted measure numbers and explicit true and false", () => {
+  for (const value of [undefined, true, false]) {
+    const source = value === undefined ? "1 2 3 4" : `measureNumbers: ${value}\n===\n1 2 3 4`;
+    const result = parse(source);
+    assert.equal(result.ok, true);
+    assert.deepEqual(result.diagnostics, []);
+    assert.equal(result.value.header.measureNumbers, value ?? false);
+  }
+});
+
 test("accepts the exact triple-equals header separator", () => {
   const result = parse(`title: "Separator"\n===\n1 2`);
   assert.equal(result.ok, true);
