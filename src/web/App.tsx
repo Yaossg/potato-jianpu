@@ -28,6 +28,7 @@ import { Toolbar } from "./Toolbar.js";
 import { initialTheme, THEME_STORAGE_KEY, themeColors } from "./theme.js";
 import type { JustifyMode, Language, PageWidthMode, TranslationKey } from "./i18n.js";
 import type { ThemeName } from "./theme.js";
+import type { VideoExportPhase } from "./video-export.js";
 
 const MELODIC_AUDITION_SOURCE = "1 2 3 4 5 6 7 1'";
 const DRUM_AUDITION_SOURCE = "X X X X";
@@ -197,6 +198,9 @@ export function App() {
   const [omitInitialRests, setOmitInitialRests] = useState(true);
   const [exportingAudio, setExportingAudio] = useState<"wav" | "mp3" | null>(null);
   const [audioExportDetails, setAudioExportDetails] = useState("");
+  const [videoProgress, setVideoProgress] = useState<{ phase: VideoExportPhase; progress: number } | null>(null);
+  const videoAbortRef = useRef<AbortController | null>(null);
+  useEffect(() => () => videoAbortRef.current?.abort(), []);
   const [showSettings, setShowSettings] = useState(false);
   const [showExamples, setShowExamples] = useState(false);
   const [pendingReplacementSource, setPendingReplacementSource] = useState<string | null>(null);
@@ -494,7 +498,7 @@ export function App() {
   }
 
   async function exportWav() {
-    if (!parsed.ok || exportingAudio) {
+    if (!parsed.ok || exportingAudio || videoAbortRef.current) {
       return;
     }
     setExportingAudio("wav");
@@ -521,7 +525,7 @@ export function App() {
   }
 
   async function exportMp3() {
-    if (!parsed.ok || exportingAudio) {
+    if (!parsed.ok || exportingAudio || videoAbortRef.current) {
       return;
     }
     setExportingAudio("mp3");
@@ -544,6 +548,33 @@ export function App() {
       setExportLoadStatus(null);
       setExportingAudio(null);
       setAudioExportDetails("");
+    }
+  }
+
+  async function exportVideo() {
+    if (!parsed.ok || exportingAudio || videoAbortRef.current) return;
+    const controller = new AbortController();
+    videoAbortRef.current = controller;
+    stop();
+    setVideoProgress({ phase: "preparing", progress: 0 });
+    try {
+      const { exportBrowserVideo, VideoUnsupportedError } = await import("./video-export.js");
+      try {
+        const result = await exportBrowserVideo(parsed.value, {
+          renderOptions, program, amplitude: volume / 100, omitInitialRests,
+          signal: controller.signal, onLoadStatus: setExportLoadStatus,
+          onProgress: (phase, progress) => setVideoProgress({ phase, progress }),
+        });
+        if (!controller.signal.aborted) downloadBlob(result.blob, exportFilename(parsed.value.header.title, result.extension));
+      } catch (error) {
+        if (!controller.signal.aborted) window.alert(t(error instanceof VideoUnsupportedError ? "videoUnsupported" : "videoFailed"));
+      }
+    } catch {
+      if (!controller.signal.aborted) window.alert(t("videoFailed"));
+    } finally {
+      videoAbortRef.current = null;
+      setVideoProgress(null);
+      setExportLoadStatus(null);
     }
   }
 
@@ -710,6 +741,8 @@ export function App() {
           canExportImage={parsed.ok && svg !== null}
           exportingAudio={exportingAudio}
           audioExportDetails={audioExportDetails}
+          exportingVideo={videoProgress !== null}
+          onExportVideo={() => void exportVideo()}
           audioLoadingText={exportLoadStatus ? audioLoadMessage(exportLoadStatus, t) : undefined}
           t={t}
           onToggleLanguage={toggleLanguage}
@@ -728,6 +761,13 @@ export function App() {
           onExportMp3={() => void exportMp3()}
         />
       </header>
+      {videoProgress && (
+        <div className="audio-load-status" role="status" aria-live="polite">
+          <span>{t(videoProgress.phase === "preparing" ? "videoPreparing" : videoProgress.phase === "finalizing" ? "videoFinalizing" : "videoRendering", { percent: Math.floor(videoProgress.progress * 100) })}</span>
+          <progress aria-label={t("exportVideo")} max={1} value={videoProgress.phase === "rendering" ? videoProgress.progress : undefined} />
+          <button type="button" onClick={() => videoAbortRef.current?.abort()}>{t("cancel")}</button>
+        </div>
+      )}
       {audioLoadStatus && (
         <div className="audio-load-status" role="status" aria-live="polite">
           <span>{audioLoadMessage(audioLoadStatus, t)}</span>

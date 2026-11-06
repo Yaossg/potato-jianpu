@@ -2,6 +2,12 @@ export type Language = "en" | "zh";
 export type PageWidthMode = "panel" | "content" | "manual";
 export type JustifyMode = "none" | "except-last" | "all";
 export type TranslationKey =
+  | "exportVideo"
+  | "videoPreparing"
+  | "videoRendering"
+  | "videoFinalizing"
+  | "videoUnsupported"
+  | "videoFailed"
   | "audioPreparing"
   | "audioDownloading"
   | "audioFirstLoad"
@@ -90,6 +96,12 @@ export type TranslationKey =
 
 const translations: { en: Record<TranslationKey, string>; zh: Record<TranslationKey, string> } = {
   en: {
+    exportVideo: "MP4 (Experimental)",
+    videoPreparing: "Preparing playback video…",
+    videoRendering: "Exporting playback video: {percent}%",
+    videoFinalizing: "Finishing video file…",
+    videoUnsupported: "This browser cannot encode playback video. Try a current desktop Chrome or Edge browser over HTTPS or localhost.",
+    videoFailed: "Could not export playback video. Try a shorter score or another browser.",
     audioPreparing: "Preparing audio…",
     audioDownloading: "Downloading sound bank…",
     audioFirstLoad: "The sound bank loads on first use and is reused on this page.",
@@ -177,6 +189,12 @@ const translations: { en: Record<TranslationKey, string>; zh: Record<Translation
     events: "events",
   } satisfies Record<TranslationKey, string>,
   zh: {
+    exportVideo: "MP4（实验）",
+    videoPreparing: "正在准备播放视频…",
+    videoRendering: "正在导出播放视频：{percent}%",
+    videoFinalizing: "正在生成视频文件…",
+    videoUnsupported: "此浏览器不支持播放视频编码，请尝试使用新版桌面 Chrome 或 Edge，并通过 HTTPS 或 localhost 打开。",
+    videoFailed: "播放视频导出失败，请尝试较短的乐谱或其他浏览器。",
     audioPreparing: "正在准备音频…",
     audioDownloading: "正在下载音源…",
     audioFirstLoad: "首次使用需要加载音源，之后在此页面中复用。",

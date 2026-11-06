@@ -21,6 +21,7 @@ function app(score = "1 2 3 4", preferences = {}) {
   let tree;
   const downloads = [];
   const audioOptions = [];
+  const videoOptions = [];
   const alerts = [];
   const storage = new Map(Object.entries({ "modern-jianpu-markup-source": score, ...preferences }));
   const exports = {};
@@ -59,6 +60,14 @@ function app(score = "1 2 3 4", preferences = {}) {
     "./theme.js": { initialTheme: () => "light", themeColors: () => ({ scoreColor: "#000000", pageBackground: "#ffffff" }) },
     "./svg-fonts.js": { embedSvgDownloadFonts: async svg => svg },
     "./pdf-export.js": { svgPagesToPdfBuffer: async pages => pages.map(page => page.svg).join("\n") },
+    "./video-export.js": {
+      VideoUnsupportedError: class extends Error {},
+      exportBrowserVideo: async (document, options) => {
+        videoOptions.push({ document, ...options });
+        options.onProgress("rendering", 0.5);
+        return { blob: "video", extension: "mp4" };
+      },
+    },
     "./audio-export.js": Object.fromEntries(["exportBrowserWavBytes", "exportBrowserMp3Bytes"].map(name => [name, async (_doc, options) => {
       audioOptions.push(options);
       return new Uint8Array();
@@ -68,7 +77,7 @@ function app(score = "1 2 3 4", preferences = {}) {
     imports[`./${name}.js`] = { [name]: name };
   }
   vm.runInNewContext(outputText, {
-    exports, navigator: { language: "en" },
+    exports, AbortController, navigator: { language: "en" },
     window: { localStorage: { getItem: key => storage.get(key) ?? null }, alert: text => alerts.push(text) },
     require(path) { assert.ok(path in imports, `unexpected import ${path}`); return imports[path]; },
   });
@@ -91,7 +100,7 @@ function app(score = "1 2 3 4", preferences = {}) {
       render();
       assert.deepEqual(alerts, []);
     },
-    downloads, audioOptions,
+    downloads, audioOptions, videoOptions,
   };
 }
 
@@ -104,6 +113,21 @@ test("fresh browser preferences use defaults and preserve a saved fractional spl
   for (const value of ["", " ", "NaN", "Infinity"]) {
     assert.equal(app(undefined, { "modern-jianpu-markup-editor-font-size": value }).props("SourceEditor").editorFontSize, 14);
   }
+});
+
+test("playback video receives the current score, page settings, and sound settings", async () => {
+  const ui = app('title: "Video demo"\npaginate: true\n===\n1 2 3 4');
+  await ui.event("SettingsPanel", "onVolumeChange", 150);
+  await ui.event("Toolbar", "onExportVideo");
+  assert.equal(ui.videoOptions.length, 1);
+  const options = ui.videoOptions[0];
+  assert.equal(options.document.header.title, "Video demo");
+  assert.equal(options.renderOptions.paginate, true);
+  assert.equal(options.amplitude, 1.5);
+  assert.equal(options.omitInitialRests, true);
+  assert.equal(options.signal.aborted, false);
+  assert.deepEqual(ui.downloads, ["video"]);
+  assert.equal(ui.props("Toolbar").exportingVideo, false);
 });
 
 test("loading an example closes the panel only after replacement is accepted", async () => {

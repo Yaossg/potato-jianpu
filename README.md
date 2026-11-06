@@ -10,6 +10,7 @@ Current status:
 - CLI with `parse`, `validate`, `export-svg`, `export-png`, `export-pdf`, `export-midi`, `export-wav`, and `export-mp3`
 - backend WAV and MP3 export
 - frontend web preview with SVG, PNG, PDF, MIDI, WAV, and MP3 export
+- frontend playback video export with synchronized score highlighting and audio
 - frontend `.jpu` open/save
 - browser playback with current-note highlighting and click-to-play preview notes
 - Astro Starlight documentation site built from MDX

@@ -92,6 +92,7 @@
     "@vexflow-fonts/bravura": "1.0.2",
     "jspdf": "^4.2.1",
     "lamejs": "^1.2.1",
+    "mediabunny": "^1.65.2",
     "pdfkit": "^0.19.1",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",

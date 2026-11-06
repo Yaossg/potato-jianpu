@@ -15,6 +15,7 @@ interface ToolbarProps {
   exportingAudio: "wav" | "mp3" | null;
   audioExportDetails: string;
   audioLoadingText?: string;
+  exportingVideo: boolean;
   t: (key: TranslationKey) => string;
   onToggleLanguage: () => void;
   onToggleTheme: () => void;
@@ -30,6 +31,7 @@ interface ToolbarProps {
   onExportMidi: () => void;
   onExportWav: () => void;
   onExportMp3: () => void;
+  onExportVideo: () => void;
 }
 
 export function Toolbar({
@@ -42,6 +44,7 @@ export function Toolbar({
   exportingAudio,
   audioExportDetails,
   audioLoadingText,
+  exportingVideo,
   t,
   onToggleLanguage,
   onToggleTheme,
@@ -57,6 +60,7 @@ export function Toolbar({
   onExportMidi,
   onExportWav,
   onExportMp3,
+  onExportVideo,
 }: ToolbarProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -119,6 +123,8 @@ export function Toolbar({
         exportingAudio={exportingAudio}
         audioExportDetails={audioExportDetails}
         audioLoadingText={audioLoadingText}
+        exportingVideo={exportingVideo}
+        onExportVideo={onExportVideo}
         t={t}
         onExportSvg={onExportSvg}
         onExportPng={onExportPng}

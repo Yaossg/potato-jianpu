@@ -8,6 +8,7 @@ import Lame from "lamejs/src/js/Lame.js";
 import MPEGMode from "lamejs/src/js/MPEGMode.js";
 
 export interface BrowserAudioExportOptions {
+  signal?: AbortSignal;
   onLoadStatus?: AudioLoadListener;
   sampleRate?: number;
   program?: number;
@@ -65,7 +66,8 @@ function normalizeBitRate(bitRate: number | undefined): number {
   return normalized;
 }
 
-async function renderDocumentPcm(document: Document, options: BrowserAudioExportOptions, label: string): Promise<RenderedAudio> {
+export async function renderDocumentPcm(document: Document, options: BrowserAudioExportOptions, label: string): Promise<RenderedAudio> {
+  options.signal?.throwIfAborted();
   const { sampleRate, amplitude, program } = normalizeAudioOptions(options, label);
   const compiled = compileArrangement(document, program);
   const arrangement = options.omitInitialRests ? skipInitialArrangementRests(compiled) : compiled;
@@ -76,17 +78,23 @@ async function renderDocumentPcm(document: Document, options: BrowserAudioExport
   } finally {
     options.onLoadStatus?.(null);
   }
+  options.signal?.throwIfAborted();
   const render = renderSoundfontBlocks(arrangement, bank, sampleRate, amplitude);
-  let result = render.next();
-  let yieldedAt = performance.now();
-  while (!result.done) {
-    if (performance.now() - yieldedAt > 20) {
-      await new Promise<void>((resolve) => setTimeout(resolve, 0));
-      yieldedAt = performance.now();
+  try {
+    let result = render.next();
+    let yieldedAt = performance.now();
+    while (!result.done) {
+      options.signal?.throwIfAborted();
+      if (performance.now() - yieldedAt > 20) {
+        await new Promise<void>((resolve) => setTimeout(resolve, 0));
+        yieldedAt = performance.now();
+      }
+      result = render.next();
     }
-    result = render.next();
+    return result.value;
+  } finally {
+    render.return(undefined as never);
   }
-  return result.value;
 }
 
 function writeAscii(bytes: Uint8Array, offset: number, value: string) {

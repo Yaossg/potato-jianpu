@@ -357,3 +357,33 @@ The frontend also exposes MP3 download. Browser MP3 export uses
 the shared SoundFont PCM renderer, then
 encodes the rendered stereo PCM samples locally with `lamejs`. The frontend uses
 the current Program, volume, and initial-rest settings.
+
+## Browser Playback Video
+
+The export menu offers MP4 (Experimental). It exports only the score area
+with synchronized note highlighting and synthesized stereo audio at 1280 × 720,
+30 fps, and 48 kHz. It snapshots the valid document, current page layout, colors,
+Program, master volume, and initial-rest preference when export starts. Later
+edits do not change an in-progress export. Split pages and PNG scale do not
+affect video. The two-second audio release tail is retained without highlighting.
+
+`src/web/video-export.ts` renders the shared SVG once, embeds export fonts, and
+rasterizes the visible viewport when the active notes change. The viewport
+follows active notes in both directions, including repeated sections, and fits
+widely separated simultaneous voices by zooming out. The timeline consumes the
+same expanded arrangement as audio, retaining sustained voices until their
+compiled events end. No editor, toolbar, or screen capture is included.
+
+Mediabunny uses WebCodecs to encode frames with explicit timestamps and mux
+them with PCM from the existing SoundFont renderer. Both encoders are checked
+before asset loading: H.264/AAC MP4 is preferred, with VP9/Opus or VP8/Opus WebM
+as fallback. A browser without a supported pair reports an error. HTTPS or
+localhost is required for WebCodecs. Video modules load only on demand.
+
+Export shows preparation, frame progress, and finalization with cancellation.
+Cancellation stops encoding and suppresses the download; shared asset downloads
+may finish for reuse. Frames are submitted with backpressure and audio/video
+are interleaved. The PCM and compressed output remain in memory, so long scores
+can exhaust browser memory. Export speed depends on the device. Browser codec,
+visual layout, and actual download checks remain manual. No CLI video export is
+provided.

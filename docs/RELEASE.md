@@ -107,7 +107,7 @@ The frontend edition is a static Vite build. Deploy the contents of
 from `/docs/` within the same static output.
 
 The frontend exposes SVG, split-page SVG, PNG, split-page PNG, PDF, MIDI, WAV,
-and MP3 download. Frontend visual exports can use shared paper presets and
+MP3, and playback video download. Frontend visual exports can use shared paper presets and
 orientation values. Frontend PNG export is a browser canvas adapter over the
 rendered SVG. Frontend PDF export uses browser-bundled PDF generation over
 rendered SVG pages. Frontend WAV and MP3 export render locally with SpessaSynth and the bundled

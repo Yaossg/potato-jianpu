@@ -246,6 +246,7 @@ Responsibilities:
 - MIDI download
 - WAV download
 - MP3 download
+- playback video download with synchronized score highlighting
 - preview/export page width and theme controls
 - paper preset, orientation, and split-page controls for visual exports
 
@@ -299,3 +300,7 @@ Practical rules:
   needed by export adapters.
 - Web must not import backend modules.
 - CLI coordinates modules but should keep logic thin.
+
+Browser playback video lives in `src/web/video-export.ts` and
+`src/web/video-timeline.ts`. It combines shared SVG output and SoundFont PCM
+through browser-only WebCodecs encoding and Mediabunny container writing.

@@ -19,6 +19,7 @@ The complete test suite run by `pnpm run test` includes:
 - frontend production-build smoke test
 - frontend application wiring tests for persisted defaults, header/UI option
   combinations, clean visual exports, audio gain, and font-download retries
+- video timeline, viewport following, encoder selection, cancellation, and timestamp tests with browser I/O substitutes
 - module import boundary checks
 
 The frontend smoke test builds both the browser app and the documentation site,
@@ -67,7 +68,8 @@ coverage output is local-only and ignored by Git.
 - No automated real-browser UI tests.
 - No automated audio perceptual comparison.
 - No automated browser PNG pixel comparison with the backend PNG golden.
-- No real-browser assertion that WAV/MP3 downloads complete successfully.
+- No real-browser assertion that WAV/MP3/video downloads complete successfully.
+- No automated real-browser video codec or exported-frame visual checks.
 
 Real-browser checks remain manual in the current phase.
 

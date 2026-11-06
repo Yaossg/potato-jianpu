@@ -7,6 +7,7 @@ interface ExportMenuProps {
   exportingAudio: "wav" | "mp3" | null;
   audioExportDetails: string;
   audioLoadingText?: string;
+  exportingVideo: boolean;
   t: (key: TranslationKey) => string;
   onExportSvg: () => void;
   onExportPng: () => void;
@@ -14,6 +15,7 @@ interface ExportMenuProps {
   onExportMidi: () => void;
   onExportWav: () => void;
   onExportMp3: () => void;
+  onExportVideo: () => void;
 }
 
 export function ExportMenu({
@@ -22,6 +24,7 @@ export function ExportMenu({
   exportingAudio,
   audioExportDetails,
   audioLoadingText,
+  exportingVideo,
   t,
   onExportSvg,
   onExportPng,
@@ -29,6 +32,7 @@ export function ExportMenu({
   onExportMidi,
   onExportWav,
   onExportMp3,
+  onExportVideo,
 }: ExportMenuProps) {
   return (
     <details className="export-menu">
@@ -48,11 +52,14 @@ export function ExportMenu({
         <button type="button" onClick={onExportMidi} disabled={!canExportScore}>
           MIDI
         </button>
-        <button type="button" onClick={onExportWav} disabled={!canExportScore || exportingAudio !== null}>
+        <button type="button" onClick={onExportWav} disabled={!canExportScore || exportingAudio !== null || exportingVideo}>
           {exportingAudio === "wav" ? `${t("exporting")} WAV...` : "WAV"}
         </button>
-        <button type="button" onClick={onExportMp3} disabled={!canExportScore || exportingAudio !== null}>
+        <button type="button" onClick={onExportMp3} disabled={!canExportScore || exportingAudio !== null || exportingVideo}>
           {exportingAudio === "mp3" ? `${t("exporting")} MP3...` : "MP3"}
+        </button>
+        <button type="button" onClick={onExportVideo} disabled={!canExportScore || !canExportImage || exportingAudio !== null || exportingVideo}>
+          {t("exportVideo")}
         </button>
         {exportingAudio && <p className="export-status">{audioLoadingText || (audioExportDetails ? `${t("renderingLocally")}: ${audioExportDetails}` : `${t("renderingLocally")}...`)}</p>}
       </div>

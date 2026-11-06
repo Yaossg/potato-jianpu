@@ -1,6 +1,6 @@
 ---
 title: 导出
-description: 将乐谱导出为 SVG、PNG、PDF、MIDI、WAV 和 MP3。
+description: 将乐谱导出为图片、文档、MIDI、音频和播放视频。
 docId: guide-export
 sectionIds:
   - export-overview
@@ -8,6 +8,7 @@ sectionIds:
   - pagination
   - midi-export
   - audio-exports
+  - playback-video
   - browser-vs-cli
 ---
 
@@ -33,6 +34,7 @@ Modern Jianpu Markup 可以从浏览器 App 和 CLI 把同一份解析后的乐�
     { id: 'midi-export', feature: 'MIDI', browser: true, cli: true, imageRenderer: false, playbackModel: true, paginationSplit: false },
     { id: 'wav-export', feature: 'WAV', browser: true, cli: true, imageRenderer: false, playbackModel: true, paginationSplit: false },
     { id: 'mp3-export', feature: 'MP3', browser: true, cli: true, imageRenderer: false, playbackModel: true, paginationSplit: false },
+    { id: 'video-export', feature: '播放视频', browser: true, cli: false, imageRenderer: true, playbackModel: true, paginationSplit: false },
   ]}
 />
 
@@ -98,6 +100,14 @@ pnpm run cli -- export-mp3 examples/twinkle.jpu -o twinkle.mp3 --program 0 --sam
 ```
 
 音频采样率默认是 `44100`。MP3 比特率默认是 `128` kbps。音频导出使用和预览播放、MIDI 导出相同的播放模型，然后把浏览器主音量或 CLI `--amplitude` 应用到渲染输出上。
+
+## 播放视频
+
+在导出菜单选择“MP4（实验）”，即可生成仅包含简谱播放区域的视频，带同步音符高亮和声音。输出为 1280 × 720、30 fps；画面沿用当前排版与颜色，自动跟随正在播放的谱行，也会跟随反复跳转。多个声部超出画面高度时，会缩小视图以同时显示。
+
+视频沿用当前音色、主音量和忽略开头休止符设置，使用 48 kHz 立体声音频，并保留结尾两秒余音。它从头导出完整曲目；拆分页和 PNG 倍率不影响视频。开始导出后再修改乐谱或设置，不会改变本次视频。
+
+浏览器支持时下载 MP4，否则尝试 WebM。需要通过 HTTPS 或 localhost 打开，并具备可用的音视频编码器。若提示不支持，可以尝试新版桌面 Chrome 或 Edge。导出会显示准备、渲染进度和文件生成状态，可随时取消；不需要录屏权限，也无需实际播放整首曲子。速度取决于设备，长曲可能占用较多内存。
 
 ## 浏览器与 CLI
 
