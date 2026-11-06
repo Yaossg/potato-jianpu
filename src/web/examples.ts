@@ -12,6 +12,7 @@ import burningField from "../../examples/burning-field.jpu?raw";
 import blockyHeroes from "../../examples/blocky-heroes.jpu?raw";
 import shining from "../../examples/shining-from-the-underground.jpu?raw";
 import theSameSong from "../../examples/the-same-song.jpu?raw";
+import lakeBaikal from "../../examples/lake-baikal.jpu?raw";
 import mengZaiRanShao from "../../examples/meng-zai-ran-shao.jpu?raw";
 import endlessFlow from "../../examples/endless-flow.jpu?raw";
 import vivaLaVida from "../../examples/vivalavida.jpu?raw";
@@ -34,6 +35,7 @@ export const examples = [
   blockyHeroes,
   shining,
   theSameSong,
+  lakeBaikal,
   mengZaiRanShao,
   endlessFlow,
   vivaLaVida,
