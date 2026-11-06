@@ -63,7 +63,7 @@ PNG 导出默认使用 `2x` 栅格倍率。可以用 CLI 的 `--png-scale <numbe
 
 分页适用于视觉导出：SVG、PNG 和 PDF。未启用分页时，渲染器会生成一个自适应高度的页面。启用分页后，渲染器会使用固定页面高度、绘制页面边界、只在第一页保留乐谱文件头，并在启用页码或页脚文字时预留页脚空间。
 
-在 `.jpu` 文件里，`paginate: true` 会让视觉渲染默认分页，`numbering: true` 会启用居中的 `current / total` 页码，`footer: "text"` 会添加左下角页脚文字。单独一行的 `---` 是手动分页；只有启用分页时，它才会让下一条谱面行从新页开始。
+在 `.jpu` 文件里，`paginate: true` 会让视觉渲染默认分页，`pageNumbers: true` 会启用居中的 `current / total` 页码，`footer: "text"` 会添加左下角页脚文字。单独一行的 `---` 是手动分页；只有启用分页时，它才会让下一条谱面行从新页开始。
 
 在 CLI 中，可以为单次导出传入 `--paginate`，并用 `--page-height`、`--page-margin`、`--page-footer` 和 `--page-numbers` 控制页面布局：
 

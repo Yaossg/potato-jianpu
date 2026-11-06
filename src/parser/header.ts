@@ -28,7 +28,7 @@ const keyMap: Record<string, KeySignature> = {
   B: 11,
 };
 
-const semanticKeys = new Set(["title", "subtitle", "composer", "key", "time", "tempo", "hidden", "footer", "numbering", "measureNumbers", "paginate", "program", "volume"]);
+const semanticKeys = new Set(["title", "subtitle", "composer", "key", "time", "tempo", "hidden", "footer", "pageNumbers", "measureNumbers", "paginate", "program", "volume"]);
 
 export function createDefaultHeader(): Header {
   return {
@@ -41,7 +41,7 @@ export function createDefaultHeader(): Header {
     tempo: 120,
     hidden: false,
     footer: "",
-    numbering: false,
+    pageNumbers: false,
     measureNumbers: false,
     paginate: false,
     trackNames: {},
@@ -135,11 +135,11 @@ export function applyHeaderProperty(
     return "ok";
   }
 
-  if (textKey === "numbering") {
-    if (!value || !recordKey(seen, "numbering", "Duplicate header property 'numbering'.", keyRange, diagnostics)) {
+  if (textKey === "pageNumbers") {
+    if (!value || !recordKey(seen, "pageNumbers", "Duplicate header property 'pageNumbers'.", keyRange, diagnostics)) {
       return "ok";
     }
-    parseNumbering(header, value, diagnostics);
+    parsePageNumbers(header, value, diagnostics);
     return "ok";
   }
 
@@ -383,20 +383,20 @@ function parseHidden(header: Header, value: HeaderValue, diagnostics: Diagnostic
   diagnostics.push({ severity: "error", message: "Expected boolean value for hidden.", range: value.range });
 }
 
-function parseNumbering(header: Header, value: HeaderValue, diagnostics: Diagnostic[]) {
+function parsePageNumbers(header: Header, value: HeaderValue, diagnostics: Diagnostic[]) {
   if (value.quoted) {
-    diagnostics.push({ severity: "error", message: "Expected boolean value for numbering.", range: value.range });
+    diagnostics.push({ severity: "error", message: "Expected boolean value for pageNumbers.", range: value.range });
     return;
   }
   if (value.text === "true") {
-    header.numbering = true;
+    header.pageNumbers = true;
     return;
   }
   if (value.text === "false") {
-    header.numbering = false;
+    header.pageNumbers = false;
     return;
   }
-  diagnostics.push({ severity: "error", message: "Expected boolean value for numbering.", range: value.range });
+  diagnostics.push({ severity: "error", message: "Expected boolean value for pageNumbers.", range: value.range });
 }
 
 function parseMeasureNumbers(header: Header, value: HeaderValue, diagnostics: Diagnostic[]) {

@@ -387,7 +387,7 @@ test("renders page footers and page numbers", () => {
 });
 
 test("uses page adornments from the header", () => {
-  const result = parse(`hidden: true\nfooter: "from-header"\nnumbering: true\n===\n1 2 | 3 4 | 5 6 | 7 1' |\n1 2 | 3 4 | 5 6 | 7 1' |`);
+  const result = parse(`hidden: true\nfooter: "from-header"\npageNumbers: true\n===\n1 2 | 3 4 | 5 6 | 7 1' |\n1 2 | 3 4 | 5 6 | 7 1' |`);
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, {
     pageWidth: 140,

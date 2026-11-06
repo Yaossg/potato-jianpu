@@ -73,7 +73,7 @@ Parse result shape:
       "tempo": 120,
       "hidden": false,
       "footer": "",
-      "numbering": false,
+      "pageNumbers": false,
       "measureNumbers": false,
       "paginate": false,
       "trackNames": {},
@@ -144,7 +144,7 @@ Options:
 - `--page-footer <text>`: optional bottom-left page-level footer text. When
   omitted, the renderer uses the parsed `footer` header value.
 - `--page-numbers`: renders centered page numbers as `current / total`. When
-  omitted, the renderer uses the parsed `numbering` header value.
+  omitted, the renderer uses the parsed `pageNumbers` header value.
 - `--color <#RRGGBB>`: six-digit hexadecimal color used for `currentColor` SVG
   notation elements.
 - `--background <#RRGGBB>`: six-digit hexadecimal color used for SVG page

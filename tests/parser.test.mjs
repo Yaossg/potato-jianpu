@@ -44,18 +44,41 @@ test("parses empty files with default header values", () => {
   assert.equal(result.value.header.keySignatureText, "C");
   assert.equal(result.value.header.tempo, 120);
   assert.equal(result.value.header.footer, "");
-  assert.equal(result.value.header.numbering, false);
+  assert.equal(result.value.header.pageNumbers, false);
   assert.equal(result.value.header.measureNumbers, false);
   assert.equal(result.value.header.paginate, false);
 });
 
 test("parses page rendering header fields", () => {
-  const result = parse(`footer: "modern-jianpu"\nnumbering: true\nmeasureNumbers: true\npaginate: true\n===\n1 2`);
+  const result = parse(`footer: "modern-jianpu"\npageNumbers: true\nmeasureNumbers: true\npaginate: true\n===\n1 2`);
   assert.equal(result.ok, true);
   assert.equal(result.value.header.footer, "modern-jianpu");
-  assert.equal(result.value.header.numbering, true);
+  assert.equal(result.value.header.pageNumbers, true);
   assert.equal(result.value.header.measureNumbers, true);
   assert.equal(result.value.header.paginate, true);
+});
+
+test("parses pageNumbers boolean values and rejects invalid or duplicate values", () => {
+  for (const value of [true, false]) {
+    const result = parse(`pageNumbers: ${value}\n===\n1 2 3 4`);
+    assert.equal(result.ok, true);
+    assert.deepEqual(result.diagnostics, []);
+    assert.equal(result.value.header.pageNumbers, value);
+  }
+  for (const value of ['"true"', 'yes', '1']) {
+    const result = parse(`pageNumbers: ${value}\n===\n1 2 3 4`);
+    assert.equal(result.ok, false);
+    assert.match(result.diagnostics.map((d) => d.message).join("\n"), /Expected boolean value for pageNumbers/);
+  }
+  const duplicate = parse("pageNumbers: true\npageNumbers: false\n===\n1 2 3 4");
+  assert.equal(duplicate.ok, false);
+  assert.match(duplicate.diagnostics.map((d) => d.message).join("\n"), /Duplicate header property 'pageNumbers'/);
+});
+
+test("rejects the former numbering header name", () => {
+  const result = parse("numbering: true\n===\n1 2 3 4");
+  assert.equal(result.ok, false);
+  assert.match(result.diagnostics.map((d) => d.message).join("\n"), /Unknown header key 'numbering'/);
 });
 
 test("parses omitted measure numbers and explicit true and false", () => {

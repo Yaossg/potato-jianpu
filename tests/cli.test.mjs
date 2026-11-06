@@ -322,7 +322,7 @@ test("CLI export-svg uses page footer and numbers from header", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
   const input = join(dir, "score.jpu");
   const output = join(dir, "score.svg");
-  await writeFile(input, `footer: "from-header"\nnumbering: true\n===\n1 2 | 3 4 | 5 6 | 7 1' |\n1 2 | 3 4 | 5 6 | 7 1' |`, "utf8");
+  await writeFile(input, `footer: "from-header"\npageNumbers: true\n===\n1 2 | 3 4 | 5 6 | 7 1' |\n1 2 | 3 4 | 5 6 | 7 1' |`, "utf8");
 
   await execFileAsync(
     process.execPath,

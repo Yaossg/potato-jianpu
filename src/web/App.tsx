@@ -228,7 +228,7 @@ export function App() {
   const effectivePaginate = headerPaginate || paginate;
   const maxPageMargin = Math.max(MIN_PAGE_MARGIN, Math.floor((Math.min(pageWidth, effectivePaginate ? resolvedPageHeight : pageWidth) - 1) / 2));
   const headerPageFooter = previewParsed?.ok ? previewParsed.value.header.footer : "";
-  const headerPageNumbers = previewParsed?.ok ? previewParsed.value.header.numbering : false;
+  const headerPageNumbers = previewParsed?.ok ? previewParsed.value.header.pageNumbers : false;
   const effectivePageNumbers = headerPageNumbers || (effectivePaginate && pageNumbers);
   const headerMeasureNumbers = previewParsed?.ok ? previewParsed.value.header.measureNumbers : false;
   const effectiveMeasureNumbers = headerMeasureNumbers || measureNumbers;

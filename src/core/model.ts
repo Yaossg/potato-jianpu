@@ -160,7 +160,7 @@ export interface Header {
   tempo: number;
   hidden: boolean;
   footer: string;
-  numbering: boolean;
+  pageNumbers: boolean;
   measureNumbers: boolean;
   paginate: boolean;
   program?: number;

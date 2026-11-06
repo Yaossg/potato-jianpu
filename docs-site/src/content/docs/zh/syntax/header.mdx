@@ -51,19 +51,19 @@ tempo: 72
 
 | 分类 | 字段 | 含义 |
 | --- | --- | --- |
-| 乐谱显示 | `title`、`subtitle`、`composer`、`hidden`、`paginate`、`numbering`、`measureNumbers`、`footer` | 可见元数据、文件头显示、分页视觉渲染、页码、小节编号和页脚文本。 |
+| 乐谱显示 | `title`、`subtitle`、`composer`、`hidden`、`paginate`、`pageNumbers`、`measureNumbers`、`footer` | 可见元数据、文件头显示、分页视觉渲染、页码、小节编号和页脚文本。 |
 | 音乐默认值 | `key`、`time`、`tempo` | 音高拼写、小节时值校验，以及播放/导出速度。 |
 | 播放默认值 | `program`、`volume` | 播放和导出的乐谱级 Program 与轨道音量默认值。 |
 | 轨道和歌词标签 | `Tn.name`、`Tn`、`Pn.name`、`Pn`、`Ln.name`、`Ln` | 旋律轨道、打击乐轨道和歌词行的可见名称。 |
 | 轨道播放覆盖 | `Tn.program`、`Pn.program`、`Tn.volume`、`Pn.volume` | 播放和导出的逐轨道 Program 与音量覆盖。 |
 
-`title`、`subtitle`、`composer` 和 `footer` 的默认值为空；`hidden`、`numbering`、`measureNumbers` 和 `paginate` 默认为 `false`；`key` 默认为 `C`；`time` 默认为 `4/4`；`tempo` 默认为 `120`；`program` 会回退到浏览器或 CLI 的 Program 设置；`volume` 默认为 `1`。
+`title`、`subtitle`、`composer` 和 `footer` 的默认值为空；`hidden`、`pageNumbers`、`measureNumbers` 和 `paginate` 默认为 `false`；`key` 默认为 `C`；`time` 默认为 `4/4`；`tempo` 默认为 `120`；`program` 会回退到浏览器或 CLI 的 Program 设置；`volume` 默认为 `1`。
 
 只接受文档列出的文件头字段。`arranger` 这样的未知字段，或 `temop` 这样的拼写错误字段，都会成为解析错误。
 
 ## 语法和校验
 
-文件头字段名区分大小写。文本值和可见标签名称必须加引号；`key`、`time`、`tempo`、`hidden`、`numbering`、`measureNumbers` 和 `paginate` 使用不加引号的类型化值。
+文件头字段名区分大小写。文本值和可见标签名称必须加引号；`key`、`time`、`tempo`、`hidden`、`pageNumbers`、`measureNumbers` 和 `paginate` 使用不加引号的类型化值。
 
 文本字段使用双引号字符串，并且必须保持在同一行。反斜杠会让分词器跳过后面的一个字符，但反斜杠本身会作为源文本保留，不会被解释成转义序列。因此请按希望用户读到的样子书写可见元数据。
 
@@ -134,7 +134,7 @@ hidden: true
 1 2 3 4`}
 />
 
-使用 `paginate: true` 可以让 SVG、PNG 和 PDF 输出默认使用固定页高分页渲染。使用 `footer` 设置每页左下角的页脚文本。使用 `numbering: true` 可以渲染居中的 `current / total` 页码。浏览器和 CLI 的渲染选项仍可以为单次导出覆盖这些字段。
+使用 `paginate: true` 可以让 SVG、PNG 和 PDF 输出默认使用固定页高分页渲染。使用 `footer` 设置每页左下角的页脚文本。使用 `pageNumbers: true` 可以渲染居中的 `current / total` 页码。浏览器和 CLI 的渲染选项仍可以为单次导出覆盖这些字段。
 
 使用 `measureNumbers: true` 可以在每条书写谱面行的首小节左边界上方标注小节编号。编号使用 `(1)`、`(5)` 这样的带括号阿拉伯数字，跨页继续，并按书写的小节计数而不展开反复。同步多轨谱组只显示一个以主声部为准的编号。浏览器中的“小节编号”设置可以在不修改源码的情况下开启或关闭这些标注。
 
@@ -142,7 +142,7 @@ hidden: true
   title="页面信息文件头源码"
   source={`paginate: true
 footer: "modern-jianpu"
-numbering: true
+pageNumbers: true
 measureNumbers: true
 ===
 1 2 3 4

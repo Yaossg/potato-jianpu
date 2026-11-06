@@ -63,7 +63,7 @@ PNG export defaults to `2x` raster scale. Use CLI `--png-scale <number>` or the 
 
 Pagination applies to visual exports: SVG, PNG, and PDF. When pagination is off, the renderer creates one adaptive-height page. When pagination is on, the renderer uses fixed-height pages, draws page boundaries, keeps the score header on the first page, and reserves footer space when page numbers or footer text are enabled.
 
-In a `.jpu` file, `paginate: true` makes paginated visual rendering the default, `numbering: true` enables centered `current / total` page numbers, and `footer: "text"` adds bottom-left footer text. A score line containing only `---` is a manual page break; it starts the next score line on a new page only when pagination is enabled.
+In a `.jpu` file, `paginate: true` makes paginated visual rendering the default, `pageNumbers: true` enables centered `current / total` page numbers, and `footer: "text"` adds bottom-left footer text. A score line containing only `---` is a manual page break; it starts the next score line on a new page only when pagination is enabled.
 
 From the CLI, pass `--paginate` for a specific export and use `--page-height`, `--page-margin`, `--page-footer`, and `--page-numbers` to control the page layout:
 

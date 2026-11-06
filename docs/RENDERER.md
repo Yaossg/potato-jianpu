@@ -71,7 +71,7 @@ interface RenderOptions {
 - `pageFooter` sets optional page-level footer text. Default: the parsed
   `footer` header value, or empty when omitted.
 - `pageNumbers` renders centered page numbers as `current / total`. Default:
-  the parsed `numbering` header value, or `false` when omitted.
+  the parsed `pageNumbers` header value, or `false` when omitted.
 - `measureNumbers` labels the first written measure of every rendered score
   line as `(number)` above its left boundary. Default: the parsed
   `measureNumbers` header value, or `false` when omitted.

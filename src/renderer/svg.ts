@@ -42,7 +42,7 @@ function resolvedRenderOptions(document: Document, options: RenderOptions): Requ
     pageHeight: options.pageHeight ?? DEFAULT_OPTIONS.pageHeight,
     pageMargin,
     pageFooter: options.pageFooter ?? document.header.footer,
-    pageNumbers: options.pageNumbers ?? document.header.numbering,
+    pageNumbers: options.pageNumbers ?? document.header.pageNumbers,
     measureNumbers: options.measureNumbers ?? document.header.measureNumbers,
     justifyMode: options.justifyMode ?? DEFAULT_OPTIONS.justifyMode,
     activeNoteIndex: options.activeNoteIndex ?? DEFAULT_OPTIONS.activeNoteIndex,

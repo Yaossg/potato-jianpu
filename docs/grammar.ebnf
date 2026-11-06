@@ -1,7 +1,7 @@
 file = { NEWLINE }, [ header ], [ score ], EOF ;
 
 header = { property }, EQUALS, EQUALS, EQUALS, NEWLINE, { NEWLINE } ;
-property = text_property | key_property | time_property | tempo_property | hidden_property | footer_property | numbering_property | measure_numbers_property | paginate_property | program_property | volume_property | track_name_property | track_name_shorthand_property | track_program_property | track_volume_property | percussion_name_property | percussion_name_shorthand_property | percussion_program_property | percussion_volume_property | lyric_label_property | lyric_label_shorthand_property ;
+property = text_property | key_property | time_property | tempo_property | hidden_property | footer_property | page_numbers_property | measure_numbers_property | paginate_property | program_property | volume_property | track_name_property | track_name_shorthand_property | track_program_property | track_volume_property | percussion_name_property | percussion_name_shorthand_property | percussion_program_property | percussion_volume_property | lyric_label_property | lyric_label_shorthand_property ;
 
 (* composer may repeat; each occurrence appends a credit line in source order.
    title and subtitle remain unique. *)
@@ -11,7 +11,7 @@ time_property = "time", ":", TIME_SIGNATURE, NEWLINE, { NEWLINE } ;
 tempo_property = "tempo", ":", NUMBER, NEWLINE, { NEWLINE } ;
 hidden_property = "hidden", ":", BOOLEAN, NEWLINE, { NEWLINE } ;
 footer_property = "footer", ":", STRING, NEWLINE, { NEWLINE } ;
-numbering_property = "numbering", ":", BOOLEAN, NEWLINE, { NEWLINE } ;
+page_numbers_property = "pageNumbers", ":", BOOLEAN, NEWLINE, { NEWLINE } ;
 measure_numbers_property = "measureNumbers", ":", BOOLEAN, NEWLINE, { NEWLINE } ;
 paginate_property = "paginate", ":", BOOLEAN, NEWLINE, { NEWLINE } ;
 program_property = "program", ":", default_program_value, NEWLINE, { NEWLINE } ;
