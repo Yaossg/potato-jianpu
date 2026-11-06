@@ -57,8 +57,9 @@ function pitchToMidi(pitch: Pitch, noteMap: number[]): number {
   return noteMap[pitch.note - 1]! + pitch.octave * 12;
 }
 
-function ornamentPitchToMidi(pitch: Pitch, noteMap: number[]): number {
-  return noteMap[pitch.note - 1]! + (pitch.accidental ?? 0) + pitch.octave * 12;
+function ornamentPitchToMidi(pitch: Pitch, noteMap: number[], baseNoteMap: number[]): number {
+  const base = pitch.accidental === undefined ? noteMap[pitch.note - 1]! : baseNoteMap[pitch.note - 1]! + pitch.accidental;
+  return base + pitch.octave * 12;
 }
 
 function adjacentPitch(pitch: Pitch, direction: "upper" | "lower"): Pitch {
@@ -86,7 +87,7 @@ function replaceChordPitch(chord: number[], index: number, pitch: number): numbe
   return chord.map((member, memberIndex) => memberIndex === index ? pitch : member);
 }
 
-function compilePitchNoteEvents(note: Extract<Note, { kind: "pitch" }>, noteMap: number[], slideTarget?: number): MelodyNote[] {
+function compilePitchNoteEvents(note: Extract<Note, { kind: "pitch" }>, noteMap: number[], baseNoteMap: number[], slideTarget?: number): MelodyNote[] {
   const velocity = note.velocity;
   const anchor = note.chord.map((pitch) => pitchToMidi(pitch, noteMap));
   const duration = note.duration.value * (note.ornament?.kind === "fermata" ? FERMATA_DURATION_FACTOR : 1);
@@ -125,7 +126,7 @@ function compilePitchNoteEvents(note: Extract<Note, { kind: "pitch" }>, noteMap:
     const segment = ornamentDuration / note.ornament.pitches.length;
     const sustain = note.duration.value - ornamentDuration;
     const graceNotes = note.ornament.pitches.map((pitch) => ({
-      chord: [ornamentPitchToMidi(pitch, noteMap)],
+      chord: [ornamentPitchToMidi(pitch, noteMap, baseNoteMap)],
       duration: segment,
       index: note.index,
       velocity,
@@ -226,7 +227,7 @@ export function melodyPitchSpans(notes: MelodyNote[]): MelodyPitchSpan[] {
   return spans;
 }
 
-function compileNoteEvents(note: Note, noteMap: number[], program: number, slideTarget?: number): MelodyNote[] {
+function compileNoteEvents(note: Note, noteMap: number[], baseNoteMap: number[], program: number, slideTarget?: number): MelodyNote[] {
   const velocity = note.velocity;
   const duration = note.duration.value * (note.ornament?.kind === "fermata" ? FERMATA_DURATION_FACTOR : 1);
   switch (note.kind) {
@@ -240,18 +241,20 @@ function compileNoteEvents(note: Note, noteMap: number[], program: number, slide
         velocity,
       }];
     case "pitch":
-      return compilePitchNoteEvents(note, noteMap, slideTarget);
+      return compilePitchNoteEvents(note, noteMap, baseNoteMap, slideTarget);
   }
 }
 
 interface PlaybackNoteContext {
   note: Note;
+  offset: number;
   noteMap: number[];
   slideTarget?: number;
 }
 
 interface SourceNoteEventGroup {
   note: Note;
+  offset: number;
   startIndex: number;
   endIndex: number;
 }
@@ -283,6 +286,7 @@ function slurTransitions(document: Document): Set<string> {
 
 function resolvePlaybackNotes(measures: Measure[], baseNoteMap: number[]): PlaybackNoteContext[] {
   const contexts: PlaybackNoteContext[] = [];
+  let offset = 0;
   for (const measure of measures) {
     const noteMap = [...baseNoteMap];
     for (const note of measure.notes) {
@@ -293,7 +297,8 @@ function resolvePlaybackNotes(measures: Measure[], baseNoteMap: number[]): Playb
           }
         }
       }
-      contexts.push({ note, noteMap: [...noteMap] });
+      contexts.push({ note, offset, noteMap: [...noteMap] });
+      offset += playbackDuration(note);
     }
   }
   for (const [index, context] of contexts.entries()) {
@@ -315,21 +320,22 @@ function compileMeasure(
   sourceGroups: SourceNoteEventGroup[],
   contexts: PlaybackNoteContext[],
   contextStart: number,
+  baseNoteMap: number[],
 ) {
   for (const [index, note] of measure.notes.entries()) {
     const context = contexts[contextStart + index]!;
-    const melodyNotes = compileNoteEvents(note, context.noteMap, program, context.slideTarget);
+    const melodyNotes = compileNoteEvents(note, context.noteMap, baseNoteMap, program, context.slideTarget);
     if (note.tie) {
       const previous = output.at(-1);
       if (previous) {
         previous.duration += melodyNotes.reduce((sum, melodyNote) => sum + melodyNote.duration, 0);
       }
       // Ties have no new attack, but their markings still update later dynamics.
-      sourceGroups.push({ note, startIndex: output.length, endIndex: output.length - 1 });
+      sourceGroups.push({ note, offset: context.offset, startIndex: output.length, endIndex: output.length - 1 });
     } else {
       const startIndex = output.length;
       output.push(...melodyNotes);
-      sourceGroups.push({ note, startIndex, endIndex: output.length - 1 });
+      sourceGroups.push({ note, offset: context.offset, startIndex, endIndex: output.length - 1 });
     }
   }
 }
@@ -431,7 +437,7 @@ function expandRepeatedMeasures(measures: Measure[]): Measure[] {
       expanded.push(...measures.slice(measureIndex));
       break;
     }
-    if (nextRepeatStartIndex > measureIndex && nextRepeatStartIndex < nextRepeatEndIndex) {
+    if (nextRepeatStartIndex > measureIndex && nextRepeatStartIndex <= nextRepeatEndIndex) {
       expanded.push(...measures.slice(measureIndex, nextRepeatStartIndex));
       measureIndex = nextRepeatStartIndex;
       continue;
@@ -513,18 +519,21 @@ function expandNavigationMeasures(measures: Measure[]): Measure[] {
   return expanded;
 }
 
-function compileMeasures(document: Document, measures: Measure[], program: number, options: { navigation?: boolean } = {}): Melody {
+function compileMeasures(document: Document, measures: Measure[], program: number, options: { navigation?: boolean; windows?: PlaybackWindow[] } = {}): Melody {
   const baseNoteMap = C_MAJOR_NOTE_MAP.map((note) => note + document.header.keySignature);
-  const notes: MelodyNote[] = [];
-  const sourceGroups: SourceNoteEventGroup[] = [];
+  let notes: MelodyNote[] = [];
+  let sourceGroups: SourceNoteEventGroup[] = [];
   const repeatedMeasures = expandRepeatedMeasures(measures);
   const playbackMeasures = options.navigation === false ? repeatedMeasures : expandNavigationMeasures(repeatedMeasures);
   const contexts = resolvePlaybackNotes(playbackMeasures, baseNoteMap);
   const transitions = slurTransitions(document);
   let contextStart = 0;
   for (const measure of playbackMeasures) {
-    compileMeasure(measure, program, notes, sourceGroups, contexts, contextStart);
+    compileMeasure(measure, program, notes, sourceGroups, contexts, contextStart, baseNoteMap);
     contextStart += measure.notes.length;
+  }
+  if (options.windows) {
+    ({ notes, sourceGroups } = slicePlaybackWindows(notes, sourceGroups, options.windows));
   }
   applySlurTransitions(notes, sourceGroups, transitions);
   applyDynamicVelocities(notes, sourceGroups);
@@ -596,63 +605,86 @@ function arrangementLineGroups(lines: ScoreLine[]): ScoreLine[][] {
   return groups;
 }
 
-function primaryLineInGroup(group: ScoreLine[]): ScoreLine | undefined {
-  return group.find((line) => line.label === undefined || line.label === "T1") ?? group[0];
+function playbackDuration(note: Note): number {
+  return note.duration.value * (note.ornament?.kind === "fermata" ? FERMATA_DURATION_FACTOR : 1);
 }
 
-function groupHasNavigationAfter(group: ScoreLine[], mark: NonNullable<Measure["navigationAfter"]>[number]): boolean {
-  return primaryLineInGroup(group)?.measures.some((measure) => hasNavigationAfter(measure, mark)) === true;
+interface PlaybackWindow {
+  start: number;
+  end: number;
 }
 
-function groupHasNavigationBefore(group: ScoreLine[], mark: NonNullable<Measure["navigationBefore"]>[number]): boolean {
-  return primaryLineInGroup(group)?.measures.some((measure) => hasNavigationBefore(measure, mark)) === true;
-}
-
-function navigationAfterGroupIndex(groups: ScoreLine[][], marks: Array<NonNullable<Measure["navigationAfter"]>[number]>): number {
-  return groups.findIndex((group) => marks.some((mark) => groupHasNavigationAfter(group, mark)));
-}
-
-function navigationBeforeGroupIndex(groups: ScoreLine[][], mark: NonNullable<Measure["navigationBefore"]>[number]): number {
-  return groups.findIndex((group) => groupHasNavigationBefore(group, mark));
-}
-
-function expandNavigationGroups(groups: ScoreLine[][]): ScoreLine[][] {
-  const jumpIndex = navigationAfterGroupIndex(groups, ["dc", "ds"]);
-  if (jumpIndex < 0) {
-    return groups;
+function arrangementNavigationWindows(measures: Measure[]): PlaybackWindow[] | undefined {
+  // Each repeat occurrence needs its own identity and position on the timeline.
+  const expanded = expandRepeatedMeasures(measures).map((measure) => ({ ...measure }));
+  if (navigationAfterIndex(expanded, ["dc", "ds"]) < 0) return undefined;
+  let offset = 0;
+  const positions = new Map(expanded.map((measure) => {
+    const start = offset;
+    offset += measure.notes.reduce((sum, note) => sum + playbackDuration(note), 0);
+    return [measure, { start, end: offset }] as const;
+  }));
+  const path = expandNavigationMeasures(expanded);
+  const windows: PlaybackWindow[] = [];
+  for (const measure of path) {
+    const position = positions.get(measure)!;
+    const previous = windows.at(-1);
+    if (previous && Math.abs(previous.end - position.start) < 1e-9) {
+      previous.end = position.end;
+    } else {
+      windows.push({ ...position });
+    }
   }
-
-  const targetIndex = groupHasNavigationAfter(groups[jumpIndex]!, "ds") ? navigationBeforeGroupIndex(groups, "segno") : 0;
-  const codaIndex = navigationBeforeGroupIndex(groups, "coda");
-  const expanded: ScoreLine[][] = [];
-  let jumped = false;
-  let codaJumped = false;
-  let index = 0;
-
-  while (index < groups.length) {
-    const group = groups[index]!;
-    expanded.push(group);
-
-    if (jumped && groupHasNavigationAfter(group, "fine")) {
-      break;
-    }
-
-    if (jumped && !codaJumped && groupHasNavigationAfter(group, "toCoda") && codaIndex >= 0) {
-      codaJumped = true;
-      index = codaIndex;
-      continue;
-    }
-
-    if (!jumped && index === jumpIndex && targetIndex >= 0) {
-      jumped = true;
-      index = targetIndex;
-      continue;
-    }
-
-    index += 1;
+  // On a normal written ending, retain any longer accompaniment tail.
+  const last = path.at(-1);
+  if (last === expanded.at(-1) && last && !hasNavigationAfter(last, "fine")) {
+    windows.at(-1)!.end = Infinity;
   }
+  return windows;
+}
 
-  return expanded;
+function slicePlaybackWindows(
+  originalNotes: MelodyNote[],
+  originalGroups: SourceNoteEventGroup[],
+  windows: PlaybackWindow[],
+): { notes: MelodyNote[]; sourceGroups: SourceNoteEventGroup[] } {
+  const notes: MelodyNote[] = [];
+  const sourceGroups: SourceNoteEventGroup[] = [];
+  for (const window of windows) {
+    let offset = 0;
+    let includedDuration = 0;
+    const mappedIndices = new Map<number, number>();
+    for (const [index, note] of originalNotes.entries()) {
+      const end = offset + note.duration;
+      const duration = Math.min(end, window.end) - Math.max(offset, window.start);
+      if (duration > 1e-9) {
+        mappedIndices.set(index, notes.length);
+        const clipped = { ...note, duration };
+        if (mappedIndices.size === 1) delete clipped.sustained;
+        notes.push(clipped);
+        includedDuration += duration;
+      }
+      offset = end;
+    }
+    for (const group of originalGroups) {
+      const indices: number[] = [];
+      for (let index = group.startIndex; index <= group.endIndex; index += 1) {
+        const mapped = mappedIndices.get(index);
+        if (mapped !== undefined) indices.push(mapped);
+      }
+      if (indices.length > 0) {
+        sourceGroups.push({ ...group, startIndex: indices[0]!, endIndex: indices.at(-1)! });
+      } else if (group.startIndex > group.endIndex && group.offset >= window.start && group.offset < window.end) {
+        // Dynamics written on a tied segment still affect following attacks.
+        sourceGroups.push({ ...group, startIndex: notes.length, endIndex: notes.length - 1 });
+      }
+    }
+    if (Number.isFinite(window.end)) {
+      const gap = window.end - window.start - includedDuration;
+      if (gap > 1e-9) notes.push({ chord: "rest", duration: gap, index: -1 });
+    }
+  }
+  return { notes, sourceGroups };
 }
 
 interface ArrangementSegment {
@@ -679,7 +711,7 @@ export function compileArrangement(document: Document, program = 0): Arrangement
   const trackMeasures = new Map<string, Measure[]>();
   const segments: ArrangementSegment[] = [];
   let groupStart = 0;
-  for (const group of expandNavigationGroups(arrangementLineGroups(document.score))) {
+  for (const group of arrangementLineGroups(document.score)) {
     const lines = group.map((line) => ({
       name: line.label ?? "",
       measures: line.measures,
@@ -706,12 +738,13 @@ export function compileArrangement(document: Document, program = 0): Arrangement
     trackMeasures.set(segment.name, measures);
   }
 
+  const windows = arrangementNavigationWindows(trackMeasures.get("T1") ?? []);
   return {
     tracks: [...trackMeasures].map(([name, measures]) => ({
       name,
       program: programForTrack(document, name, defaultProgram),
       volume: volumeForTrack(document, name),
-      notes: compileMeasures(document, measures, programForTrack(document, name, defaultProgram), { navigation: false }).notes,
+      notes: compileMeasures(document, measures, programForTrack(document, name, defaultProgram), { navigation: false, windows }).notes,
       ...base,
     })),
     ...base,

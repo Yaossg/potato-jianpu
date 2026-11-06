@@ -1143,3 +1143,114 @@ test("exports MIDI with P tracks on drum channel", () => {
   // No program change on drum channel (0xc9 should not appear)
   assert.equal(bytes.includes(0xc9), false);
 });
+
+
+test("repeats only the marked single measure after a written introduction", () => {
+  for (const prefix of ["", "T1: "]) {
+    const result = parse(`${prefix}1 - - - |: 2 - - - :| 3 - - -`);
+    assert.equal(result.ok, true);
+    assert.deepEqual(result.diagnostics, []);
+    assert.deepEqual(compileArrangement(result.value).tracks[0].notes.map((note) => note.chord), [[60], [62], [62], [64]]);
+  }
+});
+
+test("explicit grace accidentals replace the active accidental in transposed keys", () => {
+  for (const [key, transpose] of [["C", 0], ["D", 2]]) {
+    for (const [grace, expected] of [["#1", 61], ["%1", 60], ["b1", 59], ["1", 61]]) {
+      for (const placement of ["<", ">"]) {
+        const result = parse(`key: ${key}\n===\n#1 2(${placement}${grace}) 3 4`);
+        assert.equal(result.ok, true);
+        assert.deepEqual(result.diagnostics, []);
+        const notes = compileArrangement(result.value).tracks[0].notes;
+        assert.deepEqual(notes[placement === "<" ? 1 : 2].chord, [expected + transpose]);
+        assert.equal(notes.reduce((sum, note) => sum + note.duration, 0), 1);
+      }
+    }
+  }
+});
+
+test("labeled navigation matches the unlabeled measure path within a source line", () => {
+  const sources = [
+    "1 - - - [Fine] | 2 - - - [D.C.] | 3 - - -",
+    "1 - - - | [Segno] 2 - - - [Fine] | 3 - - - [D.S.] | 4 - - -",
+    "1 - - - | [Segno] 2 - - - [To Coda] | 3 - - - [D.S.] | 4 - - - | [Coda] 5 - - -",
+    "|: 1 - - - [Fine] | 2 - - - :| 3 - - - [D.C.]",
+    "1 - - - | [Segno] 2 - - - | 3 - - - [D.S.] | 4 - - -",
+    "1 - - - | 2 - - - [D.C.] | 3 - - - [Fine]",
+  ];
+  for (const source of sources) {
+    const plain = parse(source);
+    const labeled = parse(`T1: ${source}`);
+    assert.equal(plain.ok, true);
+    assert.equal(labeled.ok, true);
+    assert.deepEqual(labeled.diagnostics, []);
+    assert.deepEqual(compileArrangement(labeled.value).tracks[0].notes, compileMelody(plain.value).notes, source);
+  }
+});
+
+test("accompaniment follows primary measure navigation at the same times", () => {
+  const result = parse("T1: 1 - - - [Fine] | 2 - - - [D.C.] | 3 - - -\nT2: 4 - - - | 5 - - - | 6 - - -");
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.diagnostics, []);
+  const arrangement = compileArrangement(result.value);
+  assert.deepEqual(arrangement.tracks.map((track) => track.notes.map((note) => note.chord)), [
+    [[60], [62], [60]], [[65], [67], [65]],
+  ]);
+  assert.equal(arrangementDuration(arrangement), 3);
+});
+
+test("navigation clips held accompaniment at primary boundaries", () => {
+  const result = parse("T1: 1 - - - [Fine] | 2 - - - [D.C.] | 3 - - -\nT2: 5 - - - | ~5 - - - | ~5 - - -");
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.diagnostics, []);
+  const notes = compileArrangement(result.value).tracks[1].notes;
+  assert.deepEqual(notes.map((note) => [note.chord, note.duration]), [[[67], 2], [[67], 1]]);
+  assert.equal(melodyPitchSpans(notes).length, 2);
+});
+
+test("navigation pads short accompaniment before the next jump", () => {
+  const result = parse("T1: 1 - - - [Fine] | 2 - - - [D.C.]\nT2: 5 - - -");
+  assert.equal(result.ok, true);
+  const notes = compileArrangement(result.value).tracks[1].notes;
+  assert.deepEqual(notes.map((note) => [note.chord, note.duration]), [[[67], 1], ["rest", 1], [[67], 1]]);
+});
+
+test("navigation resolves dynamics in playback order", () => {
+  const result = parse("T1: 1 - - - [Fine] | f 2 - - - [D.C.]\nT2: 5 - - - | p 6 - - -");
+  assert.equal(result.ok, true);
+  const tracks = compileArrangement(result.value).tracks;
+  for (const track of tracks) {
+    assert.equal(track.notes[0].velocity, undefined);
+    assert.equal(track.notes[2].velocity, track.notes[1].velocity);
+    assert.notEqual(track.notes[2].velocity, undefined);
+  }
+});
+
+
+test("navigation reattacks sustained ornament voices at a jump", () => {
+  const result = parse("T1: 1 - - - | [Segno] 2 - - - [Fine] | 3 - - - [D.S.]\nT2: {1 3 5}(tr) - - - - - - - - - - -");
+  assert.equal(result.ok, true);
+  const spans = melodyPitchSpans(compileArrangement(result.value).tracks[1].notes);
+  assert.deepEqual(spans.filter((span) => span.note === 60).map((span) => [span.offset, span.duration]), [[0, 3], [3, 1]]);
+});
+
+test("a normal written ending retains a longer accompaniment tail", () => {
+  const result = parse("T1: 1 - - - [D.C.]\nT2: 5 - - - | 6 - - -");
+  assert.equal(result.ok, true);
+  const arrangement = compileArrangement(result.value);
+  assert.deepEqual(arrangement.tracks[1].notes.map((note) => note.chord), [[67], [67], [69]]);
+  assert.equal(arrangementDuration(arrangement), 3);
+});
+
+test("MIDI exports the corrected repeats, navigation, and grace pitches", () => {
+  for (const [source, expected] of [
+    ["1 - - - |: 2 - - - :| 3 - - -", [[60, 0], [62, 384], [62, 768], [64, 1152]]],
+    ["T1: 1 - - - [Fine] | 2 - - - [D.C.] | 3 - - -", [[60, 0], [62, 384], [60, 768]]],
+    ["#1 2(<#1) 3 4", [[61, 0], [61, 96], [62, 120], [64, 192], [65, 288]]],
+  ]) {
+    const result = parse(source);
+    assert.equal(result.ok, true);
+    const events = midiNoteEvents(exportMidiBytes(result.value)).filter((event) => event.type === "on");
+    assert.deepEqual(events.map((event) => [event.note, event.tick]), expected);
+  }
+});

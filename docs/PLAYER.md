@@ -153,6 +153,8 @@ placeholders such as `_` and `~` are also visual-only; neither syllable
 alignment nor placeholders are part of playback or export scheduling.
 
 Repeat barlines and repeated endings are expanded before navigation marks.
+An explicit repeat start also limits a single-measure repeat: in
+`1 |: 2 :| 3`, playback follows `1 2 2 3`.
 Navigation marks use `[Segno]` and `[Coda]` before measures, and `[Fine]`,
 `[D.C.]`, `[D.S.]`, and `[To Coda]` after measures. `[D.C.]` jumps once to the
 beginning of the expanded written timeline, and `[D.S.]` jumps once to
@@ -162,7 +164,11 @@ jumps once to `[Coda]`. If the jumped playback path does not encounter
 
 For unlabeled scores, the single score stream controls navigation. For labeled
 scores, navigation follows the primary `T1` timeline, including implicit `T1`
-lines in labeled mode. Other simultaneous tracks follow the same group order.
+lines in labeled mode. Navigation takes effect at the marked measure boundary,
+even within a source line. Other simultaneous tracks follow the same time
+intervals, with held notes clipped at jumps and shorter voices padded with rests.
+Repeat expansion precedes this shared navigation, and dynamics follow the
+resulting playback order.
 Navigation marks written on non-primary tracks are visual-only and produce a
 parser warning.
 
@@ -237,7 +243,9 @@ use that time before the shortened anchor note; after-grace notes use it after
 the shortened anchor. Multiple grace pitches split the grace duration evenly.
 
 Auxiliary ornament pitches follow the current key signature and any active
-accidental for that scale degree in the measure.
+accidental for that scale degree in the measure. An explicit accidental on a
+grace pitch replaces the active accidental for that pitch; it is applied once
+relative to the key signature and does not change later notes in the measure.
 
 Mordents, turns, and trills may attach to a whole chord. The highest sounding
 member receives the ornament while every other member sustains without a new
