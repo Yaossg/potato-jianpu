@@ -21,8 +21,8 @@ export function ToolbarIcon({ name }: { name: ToolbarIconName }) {
       <path d="M20 15.2A7.7 7.7 0 0 1 8.8 4 8.5 8.5 0 1 0 20 15.2Z" />
     ) : name === "examples" ? (
       <>
-        <path d="M6 3.5h9.2L20 8.3V20a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 20V5A1.5 1.5 0 0 1 5.5 3.5H6Zm8 1.9V9h3.6L14 5.4ZM6 5.5v14h12V11h-6V5.5H6Z" />
-        <path d="M8 9h2v2H8V9Zm0 4h2v2H8v-2Zm4-3h4v1.7h-4V10Zm0 4h4v1.7h-4V14Z" />
+        <path d="M12 6C9 3.5 5.5 3.5 2 4.5v14c3.5-1 7-1 10 1.5 3-2.5 6.5-2.5 10-1.5v-14C18.5 3.5 15 3.5 12 6Zm0 0v14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+        <path d="M5.5 8.5c1.2-.1 2.2.1 3 .5m-3 3c1.2-.1 2.2.1 3 .5m7-3.5c.8-.4 1.8-.6 3-.5m-3 4c.8-.4 1.8-.6 3-.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
       </>
     ) : name === "open" ? (
       <>
@@ -31,8 +31,8 @@ export function ToolbarIcon({ name }: { name: ToolbarIconName }) {
       </>
     ) : name === "save" ? (
       <>
-        <path d="M5 3.5h11.6L20.5 7.4V20A1.5 1.5 0 0 1 19 21.5H5A1.5 1.5 0 0 1 3.5 20V5A1.5 1.5 0 0 1 5 3.5Zm.5 2v14h13V8.2l-2.7-2.7H15V10H7V5.5H5.5ZM9 5.5V8h4V5.5H9Z" />
-        <path d="M7 13h10v2H7v-2Zm0 3h10v2H7v-2Z" />
+        <path d="M5 3h12l4 4v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm3 0v6h8V3M7 21v-8h10v8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+        <path d="M13 4h2v4h-2z" />
       </>
     ) : name === "export" ? (
       <>
