@@ -656,9 +656,12 @@ length. The target pitch determines only whether the fixed-size mark bends
 upward or downward. A slide between notes at the same sounding pitch produces
 a parser warning and is omitted.
 
-Browser preview, browser PDF export, backend PNG export, and backend PDF export
-load the bundled Bravura font for these glyphs. Other notation symbols
-continue to use Unicode text or SVG primitives.
+Browser preview, PNG export, and backend PDF export load the bundled Bravura
+font for these glyphs. Browser PDF export replaces the six SMuFL text glyphs
+with vector outlines generated from that same font, preserving their baseline,
+size, and horizontal anchor without relying on jsPDF's font support. Run
+`pnpm run fonts:outlines` after changing the bundled font or SMuFL symbol set.
+Other notation symbols continue to use Unicode text or SVG primitives.
 
 Grace-note ornaments render as small Jianpu number figures beside their anchor
 note or chord. Each grace figure includes the small pitch number, octave dots or

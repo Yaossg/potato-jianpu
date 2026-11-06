@@ -46,6 +46,8 @@ Modern Jianpu Markup 可以从浏览器 App 和 CLI 把同一份解析后的乐�
 
 SVG 是渲染器输出的确定性文本。PNG 会用内置 Noto Sans SC 和 Bravura 字体栅格化同一份渲染后的 SVG，再把结果合成到不透明白底上。PDF 会把渲染后的 SVG 页面转换为矢量 PDF 页面，并嵌入 Noto Sans SC，让中文标题和歌词等 Unicode 文本正确显示。
 
+对于延长记号、波音、回音和颤音等音乐符号，浏览器 PDF 下载使用内置 Bravura 字体的矢量轮廓，CLI PDF 导出则直接嵌入 Bravura。两种方式都能保留符号，无需在阅读设备上安装该字体。
+
 ```sh
 pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --paper a4 --orientation portrait --paginate --color "#111827" --background "#ffffff"
 pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --paper a4 --orientation portrait --paginate --color "#111827" --background "#ffffff" --png-scale 2

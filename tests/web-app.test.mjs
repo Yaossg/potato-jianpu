@@ -76,12 +76,13 @@ function app(score = "1 2 3 4", preferences = {}) {
   function find(type, node = tree) {
     if (Array.isArray(node)) return node.map(child => find(type, child)).find(Boolean);
     if (!node || typeof node !== "object") return undefined;
-    return node.type === type ? node : find(type, node.props?.children ?? null);
+    return (typeof type === "function" ? type(node) : node.type === type) ? node : find(type, node.props?.children ?? null);
   }
   render();
   find("Toolbar").props.onToggleSettings();
   render();
   return {
+    has: type => Boolean(find(type)),
     props: type => { const node = find(type); assert.ok(node, type); return node.props; },
     async event(type, name, ...args) {
       find(type).props[name](...args);
@@ -102,6 +103,28 @@ test("fresh browser preferences use defaults and preserve a saved fractional spl
   assert.equal(saved.props("section").style["--editor-pane-percent"], "45.5%");
   for (const value of ["", " ", "NaN", "Infinity"]) {
     assert.equal(app(undefined, { "modern-jianpu-markup-editor-font-size": value }).props("SourceEditor").editorFontSize, 14);
+  }
+});
+
+test("loading an example closes the panel only after replacement is accepted", async () => {
+  const confirm = node => node.type === "button" && node.props.className === "danger-action";
+  const cancel = node => node.type === "button" && node.props.children === "cancel";
+  for (const existing of ["", "1 2 3 4"]) {
+    const ui = app(existing);
+    await ui.event("Toolbar", "onToggleExamples");
+    await ui.event("ExamplesPanel", "onSelectExample", "5 6 7 1'");
+    if (existing) {
+      assert.equal(ui.props("SourceEditor").source, existing);
+      assert.equal(ui.has("ExamplesPanel"), true);
+      await ui.event(cancel, "onClick");
+      assert.equal(ui.has("ExamplesPanel"), true);
+      assert.equal(ui.props("SourceEditor").source, existing);
+      await ui.event("ExamplesPanel", "onSelectExample", "5 6 7 1'");
+      await ui.event(confirm, "onClick");
+    }
+    assert.equal(ui.props("SourceEditor").source, "5 6 7 1'");
+    assert.equal(ui.has("ExamplesPanel"), false);
+    assert.equal(ui.props("Toolbar").isPlaying, false);
   }
 });
 

@@ -637,6 +637,7 @@ export function App() {
 
   function loadSource(nextSource: string) {
     stopPlayback();
+    setShowExamples(false);
     setSource(nextSource);
     setPendingReplacementSource(null);
   }

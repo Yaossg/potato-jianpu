@@ -71,7 +71,8 @@
     "docs:links": "node scripts/check-doc-links.mjs",
     "docs:tables": "node scripts/check-doc-table-pipes.mjs",
     "docs:cli": "node scripts/check-doc-cli-commands.mjs",
-    "grammar:railroad": "node scripts/generate-grammar-railroad.mjs"
+    "grammar:railroad": "node scripts/generate-grammar-railroad.mjs",
+    "fonts:outlines": "node scripts/generate-smufl-outlines.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",

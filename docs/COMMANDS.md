@@ -83,6 +83,17 @@ docs-site verification.
 
 ## Release-Oriented Checks
 
+Regenerate browser PDF music-symbol outlines after changing Bravura or the
+renderer SMuFL symbol set:
+
+```sh
+pnpm run fonts:outlines
+```
+
+This uses the fontkit dependency already provided by PDFKit and preserves the
+Bravura license in the generated source. The font parser is not bundled into
+the browser application.
+
 ```sh
 npm pack --dry-run --json
 ```

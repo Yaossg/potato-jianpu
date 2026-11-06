@@ -46,6 +46,8 @@ Use the browser app for interactive downloads from the current preview. Use the 
 
 SVG is deterministic text output from the renderer. PNG rasterizes the same rendered SVG with bundled Noto Sans SC and Bravura fonts, then composites it over an opaque white base. PDF converts rendered SVG pages to vector PDF pages and embeds Noto Sans SC so Unicode text such as Chinese titles and lyrics renders correctly.
 
+For music symbols such as fermatas, mordents, turns, and trills, browser PDF downloads use vector outlines from the bundled Bravura font. CLI PDF exports embed Bravura directly. Both preserve the symbols without requiring that font to be installed on the reader's device.
+
 ```sh
 pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --paper a4 --orientation portrait --paginate --color "#111827" --background "#ffffff"
 pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --paper a4 --orientation portrait --paginate --color "#111827" --background "#ffffff" --png-scale 2

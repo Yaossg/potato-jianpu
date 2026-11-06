@@ -1,12 +1,12 @@
 import { jsPDF } from "jspdf";
 import { svg2pdf } from "svg2pdf.js";
-import bravuraUrl from "@vexflow-fonts/bravura/bravura.otf?url";
 import notoSansScBoldUrl from "@expo-google-fonts/noto-sans-sc/700Bold/NotoSansSC_700Bold.ttf?url";
 import notoSansScRegularUrl from "@expo-google-fonts/noto-sans-sc/400Regular/NotoSansSC_400Regular.ttf?url";
 import type { RenderedSvgPage } from "../renderer/index.js";
+import { DIMENSIONS } from "../renderer/dimensions.js";
+import { SMUFL_OUTLINES, SMUFL_UNITS_PER_EM } from "../renderer/smufl-outlines.js";
 
 const PDF_FONT_FAMILY = "NotoSansSC";
-const PDF_SMUFL_FONT_FAMILY = "Bravura";
 const PDF_TIME_SIGNATURE_LINE_Y_OFFSET = -6.84;
 const PDF_TEXT_FONT_OVERRIDE = `
 text:not(.smufl-symbol),
@@ -25,12 +25,9 @@ text:not(.smufl-symbol),
 .tempo-value,
 .velocity {
   font-family: ${PDF_FONT_FAMILY}, sans-serif !important;
-}
-.smufl-symbol {
-  font-family: ${PDF_SMUFL_FONT_FAMILY} !important;
 }`;
 
-let pdfFontsPromise: Promise<{ regular: string; bold: string; bravura: string }> | null = null;
+let pdfFontsPromise: Promise<{ regular: string; bold: string }> | null = null;
 
 function orientation(width: number, height: number): "landscape" | "portrait" {
   return width > height ? "landscape" : "portrait";
@@ -55,11 +52,10 @@ async function fetchFontBase64(url: string): Promise<string> {
   return arrayBufferToBase64(await response.arrayBuffer());
 }
 
-async function pdfFonts(): Promise<{ regular: string; bold: string; bravura: string }> {
-  pdfFontsPromise ??= Promise.all([fetchFontBase64(notoSansScRegularUrl), fetchFontBase64(notoSansScBoldUrl), fetchFontBase64(bravuraUrl)]).then(([regular, bold, bravura]) => ({
+async function pdfFonts(): Promise<{ regular: string; bold: string }> {
+  pdfFontsPromise ??= Promise.all([fetchFontBase64(notoSansScRegularUrl), fetchFontBase64(notoSansScBoldUrl)]).then(([regular, bold]) => ({
     regular,
     bold,
-    bravura,
   })).catch((error) => {
     pdfFontsPromise = null;
     throw error;
@@ -73,8 +69,6 @@ async function registerPdfFonts(pdf: jsPDF): Promise<void> {
   pdf.addFont("NotoSansSC-Regular.ttf", PDF_FONT_FAMILY, "normal");
   pdf.addFileToVFS("NotoSansSC-Bold.ttf", fonts.bold);
   pdf.addFont("NotoSansSC-Bold.ttf", PDF_FONT_FAMILY, "bold");
-  pdf.addFileToVFS("Bravura.otf", fonts.bravura);
-  pdf.addFont("Bravura.otf", PDF_SMUFL_FONT_FAMILY, "normal");
   pdf.setFont(PDF_FONT_FAMILY, "normal");
 }
 
@@ -92,6 +86,26 @@ function svgElement(svg: string): SVGSVGElement {
   const style = document.createElementNS("http://www.w3.org/2000/svg", "style");
   style.textContent = PDF_TEXT_FONT_OVERRIDE;
   defs.append(style);
+  // jsPDF cannot embed Bravura's CFF/OpenType outlines as a TrueType font.
+  // Preserve the exact glyph shapes as vectors instead of falling back to text.
+  for (const symbol of root.querySelectorAll("text.smufl-symbol")) {
+    const character = symbol.textContent ?? "";
+    const glyph = Object.hasOwn(SMUFL_OUTLINES, character) ? SMUFL_OUTLINES[character] : undefined;
+    if (!glyph) throw new Error("PDF export encountered an unsupported music symbol.");
+    const fontSize = Number(symbol.getAttribute("font-size") ?? DIMENSIONS.ornamentFontSize);
+    const scale = fontSize / SMUFL_UNITS_PER_EM;
+    const x = Number(symbol.getAttribute("x") ?? 0);
+    const y = Number(symbol.getAttribute("y") ?? 0);
+    const anchor = symbol.getAttribute("text-anchor");
+    const offset = anchor === "middle" ? glyph.advanceWidth * scale / 2 : anchor === "end" ? glyph.advanceWidth * scale : 0;
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    for (const attribute of symbol.attributes) {
+      if (!["x", "y", "text-anchor", "transform"].includes(attribute.name)) path.setAttribute(attribute.name, attribute.value);
+    }
+    path.setAttribute("d", glyph.path);
+    path.setAttribute("transform", `${symbol.getAttribute("transform") ?? ""} translate(${x - offset}, ${y}) scale(${scale}, ${-scale})`.trim());
+    symbol.replaceWith(path);
+  }
   for (const line of root.querySelectorAll(".time-signature line")) {
     for (const attribute of ["y1", "y2"]) {
       const value = Number(line.getAttribute(attribute));
