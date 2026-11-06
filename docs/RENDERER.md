@@ -337,6 +337,12 @@ chord elsewhere on the line cannot flatten its curves. Nested slurs add a
 lane-based outward offset where page-edge clearance permits, so shared anchors
 remain visually distinct without crossing their attached marks.
 
+Short, uncounted slurs that need no extra obstacle clearance use a continuous
+quadratic arch instead of a flat platform. An unnested slur meeting an incoming
+or outgoing tie at an undecorated note ends at that shared note center, so an
+adjacent tie does not unnecessarily raise the slur into another lane. Slurs
+enclosing ties or upper decorations retain their required clearance.
+
 The plan is produced after source-line layout, simultaneous-voice alignment, and slur
 projection but before pagination. Its `aboveHeight` sets the note baseline and
 line height, so pagination, lyrics, brackets, and page-overflow calculations

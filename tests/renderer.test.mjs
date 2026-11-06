@@ -421,6 +421,39 @@ test("keeps short slurs close to their notes and adjacent slurs separate", () =>
   assert.equal(pathStart(paths[0])[1], pathStart(paths[1])[1]);
 });
 
+test("draws an unobstructed short slur as a continuous arch", () => {
+  const result = parse("$(1/ 2/) 3 4 5");
+  assert.equal(result.ok, true);
+  const path = slurPaths(renderSvg(result.value))[0];
+  assert.match(path, /^M[^ ]+ Q[^ ]+ [^ ]+$/);
+  assert.ok(Math.min(...pathYValues(path)) < pathStart(path)[1]);
+});
+
+test("keeps short slurs beside incoming and outgoing ties in their natural lane", () => {
+  for (const [plain, adjacent, start, end] of [
+    ["$(3 2/) 2", "$(3 2/) ~2", 0, 1],
+    ["1/ $(1/ 2)", "1/ $(~1/ 2)", 1, 2],
+  ]) {
+    const render = (source) => {
+      const result = parse(source);
+      assert.equal(result.ok, true);
+      return renderSvg(result.value);
+    };
+    const plainSvg = render(plain);
+    const svg = render(adjacent);
+    const path = slurPaths(svg)[0];
+    const archTop = (Math.min(...pathYValues(path)) + pathStart(path)[1]) / 2;
+    const plainPath = slurPaths(plainSvg)[0];
+    const plainTop = (Math.min(...pathYValues(plainPath)) + pathStart(plainPath)[1]) / 2;
+    assert.equal(notePosition(svg, start).y - archTop, notePosition(plainSvg, start).y - plainTop);
+    if (start === 0) {
+      assert.equal(pathEnd(path)[0], noteX(svg, end));
+    } else {
+      assert.equal(pathStart(path)[0], noteX(svg, start));
+    }
+  }
+});
+
 test("keeps a short slur curved when an unrelated tall chord shares its line", () => {
   const render = (source) => {
     const result = parse(source);

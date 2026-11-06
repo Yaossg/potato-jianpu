@@ -292,10 +292,14 @@ function renderSlur(
   startsHere: boolean,
   endsHere: boolean,
   countLabel?: number,
+  curved = false,
 ): string {
   const width = Math.max(1, endX - startX);
   const topY = Math.min(endpointY, platformY);
   const height = Math.max(1, endpointY - topY);
+  if (curved && startsHere && endsHere && countLabel === undefined) {
+    return `<path class="slur" d="M${startX},${endpointY} Q${(startX + endX) / 2},${endpointY - 2 * height} ${endX},${endpointY}"/>`;
+  }
   const arcWidth = Math.min(height, width / 4);
   const startY = startsHere ? endpointY : topY;
   const endY = endsHere ? endpointY : topY;
@@ -1048,6 +1052,14 @@ function collectVerticalItems(
       const safeEndX = geometry.rightEdgeX - DIMENSIONS.slurStrokeWidth / 2;
       segment.endOutset = Math.min(safeEndX, desiredEndX) - end.x;
     }
+    // Adjacent ties share an anchor, not an interior span. Keep their
+    // bounding boxes from forcing a short slur into a higher lane.
+    if (segment.lane === 0 && start?.note.tie && anchorHorizontalBounds(start).left === start.x) {
+      segment.startOutset = 0;
+    }
+    if (segment.lane === 0 && end && nextNoteInSequence(trackNotes, end.note)?.tie && anchorHorizontalBounds(end).right === end.x) {
+      segment.endOutset = 0;
+    }
     const x1 = start
       ? start.x - (segment.startOutset ?? DIMENSIONS.slurEndpointOutset)
       : segment.startBoundaryMeasure
@@ -1352,6 +1364,8 @@ function renderLine(
         startEntry !== undefined,
         endEntry !== undefined,
         segment.countLabel,
+        endX - startX <= 4 * DIMENSIONS.baseNoteWidth &&
+          platformOffset <= bodyTop + DIMENSIONS.slurEndpointGap + slurHeight(endX - startX) + 1,
       ),
     );
   }
