@@ -36,6 +36,7 @@ pnpm run cli -- export-mp3 examples/twinkle.jpu -o twinkle.mp3
 | `blocky-heroes.jpu` | Example with naturals and dense sixteenth notes |
 | `shining-from-the-underground.jpu` | Example with measure octave prefixes |
 | `the-same-song.jpu` | Image transcription with two lyric verses, repeats, alternate endings, and slurs |
+| `meng-zai-ran-shao.jpu` | Image transcription in F major with Chinese lyrics, slurs, ties, and alternate endings |
 | `vivalavida.jpu` | Complete 129-bar two-track transcription with chords, repeats, and cross-measure ties |
 
 ## Epic Instrumentals
