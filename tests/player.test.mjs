@@ -106,7 +106,7 @@ test("plays slurs with legato overlap without changing the rhythmic timeline", (
   );
   assert.deepEqual(
     melodyPitchSpans(slurredMelody.notes).map((span) => span.duration),
-    [0.2625, 0.2625, 0.2625, 0.25],
+    [0.275, 0.275, 0.275, 0.25],
   );
   assert.notDeepEqual(exportMidiBytes(slurred.value), exportMidiBytes(plain.value));
 });
@@ -139,7 +139,7 @@ test("breaks slur legato at rests and repeated pitches", () => {
   assert.equal(result.ok, true);
   const melody = compileMelody(result.value);
   assert.deepEqual(melody.notes.map((note) => note.legatoToIndex), [undefined, undefined, 3, 4, undefined]);
-  assert.deepEqual(melodyPitchSpans(melody.notes).map((span) => span.duration), [1 / 4, 0.2625, 1 / 4, 1 / 4]);
+  assert.deepEqual(melodyPitchSpans(melody.notes).map((span) => span.duration), [1 / 4, 0.275, 1 / 4, 1 / 4]);
 });
 
 test("keeps slur playback track-local and idempotent for nested spans", () => {
@@ -148,7 +148,7 @@ test("keeps slur playback track-local and idempotent for nested spans", () => {
   const arrangement = compileArrangement(result.value);
   assert.deepEqual(
     arrangement.tracks.map((track) => melodyPitchSpans(track.notes).map((span) => span.duration)),
-    [[0.2625, 0.2625, 0.25], [0.25, 0.25, 0.25]],
+    [[0.275, 0.275, 0.25], [0.25, 0.25, 0.25]],
   );
 });
 

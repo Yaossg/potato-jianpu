@@ -45,7 +45,7 @@ const DEFAULT_VELOCITY = 64;
 const HAIRPIN_DEFAULT_DELTA = 24;
 const TRILL_SEGMENT_DURATION = 1 / 32;
 const FERMATA_DURATION_FACTOR = 1.5;
-const SLUR_OVERLAP_RATIO = 0.05;
+const SLUR_OVERLAP_RATIO = 0.1;
 
 function assertProgram(program: number) {
   if (!Number.isInteger(program) || program < MIN_PROGRAM || program > MAX_PROGRAM) {

@@ -66,7 +66,7 @@ these transitions through `melodyPitchSpans()`.
 
 `legatoToIndex` connects the event to the next source note under a slur.
 `melodyPitchSpans()` keeps the next onset on its written beat while extending
-different outgoing pitches by 5% of the shorter adjacent event. Repeated
+different outgoing pitches by 10% of the shorter adjacent event. Repeated
 pitches keep separate attacks without overlap.
 
 `compileMelody(document, program?)` keeps the legacy single-melody behavior and
