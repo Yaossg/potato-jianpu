@@ -190,7 +190,11 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(appSource, /function updateSource/);
   assert.match(appSource, /splitPageExportFilename/);
   assert.match(appSource, /<SourceEditor/);
-  assert.match(settingsPanelSource, /\{paginate && \(/);
+  assert.match(settingsPanelSource, /\{effectivePaginate && \(/);
+  assert.match(appSource, /effectivePaginate = headerPaginate \|\| paginate/);
+  assert.match(appSource, /paginate=\{paginate\}/);
+  assert.match(appSource, /effectivePaginate=\{effectivePaginate\}/);
+  assert.match(settingsPanelSource, /checked=\{paginate\}/);
   assert.match(settingsPanelSource, /PAPER_PRESET_LIST/);
   assert.match(settingsPanelSource, /PAGE_ORIENTATIONS/);
   assert.match(settingsPanelSource, /\{!usesCustomPageSize && \(/);

@@ -178,7 +178,7 @@ export function App() {
   const [pageOrientation, setPageOrientation] = useState<PageOrientation>("portrait");
   const [manualPageWidth, setManualPageWidth] = useState(DEFAULT_PAGE_WIDTH);
   const [panelPageWidth, setPanelPageWidth] = useState(DEFAULT_PAGE_WIDTH);
-  const [paginateOverride, setPaginateOverride] = useState<boolean | null>(null);
+  const [paginate, setPaginate] = useState(false);
   const [pageHeight, setPageHeight] = useState(DEFAULT_PAGE_HEIGHT);
   const [pageMargin, setPageMargin] = useState(DEFAULT_PAGE_MARGIN);
   const [pageNumbers, setPageNumbers] = useState(false);
@@ -225,7 +225,7 @@ export function App() {
   const pageWidth = pageSize.pageWidth;
   const resolvedPageHeight = pageSize.pageHeight;
   const headerPaginate = previewParsed?.ok ? previewParsed.value.header.paginate : false;
-  const effectivePaginate = paginateOverride ?? headerPaginate;
+  const effectivePaginate = headerPaginate || paginate;
   const maxPageMargin = Math.max(MIN_PAGE_MARGIN, Math.floor((Math.min(pageWidth, effectivePaginate ? resolvedPageHeight : pageWidth) - 1) / 2));
   const headerPageFooter = previewParsed?.ok ? previewParsed.value.header.footer : "";
   const headerPageNumbers = previewParsed?.ok ? previewParsed.value.header.numbering : false;
@@ -799,7 +799,8 @@ export function App() {
           manualPageWidth={manualPageWidth}
           minPageWidth={MIN_PAGE_WIDTH}
           maxPageWidth={MAX_PAGE_WIDTH}
-          paginate={effectivePaginate}
+          paginate={paginate}
+          effectivePaginate={effectivePaginate}
           pageHeight={resolvedPageHeight}
           minPageHeight={MIN_PAGE_HEIGHT}
           maxPageHeight={MAX_PAGE_HEIGHT}
@@ -833,7 +834,7 @@ export function App() {
           onPaperPresetChange={setPaperPreset}
           onPageOrientationChange={setPageOrientation}
           onManualPageWidthChange={setManualPageWidth}
-          onPaginateChange={setPaginateOverride}
+          onPaginateChange={setPaginate}
           onPageHeightChange={setPageHeight}
           onPageMarginChange={setPageMargin}
           onPageNumbersChange={setPageNumbers}

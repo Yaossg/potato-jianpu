@@ -58,6 +58,11 @@ interface RenderOptions {
 - `paginate` switches from one adaptive-height SVG page to a fixed-height
   multi-page SVG. Default: the parsed `paginate` header value, or `false` when
   omitted.
+  In the web app, pagination is enabled when either the header value or the
+  Page Settings checkbox is true, matching the OR rule for numbering. Turning
+  off the checkbox does not suppress `paginate: true` in the header. Page
+  height and page-number controls remain available whenever pagination is
+  enabled by either source. This applies to both preview and exports.
 - `pageHeight` controls each page box height when `paginate` is `true`.
   Default: `1400`.
 - `pageMargin` adds an equal margin on all four page sides. The SVG viewport

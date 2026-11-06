@@ -19,6 +19,7 @@ interface SettingsPanelProps {
   minPageWidth: number;
   maxPageWidth: number;
   paginate: boolean;
+  effectivePaginate: boolean;
   pageHeight: number;
   minPageHeight: number;
   maxPageHeight: number;
@@ -143,6 +144,7 @@ export function SettingsPanel({
   minPageWidth,
   maxPageWidth,
   paginate,
+  effectivePaginate,
   pageHeight,
   minPageHeight,
   maxPageHeight,
@@ -287,7 +289,7 @@ export function SettingsPanel({
               <input type="checkbox" checked={paginate} onChange={(event) => onPaginateChange(event.target.checked)} />
               {t("paginate")}
             </label>
-            {paginate && (
+            {effectivePaginate && (
               <label className="number-control">
                 {t("pageHeight")}
                 <input
@@ -307,7 +309,7 @@ export function SettingsPanel({
               <input type="checkbox" checked={measureNumbers} onChange={(event) => onMeasureNumbersChange(event.target.checked)} />
               {t("measureNumbers")}
             </label>
-            {paginate && (
+            {effectivePaginate && (
               <label className="checkbox-control">
                 <input type="checkbox" checked={pageNumbers} onChange={(event) => onPageNumbersChange(event.target.checked)} />
                 {t("pageNumbers")}
