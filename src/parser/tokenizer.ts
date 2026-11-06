@@ -56,14 +56,16 @@ function rangeFrom(start: SourcePosition, end: SourcePosition): SourceRange {
 
 function advance(position: SourcePosition, text: string): SourcePosition {
   let next = clonePosition(position);
+  let previous = "";
   for (const char of text) {
     next.offset += char.length;
-    if (char === "\n") {
-      next.line += 1;
+    if (char === "\r" || char === "\n") {
+      if (char !== "\n" || previous !== "\r") next.line += 1;
       next.column = 1;
     } else {
       next.column += 1;
     }
+    previous = char;
   }
   return next;
 }

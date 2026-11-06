@@ -42,7 +42,10 @@ async function pngFontCss(): Promise<string> {
 text:not(.smufl-symbol) { font-family: "Noto Sans SC", sans-serif !important; }
 .smufl-symbol { font-family: Bravura !important; }
 </style>`,
-  );
+  ).catch((error) => {
+    pngFontCssPromise = null;
+    throw error;
+  });
   return pngFontCssPromise;
 }
 
@@ -58,7 +61,10 @@ export async function embedSvgDownloadFonts(svg: string): Promise<string> {
   if (!svgUsesSmuflSymbols(svg)) {
     return svg;
   }
-  bravuraWoff2Base64Promise ??= fetchBravuraWoff2Base64();
+  bravuraWoff2Base64Promise ??= fetchBravuraWoff2Base64().catch((error) => {
+    bravuraWoff2Base64Promise = null;
+    throw error;
+  });
   return embedBravuraFontFace(svg, await bravuraWoff2Base64Promise);
 }
 

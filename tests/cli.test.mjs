@@ -40,6 +40,13 @@ test("CLI prints usage help", async () => {
   assert.match(stdout, /export-mp3/);
 });
 
+test("CLI rejects MP3-only bit rate options for WAV export", async () => {
+  await assert.rejects(
+    execFileAsync(process.execPath, ["dist/cli/main.js", "export-wav", "examples/twinkle.jpu", "--bit-rate", "128"], { cwd: repoDir }),
+    error => error.code === 2 && /unknown option --bit-rate/.test(error.stderr),
+  );
+});
+
 test("CLI export-svg accepts page width", async () => {
   const dir = await mkdtemp(join(tmpdir(), "jianpu-cli-"));
   const input = join(dir, "score.jpu");

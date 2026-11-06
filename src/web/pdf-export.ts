@@ -60,7 +60,10 @@ async function pdfFonts(): Promise<{ regular: string; bold: string; bravura: str
     regular,
     bold,
     bravura,
-  }));
+  })).catch((error) => {
+    pdfFontsPromise = null;
+    throw error;
+  });
   return pdfFontsPromise;
 }
 

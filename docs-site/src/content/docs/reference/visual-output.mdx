@@ -17,7 +17,7 @@ Use this reference when a score looks different after changing paper, margins, p
 
 SVG, PNG, and PDF begin with the same score layout. The browser preview uses that layout too, so page width, paper preset, orientation, pagination, margin, notation color, background, footer, page numbers, measure numbers, and justification affect visual output together.
 
-The file header can set `paginate`, `footer`, `pageNumbers`, and `measureNumbers` defaults. A CLI option or the browser's current Page Settings can choose a different result for that export without changing the `.jpu` source. Measure numbers label the first written measure of each score line with parenthesized Arabic numbers and continue across pages.
+The file header can set `paginate`, `footer`, `pageNumbers`, and `measureNumbers` defaults. In the browser, pagination, page numbers, and measure numbers use OR semantics: a `true` header stays enabled regardless of its checkbox, while an omitted or `false` header permits the UI to enable it. The page-number checkbox applies when pagination is active. CLI flags can enable pagination/page numbers or replace footer text without changing the `.jpu` source. Measure numbers label the first written measure of each score line with parenthesized Arabic numbers and continue across pages.
 
 ## Page Size And Source Lines
 

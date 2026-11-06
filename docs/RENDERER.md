@@ -692,6 +692,9 @@ contains it, the wrapper becomes:
 
 The frontend uses `data-note-index` for click-to-play-from-note and active note
 highlighting.
+The application shares resolved page options across layout diagnostics,
+preview, and exports. Active indices are added only to the preview render;
+SVG, PNG, and PDF downloads use the render without playback highlighting.
 
 SMuFL ornament glyphs do not participate in pointer hit testing. Their font
 boxes can extend well beyond the visible mark, so ignoring those boxes keeps a

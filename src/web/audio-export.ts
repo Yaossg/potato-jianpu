@@ -46,8 +46,8 @@ function normalizeAudioOptions(options: BrowserAudioExportOptions, label: string
   }
 
   const amplitude = options.amplitude ?? DEFAULT_AMPLITUDE;
-  if (!Number.isFinite(amplitude) || amplitude < 0 || amplitude > 1) {
-    throw new Error(`${label} amplitude must be at least 0 and no more than 1.`);
+  if (!Number.isFinite(amplitude) || amplitude < 0 || amplitude > 2) {
+    throw new Error(`${label} amplitude must be at least 0 and no more than 2.`);
   }
 
   return {

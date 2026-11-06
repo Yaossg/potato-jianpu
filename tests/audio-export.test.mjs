@@ -93,3 +93,16 @@ test("sampled export preserves the release tail and honors mute", async () => {
   const muted = await browserExports.exportBrowserWavBytes(score, { sampleRate: 8000, amplitude: 0 });
   assert.ok(muted.slice(44).every((byte) => byte === 0));
 });
+
+test("browser WAV and MP3 export accept the 200 percent master volume used by preview", async () => {
+  const score = document('tempo: 600\n===\np 1 0 0 0');
+  const normal = await browserExports.exportBrowserWavBytes(score, { sampleRate: 8000, amplitude: 1 });
+  const louder = await browserExports.exportBrowserWavBytes(score, { sampleRate: 8000, amplitude: 2 });
+  const ratio = rms(louder, 0.01, 0.07, 8000) / rms(normal, 0.01, 0.07, 8000);
+  assert.ok(ratio > 1.9 && ratio < 2.1, `gain ratio ${ratio}`);
+  const mp3 = await browserExports.exportBrowserMp3Bytes(score, { sampleRate: 8000, amplitude: 2 });
+  assert.ok(mp3.length > 0);
+  for (const amplitude of [-1, 2.1, NaN, Infinity]) {
+    await assert.rejects(browserExports.exportBrowserWavBytes(score, { amplitude }), /amplitude/);
+  }
+});

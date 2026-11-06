@@ -134,9 +134,9 @@ hidden: true
 1 2 3 4`}
 />
 
-Use `paginate: true` to render fixed-height pages by default for SVG, PNG, and PDF output. Use `footer` to set footer text rendered at the bottom-left of each page. Use `pageNumbers: true` to render centered page numbers as `current / total`. Browser and CLI render options can still override these fields for a specific export.
+Use `paginate: true` to render fixed-height pages by default for SVG, PNG, and PDF output. Use `footer` to set footer text rendered at the bottom-left of each page. Use `pageNumbers: true` to render centered page numbers as `current / total`. In the browser, a `true` header enables pagination or page numbers even when its Page Settings checkbox is unchecked. CLI flags can also enable these features without editing the source.
 
-Use `measureNumbers: true` to label the first measure of every written score line above its left boundary. Labels use parenthesized Arabic numbers such as `(1)` and `(5)`, continue across pages, and count written measures without expanding repeats. A simultaneous multi-track group receives one label based on its primary line. The browser's **Measure numbers** setting can enable or disable these labels without editing the source.
+Use `measureNumbers: true` to label the first measure of every written score line above its left boundary. Labels use parenthesized Arabic numbers such as `(1)` and `(5)`, continue across pages, and count written measures without expanding repeats. A simultaneous multi-track group receives one label based on its primary line. The browser's **Measure numbers** setting enables these labels when the header is omitted or `false`; unchecking it does not disable `measureNumbers: true` in the source.
 
 <JianpuSource
   title="Page adornment header source"

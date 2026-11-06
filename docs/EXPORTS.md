@@ -109,6 +109,7 @@ such as a missing `-o`, invalid `--paper`, invalid `--orientation`, invalid
 
 Unknown options and options missing their required value are rejected with exit
 code `2`.
+`--bit-rate` applies only to MP3 export and is rejected for WAV export.
 
 ## SVG Export
 
@@ -224,6 +225,10 @@ settings as SVG download. When Split pages is enabled in Export Settings, SVG
 and PNG downloads use the same per-page naming pattern as CLI split output and
 trigger one browser download per rendered page.
 
+Browser SVG, PNG, and PDF downloads omit active playback highlighting while
+retaining the current page settings and colors. Failed export-font requests
+are retried on the next download; successful font loads are cached for reuse.
+
 ## PDF Export
 
 PDF export uses the shared renderer's SVG page output and writes vector PDF
@@ -318,6 +323,9 @@ master gain, combined with the resolved track volume.
 Browser WAV export fetches the bundled SoundFont on demand, renders PCM locally,
 and writes a RIFF/WAVE container using the current Program, volume, and
 initial-rest settings.
+Browser WAV and MP3 master gain follows the full `0..200%` UI volume range,
+including mute. CLI `--amplitude` retains its documented `0 < amplitude <= 1`
+range.
 
 ## MP3 Export
 

@@ -96,8 +96,10 @@ function storedBoolean(key: string, fallback: boolean): boolean {
 
 function storedNumber(key: string, fallback: number, min: number, max: number): number {
   try {
-    const value = Number(window.localStorage.getItem(key));
-    return Number.isFinite(value) ? Math.min(max, Math.max(min, Math.round(value))) : fallback;
+    const stored = window.localStorage.getItem(key);
+    if (stored === null || stored.trim() === "") return fallback;
+    const value = Number(stored);
+    return Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : fallback;
   } catch {
     return fallback;
   }
@@ -233,21 +235,22 @@ export function App() {
   const headerMeasureNumbers = previewParsed?.ok ? previewParsed.value.header.measureNumbers : false;
   const effectiveMeasureNumbers = headerMeasureNumbers || measureNumbers;
   const trackProgramOverrideCount = parsed.ok ? Object.keys(parsed.value.header.trackPrograms).length : 0;
+  const renderOptions = useMemo(() => ({
+    pageWidth,
+    paginate: effectivePaginate,
+    pageHeight: resolvedPageHeight,
+    pageMargin,
+    pageFooter: headerPageFooter,
+    pageNumbers: effectivePageNumbers,
+    measureNumbers: effectiveMeasureNumbers,
+    justifyMode,
+    color: scoreColor,
+    background: pageBackground,
+  }), [pageWidth, effectivePaginate, resolvedPageHeight, pageMargin, headerPageFooter,
+    effectivePageNumbers, effectiveMeasureNumbers, justifyMode, scoreColor, pageBackground]);
   const scoreLayoutWarnings = useMemo(
-    () =>
-      parsed.ok
-        ? analyzeScoreLayout(parsed.value, {
-            pageWidth,
-            paginate: effectivePaginate,
-            pageHeight: resolvedPageHeight,
-            pageMargin,
-            pageFooter: headerPageFooter,
-            pageNumbers: effectivePageNumbers,
-            measureNumbers: effectiveMeasureNumbers,
-            justifyMode,
-          })
-        : [],
-    [effectiveMeasureNumbers, effectivePageNumbers, effectivePaginate, headerPageFooter, justifyMode, pageMargin, pageWidth, parsed, resolvedPageHeight],
+    () => parsed.ok ? analyzeScoreLayout(parsed.value, renderOptions) : [],
+    [parsed, renderOptions],
   );
   const layoutDiagnostics: Diagnostic[] = scoreLayoutWarnings.map((warning) => ({
     severity: "warning",
@@ -259,71 +262,19 @@ export function App() {
   const pageHeightWarningMessages = scoreLayoutWarnings
     .filter((warning) => warning.kind === "overheight-group" || warning.kind === "small-usable-page-height" || warning.kind === "excessive-page-count")
     .map(formatScoreLayoutWarning);
+  const exportSvgText = useMemo(
+    () => previewParsed?.ok ? renderSvg(previewParsed.value, renderOptions) : null,
+    [previewParsed, renderOptions],
+  );
   const svg = useMemo(
-    () =>
-      previewParsed?.ok
-        ? renderSvg(previewParsed.value, {
-            pageWidth,
-            paginate: effectivePaginate,
-            pageHeight: resolvedPageHeight,
-            pageMargin,
-            pageFooter: headerPageFooter,
-            pageNumbers: effectivePageNumbers,
-            measureNumbers: effectiveMeasureNumbers,
-            justifyMode,
-            activeNoteIndices: parsed.ok ? activeNoteIndices : [],
-            color: scoreColor,
-            background: pageBackground,
-          })
-        : null,
-    [
-      activeNoteIndices,
-      effectivePageNumbers,
-      effectiveMeasureNumbers,
-      effectivePaginate,
-      headerPageFooter,
-      justifyMode,
-      pageBackground,
-      resolvedPageHeight,
-      pageMargin,
-      pageWidth,
-      parsed.ok,
-      previewParsed,
-      scoreColor,
-    ],
+    () => previewParsed?.ok && parsed.ok && activeNoteIndices.length > 0
+      ? renderSvg(previewParsed.value, { ...renderOptions, activeNoteIndices })
+      : exportSvgText,
+    [previewParsed, parsed.ok, activeNoteIndices, renderOptions, exportSvgText],
   );
   const svgPages = useMemo(
-    () =>
-      previewParsed?.ok
-        ? renderSvgPages(previewParsed.value, {
-            pageWidth,
-            paginate: effectivePaginate,
-            pageHeight: resolvedPageHeight,
-            pageMargin,
-            pageFooter: headerPageFooter,
-            pageNumbers: effectivePageNumbers,
-            measureNumbers: effectiveMeasureNumbers,
-            justifyMode,
-            activeNoteIndices: parsed.ok ? activeNoteIndices : [],
-            color: scoreColor,
-            background: pageBackground,
-          })
-        : null,
-    [
-      activeNoteIndices,
-      effectivePageNumbers,
-      effectiveMeasureNumbers,
-      effectivePaginate,
-      headerPageFooter,
-      justifyMode,
-      pageBackground,
-      resolvedPageHeight,
-      pageMargin,
-      pageWidth,
-      parsed.ok,
-      previewParsed,
-      scoreColor,
-    ],
+    () => previewParsed?.ok ? renderSvgPages(previewParsed.value, renderOptions) : null,
+    [previewParsed, renderOptions],
   );
   const previewPageCount = useMemo(() => (svg ? Math.max(1, svg.match(/<g class="page" /g)?.length ?? 1) : 0), [svg]);
   const pngDimensions = useMemo(() => {
@@ -476,7 +427,7 @@ export function App() {
   }
 
   async function exportSvg() {
-    if (!parsed.ok || !svg) {
+    if (!parsed.ok || !exportSvgText) {
       return;
     }
     try {
@@ -486,14 +437,14 @@ export function App() {
         }
         return;
       }
-      downloadBytes(await embedSvgDownloadFonts(svg), exportFilename(parsed.value.header.title, "svg"), "image/svg+xml");
+      downloadBytes(await embedSvgDownloadFonts(exportSvgText), exportFilename(parsed.value.header.title, "svg"), "image/svg+xml");
     } catch (error) {
       window.alert(error instanceof Error ? error.message : "Failed to export SVG.");
     }
   }
 
   async function exportPng() {
-    if (!parsed.ok || !svg) {
+    if (!parsed.ok || !exportSvgText) {
       return;
     }
     try {
@@ -504,7 +455,7 @@ export function App() {
         }
         return;
       }
-      downloadBlob(await svgToPngBlob(svg, { scale: pngScale }), exportFilename(parsed.value.header.title, "png"));
+      downloadBlob(await svgToPngBlob(exportSvgText, { scale: pngScale }), exportFilename(parsed.value.header.title, "png"));
     } catch (error) {
       window.alert(error instanceof Error ? error.message : "Failed to export PNG.");
     }
@@ -555,7 +506,7 @@ export function App() {
         program,
         onLoadStatus: setExportLoadStatus,
         sampleRate: audioSampleRate,
-        amplitude: Math.min(1, Math.max(0, volume / 100)),
+        amplitude: volume / 100,
         omitInitialRests,
       });
       const buffer = wav.buffer.slice(wav.byteOffset, wav.byteOffset + wav.byteLength) as ArrayBuffer;
@@ -582,7 +533,7 @@ export function App() {
         program,
         onLoadStatus: setExportLoadStatus,
         sampleRate: audioSampleRate,
-        amplitude: Math.min(1, Math.max(0, volume / 100)),
+        amplitude: volume / 100,
         omitInitialRests,
       });
       const buffer = mp3.buffer.slice(mp3.byteOffset, mp3.byteOffset + mp3.byteLength) as ArrayBuffer;

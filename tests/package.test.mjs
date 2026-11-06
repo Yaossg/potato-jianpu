@@ -1,10 +1,38 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { access, readFile } from "node:fs/promises";
+import { access, readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import ts from "typescript";
 
 const repoDir = fileURLToPath(new URL("../", import.meta.url));
+
+test("shared modules and browser imports respect the documented dependency direction", async () => {
+  const allowed = {
+    core: ["core"], parser: ["core", "parser"], renderer: ["core", "renderer"],
+    player: ["core", "player"], web: ["core", "parser", "renderer", "player", "web", "index.js"],
+  };
+  for (const [layer, targets] of Object.entries(allowed)) {
+    for (const file of await readdir(join(repoDir, "src", layer))) {
+      if (!/\.tsx?$/.test(file)) continue;
+      const source = await readFile(join(repoDir, "src", layer, file), "utf8");
+      const ast = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true);
+      function visit(node) {
+        const specifier = (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) ? node.moduleSpecifier
+          : ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword ? node.arguments[0] : undefined;
+        if (specifier && ts.isStringLiteral(specifier)) {
+          const path = specifier.text;
+          if (path.startsWith("../") && !/\?(?:raw|url)$/.test(path)) {
+            assert.ok(targets.includes(path.split("/")[1]), `${layer}/${file} imports ${path}`);
+          }
+          if (layer !== "web") assert.ok(!path.startsWith("node:"), `${layer}/${file} imports ${path}`);
+        }
+        ts.forEachChild(node, visit);
+      }
+      visit(ast);
+    }
+  }
+});
 
 async function exists(path) {
   await access(join(repoDir, path));

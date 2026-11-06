@@ -1,4 +1,5 @@
-import { resolveMelodicProgramName, type Diagnostic, type Header, type KeySignature, type SourceRange, type TimeSignature } from "../core/index.js";
+import { isPercussionTrackLabel, resolveMelodicProgramName, type Diagnostic, type Header, type KeySignature, type SourceRange, type TimeSignature } from "../core/index.js";
+export { isPercussionTrackLabel } from "../core/index.js";
 
 export interface HeaderValue {
   text: string;
@@ -57,10 +58,6 @@ export function isTrackLabel(label: string): boolean {
 
 export function isMelodicScoreTrackLabel(label: string): boolean {
   return /^T(?:[1-9]|1[1-6])$/.test(label);
-}
-
-export function isPercussionTrackLabel(label: string): boolean {
-  return /^P\d+$/.test(label);
 }
 
 export function isLyricLabel(label: string): boolean {
@@ -551,11 +548,11 @@ function parseVolumeValue(value: HeaderValue, label: string, diagnostics: Diagno
 
 function parseKeySignature(key: string): KeySignature | null {
   const normalized = key.replace(" ", "");
-  if (normalized in keyMap) {
+  if (Object.hasOwn(keyMap, normalized)) {
     return keyMap[normalized]!;
   }
   const reversed = [...normalized].reverse().join("");
-  if (reversed in keyMap) {
+  if (Object.hasOwn(keyMap, reversed)) {
     return keyMap[reversed]!;
   }
   return null;

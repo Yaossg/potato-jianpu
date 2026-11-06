@@ -1,5 +1,5 @@
 import type { Document, Measure, Note, Pitch, ScoreLine } from "../core/index.js";
-import { isPercussionTrackLabel } from "../parser/header.js";
+import { isPercussionTrackLabel } from "../core/index.js";
 
 export interface MelodyNote {
   chord: number[] | "rest";

@@ -73,6 +73,8 @@ The language and theme buttons are in the top toolbar. Language preference, them
 
 The export menu downloads the current valid score as SVG, PNG, PDF, MIDI, WAV, or MP3. SVG, PNG, and PDF use the current page settings. MIDI, WAV, and MP3 use the shared playback model and the current sound settings where applicable.
 
+Visual downloads omit playback highlighting even when the score is playing. If an export font fails to download, retry the export after the connection recovers. WAV and MP3 use the same full `0–200%` master volume range as preview playback, including mute.
+
 Enable Paginate in Page Settings when you want the preview and visual downloads to use fixed-height pages. Enable Split pages in Export Settings when SVG or PNG should download one file per rendered page.
 
 Audio export can take longer than image or MIDI export because the browser renders the full arrangement before downloading. While WAV or MP3 is rendering, the export menu reports the event count and approximate duration.

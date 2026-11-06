@@ -37,6 +37,24 @@ test("parses score-only documents", () => {
   assert.equal(result.value.score[0].measures.length, 2);
 });
 
+test("rejects inherited object property names as key signatures", () => {
+  for (const key of ["constructor", "toString", "valueOf", "rotcurtsnoc"]) {
+    const result = parse(`key: ${key}\n===\n1 2 3 4`);
+    assert.equal(result.ok, false, key);
+    assert.ok(result.diagnostics.some(d => d.message === `Unknown key signature '${key}'.`));
+  }
+});
+
+test("source ranges count CR, LF, and CRLF as one newline each", () => {
+  for (const newline of ["\r", "\n", "\r\n"]) {
+    const source = ["title: \"Lines\"", "===", "1 2 3 4", "?"].join(newline);
+    const result = parse(source);
+    assert.equal(result.ok, false);
+    const unexpected = result.diagnostics.find(d => d.message === "Unexpected character '?'.");
+    assert.deepEqual(unexpected.range.start, { line: 4, column: 1, offset: source.length - 1 });
+  }
+});
+
 test("parses empty files with default header values", () => {
   const result = parse("");
   assert.equal(result.ok, true);

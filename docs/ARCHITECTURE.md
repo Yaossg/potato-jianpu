@@ -69,6 +69,7 @@ Responsibilities:
 - document model
 - header model
 - shared General MIDI Program option data and melodic Program name resolution
+- shared percussion track-label recognition used by parser and player
 - score line, measure, note, pitch, duration, and slur-span models
 - time signature helper functions
 

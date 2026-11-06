@@ -17,10 +17,19 @@ The complete test suite run by `pnpm run test` includes:
 - examples tests
 - package metadata tests
 - frontend production-build smoke test
+- frontend application wiring tests for persisted defaults, header/UI option
+  combinations, clean visual exports, audio gain, and font-download retries
+- module import boundary checks
 
 The frontend smoke test builds both the browser app and the documentation site,
 then checks selected generated files and bundled behavior. It is not a
 real-browser interaction test.
+
+Application wiring tests execute the actual App handlers with deterministic
+React hooks and the real parser/renderer. They check all 216 combinations of
+omitted/false/true page headers and the three UI checkboxes. Browser adapters
+are substituted at the I/O boundary. These tests do not cover DOM layout,
+React effect scheduling, or browser download permissions.
 
 ## Testing Guidelines
 

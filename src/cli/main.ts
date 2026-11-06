@@ -157,6 +157,7 @@ function commandFlags(command: string): Set<string> {
     case "export-midi":
       return new Set(["-o", "--program", "--omit-initial-rest"]);
     case "export-wav":
+      return new Set(["-o", "--program", "--sample-rate", "--amplitude", "--omit-initial-rest"]);
     case "export-mp3":
       return new Set(["-o", "--program", "--sample-rate", "--amplitude", "--bit-rate", "--omit-initial-rest"]);
     default:
