@@ -16,6 +16,7 @@ import lakeBaikal from "../../examples/lake-baikal.jpu?raw";
 import burningDreams from "../../examples/burning-dreams.jpu?raw";
 import endlessFlow from "../../examples/endless-flow.jpu?raw";
 import vivaLaVida from "../../examples/vivalavida.jpu?raw";
+import dreamsUnderTheStarlight from "../../examples/dreams-in-the-starlight.jpu?raw";
 import sunnySkips from "../../examples/sunny-skips.jpu?raw";
 import epicBegin from "../../examples/epic-begin.jpu?raw";
 import epicEnd from "../../examples/epic-end.jpu?raw";
@@ -39,6 +40,7 @@ export const examples = [
   burningDreams,
   endlessFlow,
   vivaLaVida,
+  dreamsUnderTheStarlight,
   sunnySkips,
   epicBegin,
   epicEnd,

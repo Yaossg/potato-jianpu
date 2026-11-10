@@ -185,17 +185,18 @@ padding is applied.
 
 In labeled multi-voice groups, simultaneous tracks share measure-local rhythmic
 anchors. Each track remains on its source line, and all tracks in the group
-share one horizontal scale when the group is overwide. When every track in a measure
-has the same rhythmic anchor set, notes with the same start position are placed
-at the same x coordinate. The shared coordinate uses enough horizontal advance
+share one horizontal scale when the group is overwide. Each measure uses the
+union of note, rest, and duration-dash start times across its tracks, so events
+with the same start time are placed at the same x coordinate even when a voice
+sustains across a beat boundary. The shared coordinate uses enough horizontal advance
 for the widest note or duration mark at that rhythmic position, so accidentals
 and dotted notes can reserve the required space without shifting another track
-off the beat. Dash extension marks are treated as their own rhythmic anchors,
+off the beat. Pitch digits and their lyrics share the alignment coordinate;
+accidentals and leading grace notes reserve space to its left.
+Dash extension marks are treated as their own rhythmic anchors,
 so a held note's extension aligns with later notes in simultaneous tracks
-instead of moving as one block with the held note head. When the tracks in a
-measure do not have matching rhythmic anchors, the renderer falls back to
-measure-level alignment: measure barlines align across tracks, and each track's
-own measure contents are stretched to fit between those aligned barlines.
+instead of moving as one block with the held note head. Different start times
+retain their chronological order, and measure barlines align across tracks.
 
 Lyric lines render below the preceding score group. A normal lyric string uses
 whitespace-separated alignment units. An automatic lyric string written as
@@ -390,9 +391,11 @@ scales down visually instead of forcing horizontal page overflow.
 
 When score justification is enabled, selected visual lines are stretched to the
 available content width by remapping horizontal coordinates. The `"except-last"`
-mode skips the final score line; `"all"` includes it. The remapping uses beat
-groups: notes inside one beat group, such as a continuous underlined run, keep
-their natural internal spacing and move as one unit. This affects notes, bars,
+mode skips the final score line; `"all"` includes it. Single-voice remapping uses
+beat groups: notes inside one beat group, such as a continuous underlined run,
+keep their natural internal spacing and move as one unit. Aligned simultaneous
+tracks instead remap each shared rhythmic anchor, including duration dashes,
+so different beat groupings cannot move simultaneous events apart. This affects notes, bars,
 ties, dashes, underlines, and duration dots together. Overwide source-line
 groups still use group-level scaling instead of additional position stretching.
 

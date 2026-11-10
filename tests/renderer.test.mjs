@@ -1566,14 +1566,56 @@ test("aligns differing simultaneous track rhythms when beat boundaries match", (
   assert.equal(new Set(finalBarXs(svg)).size, 1);
 });
 
-test("falls back to measure-level alignment when track rhythms miss beat boundaries", () => {
+test("preserves rhythmic order when a track sustains across beat boundaries", () => {
   const result = parse('time: 2/4\n===\nT1: 1/ 2 1/\nT2: 5, 6,');
   assert.equal(result.ok, true);
   const svg = renderSvg(result.value, { pageWidth: 260 });
 
   assert.equal(noteX(svg, 3), noteX(svg, 0));
-  assert.notEqual(noteX(svg, 4), noteX(svg, 1));
+  assert.ok(noteX(svg, 1) < noteX(svg, 4));
+  assert.ok(noteX(svg, 4) < noteX(svg, 2));
   assert.equal(new Set(finalBarXs(svg)).size, 1);
+});
+
+test("aligns starlight dotted sustains, offbeat rests, and lyrics across tracks", () => {
+  const result = parse(`time: 2/4
+===
+T1: 3'. 0// 3'// | 3'/ 7. | 0// 4/ 4// 6/ 4/
+T2: 1,/ 5,/ 1/ 5,/ | 3,,/ 7,,/ #5,/ 7,,/ | 2,,/ 6,,/ 2,/ 6,,/
+L1: "现 终 身 边 月 亮 代 表"`);
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.diagnostics, []);
+  for (const options of [{ pageWidth: 850 }, { pageWidth: 160 }, { pageWidth: 850, justifyMode: "all" }]) {
+    const svg = renderSvg(result.value, options);
+    // Measure 20: the rest starts with the last accompaniment eighth;
+    // the final sixteenth starts later, even though the melody misses beat 2.
+    assert.equal(noteX(svg, 0), noteX(svg, 10));
+    assert.equal(noteX(svg, 1), noteX(svg, 13));
+    assert.ok(noteX(svg, 12) < noteX(svg, 1));
+    assert.ok(noteX(svg, 1) < noteX(svg, 2));
+    // Measure 24: the dotted quarter begins with accompaniment eighth 2.
+    assert.equal(noteX(svg, 4), noteX(svg, 15));
+    // Measure 41: shared second-beat onsets must align after syncopation.
+    assert.equal(noteX(svg, 8), noteX(svg, 20));
+    assert.equal(noteX(svg, 9), noteX(svg, 21));
+    assert.ok(noteX(svg, 6) < noteX(svg, 19));
+    assert.ok(noteX(svg, 19) < noteX(svg, 7));
+    assert.equal(lyricSyllableX(svg, "终"), noteX(svg, 2));
+    assert.equal(lyricSyllableX(svg, "边"), noteX(svg, 4));
+    assert.equal(new Set(finalBarXs(svg)).size, 1);
+  }
+});
+
+test("aligns pitch digits across tracks with different accidentals", () => {
+  const result = parse('time: 2/4\n===\nT1: #1\' 6\'/. 5\'//\nT2: 6,,/ 3,/ #1/ 3,/\nL1: "在 光 辉"');
+  assert.equal(result.ok, true);
+  for (const justifyMode of ["none", "all"]) {
+    const svg = renderSvg(result.value, { pageWidth: 500, justifyMode });
+    assert.equal(noteX(svg, 0), noteX(svg, 3));
+    assert.equal(noteX(svg, 1), noteX(svg, 5));
+    assert.equal(lyricSyllableX(svg, "在"), noteX(svg, 0));
+    assert.equal(new Set(finalBarXs(svg)).size, 1);
+  }
 });
 
 test("aligns simultaneous tracks across the complete source-line span", () => {

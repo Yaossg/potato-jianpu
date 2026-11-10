@@ -22,6 +22,7 @@ export interface LineLayout {
   width: number;
   height: number;
   maxPaddingUp: number;
+  rhythmicAlignment?: boolean;
   verticalPlan?: VerticalLinePlan;
 }
 

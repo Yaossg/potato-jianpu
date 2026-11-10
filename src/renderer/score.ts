@@ -532,7 +532,8 @@ function createLineJustifier(layout: LineLayout, targetWidth: number, enabled: b
         measureXOffset(layout.measures, measureIndex) +
         measure.leftPadding +
         measure.notePositions[0]! +
-        ornamentLeftWidthOf(firstNote);
+        ornamentLeftWidthOf(firstNote) +
+        (layout.rhythmicAlignment && firstNote.kind === "pitch" ? maxAccidentalOffset(firstNote.chord) : 0);
       break;
     }
   }
@@ -1245,15 +1246,16 @@ function renderLine(
     for (const [noteIndex, note] of measureLayout.measure.notes.entries()) {
       const nextMeasureNote = measureLayout.measure.notes[noteIndex + 1];
       const naturalX = xOffset + measureLayout.notePositions[noteIndex]! + ornamentLeftWidthOf(note) + measureLayout.leftPadding;
+      const accidentalWidth = note.kind === "pitch" ? maxAccidentalOffset(note.chord) : 0;
       groupStartX ??= naturalX;
       const groupShift = justifyX(groupStartX) - groupStartX;
       const dashAnchors = measureLayout.dashPositions[noteIndex]!.map((dashPosition) => {
         const naturalDashX = xOffset + dashPosition + measureLayout.leftPadding;
-        return contentOffset + naturalDashX + groupShift;
+        return contentOffset + (layout.rhythmicAlignment ? justifyX(naturalDashX) : naturalDashX + groupShift);
       });
       const entry: LineEntry = {
         note,
-        x: contentOffset + naturalX + groupShift,
+        x: contentOffset + (layout.rhythmicAlignment ? justifyX(naturalX + accidentalWidth) - accidentalWidth : naturalX + groupShift),
         y: lineY + layout.maxPaddingUp,
         full: (fullness[noteIndex] ?? false) || nextMeasureNote === undefined || nextMeasureNote.duration.halves === 0,
         dashAnchors,
@@ -1440,7 +1442,8 @@ function renderLine(
 
   return {
     svg: parts.join("\n"),
-    lyricAnchors: lineEntries.filter((entry) => entry.note.kind !== "rest").map((entry) => entry.x),
+    lyricAnchors: lineEntries.filter((entry) => entry.note.kind !== "rest").map((entry) =>
+      entry.x + (entry.note.kind === "pitch" ? maxAccidentalOffset(entry.note.chord) : 0)),
   };
 }
 
@@ -1530,7 +1533,6 @@ function timelineKey(value: number): string {
 interface MeasureRhythmPositions {
   noteStarts: number[];
   dashStarts: number[][];
-  totalDuration: number;
 }
 
 function measureRhythmPositions(measure: Measure): MeasureRhythmPositions {
@@ -1542,7 +1544,7 @@ function measureRhythmPositions(measure: Measure): MeasureRhythmPositions {
     dashStarts.push(Array.from({ length: note.duration.dashes }, (_, index) => start + (index + 1) / 4));
     start += note.duration.value;
   }
-  return { noteStarts, dashStarts, totalDuration: start };
+  return { noteStarts, dashStarts };
 }
 
 function noteAdvanceInLayout(layout: MeasureLayout, noteIndex: number): number {
@@ -1570,13 +1572,6 @@ function dashPositionsForStarts(starts: number[][], positionsByStart: Map<string
   return starts.map((dashStarts) => positionsForStarts(dashStarts, positionsByStart));
 }
 
-function measureTimelineSignature(positions: MeasureRhythmPositions): string {
-  return [...positions.noteStarts, ...positions.dashStarts.flat()]
-    .sort((a, b) => a - b)
-    .map(timelineKey)
-    .join("|");
-}
-
 function measureTrailingWidth(measure: Measure): number {
   return 4 + (measure.repeatEnd ? DIMENSIONS.repeatRightPadding - DIMENSIONS.leftPadding : 0);
 }
@@ -1585,135 +1580,18 @@ function measureContentWidth(layout: MeasureLayout): number {
   return layout.width - layout.leftPadding - layout.rightPadding - measureTrailingWidth(layout.measure);
 }
 
-function scalePositions(positions: number[], sourceWidth: number, targetWidth: number): number[] {
-  if (sourceWidth <= 0 || targetWidth === sourceWidth) {
-    return positions;
-  }
-  const scale = targetWidth / sourceWidth;
-  return positions.map((position) => position * scale);
-}
-
-function scaleDashPositions(positions: number[][], sourceWidth: number, targetWidth: number): number[][] {
-  return positions.map((dashPositions) => scalePositions(dashPositions, sourceWidth, targetWidth));
-}
-
-function alignMeasureLinesOnly(measureLayouts: MeasureLayout[]): MeasureLayout[] {
-  const contentWidth = Math.max(0, ...measureLayouts.map(measureContentWidth));
-  const leftPadding = Math.max(...measureLayouts.map((layout) => layout.leftPadding));
-  const rightPadding = Math.max(...measureLayouts.map((layout) => layout.rightPadding));
-  return measureLayouts.map((layout) => {
-    const sourceWidth = measureContentWidth(layout);
-    return {
-      ...layout,
-      width: contentWidth + leftPadding + rightPadding + measureTrailingWidth(layout.measure),
-      leftPadding,
-      rightPadding,
-      notePositions: scalePositions(layout.notePositions, sourceWidth, contentWidth),
-      dashPositions: scaleDashPositions(layout.dashPositions, sourceWidth, contentWidth),
-    };
-  });
-}
-
-function allStarts(positions: MeasureRhythmPositions): number[] {
-  return [...positions.noteStarts, ...positions.dashStarts.flat()];
-}
-
-function canAlignBeatBoundaries(positionsByMeasure: MeasureRhythmPositions[], unit: number): boolean {
-  if (unit <= 0) {
-    return false;
-  }
-
-  return positionsByMeasure.every((positions) => {
-    const starts = new Set(allStarts(positions).map(timelineKey));
-    for (let beatStart = 0; beatStart < positions.totalDuration - 1e-9; beatStart += unit) {
-      if (!starts.has(timelineKey(beatStart))) {
-        return false;
-      }
-    }
-    return true;
-  });
-}
-
-function beatStarts(totalDuration: number, unit: number): number[] {
-  const starts: number[] = [];
-  for (let beatStart = 0; beatStart < totalDuration - 1e-9; beatStart += unit) {
-    starts.push(beatStart);
-  }
-  return starts;
-}
-
-function alignMeasureLayoutsByBeat(measureLayouts: MeasureLayout[], positionsByMeasure: MeasureRhythmPositions[], unit: number): MeasureLayout[] {
-  const beatStartsByMeasure = positionsByMeasure.map((positions) => beatStarts(positions.totalDuration, unit));
-  const beatCount = Math.max(0, ...beatStartsByMeasure.map((starts) => starts.length));
-  const positionsByAbsoluteStart = new Map<string, number>();
-  let position = 0;
-
-  for (let beatIndex = 0; beatIndex < beatCount; beatIndex += 1) {
-    const widthsByRelativeStart = new Map<string, { start: number; width: number }>();
-
-    for (const [layoutIndex, layout] of measureLayouts.entries()) {
-      const positions = positionsByMeasure[layoutIndex]!;
-      const beatStart = beatStartsByMeasure[layoutIndex]![beatIndex];
-      const beatEnd = beatStartsByMeasure[layoutIndex]![beatIndex + 1] ?? positions.totalDuration;
-      if (beatStart === undefined) {
-        continue;
-      }
-
-      for (const [noteIndex] of layout.measure.notes.entries()) {
-        const noteStart = positions.noteStarts[noteIndex]!;
-        if (noteStart >= beatStart - 1e-9 && noteStart < beatEnd - 1e-9) {
-          setTimelineWidth(widthsByRelativeStart, noteStart - beatStart, rhythmicSlotWidth(layout, noteIndex));
-        }
-        for (const dashStart of positions.dashStarts[noteIndex]!) {
-          if (dashStart >= beatStart - 1e-9 && dashStart < beatEnd - 1e-9) {
-            setTimelineWidth(widthsByRelativeStart, dashStart - beatStart, DIMENSIONS.dashSpacing);
-          }
-        }
-      }
-    }
-
-    const timeline = [...widthsByRelativeStart.values()].sort((a, b) => a.start - b.start);
-    for (const entry of timeline) {
-      for (const starts of beatStartsByMeasure) {
-        const beatStart = starts[beatIndex];
-        if (beatStart !== undefined) {
-          positionsByAbsoluteStart.set(timelineKey(beatStart + entry.start), position);
-        }
-      }
-      position += entry.width;
-    }
-  }
-
-  const leftPadding = Math.max(...measureLayouts.map((layout) => layout.leftPadding));
-  const rightPadding = Math.max(...measureLayouts.map((layout) => layout.rightPadding));
-  return measureLayouts.map((layout, layoutIndex) => {
-    const positions = positionsByMeasure[layoutIndex]!;
-    return {
-      ...layout,
-      width: position + leftPadding + rightPadding + 4 + (layout.measure.repeatEnd ? DIMENSIONS.repeatRightPadding - DIMENSIONS.leftPadding : 0),
-      leftPadding,
-      rightPadding,
-      notePositions: positionsForStarts(positions.noteStarts, positionsByAbsoluteStart),
-      dashPositions: dashPositionsForStarts(positions.dashStarts, positionsByAbsoluteStart),
-    };
-  });
-}
-
-function alignMeasureLayouts(measureLayouts: MeasureLayout[], unit: number): MeasureLayout[] {
+function alignMeasureLayouts(measureLayouts: MeasureLayout[]): MeasureLayout[] {
   const positionsByMeasure = measureLayouts.map((layout) => measureRhythmPositions(layout.measure));
-  const signatures = new Set(positionsByMeasure.map(measureTimelineSignature));
-  if (signatures.size > 1) {
-    return canAlignBeatBoundaries(positionsByMeasure, unit)
-      ? alignMeasureLayoutsByBeat(measureLayouts, positionsByMeasure, unit)
-      : alignMeasureLinesOnly(measureLayouts);
-  }
-
   const widthsByStart = new Map<string, { start: number; width: number }>();
+  const leadingWidthsByStart = new Map<string, { start: number; width: number }>();
+  const leadingWidth = (note: Note): number => ornamentLeftWidthOf(note) + (note.kind === "pitch" ? maxAccidentalOffset(note.chord) : 0);
 
   for (const [layoutIndex, layout] of measureLayouts.entries()) {
     const positions = positionsByMeasure[layoutIndex]!;
     for (const [noteIndex] of layout.measure.notes.entries()) {
-      setTimelineWidth(widthsByStart, positions.noteStarts[noteIndex]!, rhythmicSlotWidth(layout, noteIndex));
+      const leftWidth = leadingWidth(layout.measure.notes[noteIndex]!);
+      setTimelineWidth(leadingWidthsByStart, positions.noteStarts[noteIndex]!, leftWidth);
+      setTimelineWidth(widthsByStart, positions.noteStarts[noteIndex]!, rhythmicSlotWidth(layout, noteIndex) - leftWidth);
       for (const dashStart of positions.dashStarts[noteIndex]!) {
         setTimelineWidth(widthsByStart, dashStart, DIMENSIONS.dashSpacing);
       }
@@ -1724,6 +1602,7 @@ function alignMeasureLayouts(measureLayouts: MeasureLayout[], unit: number): Mea
   const positionsByStart = new Map<string, number>();
   let position = 0;
   for (const entry of timeline) {
+    position += leadingWidthsByStart.get(timelineKey(entry.start))?.width ?? 0;
     positionsByStart.set(timelineKey(entry.start), position);
     position += entry.width;
   }
@@ -1737,13 +1616,13 @@ function alignMeasureLayouts(measureLayouts: MeasureLayout[], unit: number): Mea
       width: position + leftPadding + rightPadding + 4 + (layout.measure.repeatEnd ? DIMENSIONS.repeatRightPadding - DIMENSIONS.leftPadding : 0),
       leftPadding,
       rightPadding,
-      notePositions: positionsForStarts(positions.noteStarts, positionsByStart),
+      notePositions: positionsForStarts(positions.noteStarts, positionsByStart).map((x, index) => x - leadingWidth(layout.measure.notes[index]!)),
       dashPositions: dashPositionsForStarts(positions.dashStarts, positionsByStart),
     };
   });
 }
 
-function alignLineLayouts(layouts: LineLayout[], unit: number): LineLayout[] {
+function alignLineLayouts(layouts: LineLayout[]): LineLayout[] {
   const aligned = [...layouts];
   const layoutsBySpan = new Map<string, Array<{ index: number; layout: LineLayout }>>();
 
@@ -1761,7 +1640,7 @@ function alignLineLayouts(layouts: LineLayout[], unit: number): LineLayout[] {
 
     for (let measureIndex = 0; measureIndex < measureCount; measureIndex += 1) {
       const measureLayouts = entries.map((entry) => entry.layout.measures[measureIndex]!);
-      const alignedMeasureLayouts = alignMeasureLayouts(measureLayouts, unit);
+      const alignedMeasureLayouts = alignMeasureLayouts(measureLayouts);
       for (const [entryIndex, measureLayout] of alignedMeasureLayouts.entries()) {
         alignedMeasures[entryIndex]![measureIndex] = measureLayout;
       }
@@ -1772,6 +1651,7 @@ function alignLineLayouts(layouts: LineLayout[], unit: number): LineLayout[] {
       aligned[entry.index] = {
         ...entry.layout,
         measures,
+        rhythmicAlignment: true,
         width: lineWidth(measures),
       };
     }
@@ -2052,14 +1932,13 @@ function isPrimaryLyricLine(line: ScoreLine, hasLabels: boolean): boolean {
 }
 
 function layoutScore(document: Document, pageWidth: number): ScoreLayoutContext {
-  const unit = actualNotePerBeat(document.header.timeSignature);
   const groups = scoreLineGroups(document);
   const hasLabels = document.score.some((line) => line.label !== undefined);
   const notesByLine = lineNotesByTrack(document);
   const slurLanes = slurLaneMap(document, notesByLine);
   const finalMeasures = finalBarMeasures(groups);
   const layouts = groups.flatMap((group, groupIndex) => {
-    const groupLayouts = alignLineLayouts(layoutGroupLines(group, Math.max(1, pageWidth - group.labelOffset - group.bracketOffset * 2), hasLabels), unit);
+    const groupLayouts = alignLineLayouts(layoutGroupLines(group, Math.max(1, pageWidth - group.labelOffset - group.bracketOffset * 2), hasLabels));
     const groupMusicWidth = Math.max(0, ...groupLayouts.map((layout) => layout.width + group.labelOffset + group.bracketOffset * 2));
     return groupLayouts.map((lineLayout) => {
       const slurSegments = projectSlursToLine(document, lineLayout, notesByLine, slurLanes);

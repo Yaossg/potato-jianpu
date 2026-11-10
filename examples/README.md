@@ -39,6 +39,7 @@ pnpm run cli -- export-mp3 examples/twinkle.jpu -o twinkle.mp3
 | `burning-dreams.jpu` | Image transcription in F major with Chinese lyrics, slurs, ties, and alternate endings |
 | `endless-flow.jpu` | Song in A major with Chinese lyrics, grace notes, ties, and alternate endings |
 | `vivalavida.jpu` | Complete 129-bar two-track transcription with chords, repeats, and cross-measure ties |
+| `dreams-in-the-starlight.jpu` | Complete 49-bar piano transcription in E-flat with Chinese lyrics, alternate endings, and cross-measure ties |
 
 ## Epic Instrumentals
 
