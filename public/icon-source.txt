@@ -1,0 +1,6 @@
+Minecraft Java Edition 1.12.2 potato texture (original texture)
+
+Source: https://github.com/InventivetalentDev/minecraft-assets/blob/1.12.2/assets/minecraft/textures/items/potato.png
+Copyright Mojang AB. Minecraft is a trademark of Mojang AB.
+Used as the Potato Jianpu icon; this project is not an official Minecraft product.
+The PNG is an unmodified copy of the source texture.

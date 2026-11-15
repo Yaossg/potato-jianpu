@@ -11,7 +11,7 @@ export default defineConfig({
     starlight({
       title: { en: "Potato Jianpu", "zh-CN": "土豆简谱" },
       description: "Documentation for writing, rendering, playing, and exporting Jianpu scores.",
-      favicon: "/favicon.svg",
+      favicon: "/favicon.png",
       head: [
         { tag: "meta", attrs: { name: "theme-color", content: "#13251f" } },
         { tag: "link", attrs: { rel: "manifest", href: "/docs/site.webmanifest" } },

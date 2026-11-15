@@ -20,6 +20,7 @@ export type TranslationKey =
   | "light"
   | "dark"
   | "help"
+  | "githubSource"
   | "settings"
   | "examples"
   | "open"
@@ -115,6 +116,7 @@ const translations: { en: Record<TranslationKey, string>; zh: Record<Translation
     light: "Light",
     dark: "Dark",
     help: "Help",
+    githubSource: "Source Code",
     settings: "Settings",
     examples: "Examples",
     open: "Open",
@@ -209,6 +211,7 @@ const translations: { en: Record<TranslationKey, string>; zh: Record<Translation
     light: "浅色",
     dark: "深色",
     help: "帮助",
+    githubSource: "Source Code",
     settings: "设置",
     examples: "示例",
     open: "打开",

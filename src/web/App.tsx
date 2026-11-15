@@ -731,7 +731,7 @@ export function App() {
     <main className={`app-shell theme-${theme}`}>
       <header className="topbar">
         <div className="brand-lockup">
-          <img className="brand-mark" src="/favicon.svg" alt="" />
+          <img className="brand-mark" src="/favicon.png" alt="" />
           <h1>{translate(language, "appName")}</h1>
         </div>
         <Toolbar

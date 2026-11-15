@@ -4,9 +4,9 @@
   "description": "Write, render, play, and export Jianpu scores.",
   "icons": [
     {
-      "src": "/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/favicon.png",
+      "sizes": "16x16",
+      "type": "image/png",
       "purpose": "any"
     }
   ],

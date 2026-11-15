@@ -133,6 +133,9 @@ export function Toolbar({
         onExportWav={onExportWav}
         onExportMp3={onExportMp3}
       />
+      <a className="icon-button source-link" href="https://github.com/Yaossg/potato-jianpu" target="_blank" rel="noopener noreferrer" aria-label={t("githubSource")} title={t("githubSource")}>
+        <ToolbarIcon name="github" />
+      </a>
     </div>
   );
 }
