@@ -445,7 +445,7 @@ The CLI exposes pagination through:
 pnpm run cli -- export-svg input.jpu -o output.svg --paginate --page-height 1400
 pnpm run cli -- export-png input.jpu -o output.png --paginate --page-height 1400
 pnpm run cli -- export-pdf input.jpu -o output.pdf --paginate --page-height 1400
-pnpm run cli -- export-pdf input.jpu -o output.pdf --paginate --page-footer "modern-jianpu" --page-numbers
+pnpm run cli -- export-pdf input.jpu -o output.pdf --paginate --page-footer "potato-jianpu" --page-numbers
 ```
 
 ## Header Rendering

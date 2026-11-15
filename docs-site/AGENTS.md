@@ -16,8 +16,7 @@ If a docs-site convention changes, update the relevant file under
 
 ## Scope
 
-`docs-site/` is the Astro Starlight documentation site for Modern Jianpu
-Markup. It builds the primary user-facing documentation from MDX content and is
+`docs-site/` is the Astro Starlight documentation site for Potato Jianpu. It builds the primary user-facing documentation from MDX content and is
 served as the frontend subsite at `/docs/`.
 
 Important local paths:

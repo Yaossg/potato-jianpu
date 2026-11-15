@@ -2,6 +2,7 @@ export type Language = "en" | "zh";
 export type PageWidthMode = "panel" | "content" | "manual";
 export type JustifyMode = "none" | "except-last" | "all";
 export type TranslationKey =
+  | "appName"
   | "exportVideo"
   | "videoPreparing"
   | "videoRendering"
@@ -96,6 +97,7 @@ export type TranslationKey =
 
 const translations: { en: Record<TranslationKey, string>; zh: Record<TranslationKey, string> } = {
   en: {
+    appName: "Potato Jianpu",
     exportVideo: "MP4 (Experimental)",
     videoPreparing: "Preparing playback video…",
     videoRendering: "Exporting playback video: {percent}%",
@@ -189,6 +191,7 @@ const translations: { en: Record<TranslationKey, string>; zh: Record<Translation
     events: "events",
   } satisfies Record<TranslationKey, string>,
   zh: {
+    appName: "土豆简谱",
     exportVideo: "MP4（实验）",
     videoPreparing: "正在准备播放视频…",
     videoRendering: "正在导出播放视频：{percent}%",

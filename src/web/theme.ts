@@ -1,3 +1,4 @@
+import { readStoredValue } from "./storage.js";
 export type ThemeName = "light" | "dark";
 
 const LIGHT_THEME = {
@@ -10,7 +11,7 @@ const DARK_THEME = {
   pageBackground: "#111827",
 };
 
-export const THEME_STORAGE_KEY = "modern-jianpu-markup-theme";
+export const THEME_STORAGE_KEY = "potato-jianpu-theme";
 
 export function themeColors(theme: ThemeName) {
   return theme === "light" ? LIGHT_THEME : DARK_THEME;
@@ -22,7 +23,7 @@ function isThemeName(value: string | null): value is ThemeName {
 
 function storedTheme(): ThemeName | null {
   try {
-    const value = window.localStorage.getItem(THEME_STORAGE_KEY);
+    const value = readStoredValue(THEME_STORAGE_KEY);
     return isThemeName(value) ? value : null;
   } catch {
     return null;

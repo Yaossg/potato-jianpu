@@ -61,7 +61,7 @@ test("frontend production build emits the expected app shell", async () => {
   const audioSource = await readFile(new URL("../src/web/audio.ts", import.meta.url), "utf8");
   const rendererSvgSource = await readFile(new URL("../src/renderer/svg.ts", import.meta.url), "utf8");
 
-  assert.match(script, /Modern Jianpu Markup/);
+  assert.match(script, /Potato Jianpu/);
   assert.match(script, /Export/);
   assert.match(script, /PDF/);
   assert.doesNotMatch(script, /Export SVG/);
@@ -104,8 +104,8 @@ test("frontend production build emits the expected app shell", async () => {
   assert.match(script, /fillRect/);
   assert.match(script, /Noto Sans SC/);
   assert.match(script, /Split pages \(SVG\/PNG\)/);
-  assert.match(script, /modern-jianpu-markup-theme/);
-  assert.match(script, /modern-jianpu-markup-source/);
+  assert.match(script, /potato-jianpu-theme/);
+  assert.match(script, /potato-jianpu-source/);
   assert.match(script, /prefers-color-scheme: dark/);
   assert.match(script, /Help/);
   assert.match(script, /docs\//);

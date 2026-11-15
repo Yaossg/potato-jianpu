@@ -32,7 +32,7 @@ if (warnings.length > 0) {
 }
 
 const generatedHtml = createDocumentation(ast, {
-  title: "Modern Jianpu Markup Grammar Railroad",
+  title: "Potato Jianpu Grammar Railroad",
   full: false,
   optimizeDiagrams: false,
   optimizeText: false,

@@ -374,14 +374,14 @@ test("renders page footers and page numbers", () => {
     paginate: true,
     pageHeight: 160,
     pageMargin: 20,
-    pageFooter: "modern-jianpu",
+    pageFooter: "potato-jianpu",
     pageNumbers: true,
   });
   const pageCount = [...svg.matchAll(/<g class="page" data-page="/g)].length;
   assert.ok(pageCount > 1);
   assert.equal([...svg.matchAll(/class="page-footer"/g)].length, pageCount);
   assert.equal([...svg.matchAll(/class="page-number"/g)].length, pageCount);
-  assert.match(svg, /<text class="page-footer" x="20" y="148" text-anchor="start">modern-jianpu<\/text>/);
+  assert.match(svg, /<text class="page-footer" x="20" y="148" text-anchor="start">potato-jianpu<\/text>/);
   assert.match(svg, new RegExp(`<text class="page-number" x="70" y="148" text-anchor="middle">1 / ${pageCount}</text>`));
   assert.match(svg, /<g class="page-content" transform="translate\(20, 20\)">/);
 });

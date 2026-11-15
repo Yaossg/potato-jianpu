@@ -1,3 +1,4 @@
+import { readStoredValue } from "./storage.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, KeyboardEvent, MouseEvent, PointerEvent } from "react";
 import type { Diagnostic, Document, Result } from "../core/model.js";
@@ -32,14 +33,14 @@ import type { VideoExportPhase } from "./video-export.js";
 
 const MELODIC_AUDITION_SOURCE = "1 2 3 4 5 6 7 1'";
 const DRUM_AUDITION_SOURCE = "X X X X";
-const LANGUAGE_STORAGE_KEY = "modern-jianpu-markup-language";
-const SOURCE_STORAGE_KEY = "modern-jianpu-markup-source";
-const SOURCE_WRAP_STORAGE_KEY = "modern-jianpu-markup-source-wrap";
-const EDITOR_FONT_SIZE_STORAGE_KEY = "modern-jianpu-markup-editor-font-size";
-const SHOW_LINE_NUMBERS_STORAGE_KEY = "modern-jianpu-markup-show-line-numbers";
-const HIGHLIGHT_CURRENT_LINE_STORAGE_KEY = "modern-jianpu-markup-highlight-current-line";
-const HIGHLIGHT_DIAGNOSTICS_STORAGE_KEY = "modern-jianpu-markup-highlight-diagnostics";
-const EDITOR_PANE_PERCENT_STORAGE_KEY = "modern-jianpu-markup-editor-pane-percent";
+const LANGUAGE_STORAGE_KEY = "potato-jianpu-language";
+const SOURCE_STORAGE_KEY = "potato-jianpu-source";
+const SOURCE_WRAP_STORAGE_KEY = "potato-jianpu-source-wrap";
+const EDITOR_FONT_SIZE_STORAGE_KEY = "potato-jianpu-editor-font-size";
+const SHOW_LINE_NUMBERS_STORAGE_KEY = "potato-jianpu-show-line-numbers";
+const HIGHLIGHT_CURRENT_LINE_STORAGE_KEY = "potato-jianpu-highlight-current-line";
+const HIGHLIGHT_DIAGNOSTICS_STORAGE_KEY = "potato-jianpu-highlight-diagnostics";
+const EDITOR_PANE_PERCENT_STORAGE_KEY = "potato-jianpu-editor-pane-percent";
 type PaperSelection = PaperPresetName | "custom";
 
 const DEFAULT_PAGE_WIDTH = DEFAULT_PAGE_SIZE.pageWidth;
@@ -59,7 +60,7 @@ const MAX_EDITOR_FONT_SIZE = 22;
 
 function storedLanguage(): Language | null {
   try {
-    const value = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    const value = readStoredValue(LANGUAGE_STORAGE_KEY);
     return isLanguage(value) ? value : null;
   } catch {
     return null;
@@ -72,7 +73,7 @@ function systemLanguage(): Language {
 
 function storedSource(): string {
   try {
-    return window.localStorage.getItem(SOURCE_STORAGE_KEY) ?? "";
+    return readStoredValue(SOURCE_STORAGE_KEY) ?? "";
   } catch {
     return "";
   }
@@ -80,7 +81,7 @@ function storedSource(): string {
 
 function storedSourceWrap(): boolean {
   try {
-    return window.localStorage.getItem(SOURCE_WRAP_STORAGE_KEY) !== "false";
+    return readStoredValue(SOURCE_WRAP_STORAGE_KEY) !== "false";
   } catch {
     return true;
   }
@@ -88,7 +89,7 @@ function storedSourceWrap(): boolean {
 
 function storedBoolean(key: string, fallback: boolean): boolean {
   try {
-    const value = window.localStorage.getItem(key);
+    const value = readStoredValue(key);
     return value === null ? fallback : value !== "false";
   } catch {
     return fallback;
@@ -97,7 +98,7 @@ function storedBoolean(key: string, fallback: boolean): boolean {
 
 function storedNumber(key: string, fallback: number, min: number, max: number): number {
   try {
-    const stored = window.localStorage.getItem(key);
+    const stored = readStoredValue(key);
     if (stored === null || stored.trim() === "") return fallback;
     const value = Number(stored);
     return Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : fallback;
@@ -711,7 +712,8 @@ export function App() {
     setSource("");
     setConfirmClearSource(false);
     try {
-      window.localStorage.removeItem(SOURCE_STORAGE_KEY);
+      // Keep an empty value so the legacy draft cannot return after clearing.
+      window.localStorage.setItem(SOURCE_STORAGE_KEY, "");
     } catch {
       // Source persistence is optional.
     }
@@ -730,7 +732,7 @@ export function App() {
       <header className="topbar">
         <div className="brand-lockup">
           <img className="brand-mark" src="/favicon.svg" alt="" />
-          <h1>Modern Jianpu Markup</h1>
+          <h1>{translate(language, "appName")}</h1>
         </div>
         <Toolbar
           language={language}

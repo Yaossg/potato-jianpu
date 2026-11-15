@@ -1,6 +1,6 @@
 {
-  "name": "Modern Jianpu Markup Docs",
-  "short_name": "Jianpu Docs",
+  "name": "土豆简谱 · Potato Jianpu Docs",
+  "short_name": "Potato Jianpu Docs",
   "description": "Documentation for writing, rendering, playing, and exporting Jianpu scores.",
   "icons": [
     {

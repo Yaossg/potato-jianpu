@@ -68,9 +68,9 @@ test("parses empty files with default header values", () => {
 });
 
 test("parses page rendering header fields", () => {
-  const result = parse(`footer: "modern-jianpu"\npageNumbers: true\nmeasureNumbers: true\npaginate: true\n===\n1 2`);
+  const result = parse(`footer: "potato-jianpu"\npageNumbers: true\nmeasureNumbers: true\npaginate: true\n===\n1 2`);
   assert.equal(result.ok, true);
-  assert.equal(result.value.header.footer, "modern-jianpu");
+  assert.equal(result.value.header.footer, "potato-jianpu");
   assert.equal(result.value.header.pageNumbers, true);
   assert.equal(result.value.header.measureNumbers, true);
   assert.equal(result.value.header.paginate, true);

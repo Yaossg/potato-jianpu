@@ -9,6 +9,8 @@ import * as renderer from "../dist/renderer/index.js";
 
 const require = createRequire(import.meta.url);
 const source = await readFile(new URL("../src/web/App.tsx", import.meta.url), "utf8");
+const storageSource = await readFile(new URL("../src/web/storage.ts", import.meta.url), "utf8");
+const storageCode = ts.transpileModule(storageSource, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
 const { outputText } = ts.transpileModule(source, {
   compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX },
 });
@@ -23,9 +25,13 @@ function app(score = "1 2 3 4", preferences = {}) {
   const audioOptions = [];
   const videoOptions = [];
   const alerts = [];
-  const storage = new Map(Object.entries({ "modern-jianpu-markup-source": score, ...preferences }));
+  const storage = new Map(Object.entries({ "potato-jianpu-source": score, ...preferences }));
+  const localStorage = { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value) };
+  const storageExports = {};
+  vm.runInNewContext(storageCode, { exports: storageExports, window: { localStorage } });
   const exports = {};
   const imports = {
+    "./storage.js": storageExports,
     react: {
       useState(initial) {
         const i = cursor++;
@@ -78,7 +84,7 @@ function app(score = "1 2 3 4", preferences = {}) {
   }
   vm.runInNewContext(outputText, {
     exports, AbortController, navigator: { language: "en" },
-    window: { localStorage: { getItem: key => storage.get(key) ?? null }, alert: text => alerts.push(text) },
+    window: { localStorage, alert: text => alerts.push(text) },
     require(path) { assert.ok(path in imports, `unexpected import ${path}`); return imports[path]; },
   });
   function render() { cursor = 0; tree = exports.App(); }
@@ -100,18 +106,34 @@ function app(score = "1 2 3 4", preferences = {}) {
       render();
       assert.deepEqual(alerts, []);
     },
-    downloads, audioOptions, videoOptions,
+    downloads, audioOptions, videoOptions, storage,
   };
 }
+
+test("legacy preferences restore through App and clearing never revives the old draft", async () => {
+  const ui = app(undefined, {
+    "potato-jianpu-source": null,
+    "modern-jianpu-markup-source": "5 6 7",
+    "modern-jianpu-markup-editor-font-size": "18",
+  });
+  assert.equal(ui.storage.get("potato-jianpu-source"), "5 6 7");
+  assert.equal(ui.props("SourceEditor").editorFontSize, 18);
+  await ui.event("SourceEditor", "onClearRequest");
+  await ui.event(node => node.type === "button" && node.props.className === "danger-action", "onClick");
+  assert.equal(ui.storage.get("potato-jianpu-source"), "");
+  assert.equal(ui.storage.get("modern-jianpu-markup-source"), "5 6 7");
+  const reloaded = app(undefined, Object.fromEntries(ui.storage));
+  assert.equal(reloaded.storage.get("potato-jianpu-source"), "");
+});
 
 test("fresh browser preferences use defaults and preserve a saved fractional split", () => {
   const fresh = app();
   assert.equal(fresh.props("SourceEditor").editorFontSize, 14);
   assert.equal(fresh.props("section").style["--editor-pane-percent"], "45%");
-  const saved = app(undefined, { "modern-jianpu-markup-editor-pane-percent": "45.5" });
+  const saved = app(undefined, { "potato-jianpu-editor-pane-percent": "45.5" });
   assert.equal(saved.props("section").style["--editor-pane-percent"], "45.5%");
   for (const value of ["", " ", "NaN", "Infinity"]) {
-    assert.equal(app(undefined, { "modern-jianpu-markup-editor-font-size": value }).props("SourceEditor").editorFontSize, 14);
+    assert.equal(app(undefined, { "potato-jianpu-editor-font-size": value }).props("SourceEditor").editorFontSize, 14);
   }
 });
 

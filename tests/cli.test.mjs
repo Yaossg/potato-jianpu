@@ -312,7 +312,7 @@ test("CLI export-svg accepts page footer and number options", async () => {
       "--page-margin",
       "20",
       "--page-footer",
-      "modern-jianpu",
+      "potato-jianpu",
       "--page-numbers",
     ],
     {
@@ -321,7 +321,7 @@ test("CLI export-svg accepts page footer and number options", async () => {
   );
 
   const svg = await readFile(output, "utf8");
-  assert.match(svg, /<text class="page-footer"[^>]*>modern-jianpu<\/text>/);
+  assert.match(svg, /<text class="page-footer"[^>]*>potato-jianpu<\/text>/);
   assert.match(svg, /<text class="page-number"[^>]*>1 \/ \d+<\/text>/);
 });
 

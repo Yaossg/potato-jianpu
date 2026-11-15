@@ -29,11 +29,11 @@ pnpm run cli -- validate examples/twinkle.jpu
 pnpm run cli -- --version
 pnpm run cli -- validate examples/twinkle.jpu --json
 pnpm run cli -- parse examples/twinkle.jpu --json
-pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --paper a4 --orientation portrait --paginate --page-margin 40 --page-footer "modern-jianpu" --page-numbers --color "#111827" --background "#ffffff"
+pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --paper a4 --orientation portrait --paginate --page-margin 40 --page-footer "potato-jianpu" --page-numbers --color "#111827" --background "#ffffff"
 pnpm run cli -- export-svg examples/twinkle.jpu -o twinkle.svg --paper a4 --paginate --split-pages
-pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --paper a4 --orientation portrait --paginate --page-margin 40 --page-footer "modern-jianpu" --page-numbers --color "#111827" --background "#ffffff" --png-scale 2
+pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --paper a4 --orientation portrait --paginate --page-margin 40 --page-footer "potato-jianpu" --page-numbers --color "#111827" --background "#ffffff" --png-scale 2
 pnpm run cli -- export-png examples/twinkle.jpu -o twinkle.png --paper a4 --paginate --split-pages
-pnpm run cli -- export-pdf examples/twinkle.jpu -o twinkle.pdf --paper a4 --orientation portrait --paginate --page-margin 40 --page-footer "modern-jianpu" --page-numbers --color "#111827" --background "#ffffff"
+pnpm run cli -- export-pdf examples/twinkle.jpu -o twinkle.pdf --paper a4 --orientation portrait --paginate --page-margin 40 --page-footer "potato-jianpu" --page-numbers --color "#111827" --background "#ffffff"
 pnpm run cli -- export-midi examples/twinkle.jpu -o twinkle.mid --program 0 --omit-initial-rest
 pnpm run cli -- export-wav examples/twinkle.jpu -o twinkle.wav --sample-rate 44100 --amplitude 1 --omit-initial-rest
 pnpm run cli -- export-mp3 examples/twinkle.jpu -o twinkle.mp3 --sample-rate 44100 --amplitude 1 --bit-rate 128 --omit-initial-rest

@@ -46,6 +46,9 @@ when they clarify notation.
 
 ## Terminology
 
+- Use "Potato Jianpu" in English and "土豆简谱" in Simplified Chinese.
+  The combined product name is "土豆简谱 · Potato Jianpu".
+
 Use consistent Simplified Chinese terminology across docs:
 
 - Translate the grammar concept "header" as "文件头", not "标题区".

@@ -1,6 +1,6 @@
-# Modern Jianpu Markup
+# 土豆简谱 · Potato Jianpu
 
-Modern Jianpu Markup is a TypeScript toolkit and browser app for parsing,
+Potato Jianpu is a TypeScript toolkit and browser app for parsing,
 rendering, playing, and exporting Jianpu scores.
 
 Current status:

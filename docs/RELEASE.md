@@ -75,12 +75,12 @@ publish workflow.
 
 The package also exports shared library entry points:
 
-- `modern-jianpu-markup`
-- `modern-jianpu-markup/core`
-- `modern-jianpu-markup/parser`
-- `modern-jianpu-markup/renderer`
-- `modern-jianpu-markup/player`
-- `modern-jianpu-markup/backend`
+- `potato-jianpu`
+- `potato-jianpu/core`
+- `potato-jianpu/parser`
+- `potato-jianpu/renderer`
+- `potato-jianpu/player`
+- `potato-jianpu/backend`
 
 The release file allow-list currently includes:
 

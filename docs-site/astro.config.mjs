@@ -9,7 +9,7 @@ export default defineConfig({
   outDir: "../dist-web/docs",
   integrations: [
     starlight({
-      title: "Modern Jianpu Markup",
+      title: { en: "Potato Jianpu", "zh-CN": "土豆简谱" },
       description: "Documentation for writing, rendering, playing, and exporting Jianpu scores.",
       favicon: "/favicon.svg",
       head: [
