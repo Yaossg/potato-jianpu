@@ -30,6 +30,7 @@ import { initialTheme, THEME_STORAGE_KEY, themeColors } from "./theme.js";
 import type { JustifyMode, Language, PageWidthMode, TranslationKey } from "./i18n.js";
 import type { ThemeName } from "./theme.js";
 import type { VideoExportPhase } from "./video-export.js";
+import type { VideoSettings } from "./video-settings.js";
 
 const MELODIC_AUDITION_SOURCE = "1 2 3 4 5 6 7 1'";
 const DRUM_AUDITION_SOURCE = "X X X X";
@@ -552,7 +553,7 @@ export function App() {
     }
   }
 
-  async function exportVideo() {
+  async function exportVideo(settings: VideoSettings) {
     if (!parsed.ok || exportingAudio || videoAbortRef.current) return;
     const controller = new AbortController();
     videoAbortRef.current = controller;
@@ -562,7 +563,7 @@ export function App() {
       const { exportBrowserVideo, VideoUnsupportedError } = await import("./video-export.js");
       try {
         const result = await exportBrowserVideo(parsed.value, {
-          renderOptions, program, amplitude: volume / 100, omitInitialRests,
+          settings, renderOptions, program, amplitude: volume / 100, omitInitialRests,
           signal: controller.signal, onLoadStatus: setExportLoadStatus,
           onProgress: (phase, progress) => setVideoProgress({ phase, progress }),
         });
@@ -744,7 +745,8 @@ export function App() {
           exportingAudio={exportingAudio}
           audioExportDetails={audioExportDetails}
           exportingVideo={videoProgress !== null}
-          onExportVideo={() => void exportVideo()}
+          videoPageSize={{ width: pageWidth, height: effectivePaginate ? resolvedPageHeight : undefined }}
+          onExportVideo={(settings) => void exportVideo(settings)}
           audioLoadingText={exportLoadStatus ? audioLoadMessage(exportLoadStatus, t) : undefined}
           t={t}
           onToggleLanguage={toggleLanguage}

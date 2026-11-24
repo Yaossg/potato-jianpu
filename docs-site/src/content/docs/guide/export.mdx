@@ -101,11 +101,13 @@ Audio sample rate defaults to `44100`. MP3 bit rate defaults to `128` kbps. Audi
 
 ## Playback Video
 
-Choose **MP4 (Experimental)** in the export menu to download just the score area with synchronized highlighting and audio. Output is 1280 × 720 at 30 fps. It uses the current layout and colors and follows active score lines, including repeat jumps. The view zooms out when simultaneous voices exceed the frame height.
+Choose **Video (Experimental)** in the export menu, adjust the settings, then select **Export**. Landscape and portrait presets have a 720- or 1080-pixel short edge before scaling. Choose 24/30/60 fps, a 2/4/8 Mbps video quality preset, and whether to highlight active notes. The default exports 2560 × 1440 (1280 × 720 at 2×), at 30 fps and 4 Mbps with highlighting on. The video shows the score area, uses the current layout and colors, and follows active lines through repeat jumps. The view zooms out when simultaneous voices exceed the frame height.
 
 Video uses the current Program, master volume, and initial-rest preference, with 48 kHz stereo audio and a two-second release tail. It exports the full piece from the start. Split pages and PNG scale do not affect video. Changes to the score or settings after export starts do not change that export.
 
-The browser downloads MP4 when supported, otherwise it tries WebM. HTTPS or localhost and working audio/video encoders are required. If support is unavailable, try a current desktop Chrome or Edge browser. Preparation, rendering progress, and file finalization are shown, with cancellation available. No screen capture permission or real-time playback is needed. Speed depends on the device, and long scores can use significant memory.
+Select **Custom** under **Dimensions** to enter the width and height in pixels. **Follow page settings** uses the current page width and, when pagination is enabled, the height of one page. Enter a video height when pagination is off. **Video scale** multiplies both dimensions by 1, 2, or 3. The dialog shows the final pixel dimensions. MP4 requires even output dimensions. If either output dimension is odd, **Auto** tries WebM at that size. Available dimensions depend on the browser and its encoders.
+
+The default **Auto** format tries MP4 first and falls back to WebM. Select MP4 or WebM explicitly to require that format. HTTPS or localhost and encoders that support the selected settings are required. If encoding is unsupported, try Auto, smaller dimensions, or a lower frame rate. Preparation, rendering progress, and file finalization are shown, with cancellation available. No screen capture permission or real-time playback is needed. Speed depends on the device, and long scores can use significant memory.
 
 ## Browser Vs CLI
 

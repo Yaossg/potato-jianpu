@@ -256,6 +256,34 @@ button:disabled {
   line-height: 1.4;
 }
 
+.video-export-dialog {
+  width: min(360px, calc(100% - 32px));
+  padding: 20px;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: var(--panel-bg);
+  color: var(--text);
+}
+
+.video-export-dialog::backdrop {
+  background: rgb(0 0 0 / 40%);
+}
+
+.video-export-dialog form {
+  display: grid;
+  gap: 12px;
+}
+
+.video-export-dialog h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+
+.video-export-dialog .select-control,
+.video-export-dialog .number-control {
+  justify-content: space-between;
+}
+
 .number-control {
   display: inline-flex;
   align-items: center;

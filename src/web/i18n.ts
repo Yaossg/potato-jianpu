@@ -4,6 +4,23 @@ export type JustifyMode = "none" | "except-last" | "all";
 export type TranslationKey =
   | "appName"
   | "exportVideo"
+  | "videoSize"
+  | "videoSizeCustom"
+  | "videoSizePage"
+  | "videoScale"
+  | "videoOutputSize"
+  | "videoWidth"
+  | "videoHeight"
+  | "videoSizeEven"
+  | "videoSizeAuto"
+  | "videoFrameRate"
+  | "videoQuality"
+  | "videoQualityCompact"
+  | "videoQualityStandard"
+  | "videoQualityHigh"
+  | "videoFormat"
+  | "videoFormatAuto"
+  | "videoHighlight"
   | "videoPreparing"
   | "videoRendering"
   | "videoFinalizing"
@@ -99,11 +116,28 @@ export type TranslationKey =
 const translations: { en: Record<TranslationKey, string>; zh: Record<TranslationKey, string> } = {
   en: {
     appName: "Potato Jianpu",
-    exportVideo: "MP4 (Experimental)",
+    exportVideo: "Video (Experimental)",
+    videoSize: "Dimensions",
+    videoSizeCustom: "Custom",
+    videoSizePage: "Follow page settings",
+    videoScale: "Video scale",
+    videoOutputSize: "Output size",
+    videoWidth: "Width (px)",
+    videoHeight: "Height (px)",
+    videoSizeEven: "MP4 requires even output dimensions. Try 2× scale, even dimensions, or another format.",
+    videoSizeAuto: "Auto will try WebM because an output dimension is odd.",
+    videoFrameRate: "Frame rate",
+    videoQuality: "Video quality",
+    videoQualityCompact: "Smaller file",
+    videoQualityStandard: "Standard",
+    videoQualityHigh: "High",
+    videoFormat: "File format",
+    videoFormatAuto: "Auto (prefer MP4)",
+    videoHighlight: "Highlight active notes",
     videoPreparing: "Preparing playback video…",
     videoRendering: "Exporting playback video: {percent}%",
     videoFinalizing: "Finishing video file…",
-    videoUnsupported: "This browser cannot encode playback video. Try a current desktop Chrome or Edge browser over HTTPS or localhost.",
+    videoUnsupported: "This browser cannot encode video with these settings. Try Auto format, a smaller size, or a lower frame rate. Video encoding requires HTTPS or localhost.",
     videoFailed: "Could not export playback video. Try a shorter score or another browser.",
     audioPreparing: "Preparing audio…",
     audioDownloading: "Downloading sound bank…",
@@ -194,11 +228,28 @@ const translations: { en: Record<TranslationKey, string>; zh: Record<Translation
   } satisfies Record<TranslationKey, string>,
   zh: {
     appName: "土豆简谱",
-    exportVideo: "MP4（实验）",
+    exportVideo: "视频（实验）",
+    videoSize: "画面尺寸",
+    videoSizeCustom: "自定义",
+    videoSizePage: "跟随页面设置",
+    videoScale: "视频倍率",
+    videoOutputSize: "输出尺寸",
+    videoWidth: "宽度（像素）",
+    videoHeight: "高度（像素）",
+    videoSizeEven: "MP4 要求输出宽高均为偶数。可选用 2× 倍率、偶数尺寸或其他格式。",
+    videoSizeAuto: "输出宽高有一边为奇数，自动模式会尝试 WebM。",
+    videoFrameRate: "帧率",
+    videoQuality: "视频画质",
+    videoQualityCompact: "较小文件",
+    videoQualityStandard: "标准",
+    videoQualityHigh: "高画质",
+    videoFormat: "文件格式",
+    videoFormatAuto: "自动（优先 MP4）",
+    videoHighlight: "高亮正在播放的音符",
     videoPreparing: "正在准备播放视频…",
     videoRendering: "正在导出播放视频：{percent}%",
     videoFinalizing: "正在生成视频文件…",
-    videoUnsupported: "此浏览器不支持播放视频编码，请尝试使用新版桌面 Chrome 或 Edge，并通过 HTTPS 或 localhost 打开。",
+    videoUnsupported: "此浏览器无法按当前设置编码视频。请尝试使用自动格式、较小的尺寸或较低的帧率。视频编码需要 HTTPS 或 localhost。",
     videoFailed: "播放视频导出失败，请尝试较短的乐谱或其他浏览器。",
     audioPreparing: "正在准备音频…",
     audioDownloading: "正在下载音源…",

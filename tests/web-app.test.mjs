@@ -15,6 +15,12 @@ const { outputText } = ts.transpileModule(source, {
   compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX },
 });
 
+function findElement(type, node) {
+  if (Array.isArray(node)) return node.map(child => findElement(type, child)).find(Boolean);
+  if (!node || typeof node !== "object") return undefined;
+  return (typeof type === "function" ? type(node) : node.type === type) ? node : findElement(type, node.props?.children);
+}
+
 // Execute App's actual event handlers and renderer calls with deterministic hooks.
 // This checks application wiring; it does not simulate browser layout or effects.
 function app(score = "1 2 3 4", preferences = {}) {
@@ -89,9 +95,7 @@ function app(score = "1 2 3 4", preferences = {}) {
   });
   function render() { cursor = 0; tree = exports.App(); }
   function find(type, node = tree) {
-    if (Array.isArray(node)) return node.map(child => find(type, child)).find(Boolean);
-    if (!node || typeof node !== "object") return undefined;
-    return (typeof type === "function" ? type(node) : node.type === type) ? node : find(type, node.props?.children ?? null);
+    return findElement(type, node);
   }
   render();
   find("Toolbar").props.onToggleSettings();
@@ -140,9 +144,11 @@ test("fresh browser preferences use defaults and preserve a saved fractional spl
 test("playback video receives the current score, page settings, and sound settings", async () => {
   const ui = app('title: "Video demo"\npaginate: true\n===\n1 2 3 4');
   await ui.event("SettingsPanel", "onVolumeChange", 150);
-  await ui.event("Toolbar", "onExportVideo");
+  const settings = { size: { width: 1000, height: 1778 }, frameRate: 24, quality: "videoQualityCompact", format: "mp4", highlight: false };
+  await ui.event("Toolbar", "onExportVideo", settings);
   assert.equal(ui.videoOptions.length, 1);
   const options = ui.videoOptions[0];
+  assert.deepEqual(options.settings, settings);
   assert.equal(options.document.header.title, "Video demo");
   assert.equal(options.renderOptions.paginate, true);
   assert.equal(options.amplitude, 1.5);
@@ -150,6 +156,85 @@ test("playback video receives the current score, page settings, and sound settin
   assert.equal(options.signal.aborted, false);
   assert.deepEqual(ui.downloads, ["video"]);
   assert.equal(ui.props("Toolbar").exportingVideo, false);
+});
+
+test("video can inherit the resolved page width and the height of one paginated page", async () => {
+  const ui = app();
+  const videoPageSize = () => ({ ...ui.props("Toolbar").videoPageSize });
+  await ui.event("SettingsPanel", "onPageWidthModeChange", "manual");
+  await ui.event("SettingsPanel", "onManualPageWidthChange", 1001);
+  await ui.event("SettingsPanel", "onPageHeightChange", 1600);
+  assert.deepEqual(videoPageSize(), { width: 1001, height: undefined });
+  await ui.event("SettingsPanel", "onPaginateChange", true);
+  assert.deepEqual(videoPageSize(), { width: 1001, height: 1600 });
+  await ui.event("SettingsPanel", "onPaperPresetChange", "a4");
+  await ui.event("SettingsPanel", "onPageOrientationChange", "landscape");
+  assert.deepEqual(videoPageSize(), { width: 1684, height: 1190 });
+  await ui.event("SettingsPanel", "onPaginateChange", false);
+  assert.deepEqual(videoPageSize(), { width: 1684, height: undefined });
+  assert.equal(app("paginate: true\n===\n1 2 3 4").props("Toolbar").videoPageSize.height, 1400);
+});
+
+test("video export scales presets, custom dimensions, and inherited page dimensions before validating MP4", async () => {
+  const modules = {};
+  const values = [];
+  let cursor = 0;
+  const imports = {
+    react: {
+      useRef: () => ({ current: null }),
+      useState(initial) {
+        const index = cursor++;
+        if (!(index in values)) values[index] = initial;
+        return [values[index], value => { values[index] = value; }];
+      },
+    },
+    "react/jsx-runtime": require("react/jsx-runtime"),
+    "./ToolbarIcon.js": { ToolbarIcon: "ToolbarIcon" },
+  };
+  for (const name of ["video-settings.ts", "ExportMenu.tsx"]) {
+    const input = await readFile(new URL(`../src/web/${name}`, import.meta.url), "utf8");
+    const code = ts.transpileModule(input, {
+      compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX },
+    }).outputText;
+    const exports = {};
+    vm.runInNewContext(code, { exports, require: path => imports[path] });
+    imports[`./${name.replace(/\.tsx?$/, ".js")}`] = exports;
+    Object.assign(modules, exports);
+  }
+  const sizes = [];
+  function render() {
+    cursor = 0;
+    return modules.ExportMenu({
+      canExportScore: true, canExportImage: true, exportingAudio: null, exportingVideo: false,
+      videoPageSize: { width: 1001, height: 1401 },
+      t: key => key,
+      onExportVideo: ({ size }) => sizes.push({ ...size }),
+    });
+  }
+  function change(label, value) {
+    const control = findElement(node => node.type === "label" && node.props.children[0] === label, render());
+    control.props.children[1].props.onChange({ target: { value } });
+  }
+  function submit() {
+    findElement("form", render()).props.onSubmit({ preventDefault() {} });
+  }
+  submit();
+  change("videoSize", "custom");
+  change("videoWidth", "1000");
+  change("videoHeight", "1400");
+  change("videoScale", "3");
+  submit();
+  change("videoSize", "page");
+  change("videoFormat", "mp4");
+  change("videoScale", "1");
+  submit();
+  change("videoScale", "2");
+  submit();
+  assert.deepEqual(sizes, [
+    { width: 2560, height: 1440 },
+    { width: 3000, height: 4200 },
+    { width: 2002, height: 2802 },
+  ]);
 });
 
 test("loading an example closes the panel only after replacement is accepted", async () => {

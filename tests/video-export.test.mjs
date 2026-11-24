@@ -20,6 +20,8 @@ async function load(name, imports = {}, globals = {}) {
   return exports;
 }
 const timeline = await load("video-timeline");
+const videoSettings = await load("video-settings");
+const { DEFAULT_VIDEO_SETTINGS } = videoSettings;
 function score(source) {
   const result = parse(source);
   assert.equal(result.ok, true);
@@ -60,31 +62,40 @@ test("viewport follows forward and repeat-back jumps without moving for every no
 
 async function harness({ supported = ["avc", "aac"], cancelAtFrame, failFinalize = false } = {}) {
   const controller = new AbortController();
-  const state = { video: [], audio: [], images: 0, disposed: 0, removed: 0, pcmCalls: 0, progress: [] };
+  const state = { video: [], audio: [], images: 0, disposed: 0, removed: 0, pcmCalls: 0, progress: [], probes: [], highlights: 0, svgAttributes: {} };
   const root = {
     getAttribute: name => name === "width" ? "800" : "1200",
-    setAttribute() {}, getBoundingClientRect: () => ({ width: 800, top: 0 }),
+    setAttribute(name, value) { state.svgAttributes[name] = value; },
+    getBoundingClientRect: () => ({ width: 800, top: 0 }),
     querySelectorAll: () => [{
       getAttribute: () => "0", getBoundingClientRect: () => ({ top: 100, bottom: 130 }),
-      classList: { add() {}, remove() {} },
+      classList: { add() { state.highlights++; }, remove() {} },
     }],
   };
   const context = { fillRect() {}, drawImage() { state.images++; } };
   const modules = {
     mediabunny: {
-      canEncodeVideo: async codec => supported.includes(codec),
+      canEncodeVideo: async (codec, { quality, ...options }) => {
+        state.probes.push({ codec, ...options, bitrate: quality.bitrate });
+        return supported.includes(codec);
+      },
       canEncodeAudio: async codec => supported.includes(codec),
-      Quality: class {}, BufferTarget: class {}, Mp4OutputFormat: class {}, WebMOutputFormat: class {},
+      Quality: class { constructor(options) { Object.assign(this, options); } },
+      BufferTarget: class {}, Mp4OutputFormat: class {}, WebMOutputFormat: class {},
       Output: class {
         state = "pending";
         target = { buffer: new ArrayBuffer(1) };
         constructor() { state.output = this; }
-        addVideoTrack() {} addAudioTrack() {}
+        addVideoTrack(_source, { frameRate }) { state.frameRate = frameRate; }
+        addAudioTrack() {}
         async start() { this.state = "started"; }
         async finalize() { if (failFinalize) throw Error("encoder failure"); this.state = "finalized"; }
         async cancel() { this.state = "canceled"; }
       },
       CanvasSource: class {
+        constructor({ width, height }, { codec, quality }) {
+          state.canvas = { width, height, codec, bitrate: quality.bitrate };
+        }
         async add(time, duration) {
           state.video.push({ time, duration });
           if (state.video.length === cancelAtFrame) controller.abort();
@@ -104,6 +115,7 @@ async function harness({ supported = ["avc", "aac"], cancelAtFrame, failFinalize
       return { frames: 24001, sampleRate: 48000, pcm: new Int16Array(48002) };
     } },
     "./svg-fonts.js": { embedPngExportFonts: async text => text },
+    "./video-settings.js": videoSettings,
     "./video-timeline.js": timeline,
   };
   const exporter = await load("video-export", modules, {
@@ -118,8 +130,8 @@ async function harness({ supported = ["avc", "aac"], cancelAtFrame, failFinalize
       },
     },
   });
-  const run = () => exporter.exportBrowserVideo(score("1 2 3 4"), {
-    signal: controller.signal, renderOptions: {},
+  const run = (settings = DEFAULT_VIDEO_SETTINGS) => exporter.exportBrowserVideo(score("1 2 3 4"), {
+    signal: controller.signal, renderOptions: {}, settings,
     onProgress: phase => state.progress.push(phase),
   });
   return { run, state, exporter };
@@ -140,8 +152,47 @@ test("video chooses MP4 only when both encoders work, otherwise falls back to We
     assert.equal(state.disposed, state.audio.length);
     assert.equal(state.output.state, "finalized");
     assert.equal(state.removed, 1);
+    assert.ok(state.highlights > 0);
     assert.ok(state.images < state.video.length, "unchanged notation reuses the last rasterized frame");
   }
+});
+
+test("video applies the chosen dimensions, frame rate, bitrate, format, and highlighting", async () => {
+  const { run, state } = await harness({ supported: ["avc", "aac", "vp9", "opus"] });
+  const dimensions = { width: 1000, height: 1778 };
+  const result = await run({ size: dimensions, frameRate: 60, quality: "videoQualityHigh", format: "mp4", highlight: false });
+  assert.equal(result.extension, "mp4");
+  const bitrate = 8_000_000;
+  assert.deepEqual(state.probes, [{ codec: "avc", ...dimensions, frameRate: 60, bitrate }]);
+  assert.deepEqual(state.canvas, { codec: "avc", ...dimensions, bitrate });
+  assert.equal(state.svgAttributes.width, "1000");
+  assert.equal(state.svgAttributes.height, "1778");
+  const viewBox = state.svgAttributes.viewBox.split(" ").map(Number);
+  assert.ok(Math.abs(viewBox[2] / viewBox[3] - dimensions.width / dimensions.height) < 1e-9);
+  assert.equal(state.frameRate, 60);
+  assert.equal(state.video.length, 31);
+  assert.equal(state.video[1].time, 1 / 60);
+  assert.equal(state.highlights, 0);
+});
+
+test("odd video dimensions use WebM in Auto and are rejected for explicit MP4", async () => {
+  const settings = { ...DEFAULT_VIDEO_SETTINGS, size: { width: 1001, height: 1778 } };
+  const auto = await harness({ supported: ["avc", "aac", "vp9", "opus"] });
+  assert.equal((await auto.run(settings)).extension, "webm");
+  assert.deepEqual(auto.state.probes.map(probe => probe.codec), ["vp9"]);
+  assert.equal(auto.state.canvas.width, settings.size.width);
+
+  const mp4 = await harness();
+  await assert.rejects(mp4.run({ ...settings, format: "mp4" }), mp4.exporter.VideoUnsupportedError);
+  assert.equal(mp4.state.probes.length, 0);
+  assert.equal(mp4.state.pcmCalls, 0);
+});
+
+test("explicit MP4 selection fails before loading audio when only WebM is available", async () => {
+  const { run, state, exporter } = await harness({ supported: ["vp9", "opus"] });
+  await assert.rejects(run({ ...DEFAULT_VIDEO_SETTINGS, format: "mp4" }), exporter.VideoUnsupportedError);
+  assert.deepEqual(state.probes.map(probe => probe.codec), ["avc"]);
+  assert.equal(state.pcmCalls, 0);
 });
 
 test("unsupported video fails before loading the sound bank", async () => {

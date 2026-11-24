@@ -7,32 +7,32 @@ import { compileArrangement, skipInitialArrangementRests } from "../player/index
 import { renderSvg, type RenderOptions } from "../renderer/index.js";
 import { renderDocumentPcm, type BrowserAudioExportOptions } from "./audio-export.js";
 import { embedPngExportFonts } from "./svg-fonts.js";
+import { VIDEO_BITRATES, type VideoSettings } from "./video-settings.js";
 import { abortable, createVideoTimeline, followVideoNotes, type VideoBounds } from "./video-timeline.js";
 
 export type VideoExportPhase = "preparing" | "rendering" | "finalizing";
 export interface VideoExportOptions extends BrowserAudioExportOptions {
+  settings: VideoSettings;
   signal: AbortSignal;
   renderOptions: RenderOptions;
   onProgress: (phase: VideoExportPhase, progress: number) => void;
 }
 
-const WIDTH = 1280;
-const HEIGHT = 720;
-const FPS = 30;
 const SAMPLE_RATE = 48000;
-const VIDEO_QUALITY = new Quality({ bitrate: 4_000_000 });
 const AUDIO_QUALITY = new Quality({ bitrate: 128_000 });
 
 export class VideoUnsupportedError extends Error {}
 
-async function chooseFormat() {
+async function chooseFormat(format: VideoSettings["format"], width: number, height: number, frameRate: number, quality: Quality) {
   for (const candidate of [
     { extension: "mp4", video: "avc", audio: "aac" },
     { extension: "webm", video: "vp9", audio: "opus" },
     { extension: "webm", video: "vp8", audio: "opus" },
   ] as const) {
+    if (format !== "auto" && candidate.extension !== format) continue;
+    if (candidate.extension === "mp4" && (width % 2 !== 0 || height % 2 !== 0)) continue;
     const [video, audio] = await Promise.all([
-      canEncodeVideo(candidate.video, { width: WIDTH, height: HEIGHT, frameRate: FPS, quality: VIDEO_QUALITY }),
+      canEncodeVideo(candidate.video, { width, height, frameRate, quality }),
       canEncodeAudio(candidate.audio, { sampleRate: SAMPLE_RATE, numberOfChannels: 2, quality: AUDIO_QUALITY }),
     ]);
     if (video && audio) return candidate;
@@ -42,6 +42,7 @@ async function chooseFormat() {
 
 /** Rasterize only the current viewport, never a score-sized bitmap. */
 async function createScorePainter(score: ScoreDocument, options: VideoExportOptions) {
+  const { width, height } = options.settings.size;
   const svgText = await abortable(embedPngExportFonts(renderSvg(score, {
     ...options.renderOptions, activeNoteIndices: [], activeNoteIndex: undefined,
   })), options.signal);
@@ -70,8 +71,8 @@ async function createScorePainter(score: ScoreDocument, options: VideoExportOpti
   } finally {
     holder.remove();
   }
-  root.setAttribute("width", String(WIDTH));
-  root.setAttribute("height", String(HEIGHT));
+  root.setAttribute("width", String(width));
+  root.setAttribute("height", String(height));
   const serializer = new XMLSerializer();
   let lastKey: string | undefined;
   let previousIndices: number[] = [];
@@ -79,12 +80,15 @@ async function createScorePainter(score: ScoreDocument, options: VideoExportOpti
   return async (context: CanvasRenderingContext2D, indices: number[]) => {
     const key = indices.join(",");
     if (key === lastKey) return;
-    for (const index of previousIndices) nodes.get(index)?.classList.remove("active");
-    for (const index of indices) nodes.get(index)?.classList.add("active");
+    if (options.settings.highlight) {
+      for (const index of previousIndices) nodes.get(index)?.classList.remove("active");
+      for (const index of indices) nodes.get(index)?.classList.add("active");
+      previousIndices = indices;
+    }
     const activeBounds = indices.flatMap(index => bounds.has(index) ? [bounds.get(index)!] : []);
     const span = activeBounds.length ? Math.max(...activeBounds.map(b => b.bottom)) - Math.min(...activeBounds.map(b => b.top)) : 0;
-    const viewHeight = Math.max(scoreWidth * HEIGHT / WIDTH, span + 80);
-    const viewWidth = viewHeight * WIDTH / HEIGHT;
+    const viewHeight = Math.max(scoreWidth * height / width, span + 80);
+    const viewWidth = viewHeight * width / height;
     top = followVideoNotes(top, viewHeight, scoreHeight, activeBounds);
     root.setAttribute("viewBox", `${(scoreWidth - viewWidth) / 2} ${top} ${viewWidth} ${viewHeight}`);
     const url = URL.createObjectURL(new Blob([serializer.serializeToString(root)], { type: "image/svg+xml" }));
@@ -94,22 +98,24 @@ async function createScorePainter(score: ScoreDocument, options: VideoExportOpti
       await abortable(image.decode(), options.signal);
       options.signal.throwIfAborted();
       context.fillStyle = options.renderOptions.background || "#ffffff";
-      context.fillRect(0, 0, WIDTH, HEIGHT);
-      context.drawImage(image, 0, 0, WIDTH, HEIGHT);
+      context.fillRect(0, 0, width, height);
+      context.drawImage(image, 0, 0, width, height);
     } finally {
       image.src = "";
       URL.revokeObjectURL(url);
     }
     lastKey = key;
-    previousIndices = indices;
   };
 }
 
 export async function exportBrowserVideo(score: ScoreDocument, options: VideoExportOptions) {
-  const { signal, onProgress } = options;
+  const { signal, onProgress, settings } = options;
+  const { width, height } = settings.size;
+  const { frameRate } = settings;
+  const quality = new Quality({ bitrate: VIDEO_BITRATES[settings.quality] });
   signal.throwIfAborted();
   onProgress("preparing", 0);
-  const format = await abortable(chooseFormat(), signal);
+  const format = await abortable(chooseFormat(settings.format, width, height, frameRate, quality), signal);
   const compiled = compileArrangement(score, options.program);
   const arrangement = options.omitInitialRests ? skipInitialArrangementRests(compiled) : compiled;
   const activeAt = createVideoTimeline(arrangement);
@@ -120,17 +126,17 @@ export async function exportBrowserVideo(score: ScoreDocument, options: VideoExp
   const paint = await createScorePainter(score, options);
   signal.throwIfAborted();
   const canvas = document.createElement("canvas");
-  canvas.width = WIDTH;
-  canvas.height = HEIGHT;
+  canvas.width = width;
+  canvas.height = height;
   const context = canvas.getContext("2d");
   if (!context) throw new Error("Canvas unavailable");
   const output = new Output({
     format: format.extension === "mp4" ? new Mp4OutputFormat() : new WebMOutputFormat(),
     target: new BufferTarget(),
   });
-  const videoSource = new CanvasSource(canvas, { codec: format.video, quality: VIDEO_QUALITY });
+  const videoSource = new CanvasSource(canvas, { codec: format.video, quality });
   const audioSource = new AudioSampleSource({ codec: format.audio, quality: AUDIO_QUALITY });
-  output.addVideoTrack(videoSource, { frameRate: FPS });
+  output.addVideoTrack(videoSource, { frameRate });
   output.addAudioTrack(audioSource);
   const cancel = () => { void output.cancel().catch(() => {}); };
   signal.addEventListener("abort", cancel, { once: true });
@@ -138,13 +144,13 @@ export async function exportBrowserVideo(score: ScoreDocument, options: VideoExp
     signal.throwIfAborted();
     await output.start();
     const duration = audio.frames / audio.sampleRate;
-    const frameCount = Math.ceil(duration * FPS);
+    const frameCount = Math.ceil(duration * frameRate);
     let audioCursor = 0;
     let yieldedAt = performance.now();
     for (let frame = 0; frame < frameCount; frame++) {
       signal.throwIfAborted();
-      const timestamp = frame / FPS;
-      const end = Math.min((frame + 1) / FPS, duration);
+      const timestamp = frame / frameRate;
+      const end = Math.min((frame + 1) / frameRate, duration);
       await paint(context, activeAt(timestamp));
       await videoSource.add(timestamp, end - timestamp);
       // Interleave audio and video so the muxer need not buffer a whole track.

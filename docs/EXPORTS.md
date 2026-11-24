@@ -360,9 +360,15 @@ the current Program, volume, and initial-rest settings.
 
 ## Browser Playback Video
 
-The export menu offers MP4 (Experimental). It exports only the score area
-with synchronized note highlighting and synthesized stereo audio at 1280 × 720,
-30 fps, and 48 kHz. It snapshots the valid document, current page layout, colors,
+The export menu offers Video (Experimental). Its settings dialog offers
+landscape and portrait presets at a 720- or 1080-pixel short edge,
+custom pixel dimensions, and a mode that uses the resolved page width and the
+height of one page when pagination is enabled, a 1×/2×/3× output scale,
+24/30/60 fps, 2/4/8 Mbps video bitrate targets, Auto/MP4/WebM, and an active-note
+highlight toggle. It defaults to 1280 × 720 at 2× (2560 × 1440 output),
+30 fps and 4 Mbps, Auto format,
+and highlighting enabled. The video shows the score area with synthesized
+48 kHz stereo audio. It snapshots the video settings, valid document, page layout, colors,
 Program, master volume, and initial-rest preference when export starts. Later
 edits do not change an in-progress export. Split pages and PNG scale do not
 affect video. The two-second audio release tail is retained without highlighting.
@@ -376,9 +382,14 @@ compiled events end. No editor, toolbar, or screen capture is included.
 
 Mediabunny uses WebCodecs to encode frames with explicit timestamps and mux
 them with PCM from the existing SoundFont renderer. Both encoders are checked
-before asset loading: H.264/AAC MP4 is preferred, with VP9/Opus or VP8/Opus WebM
-as fallback. A browser without a supported pair reports an error. HTTPS or
+before asset loading using the selected video parameters. Auto prefers H.264/AAC
+MP4 and falls back to VP9/Opus or VP8/Opus WebM. An explicit format selection
+requires a supported codec pair for that format. HTTPS or
 localhost is required for WebCodecs. Video modules load only on demand.
+
+The scale multiplies both dimensions without changing score layout or framing.
+MP4 requires even dimensions after scaling. Auto skips MP4 if either output
+dimension is odd and tests WebM at the scaled size.
 
 Export shows preparation, frame progress, and finalization with cancellation.
 Cancellation stops encoding and suppresses the download; shared asset downloads

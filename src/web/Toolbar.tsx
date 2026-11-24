@@ -1,9 +1,10 @@
 import { useRef } from "react";
 import { openGrammarHelp } from "./browser-utils.js";
-import { ExportMenu } from "./ExportMenu.js";
+import { ExportMenu, type VideoPageSize } from "./ExportMenu.js";
 import type { Language, TranslationKey } from "./i18n.js";
 import type { ThemeName } from "./theme.js";
 import { ToolbarIcon } from "./ToolbarIcon.js";
+import type { VideoSettings } from "./video-settings.js";
 
 interface ToolbarProps {
   language: Language;
@@ -16,6 +17,7 @@ interface ToolbarProps {
   audioExportDetails: string;
   audioLoadingText?: string;
   exportingVideo: boolean;
+  videoPageSize: VideoPageSize;
   t: (key: TranslationKey) => string;
   onToggleLanguage: () => void;
   onToggleTheme: () => void;
@@ -31,7 +33,7 @@ interface ToolbarProps {
   onExportMidi: () => void;
   onExportWav: () => void;
   onExportMp3: () => void;
-  onExportVideo: () => void;
+  onExportVideo: (settings: VideoSettings) => void;
 }
 
 export function Toolbar({
@@ -45,6 +47,7 @@ export function Toolbar({
   audioExportDetails,
   audioLoadingText,
   exportingVideo,
+  videoPageSize,
   t,
   onToggleLanguage,
   onToggleTheme,
@@ -124,6 +127,7 @@ export function Toolbar({
         audioExportDetails={audioExportDetails}
         audioLoadingText={audioLoadingText}
         exportingVideo={exportingVideo}
+        videoPageSize={videoPageSize}
         onExportVideo={onExportVideo}
         t={t}
         onExportSvg={onExportSvg}
