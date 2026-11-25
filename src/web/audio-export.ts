@@ -1,4 +1,6 @@
 import { renderSoundfontBlocks } from "../player/soundfont.js";
+import { PeakLimiter } from "../player/peak-limiter.js";
+import { browserMasterGain } from "./volume.js";
 import { loadSoundfont, type AudioLoadListener } from "./soundfont.js";
 import type { Document } from "../core/index.js";
 import { compileArrangement, skipInitialArrangementRests } from "../player/index.js";
@@ -79,7 +81,7 @@ export async function renderDocumentPcm(document: Document, options: BrowserAudi
     options.onLoadStatus?.(null);
   }
   options.signal?.throwIfAborted();
-  const render = renderSoundfontBlocks(arrangement, bank, sampleRate, amplitude);
+  const render = renderSoundfontBlocks(arrangement, bank, sampleRate, browserMasterGain(amplitude), new PeakLimiter(sampleRate));
   try {
     let result = render.next();
     let yieldedAt = performance.now();

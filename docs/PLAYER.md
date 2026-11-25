@@ -420,9 +420,9 @@ and drum-note programs. Values `128..174` trigger the drum mapping described
 above when no score-level or per-track melodic Program overrides that track.
 
 The frontend also exposes playback volume as a `0..200%` slider with a `100%`
-default. This controls browser preview master gain and combines with the
-resolved score-level or per-track `volume` value. It does not alter the parsed
-score or exported SVG.
+default. At `100%` the master gain is `+18 dB` relative to the unboosted
+SoundFont output. The label shows the gain in parentheses, including
+`0% (−∞ dB)` for mute.
 
 The Audition button plays a short built-in phrase with the current Program and
 volume. Melodic programs play a scale; drum programs play repeated `X` notes.
@@ -435,9 +435,10 @@ highlight simultaneous notes across arrangement tracks.
 
 Clicking a rendered note starts playback from that note index.
 
-Browser playback base velocity is currently `64`. The browser volume slider is
-applied through SpessaSynth master gain, and the resolved track volume
-scales each track's note velocity.
+Browser playback base velocity is currently `64`. Resolved track volume
+scales each track's note velocity. The slider applies master gain to the
+mixed browser output, then a stereo peak limiter limits samples to
+`−1 dBFS`. Browser WAV, MP3, and video audio use the same gain and limiter.
 
 Dynamic markers (`ppp` through `fff`) set MIDI-style velocities from the marked
 note onward in the same track, across rests, barlines, and source lines, until

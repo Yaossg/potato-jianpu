@@ -1,5 +1,6 @@
 import { SoundBankLoader, SpessaLog, SpessaSynthProcessor } from "spessasynth_core";
 import { arrangementDuration, melodyPitchSpans, type Arrangement } from "./melody.js";
+import type { PeakLimiter } from "./peak-limiter.js";
 
 // Keep CLI output and the browser console free of synthesizer diagnostics.
 SpessaLog.setLogLevel(false, false, false);
@@ -8,12 +9,12 @@ export const AUDIO_TAIL_SECONDS = 2;
 export const AUDIO_BLOCK_SIZE = 128;
 
 /** Render uncompressed SF2 samples synchronously, without a Web Audio context. */
-export function* renderSoundfontBlocks(arrangement: Arrangement, bank: ArrayBuffer, sampleRate: number, amplitude: number) {
+export function* renderSoundfontBlocks(arrangement: Arrangement, bank: ArrayBuffer, sampleRate: number, amplitude: number, limiter?: PeakLimiter) {
   const synth = new SpessaSynthProcessor(sampleRate, { eventsEnabled: false });
   try {
     synth.soundBankManager.addSoundBank(SoundBankLoader.fromArrayBuffer(bank), "main");
     synth.setSystemParameter("autoAllocateVoices", true);
-    synth.setSystemParameter("gain", amplitude);
+    synth.setSystemParameter("gain", limiter ? 1 : amplitude);
     const secondsPerWhole = 60 / arrangement.tempo * arrangement.beatsPerWholeNote;
     let melodicChannel = 0;
     const channels = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15];
@@ -30,26 +31,30 @@ export function* renderSoundfontBlocks(arrangement: Arrangement, bank: ArrayBuff
       });
     }).sort((a, b) => a.frame - b.frame || Number(a.on) - Number(b.on));
     const frames = Math.ceil((arrangementDuration(arrangement) * secondsPerWhole + AUDIO_TAIL_SECONDS) * sampleRate);
+    const delay = limiter?.delayFrames ?? 0;
+    const renderFrames = frames + delay;
     const pcm = new Int16Array(frames * 2);
     const left = new Float32Array(AUDIO_BLOCK_SIZE);
     const right = new Float32Array(AUDIO_BLOCK_SIZE);
     let cursor = 0;
-    for (let frame = 0; frame < frames;) {
+    for (let frame = 0; frame < renderFrames;) {
       while (cursor < events.length && events[cursor]!.frame <= frame) {
         const event = events[cursor++]!;
         if (event.on) synth.noteOn(event.channel, event.note, event.velocity);
         else synth.noteOff(event.channel, event.note);
       }
-      const size = Math.min(AUDIO_BLOCK_SIZE, frames - frame, (events[cursor]?.frame ?? frames) - frame);
+      const size = Math.min(AUDIO_BLOCK_SIZE, renderFrames - frame, (events[cursor]?.frame ?? renderFrames) - frame);
       left.fill(0);
       right.fill(0);
       synth.process(left, right, 0, size);
-      for (let i = 0; i < size; i++) {
-        pcm[(frame + i) * 2] = Math.round(Math.max(-1, Math.min(1, left[i]!)) * 32767);
-        pcm[(frame + i) * 2 + 1] = Math.round(Math.max(-1, Math.min(1, right[i]!)) * 32767);
+      limiter?.process(left, right, size, amplitude);
+      for (let i = Math.max(0, delay - frame); i < size; i++) {
+        const output = (frame + i - delay) * 2;
+        pcm[output] = Math.round(Math.max(-1, Math.min(1, left[i]!)) * 32767);
+        pcm[output + 1] = Math.round(Math.max(-1, Math.min(1, right[i]!)) * 32767);
       }
       frame += size;
-      yield frame;
+      yield Math.max(0, frame - delay);
     }
     return { sampleRate, channelCount: 2, frames, pcm };
   } finally {

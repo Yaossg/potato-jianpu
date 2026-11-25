@@ -53,6 +53,8 @@ Use `volume` to set the score-level default track volume. Use `Tn.volume` or `Pn
 
 Resolved track volume comes from the matching track override, then score-level `volume`, then `1`. It combines with the browser volume slider or CLI `--amplitude`, so master volume changes preserve the relative balance between tracks.
 
+The browser slider shows the master gain in parentheses. The default `100% (+18 dB)` is measured relative to the unboosted SoundFont output, and `0% (−∞ dB)` mutes it. Preview, audition, and browser audio and video exports apply a peak limiter after master gain.
+
 Dynamic markings set note velocity before track volume is applied and persist in the same track across rests, barlines, and source lines until changed. Tracks keep independent dynamics in expanded playback order. Hairpins interpolate velocities between their endpoints; when an endpoint has an explicit dynamic marking, that marking becomes the interpolation target. The endpoint velocity persists after the hairpin.
 
 ## Repeats And Tracks

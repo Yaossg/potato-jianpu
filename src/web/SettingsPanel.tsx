@@ -5,6 +5,7 @@ import { PAGE_ORIENTATIONS, PAPER_PRESET_LIST, isPageOrientation, isPaperPresetN
 import type { PageOrientation, PaperPresetName } from "../renderer/index.js";
 import type { JustifyMode, PageWidthMode, TranslationKey } from "./i18n.js";
 import { PNG_SCALE_OPTIONS } from "./downloads.js";
+import { formatVolumeGain } from "./volume.js";
 
 type PaperSelection = PaperPresetName | "custom";
 
@@ -210,6 +211,7 @@ export function SettingsPanel({
   const pageMarginDraft = useClampedNumberDraft(pageMargin, minPageMargin, maxPageMargin, onPageMarginChange);
   const pageHeightDraft = useClampedNumberDraft(pageHeight, minPageHeight, maxPageHeight, onPageHeightChange);
   const editorFontSizeDraft = useClampedNumberDraft(editorFontSize, minEditorFontSize, maxEditorFontSize, onEditorFontSizeChange);
+  const volumeLabel = `${Math.round(volume)}% (${formatVolumeGain(volume)})`;
 
   return (
     <section className="settings-panel">
@@ -409,8 +411,8 @@ export function SettingsPanel({
             {trackProgramOverrideCount > 0 && <p className="settings-note">{t("trackProgramOverrides", { count: trackProgramOverrideCount })}</p>}
             <label className="range-control">
               {t("volume")}
-              <input type="range" min={0} max={200} step={1} value={volume} onChange={(event) => onVolumeChange(Number(event.target.value))} />
-              <span>{Math.round(volume)}%</span>
+              <input type="range" min={0} max={200} step={1} value={volume} aria-valuetext={volumeLabel} onChange={(event) => onVolumeChange(Number(event.target.value))} />
+              <span>{volumeLabel}</span>
             </label>
             <label className="checkbox-control">
               <input type="checkbox" checked={omitInitialRests} onChange={(event) => onOmitInitialRestsChange(event.target.checked)} />

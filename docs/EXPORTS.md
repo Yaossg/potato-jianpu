@@ -325,8 +325,9 @@ master gain, combined with the resolved track volume.
 Browser WAV export fetches the bundled SoundFont on demand, renders PCM locally,
 and writes a RIFF/WAVE container using the current Program, volume, and
 initial-rest settings.
-Browser WAV and MP3 master gain follows the full `0..200%` UI volume range,
-including mute. CLI `--amplitude` retains its documented `0 < amplitude <= 1`
+Browser WAV, MP3, and video audio follow the full `0..200%` UI volume range,
+including mute. The [browser master gain and peak limiter](PLAYER.md#browser-preview-playback)
+also apply to these exports. CLI `--amplitude` uses the `0 < amplitude <= 1`
 range.
 
 ## MP3 Export

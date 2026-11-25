@@ -333,10 +333,12 @@ button:disabled {
 
 .range-control input {
   width: 120px;
+  min-width: 0;
 }
 
 .range-control span {
-  width: 38px;
+  min-width: 14ch;
+  white-space: nowrap;
   color: var(--muted-text);
   font-variant-numeric: tabular-nums;
 }

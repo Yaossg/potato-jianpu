@@ -11,11 +11,16 @@ const source = await readFile(new URL("../src/web/audio.ts", import.meta.url), "
 const { outputText } = ts.transpileModule(source, {
   compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
 });
+const volumeModule = {};
+vm.runInNewContext(ts.transpileModule(await readFile(new URL("../src/web/volume.ts", import.meta.url), "utf8"), {
+  compilerOptions: { module: ts.ModuleKind.CommonJS },
+}).outputText, { exports: volumeModule });
 function harness({ delayed = false, fail = false } = {}) {
   const context = { currentTime: 10, async resume() {} };
   const timers = new Map();
   const handlers = new Map();
   const songs = [];
+  const masterGain = { gain: { value: 1 } };
   let timerId = 0, starts = 0, stops = 0, loads = 0, origin = 10;
   let release;
   let pausedTime = 0;
@@ -56,11 +61,12 @@ function harness({ delayed = false, fail = false } = {}) {
       if (path === "../player/index.js") return playerModule;
       if (path === "../player/midi.js") return midiModule;
       if (path === "./soundfont.js") return { subscribeSoundfontProgress: () => () => {} };
+      if (path === "./volume.js") return volumeModule;
       if (path === "./synth.js") return { async createPreviewSynth() {
         loads++;
         await loading;
         if (fail && loads === 1) throw new Error("Network failed");
-        return { sequencer, synth: { setSystemParameter() {}, stopAll() { stops++; } } };
+        return { sequencer, masterGain, synth: { stopAll() { stops++; } } };
       } };
       throw new Error(`Unexpected import: ${path}`);
     },
@@ -75,7 +81,7 @@ function harness({ delayed = false, fail = false } = {}) {
     for (const [id, timer] of [...timers]) if (timer.time <= time) { timers.delete(id); timer.callback(); }
     await flush();
   }
-  return { player: new exports.PreviewAudioPlayer(), context, songs, timers, flush, tick, release, get starts() { return starts; }, get stops() { return stops; }, get loads() { return loads; } };
+  return { player: new exports.PreviewAudioPlayer(), context, masterGain, songs, timers, flush, tick, release, get starts() { return starts; }, get stops() { return stops; }, get loads() { return loads; } };
 }
 function arrangement(notes) {
   const timing = { tempo: 120, beatsPerWholeNote: 4, beatsPerMeasure: 4 };
@@ -112,6 +118,7 @@ test("submits the whole long score once and follows the audio clock for highligh
   const highlights = [];
   const playing = h.player.play(arrangement(notes), () => ended++, ids => highlights.push([...ids]));
   await h.flush();
+  assert.equal(h.masterGain.gain.value, 10 ** (18 / 20));
   assert.equal(h.songs.length, 1);
   assert.equal(h.songs[0].tracks.flatMap(t => t.events).filter(e => (e.statusByte & 0xf0) === 0x90).length, 1800);
   assert.deepEqual(highlights, [[0]]);

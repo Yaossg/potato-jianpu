@@ -2,6 +2,7 @@ import { arrangementDuration, type Arrangement } from "../player/index.js";
 import { arrangementMidiBytes } from "../player/midi.js";
 import { subscribeSoundfontProgress, type AudioLoadListener } from "./soundfont.js";
 import { createPreviewSynth } from "./synth.js";
+import { browserMasterGain } from "./volume.js";
 
 class CancellableDelay {
   private timer: number | null = null;
@@ -100,7 +101,7 @@ export class PreviewAudioPlayer {
       this.setup = setup.catch(() => {});
       await setup;
       if (generation !== this.generation) return;
-      engine.synth.setSystemParameter("gain", Math.max(0, Math.min(2, volume)));
+      engine.masterGain.gain.value = browserMasterGain(Math.max(0, Math.min(2, volume)));
       this.clearLoadStatus();
       engine.sequencer.play();
       const start = context.currentTime;
